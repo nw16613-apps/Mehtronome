@@ -10,6 +10,7 @@ test('real worklet generates audio, controls respond, and playback restarts', as
         super(context, name, options);
         const analyser = context.createAnalyser();
         this.connect(analyser);
+        this.connect(analyser, 1);
         (window as any).__analyser = analyser;
       }
     };
@@ -42,6 +43,59 @@ test('real worklet generates audio, controls respond, and playback restarts', as
   await page.locator('#count-in').check();
   await page.getByRole('button', { name: 'Start practicing' }).click();
   await expect(page.locator('#play-status')).toContainText('Count-in');
+  await page.getByRole('button', { name: 'Stop practicing' }).click();
+  expect(errors).toEqual([]);
+});
+
+test('ambient sounds and modal chord palette work during playback', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    const Original = window.AudioWorkletNode;
+    window.AudioWorkletNode = class extends Original {
+      constructor(context: BaseAudioContext, name: string, options?: AudioWorkletNodeOptions) {
+        super(context, name, options);
+        const analyser = context.createAnalyser();
+        this.connect(analyser, 1);
+        (window as any).__analyser = analyser;
+      }
+    };
+  });
+  await page.goto('/');
+  await page.locator('#quality').selectOption('lydian');
+  await expect(page.locator('#chord')).toHaveValue('maj9sharp11');
+  await expect(page.locator('#note-list')).toContainText('F♯');
+  await expect(page.locator('#chord-notes')).toContainText('F♯');
+  await expect(page.getByRole('button', { name: 'Chord progression' })).toBeDisabled();
+  await page.locator('#exercise').selectOption('arpeggio');
+  await expect(page.locator('.note')).toHaveCount(6);
+  await page.locator('#count-in').uncheck();
+  await page.getByRole('button', { name: 'Start practicing' }).click();
+  await expect(page.locator('#play-status')).toContainText('Playing');
+  for (const sound of ['glass', 'velvet', 'air', 'warm']) {
+    await page.locator('#sound').selectOption(sound);
+    await page.waitForTimeout(150);
+    await expect.poll(() => page.evaluate(() => {
+      const analyser = (window as any).__analyser as AnalyserNode;
+      const samples = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(samples);
+      return Math.max(...samples.map(Math.abs));
+    })).toBeGreaterThan(.005);
+    await expect(page.locator('#error')).toBeHidden();
+  }
+  await page.locator('#quality').selectOption('dorian');
+  await expect(page.locator('#chord')).toHaveValue('min13');
+  await expect(page.locator('#chord-notes')).toContainText('A');
+  await page.locator('#chord').selectOption('min6');
+  await expect(page.locator('#chord-name')).toHaveText('Cm6');
+  await page.locator('#quality').selectOption('locrian');
+  await expect(page.locator('#chord')).toHaveValue('halfDim');
+  await expect(page.locator('#chord-notes')).toHaveText('C · E♭ · G♭ · B♭');
+  await expect(page.locator('#chord option[value="major"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Stop practicing' }).click();
+  await page.waitForTimeout(350);
+  await page.getByRole('button', { name: 'Start practicing' }).click();
+  await expect(page.locator('#play-status')).toContainText('Playing');
   await page.getByRole('button', { name: 'Stop practicing' }).click();
   expect(errors).toEqual([]);
 });

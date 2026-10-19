@@ -1,7 +1,8 @@
+import { pedalNotes, SOUNDS } from './music.js';
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
-  click: 0.5, harmony: 0.35, countIn: true,
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm',
 };
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
@@ -27,7 +28,12 @@ export class Engine {
     this.nextBeat = true;
     this.clickAge = this.rate;
     this.clickFrequency = 1500;
-    this.phases = [0, 0, 0];
+    this.phases = Array(6).fill(0);
+    this.detunedPhases = Array(6).fill(0);
+    this.voiceLevels = Array(6).fill(0);
+    const sound = SOUNDS[this.settings.sound] || SOUNDS.warm;
+    this.timbre = [sound.harmonics[0], sound.harmonics[1], sound.detune, sound.speed, sound.depth];
+    this.breathPhase = 0;
     this.frequencies = [0, 0, 0];
     this.level = 0;
     this.clickLevel = 0;
@@ -42,18 +48,23 @@ export class Engine {
     Object.assign(this.settings, settings);
     const s = this.settings;
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
-    this.setChord(this.degree);
+    this.setChord(s.progression ? this.degree : 0);
   }
 
   setChord(degree) {
     this.degree = degree;
-    this.frequencies = chordNotes(this.settings.key, this.settings.minor, degree)
+    this.frequencies = (this.settings.progression
+      ? chordNotes(this.settings.key, this.settings.minor, degree)
+      : pedalNotes(this.settings))
       .map(note => 440 * 2 ** ((note - 69) / 12));
   }
 
-  render(output, onBeat = () => {}) {
+  render(output, onBeat = () => {}, harmonyOutput = null) {
     const s = this.settings;
     const smoothing = 1 - Math.exp(-1 / (this.rate * 0.018));
+    const voiceSmoothing = 1 - Math.exp(-1 / (this.rate * .15));
+    const sound = SOUNDS[s.sound] || SOUNDS.warm;
+    const targetTimbre = [sound.harmonics[0], sound.harmonics[1], sound.detune, sound.speed, sound.depth];
     for (let i = 0; i < output.length; i++) {
       if (this.nextBeat) {
         this.nextBeat = false;
@@ -75,12 +86,24 @@ export class Engine {
       const t = this.clickAge++ / this.rate;
       const click = t < .06 ? Math.sin(2 * Math.PI * this.clickFrequency * t) * Math.exp(-100 * t) : 0;
       let chord = 0;
-      for (let voice = 0; voice < 3; voice++) {
-        this.phases[voice] = (this.phases[voice] + 2 * Math.PI * this.frequencies[voice] / this.rate) % (2 * Math.PI);
+      for (let parameter = 0; parameter < 5; parameter++) this.timbre[parameter] += (targetTimbre[parameter] - this.timbre[parameter]) * voiceSmoothing;
+      const [h0, h1, detune, speed, depth] = this.timbre;
+      this.breathPhase = (this.breathPhase + 2 * Math.PI * speed / this.rate) % (2 * Math.PI);
+      const breath = 1 - depth / 2 + depth / 2 * Math.sin(this.breathPhase);
+      for (let voice = 0; voice < 6; voice++) {
+        const active = voice < this.frequencies.length;
+        const frequency = this.frequencies[voice] || this.frequencies[0];
+        this.voiceLevels[voice] += ((active ? 1 / this.frequencies.length : 0) - this.voiceLevels[voice]) * voiceSmoothing;
+        this.phases[voice] = (this.phases[voice] + 2 * Math.PI * frequency / this.rate) % (2 * Math.PI);
+        this.detunedPhases[voice] = (this.detunedPhases[voice] + 2 * Math.PI * frequency * (1 + detune) / this.rate) % (2 * Math.PI);
         const p = this.phases[voice];
-        chord += (Math.sin(p) + .16 * Math.sin(2 * p) + .04 * Math.sin(3 * p)) / 3.6;
+        const pure = .72 * Math.sin(p) + .28 * Math.sin(this.detunedPhases[voice]);
+        chord += (pure + h0 * Math.sin(2 * p) + h1 * Math.sin(3 * p)) / 1.4 * this.voiceLevels[voice];
       }
-      output[i] = this.level * (.3 * this.clickLevel * click + .4 * this.harmonyLevel * chord);
+      const clickSample = this.level * .3 * this.clickLevel * click;
+      const backingSample = this.level * .4 * this.harmonyLevel * chord * breath;
+      output[i] = harmonyOutput ? clickSample : clickSample + backingSample;
+      if (harmonyOutput) harmonyOutput[i] = backingSample;
       // Integer units avoid drift and preserve position when the tempo changes.
       this.phase += s.bpm;
       if (this.phase >= 60 * this.rate) {

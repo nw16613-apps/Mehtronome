@@ -8,9 +8,24 @@ Python is not required. A dedicated audio worklet drives both click and harmony
 from a single sample clock, with smooth volume changes. It includes:
 
 - 30–240 BPM, accented downbeats, 3–7 beats/bar, and a one-bar count-in.
-- All twelve keys, major and natural minor scales.
+- All twelve keys and the seven modes: Ionian, Dorian, Phrygian, Lydian,
+  Mixolydian, Aeolian, and Locrian, with characteristic degrees and note spelling.
+- Four synthesized ambient backing sounds: Warm Pad, Glass Cloud, Velvet Drone,
+  and Air Choir. Adjustable ambient space adds stereo reverb to harmony only,
+  keeping the click dry. Sound and chord changes fade smoothly.
+- 23 pedal-chord types, filtered to chords whose notes fit the selected mode.
+  Each mode selects a suggested starting chord. Choices include major/minor
+  sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,
+  major ♯11 voicings, and half-diminished chords. Rich voicings sound all their
+  displayed chord tones; arpeggio view follows the chosen chord.
 - A sustained pedal triad or I–vi–IV–V (minor: i–VI–iv–v), one chord per bar.
 - Scale and current-chord arpeggio note displays; separate click/harmony volume.
+
+For modal practice, start with Dorian + minor 13, Lydian + major 9 ♯11,
+Mixolydian + dominant 13, or Locrian + half-diminished 7. Try the characteristic
+mode degree against the sustained harmony. The new modes use pedal chords;
+mode-specific progression templates are deferred. Existing major/minor
+progressions remain available, with their original triads.
 
 Notes are visual guides for playing your own instrument, not automatic scale
 playback. Backing uses synthesized tones. Playback pauses when the page is hidden;

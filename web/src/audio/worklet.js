@@ -21,7 +21,8 @@ class HarmonyProcessor extends AudioWorkletProcessor {
   process(_inputs, outputs) {
     const channels = outputs[0];
     if (this.active && channels.length) {
-      this.engine.render(channels[0], event => this.port.postMessage(event));
+      this.engine.render(channels[0], event => this.port.postMessage(event), outputs[1]?.[0]);
+      if (outputs[1]?.length > 1) outputs[1][1].set(outputs[1][0]);
       for (let i = 1; i < channels.length; i++) channels[i].set(channels[0]);
       if (!this.engine.running && this.engine.level < 0.00001) this.active = false;
     }
