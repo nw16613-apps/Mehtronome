@@ -33,3 +33,13 @@ html[data-theme=dark] .note.chord-tone strong{color:#a6fff2}
 html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string circle{fill:var(--pulse)}html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string text{fill:var(--muted)}
 
 .voicing-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.voicings .guitar-overview{grid-template-columns:minmax(0,1fr) minmax(380px,58%)}.voicing-controls label{min-width:0}.voicing-controls select{width:100%}@media(max-width:760px){.voicings .guitar-overview{display:block}.voicing-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.voicing-controls label:nth-child(2){grid-column:1/-1;grid-row:2}}
+
+/* Keep the two guitar references together, with full-size diagrams per column. */
+@media(min-width:1100px){
+  .workspace>.guitar,.workspace>.voicings{grid-column:auto;min-width:0}
+  .guitar .guitar-overview,.voicings .guitar-overview{display:block}
+  .guitar .guitar-controls,.voicings .guitar-controls{margin:14px 0}
+  .guitar .guitar-diagrams,.voicings .guitar-diagrams{grid-template-columns:1fr}
+  .guitar .section-heading,.voicings .section-heading{align-items:start}
+  .guitar .section-heading>.small-label,.voicings .section-heading>.small-label{max-width:150px;text-align:right}
+}
