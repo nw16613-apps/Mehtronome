@@ -44,15 +44,17 @@ function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
 export function diagramSvg(board, degrees, modeDegrees, title) {
-  const x = fret => 80 + (fret - board.start) * 80;
+  const columns = board.end - board.start + 1;
+  const spacing = 400 / columns;
+  const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;
   const y = string => 30 + (5 - string) * 28;
   const nut = board.start === 0 ? 120 : 40;
   let svg = `<svg class="fretboard" viewBox="0 0 480 218" role="img" aria-label="${escape(title)}"><title>${escape(title)}</title>`;
   for (let fret = board.start; fret <= board.end; fret++) {
     svg += `<text class="fret-number" x="${x(fret)}" y="205" text-anchor="middle">${fret === 0 ? 'open' : fret}</text>`;
   }
-  for (let column = board.start === 0 ? 1 : 0; column <= 5; column++) {
-    const boundary = 40 + column * 80;
+  for (let column = board.start === 0 ? 1 : 0; column <= columns; column++) {
+    const boundary = 40 + column * spacing;
     svg += `<line class="fret-wire ${boundary === nut && board.start === 0 ? 'nut' : ''}" x1="${boundary}" x2="${boundary}" y1="30" y2="170"/>`;
   }
   TUNING.forEach((_, string) => {

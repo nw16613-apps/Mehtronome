@@ -1,7 +1,7 @@
 import './style.css';
 import './themes.css';
 import { POSITIONS, fretboardFor, diagramSvg } from './guitar/fretboard.js';
-import { guitarVoicings, voicingSvg } from './guitar/voicings.js';
+import { STRING_SETS, guitarVoicings, voicingSvg } from './guitar/voicings.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
@@ -59,7 +59,7 @@ app.innerHTML = `
     </section>
     <section class="voicings panel" aria-labelledby="voicings-title">
       <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE GRIPS · × = MUTE</span></div>
-      <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls"><label>Voicing<select id="voicing-type"><option value="drop2">Drop 2</option><option value="drop3">Drop 3</option></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals">Chord intervals</option></select></label></div></div>
+      <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls voicing-controls"><label>Voicing<select id="voicing-type"><option value="drop2">Drop 2</option><option value="drop3">Drop 3</option></select></label><label>String set<select id="voicing-strings"></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals">Chord intervals</option></select></label></div></div>
       <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p></div>
       <div id="voicing-diagrams" class="guitar-diagrams"></div>
       <div class="guitar-guide"><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All grips use fretted notes. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></div>
@@ -135,14 +135,18 @@ function renderVoicings() {
   const info = chordInfo(step);
   const chord = `${info.name}${info.suffix}`;
   const type = select('voicing-type').value;
-  const result = guitarVoicings(info, type);
+  const sets = STRING_SETS[type as keyof typeof STRING_SETS];
+  const previousSet = select('voicing-strings').value;
+  select('voicing-strings').innerHTML = sets.map(set => `<option value="${set.id}">${set.label}</option>`).join('');
+  if (sets.some(set => set.id === previousSet)) select('voicing-strings').value = previousSet;
+  const result = guitarVoicings(info, type, select('voicing-strings').value);
   el('voicings-chord').textContent = chord;
   el('voicings-tones').textContent = `Included: ${result.indices.map((i: number) => `${info.tones[i]} (${info.intervals[i]})`).join(' · ')}${result.omitted.length ? `. Omitted: ${result.omitted.join(' · ')}.` : ''}`;
-  el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth grips rather than four-part drop voicings.' : `${type === 'drop3' ? 'Drop 3 lowers the third-highest voice' : 'Drop 2 lowers the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above.' : ''}`;
-  el('voicing-diagrams').innerHTML = result.voicings.map((board: any, i: number) => {
-    const title = `${chord}, ${result.fifths ? 'spread fifths' : type === 'drop3' ? 'drop 3' : 'drop 2'}, grip ${i+1}, ${board.bass} bass, strings ${board.strings.join(', ')}`;
-    return `<article class="position-card voicing-card"><div class="position-heading"><h4>Grip ${i+1} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}</p></article>`;
-  }).join('') || '<p class="guitar-help">No comfortable grip found in frets 1–17 for this string set. Try the other drop type.</p>';
+  el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth grips rather than four-part drop voicings.' : `${type === 'drop3' ? 'Drop 3 lowers the third-highest voice' : 'Drop 2 lowers the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone, with root position and two inversions.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above; inversion names refer to that selection.' : ''}`;
+  el('voicing-diagrams').innerHTML = result.voicings.map((board: any) => {
+    const title = `${chord}, ${result.fifths ? 'spread fifths' : type === 'drop3' ? 'drop 3' : 'drop 2'}, ${board.inversionName.toLowerCase()}, ${board.bass} bass, strings ${board.strings.join(', ')}`;
+    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p></article>`;
+  }).join('') || '<p class="guitar-help">No fretted grip found within frets 1–24 for this string set.</p>';
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -366,7 +370,7 @@ async function toggle() {
   } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; }
 }
 
-for (const id of ['voicing-type','voicing-labels']) select(id).addEventListener('input', renderVoicings);
+for (const id of ['voicing-type','voicing-strings','voicing-labels']) select(id).addEventListener('input', renderVoicings);
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 

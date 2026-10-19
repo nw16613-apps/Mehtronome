@@ -89,13 +89,16 @@ Use **Compare themes** in the footer for the screenshot gallery at `themes.html`
 Links such as `?theme=midnight` preview a palette without overwriting a saved
 preference; choosing from the menu saves the choice and clears that preview URL.
 
-The **Guitar chord voicings** section follows the current chord with up to four
-fully fretted Drop 2 or Drop 3 grips. Choose note names or chord-relative intervals;
-play the four marked notes together and mute strings marked ×. Extended chords
-use a disclosed four-note reduction: root, third/suspension, seventh/sixth and an
-altered fifth or upper colour. Triads double one tone; open-fifth chords show
-spread root/fifth grips instead of claiming to be four-part drop voicings. Grips
-stay within frets 1–17 with at most a five-fret window. Backing audio is unchanged.
+The **Guitar chord voicings** section follows the current chord. Choose Drop 2
+or Drop 3, a string set, and note-name or interval labels. Drop 2 offers strings
+6–5–4–3, 5–4–3–2 and 4–3–2–1; Drop 3 offers 6–4–3–2 and 5–3–2–1.
+Each selected string set shows root position and all three inversions for a
+four-note chord, in that order. Play the four marked notes together and mute ×.
+Extended chords disclose their four-note reduction; inversion names refer to that
+selection. Triads double one tone and show root position plus two inversions;
+open-fifth chords show two spread root/fifth bass choices. All notes are fretted
+within frets 1–24. Wide stretches are marked and diagrams expand to show every
+fret needed. Backing audio is unchanged.
 
 ### Develop
 

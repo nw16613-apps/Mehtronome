@@ -31,3 +31,5 @@ html[data-theme=dark] .note.chord-tone strong{color:#a6fff2}
 
 .voicings{grid-column:1/-1}.voicings .guitar-overview{margin-bottom:14px}.voicings .guitar-help{margin:12px 0 18px}.muted-string circle{fill:#f9faf5}.muted-string text{fill:#64735f;font-size:17px}html[data-theme=dark] .muted-string circle{fill:#162622}html[data-theme=dark] .muted-string text{fill:#b4c2af}
 html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string circle{fill:var(--pulse)}html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string text{fill:var(--muted)}
+
+.voicing-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.voicings .guitar-overview{grid-template-columns:minmax(0,1fr) minmax(380px,58%)}.voicing-controls label{min-width:0}.voicing-controls select{width:100%}@media(max-width:760px){.voicings .guitar-overview{display:block}.voicing-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.voicing-controls label:nth-child(2){grid-column:1/-1;grid-row:2}}

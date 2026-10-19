@@ -1,5 +1,18 @@
 import { TUNING, diagramSvg } from './fretboard.js';
 
+export const STRING_SETS = {
+  drop2: [
+    {id:'6543',strings:[0,1,2,3],label:'6–5–4–3 · E–A–D–G'},
+    {id:'5432',strings:[1,2,3,4],label:'5–4–3–2 · A–D–G–B'},
+    {id:'4321',strings:[2,3,4,5],label:'4–3–2–1 · D–G–B–E'},
+  ],
+  drop3: [
+    {id:'6432',strings:[0,2,3,4],label:'6–4–3–2 · E–D–G–B'},
+    {id:'5321',strings:[1,3,4,5],label:'5–3–2–1 · A–G–B–E'},
+  ],
+};
+const INVERSION_NAMES = ['Root position','1st inversion','2nd inversion','3rd inversion'];
+
 // Four voices retain the root, the quality-defining third/suspension and seventh
 // (or sixth), plus an altered fifth when present or the highest available colour. Every reduction is disclosed.
 export function voicingTones(harmony) {
@@ -24,45 +37,40 @@ function closedPositions(pcs) {
   return pcs.map((_, inversion) => pcs.slice(inversion).concat(pcs.slice(0,inversion).map(pc => pc+12)));
 }
 
-export function guitarVoicings(harmony, type = 'drop2') {
+export function guitarVoicings(harmony, type = 'drop2', stringSet = STRING_SETS[type][0].id) {
   const indices = voicingTones(harmony);
   const root = harmony.midi[0] % 12;
   const pcs = [...new Set(indices.map(i => (harmony.midi[i] - root + 120) % 12))].sort((a,b) => a-b);
   const fifths = pcs.length === 2;
-  const sets = type === 'drop3' ? [[0,2,3,4],[1,3,4,5]] : [[0,1,2,3],[1,2,3,4],[2,3,4,5]];
+  const set = STRING_SETS[type].find(set => set.id === stringSet) || STRING_SETS[type][0];
+  const strings = set.strings;
+  const bassPcs = [...new Set(indices.map(i => harmony.chordPcs[i]))];
   const candidates = [];
-  for (const close of fifths ? [[0,7,12,19]] : closedPositions(pcs)) {
+  for (const close of fifths ? [[0,7,12,19],[7,12,19,24]] : closedPositions(pcs)) {
     const dropped = [...close];
     if (!fifths) dropped[dropped.length - (type === 'drop3' ? 3 : 2)] -= 12;
     dropped.sort((a,b) => a-b);
-    for (let octave = 2; octave <= 6; octave++) for (const strings of sets) {
+    for (let octave = 2; octave <= 7; octave++) {
       const pitches = dropped.map(note => root + octave * 12 + note);
       const frets = pitches.map((midi,i) => midi - TUNING[strings[i]]);
       const start = Math.min(...frets), end = Math.max(...frets);
-      if (start < 1 || end > 17 || end-start > 4) continue;
+      if (start < 1 || end > 24) continue;
       const notes = pitches.map((midi,i) => {
         const chordIndex = harmony.chordPcs.indexOf(midi % 12);
         return {string:strings[i],fret:frets[i],midi,pc:midi%12,root:midi%12===root,
           chord:true,name:harmony.tones[chordIndex],scaleIndex:chordIndex};
       });
-      candidates.push({start,end:start+4,notes,rootPc:root,
+      const inversion = bassPcs.indexOf(notes[0].pc);
+      candidates.push({start,end:Math.max(start+4,end),notes,rootPc:root,
+        inversion,inversionName:INVERSION_NAMES[inversion],wide:end-start>4,
         bass:notes[0].name,bassInterval:harmony.intervals[notes[0].scaleIndex],
         strings:strings.map(i=>6-i),type:fifths?'spread':type,
         score:start+(end-start)*2});
     }
   }
   candidates.sort((a,b)=>a.score-b.score || a.start-b.start);
-  const selected = [];
-  // Prefer different inversions, then fill remaining slots with other string sets.
-  for (const candidate of candidates) {
-    if (!selected.some(v=>v.bassInterval===candidate.bassInterval)) selected.push(candidate);
-    if (selected.length === 4) break;
-  }
-  for (const candidate of candidates) {
-    if (selected.length === 4) break;
-    if (!selected.includes(candidate)) selected.push(candidate);
-  }
-  return {voicings:selected,indices,omitted:harmony.tones.filter((_,i)=>!indices.includes(i)),
+  const selected = bassPcs.map((_, inversion) => candidates.find(board => board.inversion === inversion)).filter(Boolean);
+  return {voicings:selected,indices,stringSet:set.id,omitted:harmony.tones.filter((_,i)=>!indices.includes(i)),
     doubled:pcs.length<4,fifths};
 }
 

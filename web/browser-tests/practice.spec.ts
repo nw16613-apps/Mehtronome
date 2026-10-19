@@ -532,3 +532,33 @@ test('drop chord grips show real four-note fingerings and follow stopped and pla
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await expect(page.locator('#guitar-diagrams svg')).toHaveCount(5);
 });
+
+test('string-set dropdown shows all four inversions on exactly the chosen strings',async({page})=>{
+  await page.goto('/');
+  await page.locator('#chord').selectOption('maj7');
+  for(const [type,sets] of [['drop2',['6543','5432','4321']],['drop3',['6432','5321']]] as const){
+    await page.locator('#voicing-type').selectOption(type);
+    await expect(page.locator('#voicing-strings option')).toHaveCount(sets.length);
+    for(const set of sets){
+      await page.locator('#voicing-strings').selectOption(set);
+      await expect(page.locator('#voicing-diagrams .voicing-card')).toHaveCount(4);
+      const headings=await page.locator('#voicing-diagrams h4').allTextContents();
+      expect(headings).toEqual(['Root position · C bass','1st inversion · E bass','2nd inversion · G bass','3rd inversion · B bass']);
+      const strings=await page.locator('#voicing-diagrams svg').evaluateAll(svgs=>svgs.map(svg=>Array.from(svg.querySelectorAll('.fret-note')).map(note=>6-Number(note.getAttribute('data-string'))).join('')));
+      expect(strings).toEqual([set,set,set,set]);
+    }
+  }
+  await page.locator('#voicing-strings').selectOption('5321');
+  await page.locator('#key').selectOption('6');
+  await expect(page.locator('#voicing-strings')).toHaveValue('5321');
+  await expect(page.locator('#voicing-diagrams h4').first()).toHaveText('Root position · F♯ bass');
+  await page.locator('#progression').click();
+  await page.locator('#template').selectOption('major251');
+  await page.locator('#audition').uncheck();
+  await page.locator('#progression-strip>button').nth(1).click();
+  await expect(page.locator('#voicing-strings')).toHaveValue('5321');
+  await expect(page.locator('#voicing-diagrams .voicing-card')).toHaveCount(4);
+  await page.setViewportSize({width:390,height:844});
+  await expect(page.locator('#voicing-strings')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
