@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalNotes, pedalLabels } from '../src/audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, harmonyAt, modeNotes, pedalNotes, pedalLabels } from '../src/audio/music.js';
 import { Engine } from '../src/audio/engine.js';
 
 test('suggested chords and all selectable chord tones fit each mode in every key', () => {
@@ -135,7 +135,7 @@ test('jazz changes use conventional chord qualities, tonal roots, and compatible
   const names=template=>PROGRESSIONS[template].roman.map((_,step)=>{
     const h=harmonyAt({...settings,template},step);return h.name+h.suffix;
   });
-  assert.deepEqual(names('major251'),['Dm7','G7','Cmaj7']);
+  assert.deepEqual(names('major251'),['Dm7','G7alt','Cmaj7♯11']);
   assert.deepEqual(names('minor251'),['Dm7♭5','G7♭9','Cm6']);
   assert.deepEqual(names('turnaround'),['Dm7','G7','Cmaj7','A7']);
   assert.deepEqual(names('jazzBlues'),['C7','F7','C7','C7','F7','F♯dim7','C7','A7','Dm7','G7','C7','G7']);
@@ -157,4 +157,14 @@ test('cycle of fourths visits all twelve roots, retains every chord type and use
     assert.equal(progressionStep(settings,template==='fourths2'?24:12),0);
   }
   assert.deepEqual(Array.from({length:12},(_,step)=>harmonyAt({key:0,chord:'maj7',progression:true,template:'fourths1'},step).name),['C','F','B♭','E♭','A♭','D♭','G♭','B','E','A','D','G']);
+});
+
+test('arpeggio intervals retain extensions and altered chord spelling', () => {
+  const settings = { key: 0, mode: 'major', progression: true, template: 'major251' };
+  assert.deepEqual(harmonyAt(settings, 1).intervals, ['1','3','♭5','♭7','♭9','♯9']);
+  assert.equal(harmonyAt(settings, 1).mode, 'altered');
+  assert.deepEqual(harmonyAt(settings, 2).intervals, ['1','3','5','7','♯11']);
+  assert.equal(harmonyAt(settings, 2).mode, 'lydian');
+  assert.deepEqual(harmonyAt({...settings, progression:false, chord:'dim7'}).intervals, ['1','♭3','♭5','♭♭7']);
+  assert.deepEqual(harmonyAt({...settings, template:'diatonic'}, 1).intervals, ['1','♭3','5']);
 });

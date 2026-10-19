@@ -172,3 +172,27 @@ test('cycle of fourths has the exact one- and two-bar durations and loops after 
     for(const event of events)assert.deepEqual(event.frequencies,[48,52,55,59].map(n=>440*2**((n+(event.step*5)%12-69)/12)));
   }
 });
+
+test('audition holds selected harmony without clicks or beats, then normal playback restarts', () => {
+  const engine = new Engine(8000);
+  engine.configure({progression:true, template:'major251', countIn:true, click:1, bpm:240});
+  engine.audition(1);
+  const frequencies = [...engine.frequencies];
+  const click = new Float32Array(40000);
+  const harmony = new Float32Array(40000);
+  const events = [];
+  engine.render(click, event => events.push(event), harmony);
+  assert.ok(click.every(x => x === 0));
+  assert.ok(harmony.some(x => Math.abs(x) > .01));
+  assert.deepEqual(events, []);
+  assert.equal(engine.step, 1);
+  engine.configure({harmony:.2, bpm:120});
+  assert.deepEqual(engine.frequencies, frequencies);
+  engine.running = false;
+  engine.render(new Float32Array(8000));
+  assert.ok(engine.level < .00001);
+  engine.reset();
+  engine.render(new Float32Array(128), event => events.push(event));
+  assert.equal(events[0].counting, true);
+  assert.equal(events[0].step, 0);
+});

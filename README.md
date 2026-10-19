@@ -47,7 +47,7 @@ from a single sample clock, with smooth volume changes. It includes:
   the main Exercise control. Degrees refer to the displayed scale, while roots
   refer to the current chord. All five diagrams follow key, mode, chord and
   progression changes, including automatic jazz scale guides.
-- Jazz templates: major ii–V–I (ii7 / V7 / Imaj7 held for two bars), minor
+- Jazz templates: major ii–V–I (ii7 / V7alt / Imaj7♯11 held for two bars; Dorian / altered / Lydian guides), minor
   iiø–V–i (iiø7 / V7♭9 / i6 held for two bars), a ii–V–I–VI7 turnaround
   (one bar each), and a 12-bar jazz blues (one chord per bar). These set their
   own chord qualities and a suggested scale guide for each chord; choose the
@@ -70,6 +70,14 @@ progression templates remain future additions.
 Notes are visual guides for playing your own instrument, not automatic scale
 playback. Backing uses synthesized tones. Playback pauses when the page is hidden;
 press Start to begin again. Use wired headphones for consistent perceived timing.
+
+While stopped, select any progression chord box to view its scale/arpeggio and
+all five guitar positions. Sound preview rings the selected chord for four seconds
+without a metronome; uncheck it for silent inspection, or use Stop chord to end it
+early. Starting practice begins the progression from its first chord.
+Arpeggio notes include intervals relative to the current chord root, preserving
+extensions and alterations (for example 9, ♯11, ♭9 and ♯9). Dark mode uses bright
+teal chord-tone markers, amber roots and muted scale tones.
 
 ### Develop
 

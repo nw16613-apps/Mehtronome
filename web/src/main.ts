@@ -22,7 +22,7 @@ app.innerHTML = `
       <label class="sr-only" for="tempo">Tempo</label><input id="tempo" class="tempo-range" type="range" min="30" max="240" value="90"><div class="range-limits"><span>30 · LARGO</span><span>240 · PRESTISSIMO</span></div>
       <div class="beat-dots" id="beat-dots" aria-hidden="true"></div>
       <p class="play-status" id="play-status" role="status">Your next good practice starts here.</p>
-      <button class="play-button" id="play"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
+      <button class="play-button" id="play" aria-pressed="false"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
       <div class="pulse-options">
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in" checked>One-bar count-in</label></div>
       <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1">Quarter notes</option><option value="2">Eighth notes</option><option value="3">Eighth-note triplets</option><option value="4">Sixteenth notes</option><option value="6">Sixteenth-note sextuplets</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
@@ -38,6 +38,7 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${Object.entries(PROGRESSIONS).map(([id, template]) => `<option value="${id}">${template.name}</option>`).join('')}</select></label>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
+      <div id="preview-controls" hidden><p>While stopped, select a chord to explore its diagrams.</p><label class="check"><input id="audition" type="checkbox" checked>Sound preview (4 seconds)</label><button id="stop-preview" hidden>Stop chord</button></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
     </section>
     <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
@@ -74,6 +75,9 @@ let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let stopping = false;
 let guitarDegrees = false;
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
+let previewing = false;
+let previewGeneration = 0;
 
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
@@ -88,16 +92,19 @@ function renderMusic() {
   el('chord-caption').textContent = !settings.progression ? 'LET IT RING' : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = !settings.progression;
+  el('preview-controls').hidden = !settings.progression;
+  const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
-    return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</span>`;
+    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
   }).join('');
+  if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
   el('backing-description').textContent = !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const arpeggio = select('exercise').value === 'arpeggio';
   const displayed = arpeggio ? info.tones : notes();
-  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
-  el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[info.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
+  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
+  el('exercise-description').textContent = arpeggio ? 'Intervals are measured from the current chord root. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[info.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
   renderGuitar();
 }
 function renderGuitar() {
@@ -117,6 +124,7 @@ function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
 }
 function update() {
+  const previous = [settings.key, settings.mode, settings.chord, settings.template].join('|');
   settings.key = Number(select('key').value);
   settings.mode = select('quality').value;
   settings.minor = settings.mode === 'minor';
@@ -140,7 +148,7 @@ function update() {
   settings.harmony = Number(input('harmony').value) / 100;
   el('click-value').textContent = `${Math.round(settings.click * 100)}%`;
   el('harmony-value').textContent = `${Math.round(settings.harmony * 100)}%`;
-  if (!playing) step = 0;
+  if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   node?.port.postMessage({ type: 'settings', settings });
   el('space-value').textContent = `${input('space').value}%`;
   if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
@@ -171,6 +179,106 @@ async function stop() {
   await context?.suspend();
   stopping = false;
 }
+function stopPreview() {
+  previewGeneration++;
+  clearTimeout(previewTimer);
+  previewing = false;
+  el('stop-preview').hidden = true;
+  if (!playing) {
+    node?.port.postMessage({type: 'stop'});
+    if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
+  }
+}
+async function prepareAudio() {
+  if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
+  if (!context || context.state === 'closed') {
+    context = new AudioContext({ latencyHint: 'interactive' });
+    reverb = undefined;
+    await context.audioWorklet.addModule(workletUrl);
+    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 2, outputChannelCount: [2, 2] });
+    master = context.createGain();
+    master.gain.value = 0;
+    master.connect(context.destination);
+    node.connect(master, 0); // Click stays dry and rhythmically clear.
+    node.connect(master, 1);
+    impulse = context.createBuffer(2, Math.ceil(context.sampleRate * 3.5), context.sampleRate);
+    let seed = 42;
+    for (let channel = 0; channel < 2; channel++) {
+      const samples = impulse.getChannelData(channel);
+      let filtered = 0;
+      for (let i = 0; i < samples.length; i++) {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        filtered = .65 * filtered + .35 * (seed / 2147483648 - 1);
+        samples[i] = i < context.sampleRate * .025 ? 0 : filtered * Math.exp(-i / (context.sampleRate * .65));
+      }
+    }
+    wet = context.createGain();
+    wet.gain.value = Number(input('space').value) / 100 * .65;
+    node.port.onmessage = ({ data }) => {
+      if (!playing) return;
+      if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
+      renderBeats(data.beat);
+      el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `Playing · Bar ${data.bar} · Beat ${data.beat + 1}`;
+      if (step !== data.step) { step = data.step; renderMusic(); }
+    };
+    node.onprocessorerror = () => {
+      stopPreview();
+      playing = false;
+      reflectPlayback();
+      el('error').textContent = 'Audio stopped unexpectedly. Press Start to try again.';
+      el('error').hidden = false;
+      void context?.close();
+    };
+    context.onstatechange = () => {
+      if ((playing || previewing) && context?.state !== 'running') {
+        stopPreview();
+        playing = false;
+        reflectPlayback();
+        el('play-status').textContent = 'Audio paused by your browser. Press Start to resume.';
+      }
+    };
+  }
+  await context.resume();
+  if (context.state !== 'running') throw new Error('Your browser could not enable audio. Check site sound permissions, then try Start again.');
+  // A new convolver discards the previous session's frozen reverb tail.
+  if (reverb) { node!.disconnect(reverb, 1); reverb.disconnect(); }
+  reverb = context.createConvolver();
+  reverb.buffer = impulse!;
+  node!.connect(reverb, 1);
+  reverb.connect(wet!).connect(master!);
+  master!.gain.setTargetAtTime(1, context.currentTime, .04);
+}
+async function previewChord(index: number) {
+  if (playing || busy || stopping) return;
+  stopPreview();
+  const generation = previewGeneration;
+  step = index;
+  renderMusic();
+  if (!input('audition').checked) return;
+  busy = true;
+  el('error').hidden = true;
+  try {
+    await prepareAudio();
+    if (generation !== previewGeneration || document.hidden) { stopPreview(); return; }
+    previewing = true;
+    node!.port.postMessage({type: 'audition', settings, step});
+    el('stop-preview').hidden = false;
+    previewTimer = setTimeout(stopPreview, 4000);
+  } catch (error) {
+    el('error').textContent = error instanceof Error ? error.message : 'Could not preview chord.';
+    el('error').hidden = false;
+    stopPreview();
+    await context?.close().catch(() => {});
+    context = undefined;
+    node = undefined;
+  } finally { busy = false; }
+}
+el('progression-strip').addEventListener('click', event => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-step]');
+  if (button) void previewChord(Number(button.dataset.step));
+});
+el('stop-preview').addEventListener('click', stopPreview);
+input('audition').addEventListener('input', () => { if (!input('audition').checked) stopPreview(); });
 async function toggle() {
   if (busy || stopping) return;
   if (playing) { await stop(); return; }
@@ -178,61 +286,8 @@ async function toggle() {
   el<HTMLButtonElement>('play').disabled = true;
   el('error').hidden = true;
   try {
-    if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
-    if (!context || context.state === 'closed') {
-      context = new AudioContext({ latencyHint: 'interactive' });
-      reverb = undefined;
-      await context.audioWorklet.addModule(workletUrl);
-      node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 2, outputChannelCount: [2, 2] });
-      master = context.createGain();
-      master.gain.value = 0;
-      master.connect(context.destination);
-      node.connect(master, 0); // Click stays dry and rhythmically clear.
-      node.connect(master, 1);
-      impulse = context.createBuffer(2, Math.ceil(context.sampleRate * 3.5), context.sampleRate);
-      let seed = 42;
-      for (let channel = 0; channel < 2; channel++) {
-        const samples = impulse.getChannelData(channel);
-        let filtered = 0;
-        for (let i = 0; i < samples.length; i++) {
-          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-          filtered = .65 * filtered + .35 * (seed / 2147483648 - 1);
-          samples[i] = i < context.sampleRate * .025 ? 0 : filtered * Math.exp(-i / (context.sampleRate * .65));
-        }
-      }
-      wet = context.createGain();
-      wet.gain.value = Number(input('space').value) / 100 * .65;
-      node.port.onmessage = ({ data }) => {
-        if (!playing) return;
-        if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
-        renderBeats(data.beat);
-        el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `Playing · Bar ${data.bar} · Beat ${data.beat + 1}`;
-        if (step !== data.step) { step = data.step; renderMusic(); }
-      };
-      node.onprocessorerror = () => {
-        playing = false;
-        reflectPlayback();
-        el('error').textContent = 'Audio stopped unexpectedly. Press Start to try again.';
-        el('error').hidden = false;
-        void context?.close();
-      };
-      context.onstatechange = () => {
-        if (playing && context?.state !== 'running') {
-          playing = false;
-          reflectPlayback();
-          el('play-status').textContent = 'Audio paused by your browser. Press Start to resume.';
-        }
-      };
-    }
-    await context.resume();
-    if (context.state !== 'running') throw new Error('Your browser could not enable audio. Check site sound permissions, then try Start again.');
-    // A new convolver discards the previous session's frozen reverb tail.
-    if (reverb) { node!.disconnect(reverb, 1); reverb.disconnect(); }
-    reverb = context.createConvolver();
-    reverb.buffer = impulse!;
-    node!.connect(reverb, 1);
-    reverb.connect(wet!).connect(master!);
-    master!.gain.setTargetAtTime(1, context.currentTime, .04);
+    stopPreview();
+    await prepareAudio();
     step = 0;
     playing = true;
     node!.port.postMessage({ type: 'start', settings });
@@ -262,6 +317,7 @@ for (const id of ['key', 'sound', 'chord', 'template', 'subdivision', 'accent', 
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
+    stopPreview();
     step = 0;
     for (const id of ['pedal', 'progression']) {
       el(id).classList.toggle('selected', mode === id);
@@ -293,7 +349,7 @@ document.addEventListener('keydown', event => {
   }
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && playing) void stop();
+  if (document.hidden) { if (playing) void stop(); else stopPreview(); }
 });
 fillChords();
 update();

@@ -22,6 +22,7 @@ export class Engine {
   }
 
   reset() {
+    this.auditioning = false;
     this.phase = 0;
     this.beat = -1;
     this.remainingCount = this.settings.countIn ? this.settings.beats : 0;
@@ -53,7 +54,14 @@ export class Engine {
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
     const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
-    this.setChord(s.progression ? progressionStep(s, bar) : 0);
+    this.setChord(this.auditioning ? this.step : s.progression ? progressionStep(s, bar) : 0);
+  }
+
+  audition(step) {
+    this.reset();
+    this.auditioning = true;
+    this.nextBeat = false;
+    this.setChord(step);
   }
 
   setChord(step) {
@@ -69,7 +77,7 @@ export class Engine {
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
     const targetTimbre = [sound.harmonics[0], sound.harmonics[1], sound.detune, sound.speed, sound.depth];
     for (let i = 0; i < output.length; i++) {
-      if (this.nextBeat) {
+      if (this.nextBeat && !this.auditioning) {
         this.nextBeat = false;
         this.beat++;
         const counting = this.beat < this.remainingCount;
@@ -84,7 +92,7 @@ export class Engine {
         onBeat({ counting, beat: this.beat % s.beats, bar: bar + 1, step });
       }
       const subdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
-      if (subdivision !== this.lastSubdivision && subdivision > 0) {
+      if (!this.auditioning && subdivision !== this.lastSubdivision && subdivision > 0) {
         this.lastSubdivision = subdivision;
         this.clickAge = 0;
         this.clickFrequency = 800;
@@ -93,7 +101,7 @@ export class Engine {
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
       this.clickLevel += (s.click - this.clickLevel) * smoothing;
-      const backing = this.beat >= this.remainingCount ? s.harmony : 0;
+      const backing = this.auditioning || this.beat >= this.remainingCount ? s.harmony : 0;
       this.harmonyLevel += (backing - this.harmonyLevel) * smoothing;
       const t = this.clickAge++ / this.rate;
       const click = t < .06 ? Math.sin(2 * Math.PI * this.clickFrequency * t) * Math.exp(-100 * t) : 0;
@@ -112,7 +120,7 @@ export class Engine {
         const pure = .72 * Math.sin(p) + .28 * Math.sin(this.detunedPhases[voice]);
         chord += (pure + h0 * Math.sin(2 * p) + h1 * Math.sin(3 * p)) / 1.4 * this.voiceLevels[voice];
       }
-      const clickSample = this.level * .3 * this.clickLevel * click * this.clickStrength;
+      const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
       const backingSample = this.level * .4 * this.harmonyLevel * chord * breath;
       output[i] = harmonyOutput ? clickSample : clickSample + backingSample;
       if (harmonyOutput) harmonyOutput[i] = backingSample;
