@@ -161,6 +161,7 @@ function tempo(value: number) {
   node?.port.postMessage({ type: 'settings', settings });
 }
 function reflectPlayback() {
+  el('progression-strip').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
   el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
   el('play-icon').textContent = playing ? '■' : '▶';
   el('play').setAttribute('aria-pressed', String(playing));

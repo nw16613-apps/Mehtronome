@@ -364,4 +364,9 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   await expect(page.locator('#chord-name')).toHaveText('Dm7');
   await expect(page.locator('#progression-strip>button').first()).toBeDisabled();
   await page.locator('#play').click();
+  await expect(page.locator('#progression-strip>button').nth(2)).toBeEnabled();
+  await page.waitForTimeout(300);
+  await page.locator('#audition').uncheck();
+  await page.locator('#progression-strip>button').nth(2).click();
+  await expect(page.locator('#chord-name')).toHaveText('Cmaj7♯11');
 });
