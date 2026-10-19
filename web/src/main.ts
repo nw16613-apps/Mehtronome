@@ -1,5 +1,5 @@
 import './style.css';
-import { SHAPES, positionFor, fretboardFor, diagramSvg } from './guitar/fretboard.js';
+import { POSITIONS, fretboardFor, diagramSvg } from './guitar/fretboard.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
@@ -44,14 +44,15 @@ app.innerHTML = `
     <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="guitar panel" aria-labelledby="guitar-title">
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B e</span></div>
-      <div id="caged-positions" class="caged-positions" role="group" aria-label="CAGED position"></div>
-      <div class="guitar-body"><div id="guitar-diagram"></div><div class="guitar-guide">
+      <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p>
         <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees">Scale degrees</option></select></label></div>
         <div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span></div>
-        <p id="guitar-position"></p><p class="guitar-help">Positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
-        <p class="guitar-help">Low E is on the left, high e on the right. Numbers beside the neck are frets; circles above the nut are open strings.</p>
-      </div></div>
+      </div>
+      <div id="guitar-diagrams" class="guitar-diagrams"></div>
+      <div class="guitar-guide"><p class="guitar-help">All five positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
+        <p class="guitar-help">High e is at the top, low E at the bottom. Frets increase from left to right; circles to the left of the nut are open strings.</p>
+      </div>
     </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
@@ -72,7 +73,6 @@ let step = 0;
 let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let stopping = false;
-let guitarShape = 'C';
 let guitarDegrees = false;
 
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
@@ -101,22 +101,17 @@ function renderMusic() {
   renderGuitar();
 }
 function renderGuitar() {
-  const focusedShape = el('caged-positions').contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.shape : undefined;
   const info = chordInfo(step);
-  const board = fretboardFor(info, guitarShape, select('exercise').value === 'arpeggio');
-  el('caged-positions').innerHTML = Object.keys(SHAPES).map(shape => {
-    const position = positionFor(board.rootPc, shape);
-    return `<button type="button" data-shape="${shape}" aria-pressed="${shape === guitarShape}" class="${shape === guitarShape ? 'selected' : ''}"><strong>${shape}</strong><small>Frets ${position.start}–${position.end}</small></button>`;
-  }).join('');
   const chord = `${info.name}${info.suffix}`;
   const mode = MODES[info.mode as keyof typeof MODES];
-  const title = `${chord}, ${guitarShape}-shape position, frets ${board.start} to ${board.end}`;
-  el('guitar-diagram').innerHTML = diagramSvg(board, guitarDegrees, mode.degrees, title);
+  el('guitar-diagrams').innerHTML = POSITIONS.map(position => {
+    const board = fretboardFor(info, position.shape, select('exercise').value === 'arpeggio');
+    const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
+    return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title)}<p class="position-anchor">Root anchor: ${['low E','A','D','G','B','high e'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p></article>`;
+  }).join('');
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
-  el('guitar-position').textContent = `${guitarShape}-shape root anchor: ${['low E','A','D','G','B','high e'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.`;
   select('fret-view').value = select('exercise').value;
-  if (focusedShape) el('caged-positions').querySelector<HTMLButtonElement>(`[data-shape="${focusedShape}"]`)?.focus({ preventScroll: true });
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -255,13 +250,6 @@ async function toggle() {
   } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; }
 }
 
-el('caged-positions').addEventListener('click', event => {
-  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-shape]');
-  if (!button) return;
-  guitarShape = button.dataset.shape!;
-  renderGuitar();
-  el('caged-positions').querySelector<HTMLButtonElement>(`[data-shape="${guitarShape}"]`)?.focus({ preventScroll: true });
-});
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 

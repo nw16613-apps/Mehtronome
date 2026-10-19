@@ -35,15 +35,18 @@ from a single sample clock, with smooth volume changes. It includes:
 - Cycle-of-fourths templates with one or two bars per chord, keeping the selected
   chord type through all 12 roots. From C: C / F / B♭ / E♭ / A♭ / D♭ / G♭ /
   B / E / A / D / G, then repeat. Enharmonic names keep the cycle readable.
-- A guitar reference panel in standard E–A–D–G–B–e tuning. Select C, A, G, E,
-  or D to view a five-fret window anchored to the corresponding CAGED root
-  layout. These are scale/arpeggio note maps, not fixed chord grips or prescribed
-  fingerings. Chord roots, other chord tones, and scale tones have distinct colors.
-  Choose note names or scale degrees, and scale-plus-chord or chord-only view.
-  Diagram view and the main Exercise control stay synchronized. Degree labels
-  refer to the displayed scale, while root highlights refer to the current chord.
-  The chosen CAGED position follows changes of key, mode, chord, and progression,
-  including the automatic scale guides in jazz templates.
+- A guitar reference panel in standard E–A–D–G–B–e tuning. All five horizontal
+  position diagrams appear together, with Roman numbering: I = E form,
+  II = D form, III = C form, IV = A form, V = G form. Each preserves its
+  CAGED root layout and five-fret window; the fret numbers identify its location.
+  High e is at the top, low E at the bottom, and frets increase left to right.
+  These are scale/arpeggio note maps, not fixed chord grips or prescribed fingerings.
+  Chord roots, other chord tones, and scale tones have distinct colors.
+  Choose note names or scale degrees, and scale-plus-chord or chord-only view;
+  these controls update all five diagrams at once and stay synchronized with
+  the main Exercise control. Degrees refer to the displayed scale, while roots
+  refer to the current chord. All five diagrams follow key, mode, chord and
+  progression changes, including automatic jazz scale guides.
 - Jazz templates: major ii–V–I (ii7 / V7 / Imaj7 held for two bars), minor
   iiø–V–i (iiø7 / V7♭9 / i6 held for two bars), a ii–V–I–VI7 turnaround
   (one bar each), and a 12-bar jazz blues (one chord per bar). These set their
