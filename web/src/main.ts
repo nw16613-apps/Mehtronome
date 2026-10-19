@@ -1,7 +1,7 @@
 import './style.css';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS, chordNotes } from './audio/engine.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalLabels, pedalNotes, applyVoicing } from './audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalLabels, pedalNotes, applyVoicing, PIANO_STYLES, pianoPreset } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 function modeOptions() {
@@ -29,7 +29,7 @@ app.innerHTML = `
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
       <div class="field-row"><label>Root note<select id="key">${names.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}">${sound.name}</option>`).join('')}</select></label><label>Pedal chord<select id="chord"></select></label></div>
-      <div class="field-row voicing-row"><label>Chord voicing<select id="voicing"><option value="original">Original voicing</option><option value="close">Close position</option><option value="drop2">Drop 2</option><option value="drop3">Drop 3</option><option value="drop24">Drop 2 + 4 (4+ notes)</option></select></label><span class="voicing-help">Drop voices are lowered one octave from close position.</span></div>
+      <div class="field-row voicing-row"><label>Piano voicing<select id="voicing">${Object.entries(PIANO_STYLES).map(([id, style]) => `<option value="${id}" ${id === 'open' ? 'selected' : ''}>${style.name}</option>`).join('')}<option value="custom">Custom chord</option></select></label><span id="voicing-help" class="voicing-help"></span></div>
       <p id="mode-tip" class="mode-tip"></p>
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p><p id="voicing-notes" class="voicing-notes"></p></div>
@@ -46,7 +46,7 @@ app.innerHTML = `
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
-let settings = { ...DEFAULTS, mode: 'major', chord: 'maj9' };
+let settings = { ...DEFAULTS, mode: 'major', chord: 'maj9', voicing: 'open' };
 let master: GainNode | undefined;
 let wet: GainNode | undefined;
 let reverb: ConvolverNode | undefined;
@@ -60,7 +60,7 @@ let stopping = false;
 
 function notes(): string[] { return modeNotes(settings.key, settings.mode); }
 function chordInfo(index: number): { name: string; suffix: string; tones: string[] } {
-  if (!settings.progression) return { name: names[settings.key], suffix: CHORDS[settings.chord as keyof typeof CHORDS].symbol, tones: pedalLabels(settings) };
+  if (!settings.progression) return { name: names[settings.key], suffix: pianoPreset(settings)?.symbol || CHORDS[settings.chord as keyof typeof CHORDS].symbol, tones: pedalLabels(settings) };
   const degree = settings.progression ? [0, 5, 3, 4][index] : 0;
   const minorChord = settings.minor ? [true, false, true, true][index] : [false, true, false, false][index];
   const isMinor = settings.progression ? minorChord : settings.minor;
@@ -102,10 +102,12 @@ function update() {
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
   settings.sound = select('sound').value;
-  const voices = settings.progression ? 3 : CHORDS[settings.chord as keyof typeof CHORDS].intervals.length;
-  select('voicing').querySelector<HTMLOptionElement>('[value=drop24]')!.disabled = voices < 4;
-  if (voices < 4 && select('voicing').value === 'drop24') select('voicing').value = 'drop2';
   settings.voicing = select('voicing').value;
+  const preset = pianoPreset(settings);
+  select('chord').parentElement!.hidden = Boolean(preset) && !settings.progression;
+  el('voicing-help').textContent = settings.progression
+    ? 'Piano spacing applied to each progression chord. Mode-specific colors are for pedal backing.'
+    : preset ? preset.description + ' Choose Custom chord for the full chord menu.' : 'Choose your own chord from the pedal-chord menu.';
   settings.subdivision = Number(select('subdivision').value);
   settings.accent = input('accent').checked;
   settings.beats = Number(select('beats').value);

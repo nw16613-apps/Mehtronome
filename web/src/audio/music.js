@@ -98,6 +98,8 @@ export function modeNotes(key, mode) {
   });
 }
 export function pedalNotes(settings) {
+  const preset = pianoPreset(settings);
+  if (preset) return preset.notes;
   const id = settings.chord || (settings.minor ? 'minor' : 'major');
   return applyVoicing(CHORDS[id].intervals.map(i => 48 + settings.key + i), settings.voicing);
 }
@@ -108,13 +110,66 @@ export function pedalLabels(settings) {
   return pedalNotes(settings).map(note => labels[pitches.indexOf((note - 48 - settings.key + 24) % 12)]);
 }
 
-export function applyVoicing(notes, voicing = 'original') {
-  if (voicing === 'original') return [...notes];
-  // Establish close position before lowering voices counted down from the top.
-  const base = Math.min(...notes);
-  const close = notes.map(note => base + (note - base) % 12).sort((a, b) => a - b);
-  for (let i = 1; i < close.length; i++) while (close.slice(0, i).includes(close[i])) close[i] += 12;
-  close.sort((a, b) => a - b);
-  const drops = { close: [], drop2: [2], drop3: [3], drop24: [2,4] }[voicing] || [];
-  return close.map((note, i) => drops.includes(close.length - i) ? note - 12 : note).sort((a, b) => a - b);
+// Piano-inspired register choices: one root in the tenor register, with upper
+// voices placed above it. None of these presets lowers a voice below the root.
+export const PIANO_STYLES = {
+  shell: { name: 'Soft shell + color', description: 'Root, guide tones and an upper color; the fifth is usually omitted.' },
+  open: { name: 'Open piano', description: 'A stable root with the chord tones spread between two hands.' },
+  color: { name: 'Modal color', description: 'A mode-specific voicing that brings out the characteristic scale notes.' },
+  upper: { name: 'Floating upper voices', description: 'An isolated root beneath a lighter, higher right-hand chord.' },
+};
+// Deliberate harmonic choices rather than mechanically lowered voices.
+// Intervals are pitch content; register is assigned separately below.
+export const MODAL_COLORS = {
+  major: { symbol: 'maj13', intervals: [0,4,7,11,14,21] },
+  dorian: { symbol: 'm13(add11, no5)', intervals: [0,3,10,14,17,21] },
+  phrygian: { symbol: 'm7(♭9,♭13,no5)', intervals: [0,3,10,13,20] },
+  lydian: { symbol: 'maj13♯11(no5)', intervals: [0,4,11,14,18,21] },
+  mixolydian: { symbol: '13', intervals: [0,4,7,10,14,21] },
+  minor: { symbol: 'm9(add♭13,no5)', intervals: [0,3,10,14,20] },
+  locrian: { symbol: 'm7♭5(add11,♭9)', intervals: [0,3,6,10,13,17] },
+  melodic_minor: { symbol: 'm(maj9,add13,no5)', intervals: [0,3,11,14,21] },
+  dorian_b2: { symbol: 'm13(♭9,no5)', intervals: [0,3,10,13,21] },
+  lydian_augmented: { symbol: 'maj9(♯5,♯11)', intervals: [0,4,8,11,14,18] },
+  lydian_dominant: { symbol: '13♯11(no5)', intervals: [0,4,10,14,18,21] },
+  mixolydian_b6: { symbol: '9(add♭13,no5)', intervals: [0,4,10,14,20] },
+  locrian_natural2: { symbol: 'm9♭5(add11)', intervals: [0,3,6,10,14,17] },
+  altered: { symbol: '7alt(♭9,♯9,♭13,no5)', intervals: [0,4,10,13,15,20] },
+  harmonic_minor: { symbol: 'm(maj9,add♭13,no5)', intervals: [0,3,11,14,20] },
+  locrian_natural6: { symbol: 'm7♭5(add13)', intervals: [0,3,6,10,21] },
+  ionian_sharp5: { symbol: 'maj13♯5', intervals: [0,4,8,11,14,21] },
+  dorian_sharp4: { symbol: 'm13♯11(no5)', intervals: [0,3,10,14,18,21] },
+  phrygian_dominant: { symbol: '7(♭9,♭13,no5)', intervals: [0,4,10,13,20] },
+  lydian_sharp2: { symbol: 'maj7(♯9,♯11,no5)', intervals: [0,4,11,15,18] },
+  ultralocrian: { symbol: 'dim7(add♭9,♭13)', intervals: [0,3,6,9,13,20] },
+};
+
+export function applyVoicing(notes, voicing = 'custom') {
+  if (!PIANO_STYLES[voicing]) return [...notes];
+  const root = notes[0];
+  const intervals = [...new Set(notes.slice(1).map(note => (note - root) % 12))];
+  const chosen = voicing === 'shell' ? intervals.filter(interval => interval !== 7 || intervals.length < 3) : intervals;
+  // Keep low thirds out of the bass; extensions live in the right hand.
+  return [root, ...chosen.map(interval => {
+    const original = notes.find(note => note !== root && (note - root) % 12 === interval);
+    let distance = interval + 12;
+    if (original - root >= 12) distance = interval + (interval <= 3 ? 24 : 12);
+    else if (interval >= 9 && voicing !== 'upper') distance = interval;
+    if (voicing === 'open' && (interval === 6 || interval === 7 || interval === 8)) distance = interval;
+    return root + distance;
+  })].sort((a, b) => a - b);
+}
+
+export function pianoPreset(settings) {
+  const style = settings.voicing;
+  if (!PIANO_STYLES[style]) return null;
+  const mode = modeId(settings);
+  const chord = CHORDS[MODES[mode].chord];
+  const content = style === 'color' ? MODAL_COLORS[mode] : chord;
+  return {
+    name: PIANO_STYLES[style].name,
+    symbol: content.symbol,
+    description: PIANO_STYLES[style].description,
+    notes: applyVoicing(content.intervals.map(interval => 48 + settings.key + interval), style),
+  };
 }

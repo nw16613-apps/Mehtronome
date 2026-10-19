@@ -26,10 +26,15 @@ from a single sample clock, with smooth volume changes. It includes:
   displayed chord tones; arpeggio view follows the chosen chord. Minor-major,
   augmented-major, altered dominant, dominant ♭9/♯11, diminished, and
   half-diminished ninth chords support the added minor modes.
-- Original, close-position, Drop 2, Drop 3, and Drop 2 + 4 voicings. Drop options
-  first put the voices in close position, then lower the specified voices (counted
-  down from the highest) by one octave. The actual pitches and octaves are shown.
-  Drop 2 + 4 needs at least four notes; selecting a triad falls back to Drop 2.
+- Four piano-inspired pedal voicings for each mode: Soft Shell + Color, Open
+  Piano, Modal Color, and Floating Upper Voices. They use a stable tenor root,
+  guide tones, and upper extensions without lowering notes below the root.
+  Modal Color has deliberately selected harmonic content for all 21 modes;
+  the chord label, highlighted notes, and octave display follow what is played.
+  Choose Custom chord to access the full 33-chord menu. The ambient instrument
+  sounds are unchanged: these are piano-style note arrangements, not piano samples.
+  Existing progressions use the selected spacing style on each original triad;
+  mode-specific color content is reserved for pedal backing.
 - Dark mode, initially following the system preference, with a theme button that
   remembers your choice in this browser.
 - A sustained pedal triad or I–vi–IV–V (minor: i–VI–iv–v), one chord per bar.

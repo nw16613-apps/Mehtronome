@@ -2,7 +2,7 @@ import { pedalNotes, SOUNDS, applyVoicing } from './music.js';
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', voicing: 'original', subdivision: 1, accent: true,
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', voicing: 'custom', subdivision: 1, accent: true,
 };
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];

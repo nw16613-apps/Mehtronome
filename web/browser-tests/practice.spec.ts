@@ -83,9 +83,21 @@ test('ambient sounds and modal chord palette work during playback', async ({ pag
     })).toBeGreaterThan(.005);
     await expect(page.locator('#error')).toBeHidden();
   }
+  for (const voicing of ['shell', 'open', 'color', 'upper']) {
+    await page.locator('#voicing').selectOption(voicing);
+    await expect(page.locator('#voicing-notes')).toContainText('C3');
+    await expect.poll(() => page.evaluate(() => {
+      const analyser = (window as any).__analyser as AnalyserNode;
+      const samples = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(samples);
+      return Math.max(...samples.map(Math.abs));
+    })).toBeGreaterThan(.005);
+    await expect(page.locator('#error')).toBeHidden();
+  }
   await page.locator('#quality').selectOption('dorian');
   await expect(page.locator('#chord')).toHaveValue('min13');
   await expect(page.locator('#chord-notes')).toContainText('A');
+  await page.locator('#voicing').selectOption('custom');
   await page.locator('#chord').selectOption('min6');
   await expect(page.locator('#chord-name')).toHaveText('Cm6');
   await page.locator('#quality').selectOption('locrian');
@@ -107,7 +119,7 @@ test('small screen fits without horizontal scrolling', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('minor mode families, drop voicings, rhythm options and persisted dark mode', async ({page}) => {
+test('minor mode families, piano voicings, rhythm options and persisted dark mode', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -119,17 +131,22 @@ test('minor mode families, drop voicings, rhythm options and persisted dark mode
   await expect(page.locator('#chord')).toHaveValue('dom7b9');
   await expect(page.locator('#note-list')).toContainText('D♭');
   await page.locator('#quality').selectOption('major');
-  await page.locator('#chord').selectOption('maj7');
-  await page.locator('#voicing').selectOption('drop2');
-  await expect(page.locator('#voicing-notes')).toHaveText('G2 · C3 · E3 · B3');
-  await page.locator('#voicing').selectOption('drop24');
-  await expect(page.locator('#voicing-notes')).toHaveText('C2 · G2 · E3 · B3');
+  await expect(page.locator('#voicing')).toHaveValue('open');
+  await expect(page.locator('#chord')).toBeHidden();
+  await expect(page.locator('#voicing-notes')).toHaveText('C3 · G3 · B3 · E4 · D5');
+  await page.locator('#voicing').selectOption('shell');
+  await expect(page.locator('#voicing-notes')).toHaveText('C3 · B3 · E4 · D5');
+  await page.locator('#voicing').selectOption('upper');
+  await expect(page.locator('#voicing-notes')).toHaveText('C3 · E4 · G4 · B4 · D5');
+  await page.locator('#voicing').selectOption('color');
+  await expect(page.locator('#chord-name')).toHaveText('Cmaj13');
   await page.locator('#key').selectOption('1');
   await expect(page.locator('#voicing-notes')).toContainText('B♯3');
   await page.locator('#key').selectOption('0');
+  await page.locator('#voicing').selectOption('custom');
+  await expect(page.locator('#chord')).toBeVisible();
   await page.locator('#chord').selectOption('major');
-  await expect(page.locator('#voicing')).toHaveValue('drop2');
-  await expect(page.locator('#voicing option[value=drop24]')).toHaveJSProperty('disabled', true);
+  await expect(page.locator('#voicing-notes')).toHaveText('C3 · E3 · G3');
   await page.locator('#subdivision').selectOption('6');
   await page.locator('#accent').uncheck();
   await expect(page.locator('.beat.downbeat')).toHaveCount(0);

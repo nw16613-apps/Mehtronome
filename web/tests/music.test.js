@@ -87,23 +87,43 @@ test('minor families are exact rotations, including raised and double-flat degre
   assert.deepEqual(MODES.ultralocrian.degrees, ['1','♭2','♭3','♭4','♭5','♭6','♭♭7']);
 });
 
-test('drop voicings lower the named voices from close position and preserve pitch classes', async () => {
-  const { applyVoicing } = await import('../src/audio/music.js');
-  const closed = [48,52,55,59];
-  assert.deepEqual(applyVoicing(closed, 'drop2'), [43,48,52,59]);
-  assert.deepEqual(applyVoicing(closed, 'drop3'), [40,48,55,59]);
-  assert.deepEqual(applyVoicing(closed, 'drop24'), [36,43,52,59]);
-  assert.deepEqual(applyVoicing([48,55,60], 'close'), [48,55,60]);
-  for (const chord of Object.keys(CHORDS)) {
-    for (const voicing of ['close','drop2','drop3','drop24']) {
-      const original = pedalNotes({key: 2, chord});
-      const dropped = pedalNotes({key: 2, chord, voicing});
-      assert.deepEqual(dropped.map(n => n % 12).sort(), original.map(n => n % 12).sort());
-      assert.equal(dropped.length, original.length);
+test('piano voicings retain a stable root, fit every mode, and offer four distinct choices', async () => {
+  const { PIANO_STYLES, pianoPreset } = await import('../src/audio/music.js');
+  for (const mode of Object.keys(MODES)) {
+    for (let key = 0; key < 12; key++) {
+      const versions = [];
+      for (const voicing of Object.keys(PIANO_STYLES)) {
+        const settings = { key, mode, voicing };
+        const preset = pianoPreset(settings);
+        const notes = pedalNotes(settings);
+        assert.deepEqual(notes, preset.notes);
+        assert.equal(notes[0], 48 + key);
+        assert.ok(notes.length >= 3 && notes.length <= 6);
+        assert.equal(new Set(notes).size, notes.length);
+        assert.ok(notes.every(note => note >= 48 + key && note <= 48 + key + 27));
+        assert.ok(notes.every(note => MODES[mode].intervals.includes((note - 48 - key) % 12)), mode);
+        assert.ok(pedalLabels(settings).every(label => modeNotes(key, mode).includes(label)));
+        versions.push(JSON.stringify(notes));
+      }
+      assert.equal(new Set(versions).size, 4, mode);
     }
   }
+  assert.deepEqual(pedalNotes({key:0, mode:'major', voicing:'shell'}), [48,59,64,74]);
+  assert.deepEqual(pedalNotes({key:0, mode:'major', voicing:'open'}), [48,55,59,64,74]);
+  assert.deepEqual(pedalNotes({key:0, mode:'major', voicing:'upper'}), [48,64,67,71,74]);
+  assert.deepEqual(pedalNotes({key:0, mode:'dorian', voicing:'color'}), [48,58,63,65,69,74]);
+});
+
+test('worklet synthesis follows the selected piano preset and switches cleanly', () => {
   const engine = new Engine();
-  engine.configure({chord:'maj7', voicing:'drop2'});
-  const expected = [43,48,52,59].map(note => 440 * 2 ** ((note - 69) / 12));
-  assert.deepEqual(engine.frequencies, expected);
+  engine.configure({mode:'dorian', voicing:'color', countIn:false, click:0});
+  engine.reset();
+  assert.deepEqual(engine.frequencies, [48,58,63,65,69,74].map(note => 440 * 2 ** ((note - 69) / 12)));
+  const output = new Float32Array(12000);
+  for (const voicing of ['shell','open','color','upper','custom']) {
+    engine.configure({voicing});
+    engine.render(output);
+    assert.ok(output.every(sample => Number.isFinite(sample) && Math.abs(sample) < .7));
+    assert.ok(output.some(sample => Math.abs(sample) > .005));
+  }
 });
