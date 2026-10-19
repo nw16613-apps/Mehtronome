@@ -326,7 +326,8 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   await page.locator('#progression').click();
   await page.locator('#template').selectOption('major251');
   await page.locator('#exercise').selectOption('arpeggio');
-  await page.locator('#progression-strip>button').nth(1).click();
+  await page.locator('#progression-strip>button').nth(1).hover();
+  await page.mouse.down();
   await expect(page.locator('#chord-name')).toHaveText('G7alt');
   await expect(page.locator('#note-list small')).toHaveText(['1','3','♭5','♭7','♭9','♯9']);
   await expect(page.locator('.position-card svg')).toHaveCount(5);
@@ -346,7 +347,16 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   })).toBe(0);
   await page.locator('#sound').selectOption('glass');
   await expect(page.locator('#chord-name')).toHaveText('G7alt');
-  await expect(page.locator('#stop-preview')).toBeHidden({timeout:6000});
+  await page.waitForTimeout(4200); // A held chord must outlast the former four-second timeout.
+  await expect(page.locator('#preview-status')).toBeVisible();
+  await page.mouse.move(5,5); // Releasing outside the button must still stop it.
+  await page.mouse.up();
+  await expect(page.locator('#preview-status')).toBeHidden();
+  await expect.poll(() => page.evaluate(() => {
+    const a = (window as any).__previewAnalysers[1] as AnalyserNode;
+    const samples = new Float32Array(a.fftSize); a.getFloatTimeDomainData(samples);
+    return Math.max(...samples.map(Math.abs));
+  })).toBeLessThan(.0001);
   await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(2).focus();
   await page.keyboard.press('Enter');
@@ -355,10 +365,16 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   await expect(page.locator('#note-list small')).toHaveText(['1','3','5','7','♯11']);
   await expect(page.locator('#progression-strip>button').nth(2)).toBeFocused();
   await page.locator('#audition').check();
-  await page.locator('#progression-strip>button').nth(0).click();
-  await expect(page.locator('#stop-preview')).toBeVisible();
-  await page.locator('#stop-preview').click();
-  await expect(page.locator('#stop-preview')).toBeHidden();
+  await page.locator('#progression-strip>button').nth(0).focus();
+  await page.keyboard.down('Space');
+  await expect(page.locator('#preview-status')).toBeVisible();
+  await page.keyboard.up('Space');
+  await expect(page.locator('#preview-status')).toBeHidden();
+  await page.keyboard.down('Enter');
+  await expect(page.locator('#preview-status')).toBeVisible();
+  await page.locator('#sound').focus();
+  await expect(page.locator('#preview-status')).toBeHidden();
+  await page.keyboard.up('Enter');
   await page.locator('#play').click();
   await expect(page.locator('#play-status')).toContainText('Count-in');
   await expect(page.locator('#chord-name')).toHaveText('Dm7');
@@ -419,4 +435,61 @@ test('theme gallery loads four real previews and links to the matching live them
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('link',{name:'Try Warm Paper'}).click();
   await expect(page.locator('#palette')).toHaveValue('paper');
+});
+
+test('touch release and cancellation stop held previews', async ({page}) => {
+  await page.goto('/');
+  await page.locator('#progression').click();
+  const session = await page.context().newCDPSession(page);
+  await page.locator('#progression-strip>button').nth(1).scrollIntoViewIfNeeded();
+  const box = await page.locator('#progression-strip>button').nth(1).boundingBox();
+  const point = {x: box!.x + box!.width / 2, y: box!.y + box!.height / 2};
+  for (const ending of ['touchEnd', 'touchCancel']) {
+    await session.send('Input.dispatchTouchEvent', {type:'touchStart', touchPoints:[point]});
+    await expect(page.locator('#preview-status')).toBeVisible();
+    await session.send('Input.dispatchTouchEvent', {type:ending, touchPoints:[]});
+    await expect(page.locator('#preview-status')).toBeHidden();
+    await expect(page.locator('#play')).toHaveAttribute('aria-pressed','false');
+  }
+});
+
+test('releasing before audio finishes loading never starts a late preview', async ({page}) => {
+  await page.addInitScript(() => {
+    (window as any).__audioMessages = [];
+    const OriginalContext = window.AudioContext;
+    window.AudioContext = class extends OriginalContext {
+      constructor(options?: AudioContextOptions) {
+        super(options);
+        const addModule = this.audioWorklet.addModule.bind(this.audioWorklet);
+        this.audioWorklet.addModule = async (...args) => {
+          await new Promise<void>(resolve => { (window as any).__releaseModule = resolve; });
+          return addModule(...args);
+        };
+      }
+    };
+    const Original = window.AudioWorkletNode;
+    window.AudioWorkletNode = class extends Original {
+      constructor(context: BaseAudioContext, name: string, options?: AudioWorkletNodeOptions) {
+        super(context,name,options);
+        const originalPost = this.port.postMessage.bind(this.port);
+        this.port.postMessage = (data: any) => { (window as any).__audioMessages.push(data.type); originalPost(data); };
+      }
+    };
+  });
+  await page.goto('/');
+  await page.locator('#progression').click();
+  await page.locator('#progression-strip>button').nth(1).hover();
+  await page.mouse.down();
+  await expect.poll(() => page.evaluate(() => typeof (window as any).__releaseModule)).toBe('function');
+  await page.mouse.up();
+  await page.evaluate(() => (window as any).__releaseModule());
+  await expect.poll(() => page.evaluate(() => (window as any).__audioMessages.includes('stop'))).toBe(true);
+  expect(await page.evaluate(() => (window as any).__audioMessages.includes('audition'))).toBe(false);
+  await expect(page.locator('#preview-status')).toBeHidden();
+  await expect(page.locator('#chord-name')).toContainText('E♭');
+  await page.locator('#progression-strip>button').nth(2).hover();
+  await page.mouse.down();
+  await expect(page.locator('#preview-status')).toBeVisible();
+  await page.mouse.up();
+  await expect(page.locator('#preview-status')).toBeHidden();
 });

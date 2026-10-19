@@ -39,7 +39,7 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${Object.entries(PROGRESSIONS).map(([id, template]) => `<option value="${id}">${template.name}</option>`).join('')}</select></label>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
-      <div id="preview-controls" hidden><p>While stopped, select a chord to explore its diagrams.</p><label class="check"><input id="audition" type="checkbox" checked>Sound preview (4 seconds)</label><button id="stop-preview" hidden>Stop chord</button></div>
+      <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><label class="check"><input id="audition" type="checkbox" checked>Sound preview</label><span id="preview-status" role="status" hidden>Release to stop</span></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
     </section>
     <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
@@ -76,7 +76,8 @@ let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let stopping = false;
 let guitarDegrees = false;
-let previewTimer: ReturnType<typeof setTimeout> | undefined;
+let previewHold: string | null = null;
+let previewPreparation: Promise<void> | undefined;
 let previewing = false;
 let previewGeneration = 0;
 
@@ -183,9 +184,9 @@ async function stop() {
 }
 function stopPreview() {
   previewGeneration++;
-  clearTimeout(previewTimer);
+  previewHold = null;
   previewing = false;
-  el('stop-preview').hidden = true;
+  el('preview-status').hidden = true;
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
@@ -250,22 +251,25 @@ async function prepareAudio() {
   reverb.connect(wet!).connect(master!);
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
-async function previewChord(index: number) {
+async function previewChord(index: number, hold: string) {
   if (playing || busy || stopping) return;
   stopPreview();
   const generation = previewGeneration;
+  previewHold = hold;
   step = index;
   renderMusic();
   if (!input('audition').checked) return;
-  busy = true;
   el('error').hidden = true;
   try {
-    await prepareAudio();
-    if (generation !== previewGeneration || document.hidden) { stopPreview(); return; }
+    previewPreparation ??= prepareAudio().finally(() => { previewPreparation = undefined; });
+    await previewPreparation;
+    if (generation !== previewGeneration || document.hidden) {
+      if (!previewHold || document.hidden) stopPreview();
+      return;
+    }
     previewing = true;
     node!.port.postMessage({type: 'audition', settings, step});
-    el('stop-preview').hidden = false;
-    previewTimer = setTimeout(stopPreview, 4000);
+    el('preview-status').hidden = false;
   } catch (error) {
     el('error').textContent = error instanceof Error ? error.message : 'Could not preview chord.';
     el('error').hidden = false;
@@ -273,16 +277,49 @@ async function previewChord(index: number) {
     await context?.close().catch(() => {});
     context = undefined;
     node = undefined;
-  } finally { busy = false; }
+  }
 }
-el('progression-strip').addEventListener('click', event => {
-  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-step]');
-  if (button) void previewChord(Number(button.dataset.step));
+const progressionStrip = el('progression-strip');
+const chordButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-step]') : null;
+progressionStrip.addEventListener('pointerdown', event => {
+  const button = chordButton(event.target);
+  if (!button || button.disabled || event.button !== 0 || !event.isPrimary) return;
+  event.preventDefault();
+  button.focus();
+  void previewChord(Number(button.dataset.step), `pointer:${event.pointerId}`);
+  // Capture on the stable container: selecting a chord redraws its buttons.
+  progressionStrip.setPointerCapture(event.pointerId);
 });
-el('stop-preview').addEventListener('click', stopPreview);
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) {
+  window.addEventListener(type, event => {
+    if (previewHold === `pointer:${event.pointerId}`) stopPreview();
+  });
+}
+progressionStrip.addEventListener('keydown', event => {
+  const button = chordButton(event.target);
+  if (!button || button.disabled || !['Space', 'Enter'].includes(event.code)) return;
+  event.preventDefault();
+  if (!event.repeat) void previewChord(Number(button.dataset.step), `key:${event.code}`);
+});
+window.addEventListener('keyup', event => {
+  if (previewHold === `key:${event.code}`) { event.preventDefault(); stopPreview(); }
+});
+window.addEventListener('blur', stopPreview);
+progressionStrip.addEventListener('focusout', () => {
+  // Let a redraw restore focus before deciding whether keyboard focus left.
+  queueMicrotask(() => {
+    if (previewHold?.startsWith('key:') && !progressionStrip.contains(document.activeElement)) stopPreview();
+  });
+});
+progressionStrip.addEventListener('contextmenu', event => { if (previewHold) event.preventDefault(); });
+// Assistive technology can select a chord without synthesizing a held press.
+progressionStrip.addEventListener('click', event => {
+  const button = chordButton(event.target);
+  if (button && !playing) { step = Number(button.dataset.step); renderMusic(); }
+});
 input('audition').addEventListener('input', () => { if (!input('audition').checked) stopPreview(); });
 async function toggle() {
-  if (busy || stopping) return;
+  if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
   busy = true;
   el<HTMLButtonElement>('play').disabled = true;

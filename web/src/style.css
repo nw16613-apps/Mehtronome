@@ -19,9 +19,12 @@ html[data-theme=dark] .brand-mark{color:#a8c1a3}
 .progression-strip>button:disabled{cursor:default;opacity:1}
 #preview-controls{font-size:12px;margin:12px 0;color:var(--muted)}
 #preview-controls .check{display:inline-flex;align-items:center;gap:8px}
-#stop-preview{margin-left:12px;padding:5px 10px;border-radius:5px;cursor:pointer}
 html[data-theme=dark] .fret-note.chord circle{fill:#65d8cf;stroke:#a6fff2}
 html[data-theme=dark] .fret-note.chord text{fill:#102b2a}
 html[data-theme=dark] .guitar-legend i.chord{background:#65d8cf}
 html[data-theme=dark] .note.chord-tone{background:#214942;border-color:#65d8cf;color:#a6fff2}
 html[data-theme=dark] .note.chord-tone strong{color:#a6fff2}
+
+.progression-strip{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+#preview-status{display:inline-block;margin-left:12px;font-size:12px}
+#preview-status[hidden]{display:none}

@@ -55,7 +55,6 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]){
   .guitar-legend i.root{background:var(--root)}
   .guitar-legend i.scale{background:var(--scale);border:1px solid var(--line)}
   #preview-controls{color:var(--muted)}
-  #stop-preview{background:var(--field);color:var(--ink);border:1px solid var(--line)}
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline-color:var(--accent)}
 }
 html[data-palette=slate] h2{letter-spacing:1.1px;text-transform:uppercase;font-size:13px}
