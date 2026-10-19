@@ -86,11 +86,11 @@ export function compatibleChords(mode) {
   const notes = MODES[mode].intervals;
   return Object.entries(CHORDS).filter(([, chord]) => chord.intervals.every(i => notes.includes(i % 12))).map(([id]) => id);
 }
-export function modeNotes(key, mode) {
+export function modeNotes(key, mode, rootName = null) {
   const letters = ['C','D','E','F','G','A','B'];
   const naturals = [0,2,4,5,7,9,11];
   const roots = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-  const start = letters.indexOf(roots[key][0]);
+  const start = letters.indexOf((rootName || roots[key])[0]);
   return MODES[mode].intervals.map((interval, i) => {
     const letter = (start + i) % 7;
     const delta = ((key + interval - naturals[letter] + 18) % 12) - 6;
@@ -98,10 +98,8 @@ export function modeNotes(key, mode) {
   });
 }
 export function pedalNotes(settings) {
-  const preset = pianoPreset(settings);
-  if (preset) return preset.notes;
-  const id = settings.chord || (settings.minor ? 'minor' : 'major');
-  return applyVoicing(CHORDS[id].intervals.map(i => 48 + settings.key + i), settings.voicing);
+  const id = settings.chord || (settings.mode ? MODES[modeId(settings)].chord : settings.minor ? 'minor' : 'major');
+  return CHORDS[id].intervals.map(i => 48 + settings.key + i);
 }
 export function pedalLabels(settings) {
   const mode = modeId(settings);
@@ -110,66 +108,47 @@ export function pedalLabels(settings) {
   return pedalNotes(settings).map(note => labels[pitches.indexOf((note - 48 - settings.key + 24) % 12)]);
 }
 
-// Piano-inspired register choices: one root in the tenor register, with upper
-// voices placed above it. None of these presets lowers a voice below the root.
-export const PIANO_STYLES = {
-  shell: { name: 'Soft shell + color', description: 'Root, guide tones and an upper color; the fifth is usually omitted.' },
-  open: { name: 'Open piano', description: 'A stable root with the chord tones spread between two hands.' },
-  color: { name: 'Modal color', description: 'A mode-specific voicing that brings out the characteristic scale notes.' },
-  upper: { name: 'Floating upper voices', description: 'An isolated root beneath a lighter, higher right-hand chord.' },
-};
-// Deliberate harmonic choices rather than mechanically lowered voices.
-// Intervals are pitch content; register is assigned separately below.
-export const MODAL_COLORS = {
-  major: { symbol: 'maj13', intervals: [0,4,7,11,14,21] },
-  dorian: { symbol: 'm13(add11, no5)', intervals: [0,3,10,14,17,21] },
-  phrygian: { symbol: 'm7(♭9,♭13,no5)', intervals: [0,3,10,13,20] },
-  lydian: { symbol: 'maj13♯11(no5)', intervals: [0,4,11,14,18,21] },
-  mixolydian: { symbol: '13', intervals: [0,4,7,10,14,21] },
-  minor: { symbol: 'm9(add♭13,no5)', intervals: [0,3,10,14,20] },
-  locrian: { symbol: 'm7♭5(add11,♭9)', intervals: [0,3,6,10,13,17] },
-  melodic_minor: { symbol: 'm(maj9,add13,no5)', intervals: [0,3,11,14,21] },
-  dorian_b2: { symbol: 'm13(♭9,no5)', intervals: [0,3,10,13,21] },
-  lydian_augmented: { symbol: 'maj9(♯5,♯11)', intervals: [0,4,8,11,14,18] },
-  lydian_dominant: { symbol: '13♯11(no5)', intervals: [0,4,10,14,18,21] },
-  mixolydian_b6: { symbol: '9(add♭13,no5)', intervals: [0,4,10,14,20] },
-  locrian_natural2: { symbol: 'm9♭5(add11)', intervals: [0,3,6,10,14,17] },
-  altered: { symbol: '7alt(♭9,♯9,♭13,no5)', intervals: [0,4,10,13,15,20] },
-  harmonic_minor: { symbol: 'm(maj9,add♭13,no5)', intervals: [0,3,11,14,20] },
-  locrian_natural6: { symbol: 'm7♭5(add13)', intervals: [0,3,6,10,21] },
-  ionian_sharp5: { symbol: 'maj13♯5', intervals: [0,4,8,11,14,21] },
-  dorian_sharp4: { symbol: 'm13♯11(no5)', intervals: [0,3,10,14,18,21] },
-  phrygian_dominant: { symbol: '7(♭9,♭13,no5)', intervals: [0,4,10,13,20] },
-  lydian_sharp2: { symbol: 'maj7(♯9,♯11,no5)', intervals: [0,4,11,15,18] },
-  ultralocrian: { symbol: 'dim7(add♭9,♭13)', intervals: [0,3,6,9,13,20] },
-};
 
-export function applyVoicing(notes, voicing = 'custom') {
-  if (!PIANO_STYLES[voicing]) return [...notes];
-  const root = notes[0];
-  const intervals = [...new Set(notes.slice(1).map(note => (note - root) % 12))];
-  const chosen = voicing === 'shell' ? intervals.filter(interval => interval !== 7 || intervals.length < 3) : intervals;
-  // Keep low thirds out of the bass; extensions live in the right hand.
-  return [root, ...chosen.map(interval => {
-    const original = notes.find(note => note !== root && (note - root) % 12 === interval);
-    let distance = interval + 12;
-    if (original - root >= 12) distance = interval + (interval <= 3 ? 24 : 12);
-    else if (interval >= 9 && voicing !== 'upper') distance = interval;
-    if (voicing === 'open' && (interval === 6 || interval === 7 || interval === 8)) distance = interval;
-    return root + distance;
-  })].sort((a, b) => a - b);
+export const PROGRESSIONS = {
+  parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, roman: ['I','♭III','♭V','VI'] },
+  parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, roman: ['I','♭III','♭V','VI'] },
+  diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, roman: ['I','vi','IV','V'] },
+};
+export function progressionStep(settings, bar) {
+  return Math.floor(bar / PROGRESSIONS[settings.template || 'parallel1'].bars) % 4;
 }
-
-export function pianoPreset(settings) {
-  const style = settings.voicing;
-  if (!PIANO_STYLES[style]) return null;
+const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
+  const letters = ['C','D','E','F','G','A','B'];
+  const letter = (letters.indexOf(rootName[0]) + letterSteps) % 7;
+  const accidental = ((key + semitones - [0,2,4,5,7,9,11][letter] + 18) % 12) - 6;
+  return letters[letter] + (accidental < 0 ? '♭'.repeat(-accidental) : '♯'.repeat(accidental));
+}
+export function harmonyAt(settings, step = 0) {
   const mode = modeId(settings);
-  const chord = CHORDS[MODES[mode].chord];
-  const content = style === 'color' ? MODAL_COLORS[mode] : chord;
-  return {
-    name: PIANO_STYLES[style].name,
-    symbol: content.symbol,
-    description: PIANO_STYLES[style].description,
-    notes: applyVoicing(content.intervals.map(interval => 48 + settings.key + interval), style),
-  };
+  const template = settings.template || 'parallel1';
+  if (settings.progression && template === 'diatonic') {
+    const scale = MODES[mode].intervals;
+    const degree = [0,5,3,4][step];
+    const degrees = [degree, degree + 2, degree + 4];
+    const midi = degrees.map(i => 48 + settings.key + scale[i % 7] + 12 * Math.floor(i / 7));
+    const scaleNames = modeNotes(settings.key, mode);
+    const third = midi[1] - midi[0];
+    return { name: scaleNames[degree], suffix: third === 3 ? 'm' : 'maj', tones: degrees.map(i => scaleNames[i % 7]), midi,
+      scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
+      roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
+  }
+  const offset = settings.progression ? [0,3,6,9][step] : 0;
+  const key = (settings.key + offset) % 12;
+  const name = settings.progression ? spellPitch(settings.key, [0,2,4,5][step], offset) : ROOT_NAMES[key];
+  const chordId = settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
+  const chord = CHORDS[chordId];
+  const scaleNames = modeNotes(key, mode, name);
+  const scalePcs = MODES[mode].intervals.map(i => (key + i) % 12);
+  const midi = chord.intervals.map(i => 48 + key + i);
+  const chordDegrees = {0:0,2:1,3:2,4:2,5:3,6:4,7:4,8:4,9:5,10:6,11:6,12:7,13:8,14:8,15:8,17:10,18:10,20:12,21:12};
+  const tones = chord.intervals.map(interval => spellPitch(key, chordId === 'dim7' && interval === 9 ? 6 : chordDegrees[interval], interval, name));
+
+  return { name, suffix: chord.symbol, tones, midi, scaleNames, scalePcs, chordPcs: midi.map(i => i % 12),
+    roman: settings.progression ? PROGRESSIONS[template].roman[step] : 'I' };
 }

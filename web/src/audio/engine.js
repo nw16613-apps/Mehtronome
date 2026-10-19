@@ -1,8 +1,8 @@
-import { pedalNotes, SOUNDS, applyVoicing } from './music.js';
+import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', voicing: 'custom', subdivision: 1, accent: true,
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
 };
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
@@ -42,7 +42,7 @@ export class Engine {
     this.harmonyLevel = 0;
     this.running = true;
     this.age = 0;
-    this.degree = 0;
+    this.step = 0;
     this.configure({});
   }
 
@@ -52,14 +52,13 @@ export class Engine {
     const s = this.settings;
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
-    this.setChord(s.progression ? this.degree : 0);
+    const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
+    this.setChord(s.progression ? progressionStep(s, bar) : 0);
   }
 
-  setChord(degree) {
-    this.degree = degree;
-    this.frequencies = (this.settings.progression
-      ? applyVoicing(chordNotes(this.settings.key, this.settings.minor, degree), this.settings.voicing)
-      : pedalNotes(this.settings))
+  setChord(step) {
+    this.step = step;
+    this.frequencies = (this.settings.progression ? harmonyAt(this.settings, step).midi : pedalNotes(this.settings))
       .map(note => 440 * 2 ** ((note - 69) / 12));
   }
 
@@ -76,8 +75,8 @@ export class Engine {
         const counting = this.beat < this.remainingCount;
         const musicalBeat = Math.max(0, this.beat - this.remainingCount);
         const bar = Math.floor(musicalBeat / s.beats);
-        const step = s.progression ? bar % 4 : 0;
-        this.setChord(s.progression ? DEGREES[step] : 0);
+        const step = s.progression ? progressionStep(s, bar) : 0;
+        this.setChord(step);
         this.clickAge = 0;
         this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
         this.clickStrength = 1;

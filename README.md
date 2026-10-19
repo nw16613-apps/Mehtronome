@@ -17,7 +17,7 @@ from a single sample clock, with smooth volume changes. It includes:
   ascending and descending). Each family contains all seven rotations, with
   correctly spelled notes, characteristic degrees, and compatible backing chords.
 - Four synthesized ambient backing sounds: Warm Pad, Glass Cloud, Velvet Drone,
-  and Air Choir. Adjustable ambient space adds stereo reverb to harmony only,
+  and Air Choir. Ambient space defaults to 75% and adds adjustable stereo reverb to harmony only,
   keeping the click dry. Sound and chord changes fade smoothly.
 - 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
@@ -26,25 +26,23 @@ from a single sample clock, with smooth volume changes. It includes:
   displayed chord tones; arpeggio view follows the chosen chord. Minor-major,
   augmented-major, altered dominant, dominant ♭9/♯11, diminished, and
   half-diminished ninth chords support the added minor modes.
-- Four piano-inspired pedal voicings for each mode: Soft Shell + Color, Open
-  Piano, Modal Color, and Floating Upper Voices. They use a stable tenor root,
-  guide tones, and upper extensions without lowering notes below the root.
-  Modal Color has deliberately selected harmonic content for all 21 modes;
-  the chord label, highlighted notes, and octave display follow what is played.
-  Choose Custom chord to access the full 33-chord menu. The ambient instrument
-  sounds are unchanged: these are piano-style note arrangements, not piano samples.
-  Existing progressions use the selected spacing style on each original triad;
-  mode-specific color content is reserved for pedal backing.
+- Simple root-position chord selection, with the piano/drop voicing controls removed.
+- Chord progression templates for I–♭III–♭V–VI: one bar per chord or two bars
+  per chord. The selected chord type is kept on each root (for example, Cmaj7 →
+  E♭maj7 → G♭maj7 → Amaj7). All 33 chord types are available in progression
+  mode, regardless of the scale selected. The displayed scale transposes to each
+  chord root, while arpeggio view shows the actual current chord tones.
 - Dark mode, initially following the system preference, with a theme button that
   remembers your choice in this browser.
-- A sustained pedal triad or I–vi–IV–V (minor: i–VI–iv–v), one chord per bar.
+- A sustained pedal chord, plus the original diatonic I–vi–IV–V
+  (minor: i–VI–iv–v) template, one bar per triad. This legacy template keeps the
+  starting key’s scale fixed and is available for major and natural minor.
 - Scale and current-chord arpeggio note displays; separate click/harmony volume.
 
 For modal practice, start with Dorian + minor 13, Lydian + major 9 ♯11,
 Mixolydian + dominant 13, or Locrian + half-diminished 7. Try the characteristic
-mode degree against the sustained harmony. The new modes use pedal chords;
-mode-specific progression templates are deferred. Existing major/minor
-progressions remain available, with their original triads.
+mode degree against the sustained harmony. All modes support the new parallel-root templates. Additional mode-specific
+progression templates remain a future addition.
 
 Notes are visual guides for playing your own instrument, not automatic scale
 playback. Backing uses synthesized tones. Playback pauses when the page is hidden;
@@ -80,7 +78,7 @@ Playwright may require `npx playwright install --with-deps chromium`.
 
 ### Publish a testing link
 
-No public deployment has been created from this workspace. The included GitHub
+The live app is at https://nw16613-apps.github.io/Mehtronome/. The included GitHub
 Actions workflows check changes and provide an explicit Pages publication step:
 
 1. Commit and push the browser files and `.github/workflows/` to GitHub.

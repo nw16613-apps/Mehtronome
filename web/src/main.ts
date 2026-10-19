@@ -1,7 +1,7 @@
 import './style.css';
 import workletUrl from './audio/worklet.js?worker&url';
-import { DEFAULTS, chordNotes } from './audio/engine.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalLabels, pedalNotes, applyVoicing, PIANO_STYLES, pianoPreset } from './audio/music.js';
+import { DEFAULTS } from './audio/engine.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 function modeOptions() {
@@ -27,17 +27,18 @@ app.innerHTML = `
     </section>
     <section class="harmony panel" aria-labelledby="harmony-title">
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
-      <div class="field-row"><label>Root note<select id="key">${names.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
-      <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}">${sound.name}</option>`).join('')}</select></label><label>Pedal chord<select id="chord"></select></label></div>
-      <div class="field-row voicing-row"><label>Piano voicing<select id="voicing">${Object.entries(PIANO_STYLES).map(([id, style]) => `<option value="${id}" ${id === 'open' ? 'selected' : ''}>${style.name}</option>`).join('')}<option value="custom">Custom chord</option></select></label><span id="voicing-help" class="voicing-help"></span></div>
+      <div class="field-row"><label><span id="root-label">Root note</span><select id="key">${names.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
+      <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}">${sound.name}</option>`).join('')}</select></label><label><span id="chord-label">Pedal chord</span><select id="chord"></select></label></div>
+
       <p id="mode-tip" class="mode-tip"></p>
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
-      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p><p id="voicing-notes" class="voicing-notes"></p></div>
+      <label id="template-field" class="template-field" hidden>Progression template<select id="template">${Object.entries(PROGRESSIONS).map(([id, template]) => `<option value="${id}">${template.name}</option>`).join('')}</select></label>
+      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
     </section>
     <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
-    <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">45%</output></label><input id="space" type="range" min="0" max="100" value="45"></section>
+    <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span>Headphones on. Distractions off.</span></footer>
@@ -46,7 +47,7 @@ app.innerHTML = `
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
-let settings = { ...DEFAULTS, mode: 'major', chord: 'maj9', voicing: 'open' };
+let settings = { ...DEFAULTS, mode: 'major', chord: 'maj9' };
 let master: GainNode | undefined;
 let wet: GainNode | undefined;
 let reverb: ConvolverNode | undefined;
@@ -58,40 +59,24 @@ let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let stopping = false;
 
-function notes(): string[] { return modeNotes(settings.key, settings.mode); }
-function chordInfo(index: number): { name: string; suffix: string; tones: string[] } {
-  if (!settings.progression) return { name: names[settings.key], suffix: pianoPreset(settings)?.symbol || CHORDS[settings.chord as keyof typeof CHORDS].symbol, tones: pedalLabels(settings) };
-  const degree = settings.progression ? [0, 5, 3, 4][index] : 0;
-  const minorChord = settings.minor ? [true, false, true, true][index] : [false, true, false, false][index];
-  const isMinor = settings.progression ? minorChord : settings.minor;
-  const scale = notes();
-  return { name: scale[degree], suffix: isMinor ? 'min' : 'maj', tones: [degree, degree + 2, degree + 4].map(i => scale[i % 7]) };
-}
-function voicedMidi(index: number): number[] {
-  return settings.progression ? applyVoicing(chordNotes(settings.key, settings.minor, [0,5,3,4][index]), settings.voicing) : pedalNotes(settings);
-}
-function pitchLabel(note: number): string {
-  const scale = MODES[settings.mode as keyof typeof MODES].intervals;
-  const label = notes()[scale.indexOf((note - 48 - settings.key + 24) % 12)];
-  const accidental = [...label.slice(1)].reduce((sum, char) => sum + (char === '♯' ? 1 : -1), 0);
-  return `${label}${Math.floor((note - accidental) / 12) - 1}`;
-}
+function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
+function chordInfo(index: number) { return harmonyAt(settings, index); }
 function renderMusic() {
   const info = chordInfo(step);
   el('chord-name').innerHTML = `${info.name}<span>${info.suffix}</span>`;
   el('chord-notes').textContent = info.tones.join(' · ');
-  el('voicing-notes').textContent = voicedMidi(step).map(pitchLabel).join(' · ');
-  el('chord-caption').textContent = settings.progression ? 'ONE CHORD PER BAR' : 'LET IT RING';
+
+  el('chord-caption').textContent = settings.progression ? (PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD') : 'LET IT RING';
   el('progression-strip').hidden = !settings.progression;
   el('progression-strip').innerHTML = Array.from({ length: 4 }, (_, i) => {
     const c = chordInfo(i);
-    return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'min' ? 'm' : ''}<small>${(settings.minor ? ['i', 'VI', 'iv', 'v'] : ['I', 'vi', 'IV', 'V'])[i]}</small></span>`;
+    return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small></span>`;
   }).join('');
-  el('backing-description').textContent = settings.progression ? 'Four chords, one bar each. Listen as the same notes change color.' : 'One sustained chord. Explore how every note feels against it.';
+  el('backing-description').textContent = settings.progression ? (settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : `The same chord type on I, ♭III, ♭V and VI. ${PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`) : 'One sustained chord. Explore how every note feels against it.';
   const arpeggio = select('exercise').value === 'arpeggio';
   const displayed = arpeggio ? info.tones : notes();
-  el('note-list').innerHTML = displayed.map((n, i) => `<div class="note ${info.tones.includes(n) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[settings.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
-  el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
+  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[settings.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
+  el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[settings.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -102,12 +87,12 @@ function update() {
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
   settings.sound = select('sound').value;
-  settings.voicing = select('voicing').value;
-  const preset = pianoPreset(settings);
-  select('chord').parentElement!.hidden = Boolean(preset) && !settings.progression;
-  el('voicing-help').textContent = settings.progression
-    ? 'Piano spacing applied to each progression chord. Mode-specific colors are for pedal backing.'
-    : preset ? preset.description + ' Choose Custom chord for the full chord menu.' : 'Choose your own chord from the pedal-chord menu.';
+  settings.template = select('template').value;
+  el('template-field').hidden = !settings.progression;
+  const diatonic = settings.progression && settings.template === 'diatonic';
+  select('chord').disabled = diatonic;
+  el('root-label').textContent = settings.progression ? 'Starting root' : 'Root note';
+  el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
   settings.subdivision = Number(select('subdivision').value);
   settings.accent = input('accent').checked;
   settings.beats = Number(select('beats').value);
@@ -179,6 +164,7 @@ async function toggle() {
       wet.gain.value = Number(input('space').value) / 100 * .65;
       node.port.onmessage = ({ data }) => {
         if (!playing) return;
+        if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
         renderBeats(data.beat);
         el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `Playing · Bar ${data.bar} · Beat ${data.beat + 1}`;
         if (step !== data.step) { step = data.step; renderMusic(); }
@@ -229,7 +215,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['key', 'sound', 'chord', 'voicing', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -238,30 +224,23 @@ for (const mode of ['pedal', 'progression']) {
       el(id).classList.toggle('selected', mode === id);
       el(id).setAttribute('aria-pressed', String(mode === id));
     }
-    select('chord').disabled = settings.progression;
+    fillChords(true);
     update();
   });
 }
-function fillChords() {
+function fillChords(preserve = false) {
+  const previousChord = select('chord').value;
   const mode = select('quality').value as keyof typeof MODES;
-  select('chord').innerHTML = compatibleChords(mode).map(id => {
+  select('chord').innerHTML = (settings.progression ? Object.keys(CHORDS) : compatibleChords(mode)).map(id => {
     const chord = CHORDS[id as keyof typeof CHORDS];
     return `<option value="${id}">${chord.name}${id === MODES[mode].chord ? ' · suggested' : ''}</option>`;
   }).join('');
-  select('chord').value = MODES[mode].chord;
+  select('chord').value = preserve && Array.from(select('chord').options).some(option => option.value === previousChord) ? previousChord : MODES[mode].chord;
   el('mode-tip').textContent = MODES[mode].tip;
   const modal = mode !== 'major' && mode !== 'minor';
-  el<HTMLButtonElement>('progression').disabled = modal;
-  el('progression').title = modal ? 'Mode-specific progressions are coming later. Explore a pedal chord.' : '';
-  if (modal) {
-    settings.progression = false;
-    step = 0;
-    el('pedal').classList.add('selected');
-    el('pedal').setAttribute('aria-pressed', 'true');
-    el('progression').classList.remove('selected');
-    el('progression').setAttribute('aria-pressed', 'false');
-  }
-  select('chord').disabled = settings.progression;
+  select('template').querySelector<HTMLOptionElement>('[value=diatonic]')!.disabled = modal;
+  if (modal && select('template').value === 'diatonic') select('template').value = 'parallel1';
+
 }
 select('quality').addEventListener('input', () => { fillChords(); update(); });
 

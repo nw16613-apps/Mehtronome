@@ -14,6 +14,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
         this.engine.running = false;
       } else if (data.type === 'settings') {
         this.engine.configure(data.settings);
+        this.port.postMessage({ type: 'harmony', step: this.engine.step });
       }
     };
   }

@@ -31,6 +31,7 @@ test('real worklet generates audio, controls respond, and playback restarts', as
   await page.locator('#quality').selectOption('minor');
   await page.getByRole('button', { name: 'Chord progression' }).click();
   await expect(page.locator('#progression-strip')).toBeVisible();
+  await page.locator('#template').selectOption('diatonic');
   await page.locator('#exercise').selectOption('arpeggio');
   await expect(page.locator('.note')).toHaveCount(3);
   await page.locator('#bpm').fill('240');
@@ -66,7 +67,7 @@ test('ambient sounds and modal chord palette work during playback', async ({ pag
   await expect(page.locator('#chord')).toHaveValue('maj9sharp11');
   await expect(page.locator('#note-list')).toContainText('F♯');
   await expect(page.locator('#chord-notes')).toContainText('F♯');
-  await expect(page.getByRole('button', { name: 'Chord progression' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Chord progression' })).toBeEnabled();
   await page.locator('#exercise').selectOption('arpeggio');
   await expect(page.locator('.note')).toHaveCount(6);
   await page.locator('#count-in').uncheck();
@@ -83,21 +84,9 @@ test('ambient sounds and modal chord palette work during playback', async ({ pag
     })).toBeGreaterThan(.005);
     await expect(page.locator('#error')).toBeHidden();
   }
-  for (const voicing of ['shell', 'open', 'color', 'upper']) {
-    await page.locator('#voicing').selectOption(voicing);
-    await expect(page.locator('#voicing-notes')).toContainText('C3');
-    await expect.poll(() => page.evaluate(() => {
-      const analyser = (window as any).__analyser as AnalyserNode;
-      const samples = new Float32Array(analyser.fftSize);
-      analyser.getFloatTimeDomainData(samples);
-      return Math.max(...samples.map(Math.abs));
-    })).toBeGreaterThan(.005);
-    await expect(page.locator('#error')).toBeHidden();
-  }
   await page.locator('#quality').selectOption('dorian');
   await expect(page.locator('#chord')).toHaveValue('min13');
   await expect(page.locator('#chord-notes')).toContainText('A');
-  await page.locator('#voicing').selectOption('custom');
   await page.locator('#chord').selectOption('min6');
   await expect(page.locator('#chord-name')).toHaveText('Cm6');
   await page.locator('#quality').selectOption('locrian');
@@ -117,9 +106,12 @@ test('small screen fits without horizontal scrolling', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Start practicing' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', {name:'Chord progression'}).click();
+  await page.locator('#chord').selectOption('halfDim11');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('minor mode families, piano voicings, rhythm options and persisted dark mode', async ({page}) => {
+test('minor mode families, simple chords, rhythm options and persisted dark mode', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -131,22 +123,12 @@ test('minor mode families, piano voicings, rhythm options and persisted dark mod
   await expect(page.locator('#chord')).toHaveValue('dom7b9');
   await expect(page.locator('#note-list')).toContainText('D♭');
   await page.locator('#quality').selectOption('major');
-  await expect(page.locator('#voicing')).toHaveValue('open');
-  await expect(page.locator('#chord')).toBeHidden();
-  await expect(page.locator('#voicing-notes')).toHaveText('C3 · G3 · B3 · E4 · D5');
-  await page.locator('#voicing').selectOption('shell');
-  await expect(page.locator('#voicing-notes')).toHaveText('C3 · B3 · E4 · D5');
-  await page.locator('#voicing').selectOption('upper');
-  await expect(page.locator('#voicing-notes')).toHaveText('C3 · E4 · G4 · B4 · D5');
-  await page.locator('#voicing').selectOption('color');
-  await expect(page.locator('#chord-name')).toHaveText('Cmaj13');
-  await page.locator('#key').selectOption('1');
-  await expect(page.locator('#voicing-notes')).toContainText('B♯3');
-  await page.locator('#key').selectOption('0');
-  await page.locator('#voicing').selectOption('custom');
+  await expect(page.locator('#voicing')).toHaveCount(0);
   await expect(page.locator('#chord')).toBeVisible();
   await page.locator('#chord').selectOption('major');
-  await expect(page.locator('#voicing-notes')).toHaveText('C3 · E3 · G3');
+  await expect(page.locator('#chord-notes')).toHaveText('C · E · G');
+  await expect(page.locator('#space')).toHaveValue('75');
+  await expect(page.locator('#space-value')).toHaveText('75%');
   await page.locator('#subdivision').selectOption('6');
   await page.locator('#accent').uncheck();
   await expect(page.locator('.beat.downbeat')).toHaveCount(0);
@@ -163,5 +145,40 @@ test('minor mode families, piano voicings, rhythm options and persisted dark mod
   await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
   await page.locator('#theme').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  expect(errors).toEqual([]);
+});
+
+
+test('parallel chord templates offer every chord type and both bar lengths', async ({page}) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.locator('#quality').selectOption('dorian');
+  await page.getByRole('button', {name: 'Chord progression'}).click();
+  await expect(page.locator('#chord option')).toHaveCount(33);
+  await page.locator('#chord').selectOption('maj7');
+  await expect(page.locator('#progression-strip')).toHaveText('Cmaj7IE♭maj7♭IIIG♭maj7♭VAmaj7VI');
+  await expect(page.locator('#chord-name')).toHaveText('Cmaj7');
+  await page.locator('#template').selectOption('parallel2');
+  await expect(page.locator('#chord-caption')).toHaveText('TWO BARS PER CHORD');
+  await page.locator('#bpm').fill('240');
+  await page.locator('#bpm').blur();
+  await page.locator('#beats').selectOption('3');
+  await page.locator('#count-in').uncheck();
+  await page.getByRole('button', {name: 'Start practicing'}).click();
+  await expect(page.locator('#play-status')).toContainText('Bar 2');
+  await expect(page.locator('#chord-name')).toHaveText('Cmaj7');
+  await expect(page.locator('#play-status')).toContainText('Bar 3', {timeout:5000});
+  await expect(page.locator('#chord-name')).toHaveText('E♭maj7');
+  await expect(page.locator('#progression-strip .current')).toContainText('E♭maj7');
+  await expect(page.locator('#note-list')).toContainText('E♭');
+  await page.locator('#exercise').selectOption('arpeggio');
+  await expect(page.locator('#note-list')).toHaveText('E♭chord toneGchord toneB♭chord toneDchord tone');
+  await page.getByRole('button', {name:'Stop practicing'}).click();
+  await page.locator('#template').selectOption('parallel1');
+  await expect(page.locator('#chord-caption')).toHaveText('ONE BAR PER CHORD');
+  await page.getByRole('button', {name:'Pedal chord'}).click();
+  await expect(page.locator('#template')).toBeHidden();
+  await expect(page.locator('#chord')).toHaveValue('min13');
   expect(errors).toEqual([]);
 });

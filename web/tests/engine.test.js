@@ -110,3 +110,35 @@ test('sextuplets stay synchronized across callback boundaries at awkward tempos'
   for (let i = 0; i < actual.length; i += 128) chunked.render(actual.subarray(i, i + 128));
   assert.deepEqual(actual, expected);
 });
+
+test('one- and two-bar templates keep the selected chord for the exact bar count after count-in', () => {
+  for (const [template, bars] of [['parallel1',1],['parallel2',2]]) {
+    for (const beats of [3,4,7]) {
+      const engine = new Engine(1200);
+      engine.configure({progression:true, template, chord:'maj7', bpm:240, beats, countIn:true});
+      engine.reset();
+      const events = [];
+      engine.render(new Float32Array(300 * beats * (bars * 4 + 2)), event => {
+        if (!event.counting && event.beat === 0) events.push({step:event.step, frequencies:[...engine.frequencies]});
+      });
+      const expected = Array.from({length:bars*4+1},(_,i)=>Math.floor(i/bars)%4);
+      assert.deepEqual(events.map(e=>e.step), expected);
+      for (const event of events) {
+        const root = [0,3,6,9][event.step];
+        assert.deepEqual(event.frequencies, [48,52,55,59].map(note=>440*2**((note+root-69)/12)));
+      }
+    }
+  }
+});
+
+test('two-bar progression remains sample-identical across callback boundaries and tempo changes', () => {
+  const a = new Engine(1200), b = new Engine(1200);
+  for (const engine of [a,b]) {engine.configure({progression:true, template:'parallel2', chord:'min13',bpm:137}); engine.reset();}
+  for (const bpm of [137,211]) {
+    a.configure({bpm}); b.configure({bpm});
+    const whole = new Float32Array(30000), blocks = new Float32Array(30000);
+    a.render(whole);
+    for (let i=0;i<blocks.length;i+=128) b.render(blocks.subarray(i,i+128));
+    assert.deepEqual(blocks,whole);
+  }
+});
