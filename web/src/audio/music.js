@@ -1,5 +1,5 @@
 // Shared by the display and the audio worklet: the chord you see is what sounds.
-export const MODES = {
+const DIATONIC = {
   major: { name: 'Ionian (major)', intervals: [0,2,4,5,7,9,11], degrees: ['1','2','3','4','5','6','7'], chord: 'maj9', tip: 'Listen to the natural 7 resolving to the root.' },
   dorian: { name: 'Dorian', intervals: [0,2,3,5,7,9,10], degrees: ['1','2','♭3','4','5','6','♭7'], chord: 'min13', tip: 'The natural 6 gives this minor mode its open, bright color.' },
   phrygian: { name: 'Phrygian', intervals: [0,1,3,5,7,8,10], degrees: ['1','♭2','♭3','4','5','♭6','♭7'], chord: 'min7', tip: 'Explore the tension of the ♭2 against the root.' },
@@ -7,6 +7,38 @@ export const MODES = {
   mixolydian: { name: 'Mixolydian', intervals: [0,2,4,5,7,9,10], degrees: ['1','2','3','4','5','6','♭7'], chord: 'dom13', tip: 'The ♭7 softens the pull of the major third.' },
   minor: { name: 'Aeolian (natural minor)', intervals: [0,2,3,5,7,8,10], degrees: ['1','2','♭3','4','5','♭6','♭7'], chord: 'min9', tip: 'Listen to the darker ♭6 against the minor chord.' },
   locrian: { name: 'Locrian', intervals: [0,1,3,5,6,8,10], degrees: ['1','♭2','♭3','4','♭5','♭6','♭7'], chord: 'halfDim', tip: 'The ♭5 and ♭2 create an intentionally unsettled sound.' },
+};
+function familyModes(parent, family, entries) {
+  const natural = [0,2,4,5,7,9,11];
+  return Object.fromEntries(entries.map(([id, name, chord, tip], degree) => {
+    const intervals = parent.map((_, i) => (parent[(degree + i) % 7] - parent[degree] + 12) % 12);
+    const degrees = intervals.map((n, i) => {
+      const delta = n - natural[i];
+      return (delta < 0 ? '♭'.repeat(-delta) : '♯'.repeat(delta)) + (i + 1);
+    });
+    return [id, { name, intervals, degrees, chord, tip, family }];
+  }));
+}
+export const MODES = {
+  ...DIATONIC,
+  ...familyModes([0,2,3,5,7,9,11], 'Melodic minor', [
+    ['melodic_minor', 'Melodic minor', 'minMaj9', 'Jazz melodic minor uses the same notes ascending and descending. Listen to the natural 6 and 7.'],
+    ['dorian_b2', 'Dorian ♭2', 'min6', 'Try the ♭2 against a minor sixth chord.'],
+    ['lydian_augmented', 'Lydian augmented', 'augMaj9', 'Explore the raised 4 and raised 5 over augmented major harmony.'],
+    ['lydian_dominant', 'Lydian dominant', 'dom9sharp11', 'Combine the floating ♯4 with a dominant ♭7.'],
+    ['mixolydian_b6', 'Mixolydian ♭6', 'dom9', 'Listen to the ♭6 against a dominant chord.'],
+    ['locrian_natural2', 'Locrian ♮2', 'halfDim9', 'The natural 2 opens up a half-diminished chord.'],
+    ['altered', 'Altered (super Locrian)', 'dom7alt', 'Explore altered dominant tensions. The written ♭4 sounds as a major 3rd.'],
+  ]),
+  ...familyModes([0,2,3,5,7,8,11], 'Harmonic minor', [
+    ['harmonic_minor', 'Harmonic minor', 'minMaj9', 'Explore the pull between ♭6 and natural 7.'],
+    ['locrian_natural6', 'Locrian ♮6', 'halfDim', 'Listen to natural 6 over the half-diminished chord.'],
+    ['ionian_sharp5', 'Ionian ♯5', 'augMaj9', 'Hear the raised 5 against major 7 harmony.'],
+    ['dorian_sharp4', 'Dorian ♯4', 'min13', 'The raised 4 adds an unexpected lift to Dorian.'],
+    ['phrygian_dominant', 'Phrygian dominant', 'dom7b9', 'Explore ♭2 and ♭6 around a major 3rd.'],
+    ['lydian_sharp2', 'Lydian ♯2', 'maj7sharp11', 'Hear the raised 2 and 4 over major harmony.'],
+    ['ultralocrian', 'Ultralocrian (super Locrian ♭♭7)', 'dim7', 'The diminished 7th is spelled ♭♭7; let its tension ring.'],
+  ]),
 };
 export const CHORDS = {
   major: { name: 'Major', symbol: 'maj', intervals: [0,4,7] },
@@ -31,6 +63,16 @@ export const CHORDS = {
   nineSus: { name: '9 suspended 4', symbol: '9sus4', intervals: [0,5,7,10,14] },
   halfDim: { name: 'Half-diminished 7', symbol: 'm7♭5', intervals: [0,3,6,10] },
   halfDim11: { name: 'Half-diminished 11 (no 9)', symbol: 'm7♭5(add11)', intervals: [0,3,6,10,17] },
+  minMaj7: { name: 'Minor major 7', symbol: 'm(maj7)', intervals: [0,3,7,11] },
+  minMaj9: { name: 'Minor major 9', symbol: 'm(maj9)', intervals: [0,3,7,11,14] },
+  augmented: { name: 'Augmented', symbol: 'aug', intervals: [0,4,8] },
+  augMaj7: { name: 'Augmented major 7', symbol: 'maj7♯5', intervals: [0,4,8,11] },
+  augMaj9: { name: 'Augmented major 9', symbol: 'maj9♯5', intervals: [0,4,8,11,14] },
+  dom9sharp11: { name: 'Dominant 9 ♯11', symbol: '9♯11', intervals: [0,4,7,10,14,18] },
+  dom7b9: { name: 'Dominant 7 ♭9', symbol: '7♭9', intervals: [0,4,7,10,13] },
+  dom7alt: { name: 'Altered dominant (♭5 ♭9 ♯9)', symbol: '7alt', intervals: [0,4,6,10,13,15] },
+  halfDim9: { name: 'Half-diminished 9', symbol: 'm9♭5', intervals: [0,3,6,10,14] },
+  dim7: { name: 'Diminished 7', symbol: 'dim7', intervals: [0,3,6,9] },
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {
@@ -57,11 +99,22 @@ export function modeNotes(key, mode) {
 }
 export function pedalNotes(settings) {
   const id = settings.chord || (settings.minor ? 'minor' : 'major');
-  return CHORDS[id].intervals.map(i => 48 + settings.key + i);
+  return applyVoicing(CHORDS[id].intervals.map(i => 48 + settings.key + i), settings.voicing);
 }
 export function pedalLabels(settings) {
   const mode = modeId(settings);
   const pitches = MODES[mode].intervals;
   const labels = modeNotes(settings.key, mode);
-  return CHORDS[settings.chord || MODES[mode].chord].intervals.map(i => labels[pitches.indexOf(i % 12)]);
+  return pedalNotes(settings).map(note => labels[pitches.indexOf((note - 48 - settings.key + 24) % 12)]);
+}
+
+export function applyVoicing(notes, voicing = 'original') {
+  if (voicing === 'original') return [...notes];
+  // Establish close position before lowering voices counted down from the top.
+  const base = Math.min(...notes);
+  const close = notes.map(note => base + (note - base) % 12).sort((a, b) => a - b);
+  for (let i = 1; i < close.length; i++) while (close.slice(0, i).includes(close[i])) close[i] += 12;
+  close.sort((a, b) => a - b);
+  const drops = { close: [], drop2: [2], drop3: [3], drop24: [2,4] }[voicing] || [];
+  return close.map((note, i) => drops.includes(close.length - i) ? note - 12 : note).sort((a, b) => a - b);
 }

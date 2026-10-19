@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#122323" />
     <meta name="description" content="Practice scales and arpeggios with a precise metronome and warm harmony backing." />
+    <script>
+      try {
+        const saved = localStorage.getItem('mehtronome-theme');
+        document.documentElement.dataset.theme = saved === 'dark' || saved === 'light' ? saved : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      } catch { document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    </script>
     <title>Mehtronome — practice with harmony</title>
   </head>
   <body>

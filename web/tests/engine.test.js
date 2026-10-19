@@ -68,3 +68,45 @@ test('tempo changes preserve beat position and reset restores count-in', () => {
   assert.equal(engine.phase, 0);
   assert.equal(engine.remainingCount, 4);
 });
+
+test('all subdivision grids produce clicks at exact sample positions', () => {
+  for (const subdivision of [1,2,3,4,6]) {
+    const engine = new Engine(12000);
+    engine.configure({bpm:120, subdivision, harmony:0, accent:false});
+    engine.reset();
+    const output = new Float32Array(24000);
+    engine.render(output);
+    const spacing = 6000 / subdivision;
+    for (let onset = 6000; onset < output.length; onset += spacing) {
+      const window = output.subarray(onset + 1, onset + 100);
+      assert.ok(window.some(sample => Math.abs(sample) > .03), `missing subdivision ${subdivision} at ${onset}`);
+      assert.equal(output[onset - 100], 0);
+    }
+    assert.equal(engine.beat, 3); // Subdivisions never advance the bar clock.
+  }
+});
+
+test('unaccented downbeats have exactly the same click as other beats', () => {
+  const engine = new Engine(12000);
+  engine.configure({bpm:120, harmony:0, accent:false});
+  engine.reset();
+  const output = new Float32Array(36000);
+  engine.render(output);
+  assert.deepEqual(output.slice(18000,18600), output.slice(24000,24600));
+  const accented = new Engine(12000);
+  accented.configure({bpm:120, harmony:0, accent:true});
+  accented.reset();
+  accented.render(output);
+  assert.notDeepEqual(output.slice(18000,18600), output.slice(24000,24600));
+});
+
+test('sextuplets stay synchronized across callback boundaries at awkward tempos', () => {
+  const whole = new Engine();
+  const chunked = new Engine();
+  for (const engine of [whole, chunked]) { engine.configure({bpm:137, subdivision:6}); engine.reset(); }
+  const expected = new Float32Array(150000);
+  const actual = new Float32Array(150000);
+  whole.render(expected);
+  for (let i = 0; i < actual.length; i += 128) chunked.render(actual.subarray(i, i + 128));
+  assert.deepEqual(actual, expected);
+});

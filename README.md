@@ -7,17 +7,31 @@ The browser version lives in `web/`. It uses TypeScript and the Web Audio API;
 Python is not required. A dedicated audio worklet drives both click and harmony
 from a single sample clock, with smooth volume changes. It includes:
 
-- 30–240 BPM, accented downbeats, 3–7 beats/bar, and a one-bar count-in.
-- All twelve keys and the seven modes: Ionian, Dorian, Phrygian, Lydian,
-  Mixolydian, Aeolian, and Locrian, with characteristic degrees and note spelling.
+- 30–240 BPM, optional downbeat accent, 3–7 beats/bar, and a one-bar count-in.
+- Quarter notes, eighth notes, eighth-note triplets, sixteenth notes, and
+  sixteenth-note sextuplets, all locked to the same audio sample clock.
+  Subdivision clicks are softer; turning off beat-one accent makes every main
+  beat identical, including during count-in.
+- All twelve keys and 21 modes, grouped by major, melodic minor, and harmonic
+  minor parent scales. Melodic minor follows the jazz convention (same notes
+  ascending and descending). Each family contains all seven rotations, with
+  correctly spelled notes, characteristic degrees, and compatible backing chords.
 - Four synthesized ambient backing sounds: Warm Pad, Glass Cloud, Velvet Drone,
   and Air Choir. Adjustable ambient space adds stereo reverb to harmony only,
   keeping the click dry. Sound and chord changes fade smoothly.
-- 23 pedal-chord types, filtered to chords whose notes fit the selected mode.
+- 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
   sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,
   major ♯11 voicings, and half-diminished chords. Rich voicings sound all their
-  displayed chord tones; arpeggio view follows the chosen chord.
+  displayed chord tones; arpeggio view follows the chosen chord. Minor-major,
+  augmented-major, altered dominant, dominant ♭9/♯11, diminished, and
+  half-diminished ninth chords support the added minor modes.
+- Original, close-position, Drop 2, Drop 3, and Drop 2 + 4 voicings. Drop options
+  first put the voices in close position, then lower the specified voices (counted
+  down from the highest) by one octave. The actual pitches and octaves are shown.
+  Drop 2 + 4 needs at least four notes; selecting a triad falls back to Drop 2.
+- Dark mode, initially following the system preference, with a theme button that
+  remembers your choice in this browser.
 - A sustained pedal triad or I–vi–IV–V (minor: i–VI–iv–v), one chord per bar.
 - Scale and current-chord arpeggio note displays; separate click/harmony volume.
 

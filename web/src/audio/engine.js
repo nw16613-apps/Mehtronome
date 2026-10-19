@@ -1,8 +1,8 @@
-import { pedalNotes, SOUNDS } from './music.js';
+import { pedalNotes, SOUNDS, applyVoicing } from './music.js';
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm',
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', voicing: 'original', subdivision: 1, accent: true,
 };
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
@@ -28,6 +28,8 @@ export class Engine {
     this.nextBeat = true;
     this.clickAge = this.rate;
     this.clickFrequency = 1500;
+    this.clickStrength = 1;
+    this.lastSubdivision = 0;
     this.phases = Array(6).fill(0);
     this.detunedPhases = Array(6).fill(0);
     this.voiceLevels = Array(6).fill(0);
@@ -45,16 +47,18 @@ export class Engine {
   }
 
   configure(settings) {
+    const previousSubdivision = this.settings.subdivision;
     Object.assign(this.settings, settings);
     const s = this.settings;
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
+    if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
     this.setChord(s.progression ? this.degree : 0);
   }
 
   setChord(degree) {
     this.degree = degree;
     this.frequencies = (this.settings.progression
-      ? chordNotes(this.settings.key, this.settings.minor, degree)
+      ? applyVoicing(chordNotes(this.settings.key, this.settings.minor, degree), this.settings.voicing)
       : pedalNotes(this.settings))
       .map(note => 440 * 2 ** ((note - 69) / 12));
   }
@@ -75,8 +79,17 @@ export class Engine {
         const step = s.progression ? bar % 4 : 0;
         this.setChord(s.progression ? DEGREES[step] : 0);
         this.clickAge = 0;
-        this.clickFrequency = this.beat % s.beats === 0 ? 1500 : 1000;
+        this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
+        this.clickStrength = 1;
+        this.lastSubdivision = 0;
         onBeat({ counting, beat: this.beat % s.beats, bar: bar + 1, step });
+      }
+      const subdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
+      if (subdivision !== this.lastSubdivision && subdivision > 0) {
+        this.lastSubdivision = subdivision;
+        this.clickAge = 0;
+        this.clickFrequency = 800;
+        this.clickStrength = .6;
       }
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
@@ -100,7 +113,7 @@ export class Engine {
         const pure = .72 * Math.sin(p) + .28 * Math.sin(this.detunedPhases[voice]);
         chord += (pure + h0 * Math.sin(2 * p) + h1 * Math.sin(3 * p)) / 1.4 * this.voiceLevels[voice];
       }
-      const clickSample = this.level * .3 * this.clickLevel * click;
+      const clickSample = this.level * .3 * this.clickLevel * click * this.clickStrength;
       const backingSample = this.level * .4 * this.harmonyLevel * chord * breath;
       output[i] = harmonyOutput ? clickSample : clickSample + backingSample;
       if (harmonyOutput) harmonyOutput[i] = backingSample;

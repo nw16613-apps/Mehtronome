@@ -1,12 +1,17 @@
 import './style.css';
 import workletUrl from './audio/worklet.js?worker&url';
-import { DEFAULTS } from './audio/engine.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalLabels } from './audio/music.js';
+import { DEFAULTS, chordNotes } from './audio/engine.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, modeNotes, pedalLabels, pedalNotes, applyVoicing } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+function modeOptions() {
+  return ['Major scale', 'Melodic minor', 'Harmonic minor'].map(family =>
+    `<optgroup label="${family}">${Object.entries(MODES).filter(([, mode]) => ('family' in mode ? mode.family : 'Major scale') === family).map(([id, mode]) => `<option value="${id}">${mode.name}</option>`).join('')}</optgroup>`
+  ).join('');
+}
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
-<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><span class="tag">PRACTICE ROOM / 01</span></header>
+<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><button id="theme" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">Dark mode</button></header>
 <main>
   <div class="intro"><div><p class="eyebrow">MAKE SPACE FOR PRACTICE</p><h1>Find your rhythm.<br><em>Hear the harmony.</em></h1></div><p class="intro-copy">Give your scales somewhere to go.<br>A steady pulse and a little harmonic context.</p></div>
   <div class="workspace">
@@ -18,14 +23,16 @@ app.innerHTML = `
       <p class="play-status" id="play-status" role="status">Your next good practice starts here.</p>
       <button class="play-button" id="play"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in" checked>One-bar count-in</label></div>
+      <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1">Quarter notes</option><option value="2">Eighth notes</option><option value="3">Eighth-note triplets</option><option value="4">Sixteenth notes</option><option value="6">Sixteenth-note sextuplets</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
     </section>
     <section class="harmony panel" aria-labelledby="harmony-title">
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
-      <div class="field-row"><label>Root note<select id="key">${names.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${Object.entries(MODES).map(([id, mode]) => `<option value="${id}">${mode.name}</option>`).join('')}</select></label></div>
+      <div class="field-row"><label>Root note<select id="key">${names.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}">${sound.name}</option>`).join('')}</select></label><label>Pedal chord<select id="chord"></select></label></div>
+      <div class="field-row voicing-row"><label>Chord voicing<select id="voicing"><option value="original">Original voicing</option><option value="close">Close position</option><option value="drop2">Drop 2</option><option value="drop3">Drop 3</option><option value="drop24">Drop 2 + 4 (4+ notes)</option></select></label><span class="voicing-help">Drop voices are lowered one octave from close position.</span></div>
       <p id="mode-tip" class="mode-tip"></p>
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
-      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
+      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p><p id="voicing-notes" class="voicing-notes"></p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
     </section>
@@ -60,10 +67,20 @@ function chordInfo(index: number): { name: string; suffix: string; tones: string
   const scale = notes();
   return { name: scale[degree], suffix: isMinor ? 'min' : 'maj', tones: [degree, degree + 2, degree + 4].map(i => scale[i % 7]) };
 }
+function voicedMidi(index: number): number[] {
+  return settings.progression ? applyVoicing(chordNotes(settings.key, settings.minor, [0,5,3,4][index]), settings.voicing) : pedalNotes(settings);
+}
+function pitchLabel(note: number): string {
+  const scale = MODES[settings.mode as keyof typeof MODES].intervals;
+  const label = notes()[scale.indexOf((note - 48 - settings.key + 24) % 12)];
+  const accidental = [...label.slice(1)].reduce((sum, char) => sum + (char === '♯' ? 1 : -1), 0);
+  return `${label}${Math.floor((note - accidental) / 12) - 1}`;
+}
 function renderMusic() {
   const info = chordInfo(step);
   el('chord-name').innerHTML = `${info.name}<span>${info.suffix}</span>`;
   el('chord-notes').textContent = info.tones.join(' · ');
+  el('voicing-notes').textContent = voicedMidi(step).map(pitchLabel).join(' · ');
   el('chord-caption').textContent = settings.progression ? 'ONE CHORD PER BAR' : 'LET IT RING';
   el('progression-strip').hidden = !settings.progression;
   el('progression-strip').innerHTML = Array.from({ length: 4 }, (_, i) => {
@@ -77,7 +94,7 @@ function renderMusic() {
   el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
 }
 function renderBeats(active = -1) {
-  el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 ? 'downbeat' : ''}">${i + 1}</span>`).join('');
+  el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
 }
 function update() {
   settings.key = Number(select('key').value);
@@ -85,6 +102,12 @@ function update() {
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
   settings.sound = select('sound').value;
+  const voices = settings.progression ? 3 : CHORDS[settings.chord as keyof typeof CHORDS].intervals.length;
+  select('voicing').querySelector<HTMLOptionElement>('[value=drop24]')!.disabled = voices < 4;
+  if (voices < 4 && select('voicing').value === 'drop24') select('voicing').value = 'drop2';
+  settings.voicing = select('voicing').value;
+  settings.subdivision = Number(select('subdivision').value);
+  settings.accent = input('accent').checked;
   settings.beats = Number(select('beats').value);
   settings.countIn = input('count-in').checked;
   settings.click = Number(input('click').value) / 100;
@@ -204,7 +227,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['key', 'sound', 'chord', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['key', 'sound', 'chord', 'voicing', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -250,3 +273,16 @@ document.addEventListener('visibilitychange', () => {
 });
 fillChords();
 update();
+
+function reflectTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  el('theme').setAttribute('aria-pressed', String(dark));
+  el('theme').textContent = dark ? 'Light mode' : 'Dark mode';
+}
+el('theme').addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('mehtronome-theme', theme); } catch { /* Session-only if storage is unavailable. */ }
+  reflectTheme();
+});
+reflectTheme();

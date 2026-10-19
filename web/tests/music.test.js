@@ -73,3 +73,37 @@ test('switching chord sizes and sounds keeps audio finite and fades fully on sto
   engine.render(output);
   assert.ok(output.every(x => Math.abs(x) < 1e-8));
 });
+
+test('minor families are exact rotations, including raised and double-flat degrees', () => {
+  const melodic = Object.values(MODES).filter(mode => mode.family === 'Melodic minor');
+  const harmonic = Object.values(MODES).filter(mode => mode.family === 'Harmonic minor');
+  assert.equal(Object.keys(MODES).length, 21);
+  for (const [family, parent] of [[melodic, [0,2,3,5,7,9,11]], [harmonic, [0,2,3,5,7,8,11]]]) {
+    assert.equal(family.length, 7);
+    family.forEach((mode, degree) => assert.deepEqual(mode.intervals, parent.map((_, i) => (parent[(degree + i) % 7] - parent[degree] + 12) % 12)));
+  }
+  assert.deepEqual(modeNotes(0, 'melodic_minor'), ['C','D','E♭','F','G','A','B']);
+  assert.deepEqual(modeNotes(0, 'harmonic_minor'), ['C','D','E♭','F','G','A♭','B']);
+  assert.deepEqual(MODES.ultralocrian.degrees, ['1','♭2','♭3','♭4','♭5','♭6','♭♭7']);
+});
+
+test('drop voicings lower the named voices from close position and preserve pitch classes', async () => {
+  const { applyVoicing } = await import('../src/audio/music.js');
+  const closed = [48,52,55,59];
+  assert.deepEqual(applyVoicing(closed, 'drop2'), [43,48,52,59]);
+  assert.deepEqual(applyVoicing(closed, 'drop3'), [40,48,55,59]);
+  assert.deepEqual(applyVoicing(closed, 'drop24'), [36,43,52,59]);
+  assert.deepEqual(applyVoicing([48,55,60], 'close'), [48,55,60]);
+  for (const chord of Object.keys(CHORDS)) {
+    for (const voicing of ['close','drop2','drop3','drop24']) {
+      const original = pedalNotes({key: 2, chord});
+      const dropped = pedalNotes({key: 2, chord, voicing});
+      assert.deepEqual(dropped.map(n => n % 12).sort(), original.map(n => n % 12).sort());
+      assert.equal(dropped.length, original.length);
+    }
+  }
+  const engine = new Engine();
+  engine.configure({chord:'maj7', voicing:'drop2'});
+  const expected = [43,48,52,59].map(note => 440 * 2 ** ((note - 69) / 12));
+  assert.deepEqual(engine.frequencies, expected);
+});
