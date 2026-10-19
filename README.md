@@ -40,6 +40,8 @@ from a single sample clock, with smooth volume changes. It includes:
   II = D form, III = C form, IV = A form, V = G form. Each preserves its
   CAGED root layout and five-fret window; the fret numbers identify its location.
   High e is at the top, low E at the bottom, and frets increase left to right.
+  All positions use fretted notes; open-position forms move up an octave,
+  preserving their CAGED patterns and root anchors.
   These are scale/arpeggio note maps, not fixed chord grips or prescribed fingerings.
   Chord roots, other chord tones, and scale tones have distinct colors.
   Choose note names or scale degrees, and scale-plus-chord or chord-only view;
@@ -78,6 +80,13 @@ early. Starting practice begins the progression from its first chord.
 Arpeggio notes include intervals relative to the current chord root, preserving
 extensions and alterations (for example 9, ♯11, ♭9 and ♯9). Dark mode uses bright
 teal chord-tone markers, amber roots and muted scale tones.
+
+Choose **Theme** in the header to try Midnight Studio (navy/cyan), Warm Paper
+(cream/terracotta), Plum Session (aubergine/rose), or Slate Minimal (grey/blue).
+Original light and dark remain available, and explicit choices persist locally.
+Use **Compare themes** in the footer for the screenshot gallery at `themes.html`.
+Links such as `?theme=midnight` preview a palette without overwriting a saved
+preference; choosing from the menu saves the choice and clears that preview URL.
 
 ### Develop
 

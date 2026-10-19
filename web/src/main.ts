@@ -1,4 +1,5 @@
 import './style.css';
+import './themes.css';
 import { POSITIONS, fretboardFor, diagramSvg } from './guitar/fretboard.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
@@ -12,7 +13,7 @@ function modeOptions() {
 }
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
-<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><button id="theme" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">Dark mode</button></header>
+<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><div class="theme-controls"><label class="theme-picker">Theme<select id="palette" aria-label="Page theme"><option value="light">Original light</option><option value="dark">Original dark</option><option value="midnight">Midnight Studio</option><option value="paper">Warm Paper</option><option value="plum">Plum Session</option><option value="slate">Slate Minimal</option></select></label><button id="theme" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">Dark mode</button></div></header>
 <main>
   <div class="intro"><div><p class="eyebrow">MAKE SPACE FOR PRACTICE</p><h1>Find your rhythm.<br><em>Hear the harmony.</em></h1></div><p class="intro-copy">Give your scales somewhere to go.<br>A steady pulse and a little harmonic context.</p></div>
   <div class="workspace">
@@ -52,12 +53,12 @@ app.innerHTML = `
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="guitar-guide"><p class="guitar-help">All five positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
-        <p class="guitar-help">High e is at the top, low E at the bottom. Frets increase from left to right; circles to the left of the nut are open strings.</p>
+        <p class="guitar-help">High e is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </div>
     </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
-  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span>Headphones on. Distractions off.</span></footer>
+  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>`;
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -357,13 +358,20 @@ update();
 
 function reflectTheme() {
   const dark = document.documentElement.dataset.theme === 'dark';
+  select('palette').value = document.documentElement.dataset.palette || (dark ? 'dark' : 'light');
   el('theme').setAttribute('aria-pressed', String(dark));
   el('theme').textContent = dark ? 'Light mode' : 'Dark mode';
 }
-el('theme').addEventListener('click', () => {
-  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('mehtronome-theme', theme); } catch { /* Session-only if storage is unavailable. */ }
+function applyTheme(palette: string) {
+  document.documentElement.dataset.palette = palette;
+  document.documentElement.dataset.theme = ['dark', 'midnight', 'plum'].includes(palette) ? 'dark' : 'light';
+  try { localStorage.setItem('mehtronome-theme', palette); } catch { /* Session-only if storage is unavailable. */ }
+  // An explicit choice replaces a preview link's theme on reload.
+  const url = new URL(location.href);
+  url.searchParams.delete('theme');
+  history.replaceState(null, '', url);
   reflectTheme();
-});
+}
+select('palette').addEventListener('input', () => applyTheme(select('palette').value));
+el('theme').addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 reflectTheme();

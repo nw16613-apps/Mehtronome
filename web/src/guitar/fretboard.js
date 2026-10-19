@@ -16,8 +16,10 @@ export const POSITIONS = [
 const CHROMATIC_DEGREES = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
 export function positionFor(rootPc, shape) {
   const definition = SHAPES[shape];
-  const transposition = (rootPc - definition.tonic + 12) % 12;
-  const start = Math.max(0, transposition - definition.leadIn);
+  // Move any open-position form up an octave, preserving its root and pattern.
+  let transposition = (rootPc - definition.tonic + 12) % 12;
+  if (transposition - definition.leadIn < 1) transposition += 12;
+  const start = transposition - definition.leadIn;
   return { shape, start, end: start + 4, rootString: definition.rootString, rootFret: transposition + definition.rootOffset };
 }
 export function fretboardFor(harmony, shape = 'C', chordOnly = false) {

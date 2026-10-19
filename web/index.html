@@ -6,10 +6,15 @@
     <meta name="theme-color" content="#122323" />
     <meta name="description" content="Practice scales and arpeggios with a precise metronome and warm harmony backing." />
     <script>
-      try {
-        const saved = localStorage.getItem('mehtronome-theme');
-        document.documentElement.dataset.theme = saved === 'dark' || saved === 'light' ? saved : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      } catch { document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+      (() => {
+        const available = ['light', 'dark', 'midnight', 'paper', 'plum', 'slate'];
+        let saved;
+        try { saved = localStorage.getItem('mehtronome-theme'); } catch { /* Use system preference. */ }
+        const preview = new URLSearchParams(location.search).get('theme');
+        const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.palette = palette;
+        document.documentElement.dataset.theme = ['dark', 'midnight', 'plum'].includes(palette) ? 'dark' : 'light';
+      })();
     </script>
     <title>Mehtronome — practice with harmony</title>
   </head>
