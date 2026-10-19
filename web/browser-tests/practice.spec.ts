@@ -241,3 +241,59 @@ test('I–IV and jazz presets display their complete changes and scale guides du
   await expect(page.locator('#chord')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('CAGED positions, labels and chord-only view track the selected mode and chord',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'Guitar reference'})).toBeVisible();
+  await expect(page.locator('#caged-positions button')).toHaveCount(5);
+  await expect(page.locator('#guitar-diagram svg')).toHaveAttribute('aria-label',/Cmaj9, C-shape/);
+  await page.locator('#quality').selectOption('dorian');
+  await expect(page.locator('#guitar-context')).toHaveText('Cm13');
+  await expect(page.locator('#guitar-scale')).toContainText('C Dorian');
+  for(const shape of ['A','G','E','D','C']){
+    await page.locator(`#caged-positions [data-shape=${shape}]`).click();
+    await expect(page.locator(`#caged-positions [data-shape=${shape}]`)).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#guitar-diagram svg')).toHaveAttribute('aria-label',new RegExp(`${shape}-shape`));
+  }
+  await page.locator('#fret-labels').selectOption('degrees');
+  await expect(page.locator('#guitar-diagram .fret-note text')).toContainText(['♭3']);
+  await page.locator('#fret-view').selectOption('arpeggio');
+  await expect(page.locator('#exercise')).toHaveValue('arpeggio');
+  await expect(page.locator('#guitar-diagram .fret-note.scale')).toHaveCount(0);
+  await expect(page.locator('#guitar-diagram .fret-note.root')).not.toHaveCount(0);
+  await page.locator('#exercise').selectOption('scale');
+  await expect(page.locator('#fret-view')).toHaveValue('scale');
+  await page.locator('#key').selectOption('2');
+  await expect(page.locator('#guitar-context')).toHaveText('Dm13');
+  await expect(page.locator('#guitar-position')).toContainText('fret 5');
+  await page.locator('#theme').click();
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await expect(page.locator('#guitar-diagram svg')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('fourths progression and guitar diagrams update together in live playback, including jazz guides',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button',{name:'Chord progression'}).click();
+  await page.locator('#template').selectOption('fourths2');
+  await page.locator('#chord').selectOption('maj7');
+  await expect(page.locator('#progression-strip>span')).toHaveCount(12);
+  await expect(page.locator('#progression-strip>span').nth(6)).toContainText('G♭maj7');
+  await expect(page.locator('#progression-strip>span').nth(7)).toContainText('Bmaj7');
+  await page.locator('#template').selectOption('fourths1');
+  await page.locator('#bpm').fill('240');await page.locator('#bpm').blur();
+  await page.locator('#count-in').uncheck();
+  await page.getByRole('button',{name:'Start practicing'}).click();
+  await expect(page.locator('#chord-name')).toHaveText('Fmaj7',{timeout:5000});
+  await expect(page.locator('#guitar-context')).toHaveText('Fmaj7');
+  await expect(page.locator('#guitar-scale')).toContainText('F Ionian');
+  await expect(page.locator('#caged-positions [data-shape=C]')).toContainText('Frets 5–9');
+  await page.getByRole('button',{name:'Stop practicing'}).click();
+  await page.locator('#template').selectOption('major251');
+  await expect(page.locator('#guitar-context')).toHaveText('Dm7');
+  await expect(page.locator('#guitar-scale')).toContainText('D Dorian');
+  expect(errors).toEqual([]);
+});

@@ -114,6 +114,8 @@ export const PROGRESSIONS = {
   parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
   oneFour1: { name: 'I–IV · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
   oneFour2: { name: 'I–IV · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
+  fourths1: { name: 'Cycle of fourths · 1 bar per chord', bars: 1, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
+  fourths2: { name: 'Cycle of fourths · 2 bars per chord', bars: 2, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
   major251: { name: 'Jazz major ii–V–I · 4 bars', bars: 1, kind: 'jazz', roman: ['ii7','V7','Imaj7'], steps: [
     { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
     { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
@@ -185,7 +187,8 @@ export function harmonyAt(settings, step = 0) {
   }
   const offset = jazz ? jazz.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;
-  const name = settings.progression ? spellPitch(settings.key, jazz ? jazz.letter : definition.letters[step], offset) : ROOT_NAMES[key];
+  const cycleNames = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+  const name = settings.progression ? definition.cycle ? (step === 0 ? ROOT_NAMES[key] : cycleNames[key]) : spellPitch(settings.key, jazz ? jazz.letter : definition.letters[step], offset) : ROOT_NAMES[key];
   const chordId = jazz ? jazz.chord : settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
   const chord = CHORDS[chordId];
   const scaleNames = modeNotes(key, mode, name);

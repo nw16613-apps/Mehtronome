@@ -1,4 +1,5 @@
 import './style.css';
+import { SHAPES, positionFor, fretboardFor, diagramSvg } from './guitar/fretboard.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
@@ -41,6 +42,17 @@ app.innerHTML = `
     </section>
     <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
     <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
+    <section class="guitar panel" aria-labelledby="guitar-title">
+      <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B e</span></div>
+      <div id="caged-positions" class="caged-positions" role="group" aria-label="CAGED position"></div>
+      <div class="guitar-body"><div id="guitar-diagram"></div><div class="guitar-guide">
+        <h3 id="guitar-context"></h3><p id="guitar-scale"></p>
+        <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees">Scale degrees</option></select></label></div>
+        <div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span></div>
+        <p id="guitar-position"></p><p class="guitar-help">Positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
+        <p class="guitar-help">Low E is on the left, high e on the right. Numbers beside the neck are frets; circles above the nut are open strings.</p>
+      </div></div>
+    </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span>Headphones on. Distractions off.</span></footer>
@@ -60,6 +72,8 @@ let step = 0;
 let context: AudioContext | undefined;
 let node: AudioWorkletNode | undefined;
 let stopping = false;
+let guitarShape = 'C';
+let guitarDegrees = false;
 
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
@@ -72,18 +86,37 @@ function renderMusic() {
 
   const jazz = template.kind === 'jazz';
   el('chord-caption').textContent = !settings.progression ? 'LET IT RING' : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
-  el('progression-strip').classList.toggle('blues', settings.template === 'jazzBlues');
+  el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = !settings.progression;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
     return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</span>`;
   }).join('');
-  el('backing-description').textContent = !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
+  el('backing-description').textContent = !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const arpeggio = select('exercise').value === 'arpeggio';
   const displayed = arpeggio ? info.tones : notes();
   el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
   el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[info.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
+  renderGuitar();
+}
+function renderGuitar() {
+  const focusedShape = el('caged-positions').contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.shape : undefined;
+  const info = chordInfo(step);
+  const board = fretboardFor(info, guitarShape, select('exercise').value === 'arpeggio');
+  el('caged-positions').innerHTML = Object.keys(SHAPES).map(shape => {
+    const position = positionFor(board.rootPc, shape);
+    return `<button type="button" data-shape="${shape}" aria-pressed="${shape === guitarShape}" class="${shape === guitarShape ? 'selected' : ''}"><strong>${shape}</strong><small>Frets ${position.start}–${position.end}</small></button>`;
+  }).join('');
+  const chord = `${info.name}${info.suffix}`;
+  const mode = MODES[info.mode as keyof typeof MODES];
+  const title = `${chord}, ${guitarShape}-shape position, frets ${board.start} to ${board.end}`;
+  el('guitar-diagram').innerHTML = diagramSvg(board, guitarDegrees, mode.degrees, title);
+  el('guitar-context').textContent = chord;
+  el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
+  el('guitar-position').textContent = `${guitarShape}-shape root anchor: ${['low E','A','D','G','B','high e'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.`;
+  select('fret-view').value = select('exercise').value;
+  if (focusedShape) el('caged-positions').querySelector<HTMLButtonElement>(`[data-shape="${focusedShape}"]`)?.focus({ preventScroll: true });
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -112,6 +145,7 @@ function update() {
   settings.harmony = Number(input('harmony').value) / 100;
   el('click-value').textContent = `${Math.round(settings.click * 100)}%`;
   el('harmony-value').textContent = `${Math.round(settings.harmony * 100)}%`;
+  if (!playing) step = 0;
   node?.port.postMessage({ type: 'settings', settings });
   el('space-value').textContent = `${input('space').value}%`;
   if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
@@ -220,6 +254,16 @@ async function toggle() {
     node = undefined;
   } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; }
 }
+
+el('caged-positions').addEventListener('click', event => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-shape]');
+  if (!button) return;
+  guitarShape = button.dataset.shape!;
+  renderGuitar();
+  el('caged-positions').querySelector<HTMLButtonElement>(`[data-shape="${guitarShape}"]`)?.focus({ preventScroll: true });
+});
+select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
+select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 
 el('play').addEventListener('click', () => void toggle());
 input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)));

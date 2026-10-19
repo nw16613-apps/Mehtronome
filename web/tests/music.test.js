@@ -140,3 +140,21 @@ test('jazz changes use conventional chord qualities, tonal roots, and compatible
   assert.deepEqual(names('turnaround'),['Dm7','G7','Cmaj7','A7']);
   assert.deepEqual(names('jazzBlues'),['C7','F7','C7','C7','F7','F♯dim7','C7','A7','Dm7','G7','C7','G7']);
 });
+
+test('cycle of fourths visits all twelve roots, retains every chord type and uses readable enharmonic names',async()=>{
+  const {harmonyAt,progressionStep}=await import('../src/audio/music.js');
+  for(const template of ['fourths1','fourths2'])for(const chord of Object.keys(CHORDS))for(let key=0;key<12;key++){
+    const settings={key,chord,mode:'major',progression:true,template};
+    const roots=[];
+    for(let step=0;step<12;step++){
+      const h=harmonyAt(settings,step);
+      roots.push(h.midi[0]%12);
+      assert.deepEqual(h.midi,CHORDS[chord].intervals.map(n=>48+(key+step*5)%12+n));
+      assert.equal(h.suffix,CHORDS[chord].symbol);
+    }
+    assert.equal(new Set(roots).size,12);
+    for(let i=0;i<12;i++)assert.equal((roots[(i+1)%12]-roots[i]+12)%12,5);
+    assert.equal(progressionStep(settings,template==='fourths2'?24:12),0);
+  }
+  assert.deepEqual(Array.from({length:12},(_,step)=>harmonyAt({key:0,chord:'maj7',progression:true,template:'fourths1'},step).name),['C','F','B♭','E♭','A♭','D♭','G♭','B','E','A','D','G']);
+});

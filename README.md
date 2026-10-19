@@ -32,6 +32,18 @@ from a single sample clock, with smooth volume changes. It includes:
   E♭maj7 → G♭maj7 → Amaj7). All 33 chord types are available in parallel-root progression
   mode, regardless of the scale selected. The displayed scale transposes to each
   chord root, while arpeggio view shows the actual current chord tones.
+- Cycle-of-fourths templates with one or two bars per chord, keeping the selected
+  chord type through all 12 roots. From C: C / F / B♭ / E♭ / A♭ / D♭ / G♭ /
+  B / E / A / D / G, then repeat. Enharmonic names keep the cycle readable.
+- A guitar reference panel in standard E–A–D–G–B–e tuning. Select C, A, G, E,
+  or D to view a five-fret window anchored to the corresponding CAGED root
+  layout. These are scale/arpeggio note maps, not fixed chord grips or prescribed
+  fingerings. Chord roots, other chord tones, and scale tones have distinct colors.
+  Choose note names or scale degrees, and scale-plus-chord or chord-only view.
+  Diagram view and the main Exercise control stay synchronized. Degree labels
+  refer to the displayed scale, while root highlights refer to the current chord.
+  The chosen CAGED position follows changes of key, mode, chord, and progression,
+  including the automatic scale guides in jazz templates.
 - Jazz templates: major ii–V–I (ii7 / V7 / Imaj7 held for two bars), minor
   iiø–V–i (iiø7 / V7♭9 / i6 held for two bars), a ii–V–I–VI7 turnaround
   (one bar each), and a 12-bar jazz blues (one chord per bar). These set their
@@ -50,7 +62,7 @@ from a single sample clock, with smooth volume changes. It includes:
 For modal practice, start with Dorian + minor 13, Lydian + major 9 ♯11,
 Mixolydian + dominant 13, or Locrian + half-diminished 7. Try the characteristic
 mode degree against the sustained harmony. All modes support the new parallel-root templates. Additional mode-specific
-progression templates and CAGED-style guitar reference diagrams remain future additions.
+progression templates remain future additions.
 
 Notes are visual guides for playing your own instrument, not automatic scale
 playback. Backing uses synthesized tones. Playback pauses when the page is hidden;

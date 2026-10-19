@@ -158,3 +158,17 @@ test('two-chord and jazz loops play each chord for the specified bars, including
     for(const event of events)assert.deepEqual(event.frequencies,harmonyAt(engine.settings,event.step).midi.map(n=>440*2**((n-69)/12)));
   }
 });
+
+test('cycle of fourths has the exact one- and two-bar durations and loops after twelve chords',()=>{
+  for(const [template,bars] of [['fourths1',1],['fourths2',2]]){
+    const engine=new Engine(1200);
+    engine.configure({progression:true,template,bpm:240,beats:3,countIn:true,chord:'maj7'});
+    engine.reset();
+    const events=[];
+    engine.render(new Float32Array(900*(12*bars+2)),event=>{
+      if(!event.counting&&event.beat===0)events.push({step:event.step,frequencies:[...engine.frequencies]});
+    });
+    assert.deepEqual(events.map(e=>e.step),Array.from({length:12*bars+1},(_,bar)=>Math.floor(bar/bars)%12));
+    for(const event of events)assert.deepEqual(event.frequencies,[48,52,55,59].map(n=>440*2**((n+(event.step*5)%12-69)/12)));
+  }
+});
