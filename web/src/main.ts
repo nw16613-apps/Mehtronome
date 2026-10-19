@@ -58,7 +58,7 @@ app.innerHTML = `
       </div>
     </section>
     <section class="voicings panel" aria-labelledby="voicings-title">
-      <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE GRIPS · × = MUTE</span></div>
+      <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE CHORD SHAPES · × = MUTE</span></div>
       <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls voicing-controls"><label>Voicing<select id="voicing-type"><option value="drop2">Drop 2</option><option value="drop3">Drop 3</option></select></label><label>String set<select id="voicing-strings"></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals">Chord intervals</option></select></label></div></div>
       <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p></div>
       <div id="voicing-diagrams" class="guitar-diagrams"></div>
