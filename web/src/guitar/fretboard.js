@@ -1,4 +1,4 @@
-// Standard guitar tuning, low E to high e, in MIDI pitches.
+// Standard guitar tuning, low E to high E, in MIDI pitches.
 export const TUNING = [40,45,50,55,59,64];
 export const SHAPES = {
   C: { tonic: 0, rootString: 1, rootOffset: 3, leadIn: 0 },
@@ -56,7 +56,7 @@ export function diagramSvg(board, degrees, modeDegrees, title) {
     svg += `<line class="fret-wire ${boundary === nut && board.start === 0 ? 'nut' : ''}" x1="${boundary}" x2="${boundary}" y1="30" y2="170"/>`;
   }
   TUNING.forEach((_, string) => {
-    svg += `<line class="guitar-string" style="stroke-width:${2.2-string*.25}" x1="${nut}" x2="440" y1="${y(string)}" y2="${y(string)}"/><text class="string-name" x="15" y="${y(string)+4}" text-anchor="middle">${['E','A','D','G','B','e'][string]}</text>`;
+    svg += `<line class="guitar-string" style="stroke-width:${2.2-string*.25}" x1="${nut}" x2="440" y1="${y(string)}" y2="${y(string)}"/><text class="string-name" x="15" y="${y(string)+4}" text-anchor="middle">${['E','A','D','G','B','E'][string]}</text>`;
   });
   for (const note of board.notes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;

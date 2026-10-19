@@ -39,7 +39,7 @@ from a single sample clock, with smooth volume changes. It includes:
   position diagrams appear together, with Roman numbering: I = E form,
   II = D form, III = C form, IV = A form, V = G form. Each preserves its
   CAGED root layout and five-fret window; the fret numbers identify its location.
-  High e is at the top, low E at the bottom, and frets increase left to right.
+  High E is at the top, low E at the bottom, and frets increase left to right.
   All positions use fretted notes; open-position forms move up an octave,
   preserving their CAGED patterns and root anchors.
   These are scale/arpeggio note maps, not fixed chord grips or prescribed fingerings.
@@ -88,6 +88,14 @@ Original light and dark remain available, and explicit choices persist locally.
 Use **Compare themes** in the footer for the screenshot gallery at `themes.html`.
 Links such as `?theme=midnight` preview a palette without overwriting a saved
 preference; choosing from the menu saves the choice and clears that preview URL.
+
+The **Guitar chord voicings** section follows the current chord with up to four
+fully fretted Drop 2 or Drop 3 grips. Choose note names or chord-relative intervals;
+play the four marked notes together and mute strings marked ×. Extended chords
+use a disclosed four-note reduction: root, third/suspension, seventh/sixth and an
+altered fifth or upper colour. Triads double one tone; open-fifth chords show
+spread root/fifth grips instead of claiming to be four-part drop voicings. Grips
+stay within frets 1–17 with at most a five-fret window. Backing audio is unchanged.
 
 ### Develop
 

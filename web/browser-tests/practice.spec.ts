@@ -330,8 +330,8 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   await page.mouse.down();
   await expect(page.locator('#chord-name')).toHaveText('G7alt');
   await expect(page.locator('#note-list small')).toHaveText(['1','3','♭5','♭7','♭9','♯9']);
-  await expect(page.locator('.position-card svg')).toHaveCount(5);
-  for (const diagram of await page.locator('.position-card svg').all()) await expect(diagram).toHaveAttribute('aria-label', /G7alt/);
+  await expect(page.locator('#guitar-diagrams .position-card svg')).toHaveCount(5);
+  for (const diagram of await page.locator('#guitar-diagrams .position-card svg').all()) await expect(diagram).toHaveAttribute('aria-label', /G7alt/);
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('.beat.active')).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => {
@@ -492,4 +492,43 @@ test('releasing before audio finishes loading never starts a late preview', asyn
   await expect(page.locator('#preview-status')).toBeVisible();
   await page.mouse.up();
   await expect(page.locator('#preview-status')).toBeHidden();
+});
+
+test('drop chord grips show real four-note fingerings and follow stopped and playing harmony',async({page})=>{
+  await page.goto('/');
+  await expect(page.locator('.guitar .section-heading .small-label')).toHaveText('STANDARD TUNING · E A D G B E');
+  await expect(page.locator('#voicings-chord')).toHaveText('Cmaj9');
+  await expect(page.locator('#voicings-tones')).toContainText('Omitted: G');
+  await expect(page.locator('#voicing-diagrams .voicing-card')).toHaveCount(4);
+  for(const svg of await page.locator('#voicing-diagrams svg').all()){
+    await expect(svg.locator('.fret-note')).toHaveCount(4);
+    await expect(svg.locator('.muted-string')).toHaveCount(2);
+    await expect(svg.locator('[data-fret="0"]')).toHaveCount(0);
+  }
+  await page.locator('#voicing-type').selectOption('drop3');
+  await expect(page.locator('#voicing-diagrams svg').first()).toHaveAttribute('aria-label',/drop 3/);
+  await page.locator('#voicing-labels').selectOption('intervals');
+  await expect(page.locator('#voicing-diagrams .fret-note text')).toContainText(['9']);
+  await page.locator('#progression').click();
+  await page.locator('#template').selectOption('major251');
+  await page.locator('#audition').uncheck();
+  await page.locator('#progression-strip>button').nth(1).click();
+  await expect(page.locator('#voicings-chord')).toHaveText('G7alt');
+  await expect(page.locator('#voicings-tones')).toContainText('D♭ (♭5)');
+  for(const svg of await page.locator('#voicing-diagrams svg').all())await expect(svg).toHaveAttribute('aria-label',/G7alt, drop 3/);
+  await page.locator('#count-in').uncheck();
+  await page.locator('#bpm').fill('240');await page.locator('#bpm').blur();
+  await page.locator('#play').click();
+  await expect(page.locator('#voicings-chord')).toHaveText('Cmaj7♯11',{timeout:6000});
+  await page.locator('#play').click();
+  await page.locator('#pedal').click();
+  await page.locator('#chord').selectOption('major');
+  await expect(page.locator('#voicings-description')).toContainText('Triads use four voices');
+  await page.locator('#quality').selectOption('major');
+  await page.locator('#chord').selectOption('fifth');
+  await expect(page.locator('#voicings-description')).toContainText('spread root/fifth grips');
+  await page.locator('#palette').selectOption('midnight');
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await expect(page.locator('#guitar-diagrams svg')).toHaveCount(5);
 });

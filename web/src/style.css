@@ -28,3 +28,6 @@ html[data-theme=dark] .note.chord-tone strong{color:#a6fff2}
 .progression-strip{touch-action:pan-y;user-select:none;-webkit-user-select:none}
 #preview-status{display:inline-block;margin-left:12px;font-size:12px}
 #preview-status[hidden]{display:none}
+
+.voicings{grid-column:1/-1}.voicings .guitar-overview{margin-bottom:14px}.voicings .guitar-help{margin:12px 0 18px}.muted-string circle{fill:#f9faf5}.muted-string text{fill:#64735f;font-size:17px}html[data-theme=dark] .muted-string circle{fill:#162622}html[data-theme=dark] .muted-string text{fill:#b4c2af}
+html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string circle{fill:var(--pulse)}html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-string text{fill:var(--muted)}

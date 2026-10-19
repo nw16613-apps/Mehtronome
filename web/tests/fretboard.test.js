@@ -83,7 +83,7 @@ test('Roman positions follow the E-D-C-A-G sequence without changing fretboard p
   assert.deepEqual(POSITIONS.map(position=>fretboardFor(harmony,position.shape).start),[7,9,12,3,5]);
 });
 
-test('horizontal diagrams have horizontal strings, vertical frets, high e above low E, and no open strings',()=>{
+test('horizontal diagrams have horizontal strings, vertical frets, high E above low E, and no open strings',()=>{
   const harmony=harmonyAt({key:0,mode:'major',chord:'maj7'});
   const svg=diagramSvg(fretboardFor(harmony,'C'),false,MODES.major.degrees,'Position III');
   const strings=[...svg.matchAll(/class="guitar-string"[^>]+x1="([^"]+)" x2="([^"]+)" y1="([^"]+)" y2="([^"]+)"/g)];
