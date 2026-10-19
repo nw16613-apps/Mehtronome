@@ -182,3 +182,62 @@ test('parallel chord templates offer every chord type and both bar lengths', asy
   await expect(page.locator('#chord')).toHaveValue('min13');
   expect(errors).toEqual([]);
 });
+
+test('pulse dropdowns and checkboxes share columns at every layout size', async ({page}) => {
+  await page.goto('/');
+  for(const width of [1440,1000,760,640,390]) {
+    await page.setViewportSize({width,height:1000});
+    const beats=await page.locator('#beats').boundingBox();
+    const subdivision=await page.locator('#subdivision').boundingBox();
+    const count=await page.locator('#count-in').boundingBox();
+    const accent=await page.locator('#accent').boundingBox();
+    expect(Math.abs(beats!.x-subdivision!.x)).toBeLessThan(1);
+    expect(Math.abs(beats!.width-subdivision!.width)).toBeLessThan(1);
+    expect(Math.abs(count!.x-accent!.x)).toBeLessThan(1);
+    expect(Math.abs((beats!.y+beats!.height/2)-(count!.y+count!.height/2))).toBeLessThan(1);
+    expect(Math.abs((subdivision!.y+subdivision!.height/2)-(accent!.y+accent!.height/2))).toBeLessThan(1);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  }
+});
+
+test('I–IV and jazz presets display their complete changes and scale guides during playback', async ({page}) => {
+  const errors:string[]=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button',{name:'Chord progression'}).click();
+  await page.locator('#chord').selectOption('min9');
+  await page.locator('#template').selectOption('oneFour2');
+  await expect(page.locator('#progression-strip>span')).toHaveCount(2);
+  await expect(page.locator('#progression-strip>span').nth(0)).toContainText('Cm9');
+  await expect(page.locator('#progression-strip>span').nth(1)).toContainText('Fm9');
+  await expect(page.locator('#chord-caption')).toHaveText('TWO BARS PER CHORD');
+  await page.locator('#template').selectOption('major251');
+  await expect(page.locator('#chord')).toBeHidden();
+  await expect(page.locator('#quality')).toBeHidden();
+  await expect(page.locator('#chord-name')).toHaveText('Dm7');
+  await expect(page.locator('#exercise-description')).toContainText('D Dorian');
+  await expect(page.locator('#progression-strip>span').nth(2)).toContainText('2 bars');
+  await page.locator('#bpm').fill('240');await page.locator('#bpm').blur();
+  await page.locator('#count-in').uncheck();
+  await page.getByRole('button',{name:'Start practicing'}).click();
+  await expect(page.locator('#chord-name')).toHaveText('G7',{timeout:5000});
+  await expect(page.locator('#exercise-description')).toContainText('G Mixolydian');
+  await expect(page.locator('#chord-name')).toHaveText('Cmaj7',{timeout:5000});
+  await page.locator('#template').selectOption('oneFour1');
+  await expect(page.locator('#progression-strip>span')).toHaveCount(2);
+  await expect(page.locator('#error')).toBeHidden();
+  await page.locator('#template').selectOption('minor251');
+  await expect(page.locator('#progression-strip>span').nth(0)).toContainText('Dm7♭5');
+  await expect(page.locator('#progression-strip>span').nth(1)).toContainText('G7♭9');
+  await page.locator('#template').selectOption('turnaround');
+  await expect(page.locator('#progression-strip>span').nth(3)).toContainText('A7');
+  await page.locator('#template').selectOption('jazzBlues');
+  await expect(page.locator('#progression-strip>span')).toHaveCount(12);
+  await page.getByRole('button',{name:'Stop practicing'}).click();
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Pedal chord'}).click();
+  await expect(page.locator('#quality')).toBeVisible();
+  await expect(page.locator('#chord')).toBeVisible();
+  expect(errors).toEqual([]);
+});

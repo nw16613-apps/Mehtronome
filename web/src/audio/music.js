@@ -110,12 +110,54 @@ export function pedalLabels(settings) {
 
 
 export const PROGRESSIONS = {
-  parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, roman: ['I','♭III','♭V','VI'] },
-  parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, roman: ['I','♭III','♭V','VI'] },
-  diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, roman: ['I','vi','IV','V'] },
+  parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
+  parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
+  oneFour1: { name: 'I–IV · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
+  oneFour2: { name: 'I–IV · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
+  major251: { name: 'Jazz major ii–V–I · 4 bars', bars: 1, kind: 'jazz', roman: ['ii7','V7','Imaj7'], steps: [
+    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'maj7', mode: 'major', bars: 2 },
+  ] },
+  minor251: { name: 'Jazz minor iiø–V–i · 4 bars', bars: 1, kind: 'jazz', roman: ['iiø7','V7♭9','i6'], steps: [
+    { root: 2, letter: 1, chord: 'halfDim', mode: 'locrian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7b9', mode: 'phrygian_dominant', bars: 1 },
+    { root: 0, letter: 0, chord: 'min6', mode: 'melodic_minor', bars: 2 },
+  ] },
+  turnaround: { name: 'Jazz ii–V–I–VI turnaround · 4 bars', bars: 1, kind: 'jazz', roman: ['ii7','V7','Imaj7','VI7'], steps: [
+    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'maj7', mode: 'major', bars: 1 },
+    { root: 9, letter: 5, chord: 'dom7', mode: 'phrygian_dominant', bars: 1 },
+  ] },
+  jazzBlues: { name: '12-bar jazz blues', bars: 1, kind: 'jazz', roman: ['I7','IV7','I7','I7','IV7','♯iv°7','I7','VI7','ii7','V7','I7','V7'], steps: [
+    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 5, letter: 3, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 5, letter: 3, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 6, letter: 3, chord: 'dim7', mode: 'ultralocrian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 9, letter: 5, chord: 'dom7', mode: 'phrygian_dominant', bars: 1 },
+    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+  ] },
+  diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['I','vi','IV','V'] },
 };
+export function progressionDurations(settings) {
+  const template = PROGRESSIONS[settings.template || 'parallel1'];
+  return template.kind === 'jazz' ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
+}
 export function progressionStep(settings, bar) {
-  return Math.floor(bar / PROGRESSIONS[settings.template || 'parallel1'].bars) % 4;
+  const durations = progressionDurations(settings);
+  let position = bar % durations.reduce((sum, duration) => sum + duration, 0);
+  for (let step = 0; step < durations.length; step++) {
+    if (position < durations[step]) return step;
+    position -= durations[step];
+  }
+  return 0;
 }
 const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
@@ -125,8 +167,11 @@ function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
   return letters[letter] + (accidental < 0 ? '♭'.repeat(-accidental) : '♯'.repeat(accidental));
 }
 export function harmonyAt(settings, step = 0) {
-  const mode = modeId(settings);
   const template = settings.template || 'parallel1';
+  const definition = PROGRESSIONS[template];
+  step = ((step % definition.roman.length) + definition.roman.length) % definition.roman.length;
+  const jazz = settings.progression && definition.kind === 'jazz' ? definition.steps[step] : null;
+  const mode = jazz ? jazz.mode : modeId(settings);
   if (settings.progression && template === 'diatonic') {
     const scale = MODES[mode].intervals;
     const degree = [0,5,3,4][step];
@@ -136,12 +181,12 @@ export function harmonyAt(settings, step = 0) {
     const third = midi[1] - midi[0];
     return { name: scaleNames[degree], suffix: third === 3 ? 'm' : 'maj', tones: degrees.map(i => scaleNames[i % 7]), midi,
       scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
-      roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
+      mode, roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
   }
-  const offset = settings.progression ? [0,3,6,9][step] : 0;
+  const offset = jazz ? jazz.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;
-  const name = settings.progression ? spellPitch(settings.key, [0,2,4,5][step], offset) : ROOT_NAMES[key];
-  const chordId = settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
+  const name = settings.progression ? spellPitch(settings.key, jazz ? jazz.letter : definition.letters[step], offset) : ROOT_NAMES[key];
+  const chordId = jazz ? jazz.chord : settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
   const chord = CHORDS[chordId];
   const scaleNames = modeNotes(key, mode, name);
   const scalePcs = MODES[mode].intervals.map(i => (key + i) % 12);
@@ -150,5 +195,5 @@ export function harmonyAt(settings, step = 0) {
   const tones = chord.intervals.map(interval => spellPitch(key, chordId === 'dim7' && interval === 9 ? 6 : chordDegrees[interval], interval, name));
 
   return { name, suffix: chord.symbol, tones, midi, scaleNames, scalePcs, chordPcs: midi.map(i => i % 12),
-    roman: settings.progression ? PROGRESSIONS[template].roman[step] : 'I' };
+    mode, roman: settings.progression ? definition.roman[step] : 'I' };
 }

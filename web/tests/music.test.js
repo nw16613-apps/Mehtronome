@@ -104,3 +104,39 @@ test('parallel root movement preserves all 33 chord types in every starting key'
   assert.deepEqual(harmonyAt(settings,2).tones, ['G♭','B♭','D♭','F']);
   assert.deepEqual(harmonyAt({...settings,chord:'minor'},2).tones, ['G♭','B♭♭','D♭']);
 });
+
+test('I–IV templates preserve all chord types and transpose to the fourth in every key', async () => {
+  const { harmonyAt, progressionStep } = await import('../src/audio/music.js');
+  for (const template of ['oneFour1','oneFour2']) for (const chord of Object.keys(CHORDS)) for (let key=0;key<12;key++) {
+    const settings = { key, chord, mode:'major', progression:true, template };
+    assert.deepEqual(harmonyAt(settings,0).midi, CHORDS[chord].intervals.map(n=>48+key+n));
+    assert.deepEqual(harmonyAt(settings,1).midi, CHORDS[chord].intervals.map(n=>48+(key+5)%12+n));
+    assert.equal(harmonyAt(settings,1).suffix,CHORDS[chord].symbol);
+  }
+  assert.equal(harmonyAt({key:8,chord:'maj7',progression:true,template:'oneFour1'},1).name,'D♭');
+  assert.deepEqual([0,1,2,3,4].map(bar=>progressionStep({template:'oneFour2'},bar)),[0,0,1,1,0]);
+});
+
+test('jazz changes use conventional chord qualities, tonal roots, and compatible scale guides', async () => {
+  const { PROGRESSIONS, harmonyAt, progressionDurations } = await import('../src/audio/music.js');
+  for (const template of ['major251','minor251','turnaround','jazzBlues']) {
+    const definition = PROGRESSIONS[template];
+    assert.equal(progressionDurations({template}).reduce((a,b)=>a+b),template==='jazzBlues'?12:4);
+    for (let key=0;key<12;key++) for(let step=0;step<definition.steps.length;step++) {
+      const harmony=harmonyAt({key,mode:'altered',chord:'fifth',progression:true,template},step);
+      const entry=definition.steps[step];
+      assert.deepEqual(harmony.midi,CHORDS[entry.chord].intervals.map(n=>48+(key+entry.root)%12+n));
+      assert.ok(harmony.chordPcs.every(pc=>harmony.scalePcs.includes(pc)));
+      assert.equal(harmony.mode,entry.mode);
+      assert.equal(harmony.tones.length,harmony.midi.length);
+    }
+  }
+  const settings={key:0,progression:true};
+  const names=template=>PROGRESSIONS[template].roman.map((_,step)=>{
+    const h=harmonyAt({...settings,template},step);return h.name+h.suffix;
+  });
+  assert.deepEqual(names('major251'),['Dm7','G7','Cmaj7']);
+  assert.deepEqual(names('minor251'),['Dm7♭5','G7♭9','Cm6']);
+  assert.deepEqual(names('turnaround'),['Dm7','G7','Cmaj7','A7']);
+  assert.deepEqual(names('jazzBlues'),['C7','F7','C7','C7','F7','F♯dim7','C7','A7','Dm7','G7','C7','G7']);
+});

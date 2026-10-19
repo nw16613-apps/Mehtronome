@@ -27,11 +27,19 @@ from a single sample clock, with smooth volume changes. It includes:
   augmented-major, altered dominant, dominant ♭9/♯11, diminished, and
   half-diminished ninth chords support the added minor modes.
 - Simple root-position chord selection, with the piano/drop voicing controls removed.
-- Chord progression templates for I–♭III–♭V–VI: one bar per chord or two bars
+- Chord progression templates for I–♭III–♭V–VI and I–IV: one bar per chord or two bars
   per chord. The selected chord type is kept on each root (for example, Cmaj7 →
-  E♭maj7 → G♭maj7 → Amaj7). All 33 chord types are available in progression
+  E♭maj7 → G♭maj7 → Amaj7). All 33 chord types are available in parallel-root progression
   mode, regardless of the scale selected. The displayed scale transposes to each
   chord root, while arpeggio view shows the actual current chord tones.
+- Jazz templates: major ii–V–I (ii7 / V7 / Imaj7 held for two bars), minor
+  iiø–V–i (iiø7 / V7♭9 / i6 held for two bars), a ii–V–I–VI7 turnaround
+  (one bar each), and a 12-bar jazz blues (one chord per bar). These set their
+  own chord qualities and a suggested scale guide for each chord; choose the
+  tonic key to transpose the entire progression. Jazz blues uses
+  I7 / IV7 / I7 / I7 / IV7 / ♯iv°7 / I7 / VI7 / ii7 / V7 / I7 / V7.
+- The pulse controls use shared columns so dropdowns and checkboxes align on
+  both desktop and phone layouts.
 - Dark mode, initially following the system preference, with a theme button that
   remembers your choice in this browser.
 - A sustained pedal chord, plus the original diatonic I–vi–IV–V
@@ -42,7 +50,7 @@ from a single sample clock, with smooth volume changes. It includes:
 For modal practice, start with Dorian + minor 13, Lydian + major 9 ♯11,
 Mixolydian + dominant 13, or Locrian + half-diminished 7. Try the characteristic
 mode degree against the sustained harmony. All modes support the new parallel-root templates. Additional mode-specific
-progression templates remain a future addition.
+progression templates and CAGED-style guitar reference diagrams remain future additions.
 
 Notes are visual guides for playing your own instrument, not automatic scale
 playback. Backing uses synthesized tones. Playback pauses when the page is hidden;

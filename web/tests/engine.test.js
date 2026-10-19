@@ -142,3 +142,19 @@ test('two-bar progression remains sample-identical across callback boundaries an
     assert.deepEqual(blocks,whole);
   }
 });
+
+test('two-chord and jazz loops play each chord for the specified bars, including tonic holds and full blues cycles', async () => {
+  const {harmonyAt}=await import('../src/audio/music.js');
+  const cases={oneFour1:[0,1],oneFour2:[0,0,1,1],major251:[0,1,2,2],minor251:[0,1,2,2],turnaround:[0,1,2,3],jazzBlues:[0,1,2,3,4,5,6,7,8,9,10,11]};
+  for(const [template,cycle] of Object.entries(cases)) for(const beats of [3,4,7]) {
+    const engine=new Engine(1200);
+    engine.configure({template,progression:true,key:2,chord:'min9',bpm:240,beats,countIn:true});
+    engine.reset();
+    const events=[];
+    engine.render(new Float32Array(300*beats*(cycle.length*2+1)),event=>{
+      if(!event.counting&&event.beat===0)events.push({step:event.step,frequencies:[...engine.frequencies]});
+    });
+    assert.deepEqual(events.map(e=>e.step),[...cycle,...cycle],template);
+    for(const event of events)assert.deepEqual(event.frequencies,harmonyAt(engine.settings,event.step).midi.map(n=>440*2**((n-69)/12)));
+  }
+});

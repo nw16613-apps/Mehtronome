@@ -1,7 +1,7 @@
 import './style.css';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, harmonyAt } from './audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 function modeOptions() {
@@ -22,8 +22,10 @@ app.innerHTML = `
       <div class="beat-dots" id="beat-dots" aria-hidden="true"></div>
       <p class="play-status" id="play-status" role="status">Your next good practice starts here.</p>
       <button class="play-button" id="play"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
+      <div class="pulse-options">
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in" checked>One-bar count-in</label></div>
       <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1">Quarter notes</option><option value="2">Eighth notes</option><option value="3">Eighth-note triplets</option><option value="4">Sixteenth notes</option><option value="6">Sixteenth-note sextuplets</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
+      </div>
     </section>
     <section class="harmony panel" aria-labelledby="harmony-title">
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
@@ -62,21 +64,26 @@ let stopping = false;
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
 function renderMusic() {
+  const template = PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS];
+  step = settings.progression ? step % template.roman.length : 0;
   const info = chordInfo(step);
   el('chord-name').innerHTML = `${info.name}<span>${info.suffix}</span>`;
   el('chord-notes').textContent = info.tones.join(' · ');
 
-  el('chord-caption').textContent = settings.progression ? (PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD') : 'LET IT RING';
+  const jazz = template.kind === 'jazz';
+  el('chord-caption').textContent = !settings.progression ? 'LET IT RING' : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
+  el('progression-strip').classList.toggle('blues', settings.template === 'jazzBlues');
   el('progression-strip').hidden = !settings.progression;
-  el('progression-strip').innerHTML = Array.from({ length: 4 }, (_, i) => {
+  el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
-    return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small></span>`;
+    return `<span class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</span>`;
   }).join('');
-  el('backing-description').textContent = settings.progression ? (settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : `The same chord type on I, ♭III, ♭V and VI. ${PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`) : 'One sustained chord. Explore how every note feels against it.';
+  el('backing-description').textContent = !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
+
   const arpeggio = select('exercise').value === 'arpeggio';
   const displayed = arpeggio ? info.tones : notes();
-  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[settings.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
-  el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[settings.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
+  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? 'chord tone' : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
+  el('exercise-description').textContent = arpeggio ? 'Current chord tones. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[info.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -90,8 +97,12 @@ function update() {
   settings.template = select('template').value;
   el('template-field').hidden = !settings.progression;
   const diatonic = settings.progression && settings.template === 'diatonic';
+  const jazz = settings.progression && PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].kind === 'jazz';
+  select('quality').parentElement!.hidden = jazz;
+  select('chord').parentElement!.hidden = jazz || diatonic;
+  el('mode-tip').hidden = jazz;
   select('chord').disabled = diatonic;
-  el('root-label').textContent = settings.progression ? 'Starting root' : 'Root note';
+  el('root-label').textContent = jazz ? 'Tonic key' : settings.progression ? 'Starting root' : 'Root note';
   el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
   settings.subdivision = Number(select('subdivision').value);
   settings.accent = input('accent').checked;
