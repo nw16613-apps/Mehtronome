@@ -45,6 +45,26 @@ from a single sample clock, with smooth volume changes. It includes:
   bundled CC0 recordings, decoded once before playback and cached in memory
   (about 153 KB of WAV assets). No third-party audio service or soundfont is needed.
   Sources, modifications and licenses: [sample credits](web/src/audio/samples/README.md).
+- **Practice presets**: name and save up to 50 setups in this browser, then load,
+  update/rename or delete them. Presets recall tempo, meter, harmony, mix, rhythm,
+  sequence, gap/loop settings and guitar display choices. Loading stops playback;
+  it never starts audio automatically. They persist across reloads through local
+  storage, so they are specific to this browser and can be removed by clearing
+  site data. Storage failures are shown without claiming a save succeeded.
+- **Gap training** in The pulse: choose 1/2/4/8 audible bars, then 1/2/4 gap bars.
+  Mute the click, backing or both. The clock, chords and musical patterns continue
+  through gaps, with short fades at the boundaries. Backing gaps also silence the
+  external reverb tail. The count-in and held chord previews are unaffected.
+- **Loop selected chords** in The harmony: choose inclusive start/end chords.
+  The loop retains each chord's original bar duration, can hold a single chord,
+  and can wrap across the end of a template. Excluded chords are dimmed but can
+  still be inspected/previewed while stopped. Selecting another template resets
+  the range to that whole progression and switches the range loop off.
+- **Modal colour notes**: optional dashed highlights on the note cards and all
+  five CAGED diagrams, plus spelled notes and degrees (for example Dorian's 6
+  and Lydian's ♯4). Covers all 21 modes and follows jazz scale changes. Root and
+  chord-tone fills stay visible beneath the highlight. In arpeggio view only
+  colour notes that are also part of the chord are shown.
 - 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
   sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,

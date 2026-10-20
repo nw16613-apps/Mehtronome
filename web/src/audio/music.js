@@ -155,14 +155,37 @@ export function progressionDurations(settings) {
   const template = PROGRESSIONS[settings.template || 'parallel1'];
   return template.kind === 'jazz' ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
 }
+// Inclusive ranges may cross the end of a template (for example V back to ii).
+export function progressionOrder(settings) {
+  const count = progressionDurations(settings).length;
+  if (!settings.loopEnabled) return Array.from({length:count}, (_, i) => i);
+  const bound = value => Math.max(0, Math.min(count - 1, Math.floor(Number(value) || 0)));
+  const start = bound(settings.loopStart), end = bound(settings.loopEnd);
+  return Array.from({length:(end - start + count) % count + 1}, (_, i) => (start + i) % count);
+}
 export function progressionStep(settings, bar) {
   const durations = progressionDurations(settings);
-  let position = bar % durations.reduce((sum, duration) => sum + duration, 0);
-  for (let step = 0; step < durations.length; step++) {
-    if (position < durations[step]) return step;
-    position -= durations[step];
+  const order = progressionOrder(settings);
+  let position = bar % order.reduce((sum, index) => sum + durations[index], 0);
+  for (const index of order) {
+    if (position < durations[index]) return index;
+    position -= durations[index];
   }
-  return 0;
+  return order[0];
+}
+export const CHARACTERISTIC_DEGREES = {
+  major:['3','7'], dorian:['6'], phrygian:['♭2'], lydian:['♯4'], mixolydian:['♭7'], minor:['♭6'], locrian:['♭2','♭5'],
+  melodic_minor:['6','7'], dorian_b2:['♭2','6'], lydian_augmented:['♯4','♯5'], lydian_dominant:['♯4','♭7'],
+  mixolydian_b6:['♭6','♭7'], locrian_natural2:['2','♭5'], altered:['♭2','♭3','♭5','♭6'],
+  harmonic_minor:['♭6','7'], locrian_natural6:['♭5','6'], ionian_sharp5:['♯5','7'], dorian_sharp4:['♯4','6'],
+  phrygian_dominant:['♭2','3','♭6'], lydian_sharp2:['♯2','♯4'], ultralocrian:['♭5','♭♭7'],
+};
+export function characteristicNotes(harmony) {
+  const mode = MODES[harmony.mode];
+  return CHARACTERISTIC_DEGREES[harmony.mode].map(degree => {
+    const index = mode.degrees.indexOf(degree);
+    return {degree, pc:harmony.scalePcs[index], name:harmony.scaleNames[index]};
+  });
 }
 const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {

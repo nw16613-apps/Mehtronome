@@ -5,11 +5,19 @@ import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
+  gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
+  loopEnabled:false, loopStart:0, loopEnd:3,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   sequence:false, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
 };
+export function gapAt(settings, bar) {
+  if (!settings.gapEnabled) return false;
+  const audible = Math.max(1,Math.min(16,Math.floor(Number(settings.gapPlayBars) || 4)));
+  const silent = Math.max(1,Math.min(16,Math.floor(Number(settings.gapMuteBars) || 1)));
+  return bar % (audible + silent) >= audible;
+}
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
 export const minor = [0, 2, 3, 5, 7, 8, 10];
@@ -28,6 +36,7 @@ export class Engine {
     this.voiceSmoothing = 1 - Math.exp(-1 / (rate * .15));
     this.blendSmoothing = 1 - Math.exp(-1 / (rate * .04));
     this.inverseRate = 1 / rate;
+    this.gapSlew = 1 / (rate * .005);
     this.reset();
   }
 
@@ -39,6 +48,8 @@ export class Engine {
 
   reset() {
     this.auditioning = false;
+    this.gapGain = 1;
+    this.gapMuted = false;
     this.sequence = new Sequence(this.rate);
     this.rhythm = new Rhythm(this.rate, this.drumKit);
     this.drumsLevel = 0;
@@ -108,6 +119,7 @@ export class Engine {
       this.sequence.lastGrid=this.beat>=this.remainingCount ? this.sequence.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
+    this.gapMuted = !this.auditioning && this.beat >= this.remainingCount && gapAt(s,bar);
     this.setChord(this.auditioning ? this.step : s.progression ? progressionStep(s, bar) : 0);
   }
 
@@ -129,7 +141,7 @@ export class Engine {
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
   }
 
-  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP) {
+  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
     const s = this.settings;
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
@@ -150,7 +162,8 @@ export class Engine {
         this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
         this.clickStrength = 1;
         this.lastSubdivision = 0;
-        onBeat({ counting, beat: this.beat % s.beats, bar: bar + 1, step });
+        this.gapMuted = !counting && gapAt(s, bar);
+        onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step });
       }
       const subdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
       if (!this.auditioning && subdivision !== this.lastSubdivision && subdivision > 0) {
@@ -250,10 +263,16 @@ export class Engine {
         this.echoIndex++;
         if (this.echoIndex === this.rate) this.echoIndex = 0;
       }
-      const backingSample=this.level*left;
-      const rightSample=this.level*right;
-      output[i] = (harmonyOutput ? clickSample : clickSample + backingSample) + (rhythmOutput ? 0 : rhythmSample);
-      if (rhythmOutput) rhythmOutput[i] = rhythmSample;
+      // Oscillators, echoes and progression clocks keep running through gaps.
+      const target = this.auditioning || !this.gapMuted ? 1 : 0;
+      this.gapGain = target ? Math.min(1,this.gapGain+this.gapSlew) : Math.max(0,this.gapGain-this.gapSlew);
+      const clickGate = s.gapTarget === 'backing' ? 1 : this.gapGain;
+      const backingGate = s.gapTarget === 'click' ? 1 : this.gapGain;
+      if (gapOutput) gapOutput[i] = backingGate;
+      const backingSample=this.level*left*backingGate;
+      const rightSample=this.level*right*backingGate;
+      output[i] = (harmonyOutput ? clickSample*clickGate : clickSample*clickGate + backingSample) + (rhythmOutput ? 0 : rhythmSample*backingGate);
+      if (rhythmOutput) rhythmOutput[i] = rhythmSample*backingGate;
       if (harmonyOutput) harmonyOutput[i] = backingSample;
       if (harmonyRight) harmonyRight[i] = rightSample;
       // Integer units avoid drift and preserve position when the tempo changes.

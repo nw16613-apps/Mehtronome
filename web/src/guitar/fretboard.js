@@ -1,3 +1,4 @@
+import { characteristicNotes } from '../audio/music.js';
 // Standard guitar tuning, low E to high E, in MIDI pitches.
 export const TUNING = [40,45,50,55,59,64];
 export const SHAPES = {
@@ -26,6 +27,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const rootPc = harmony.midi[0] % 12;
   const position = positionFor(rootPc, shape);
   const notes = [];
+  const colourPcs = characteristicNotes(harmony).map(note => note.pc);
   for (let string = 0; string < TUNING.length; string++) {
     for (let fret = position.start; fret <= position.end; fret++) {
       const midi = TUNING[string] + fret;
@@ -35,7 +37,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
       if (chordOnly ? chordIndex < 0 : scaleIndex < 0 && chordIndex < 0) continue;
       notes.push({ string, fret, midi, pc, root: pc === rootPc, chord: chordIndex >= 0, scale: scaleIndex >= 0,
         name: chordIndex >= 0 ? harmony.tones[chordIndex] : harmony.scaleNames[scaleIndex],
-        scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
+        characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
   }
   return { ...position, rootPc, notes };
@@ -43,7 +45,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
 function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
-export function diagramSvg(board, degrees, modeDegrees, title) {
+export function diagramSvg(board, degrees, modeDegrees, title, highlight = false) {
   const columns = board.end - board.start + 1;
   const spacing = 400 / columns;
   const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;
@@ -62,8 +64,9 @@ export function diagramSvg(board, degrees, modeDegrees, title) {
   });
   for (const note of board.notes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
+    const colour = highlight && note.characteristic;
     const kind = note.root ? 'root' : note.chord ? 'chord' : 'scale';
-    svg += `<g class="fret-note ${kind}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/><text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text></g>`;
+    svg += `<g class="fret-note ${kind}${highlight && note.characteristic ? ' characteristic' : ''}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="17"/>` : ''}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text></g>`;
   }
   return svg + '</svg>';
 }

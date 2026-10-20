@@ -1,3 +1,4 @@
+import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets } from './practice/presets.js';
 import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
@@ -6,7 +7,7 @@ import { DROP_TYPES, STRING_SETS, guitarVoicings, voicingSvg } from './guitar/vo
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 function modeOptions() {
@@ -19,6 +20,11 @@ app.innerHTML = `
 <header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><div class="theme-controls"><label class="theme-picker">Theme<select id="palette" aria-label="Page theme"><option value="light">Original light</option><option value="dark">Original dark</option><option value="midnight">Midnight Studio</option><option value="paper">Warm Paper</option><option value="plum">Plum Session</option><option value="slate">Slate Minimal</option></select></label><button id="theme" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">Dark mode</button></div></header>
 <main>
   <div class="intro"><div><p class="eyebrow">MAKE SPACE FOR PRACTICE</p><h1>Find your rhythm.<br><em>Hear the harmony.</em></h1></div><p class="intro-copy">Give your scales somewhere to go.<br>A steady pulse and a little harmonic context.</p></div>
+  <section class="presets panel" aria-labelledby="presets-title">
+    <div class="section-heading"><h2 id="presets-title">Practice presets</h2><span class="small-label">PICK UP WHERE YOU LEFT OFF</span></div>
+    <div class="preset-fields"><label>Preset name<input id="preset-name" type="text" maxlength="60" placeholder="e.g. D Dorian · slow groove"></label><button id="preset-save" class="practice-button">Save new</button><label>Saved setups<select id="preset-list"><option value="">Choose a preset</option></select></label><div class="preset-actions"><button id="preset-load" class="practice-button" disabled>Load</button><button id="preset-update" class="practice-button" disabled>Update</button><button id="preset-delete" class="practice-button" disabled>Delete</button></div></div>
+    <p id="preset-status" class="practice-help" role="status">Saved on this browser. Loading a preset stops playback.</p>
+  </section>
   <div class="workspace">
     <section class="transport panel" aria-labelledby="pulse-title">
       <div class="section-heading"><h2 id="pulse-title">The pulse</h2><span class="live-dot" id="live-dot"></span></div>
@@ -31,6 +37,7 @@ app.innerHTML = `
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in" checked>One-bar count-in</label></div>
       <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1">Quarter notes</option><option value="2">Eighth notes</option><option value="3">Eighth-note triplets</option><option value="4">Sixteenth notes</option><option value="6">Sixteenth-note sextuplets</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
       </div>
+      <div class="practice-block gap-training"><label class="check"><input id="gap-enabled" type="checkbox">Gap training</label><div id="gap-controls" hidden><div class="field-row"><label>Audible bars<select id="gap-play"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label><label>Gap bars<select id="gap-mute"><option>1</option><option>2</option><option>4</option></select></label></div><label class="template-field">Mute during gaps<select id="gap-target"><option value="all">Click + backing</option><option value="click">Click only</option><option value="backing">Backing only</option></select></label><p class="practice-help">Keep playing through the gap. The harmony and pulse continue underneath; the count-in stays audible.</p></div></div>
     </section>
     <section class="harmony panel" aria-labelledby="harmony-title">
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
@@ -42,10 +49,11 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${Object.entries(PROGRESSIONS).map(([id, template]) => `<option value="${id}">${template.name}</option>`).join('')}</select></label>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
+      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></div>
       <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><label class="check"><input id="audition" type="checkbox" checked>Sound preview</label><span id="preview-status" role="status" hidden>Release to stop</span></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
     </section>
-    <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
+    <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
     <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="sequence panel" aria-labelledby="sequence-title">
       <div class="section-heading"><h2 id="sequence-title">Melodic movement</h2><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
@@ -68,7 +76,7 @@ app.innerHTML = `
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p>
         <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees">Scale degrees</option></select></label></div>
-        <div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span></div>
+        <div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="guitar-guide"><p class="guitar-help">All five positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
@@ -93,6 +101,7 @@ const select = (id: string) => el<HTMLSelectElement>(id);
 let settings = { ...DEFAULTS, mode: 'major', chord: 'maj9' };
 let master: GainNode | undefined;
 let wet: GainNode | undefined;
+let reverbGate: GainNode | undefined;
 let reverb: ConvolverNode | undefined;
 let impulse: AudioBuffer | undefined;
 let playing = false;
@@ -113,25 +122,34 @@ function renderMusic() {
   const template = PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS];
   step = settings.progression ? step % template.roman.length : 0;
   const info = chordInfo(step);
+  const order = progressionOrder(settings);
+  el('loop-controls').hidden = !settings.progression;
+  el('loop-range').hidden = !settings.loopEnabled;
+  el('loop-summary').textContent = `${order.map((i: number) => { const c=chordInfo(i); return c.name+c.suffix; }).join(' → ')} · ${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)} bars. Original chord durations are kept.${settings.loopStart > settings.loopEnd ? ' Wraps across the end of the template.' : ''}`;
   el('chord-name').innerHTML = `${info.name}<span>${info.suffix}</span>`;
   el('chord-notes').textContent = info.tones.join(' · ');
 
   const jazz = template.kind === 'jazz';
-  el('chord-caption').textContent = !settings.progression ? 'LET IT RING' : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
+  el('chord-caption').textContent = !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = !settings.progression;
   el('preview-controls').hidden = !settings.progression;
   const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
-    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
+    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
   }).join('');
   if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
   el('backing-description').textContent = !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
+  const colour = characteristicNotes(info);
+  const highlight = input('highlight-mode').checked;
+  el('characteristic-notes').hidden = !highlight;
+  el('characteristic-notes').textContent = `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} colour notes: ${colour.map((n: any)=>`${n.name} (${n.degree})`).join(' · ')}. Listen to their character against the chord.`;
+  el('characteristic-legend').hidden = !highlight;
   const arpeggio = select('exercise').value === 'arpeggio';
   const displayed = arpeggio ? info.tones : notes();
-  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
+  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''} ${highlight && colour.some((c: any)=>c.pc === (arpeggio ? info.chordPcs[i] : info.scalePcs[i])) ? 'characteristic' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
   el('exercise-description').textContent = arpeggio ? 'Intervals are measured from the current chord root. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.name} ${MODES[info.mode as keyof typeof MODES].name}. The scale follows each chord root.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
   renderGuitar();
   renderVoicings();
@@ -143,7 +161,7 @@ function renderGuitar() {
   el('guitar-diagrams').innerHTML = POSITIONS.map(position => {
     const board = fretboardFor(info, position.shape, select('exercise').value === 'arpeggio');
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
-    return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title)}<p class="position-anchor">Root anchor: ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p></article>`;
+    return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked)}<p class="position-anchor">Root anchor: ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p></article>`;
   }).join('');
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
@@ -169,7 +187,18 @@ function renderVoicings() {
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
 }
+function fillLoopOptions(reset = false) {
+  const count = PROGRESSIONS[select('template').value as keyof typeof PROGRESSIONS].roman.length;
+  const start = reset ? 0 : Number(select('loop-start').value || 0);
+  const end = reset ? count-1 : Number(select('loop-end').value || 0);
+  const loopSettings = {...settings, key:Number(select('key').value), mode:select('quality').value, chord:select('chord').value, template:select('template').value, progression:true};
+  for (const [id,value] of [['loop-start',start],['loop-end',end]] as const) {
+    select(id).innerHTML = Array.from({length:count},(_,i)=>{const c=harmonyAt(loopSettings,i);return `<option value="${i}">${i+1}. ${c.name}${c.suffix} · ${c.roman}</option>`;}).join('');
+    select(id).value = String(Math.min(count-1,value));
+  }
+}
 function update() {
+  const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|');
   const previous = [settings.key, settings.mode, settings.chord, settings.template].join('|');
   settings.key = Number(select('key').value);
   settings.mode = select('quality').value;
@@ -196,7 +225,18 @@ function update() {
   input('sequence-swing').disabled = settings.sequenceRate===3;
   for(const name of ['density','swing','volume']) el(`sequence-${name}-value`).textContent = `${input(`sequence-${name}`).value}%`;
   if(settings.sequenceRate===3) el('sequence-swing-value').textContent='Straight triplets';
+  const newTemplate = settings.template !== select('template').value;
+  fillLoopOptions(newTemplate || !select('loop-start').options.length);
   settings.template = select('template').value;
+  if (newTemplate) input('loop-enabled').checked = false;
+  settings.loopEnabled = input('loop-enabled').checked;
+  settings.loopStart = Number(select('loop-start').value);
+  settings.loopEnd = Number(select('loop-end').value);
+  settings.gapEnabled = input('gap-enabled').checked;
+  settings.gapPlayBars = Number(select('gap-play').value);
+  settings.gapMuteBars = Number(select('gap-mute').value);
+  settings.gapTarget = select('gap-target').value;
+  el('gap-controls').hidden = !settings.gapEnabled;
   el('template-field').hidden = !settings.progression;
   const diatonic = settings.progression && settings.template === 'diatonic';
   const jazz = settings.progression && PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].kind === 'jazz';
@@ -215,6 +255,7 @@ function update() {
   el('click-value').textContent = `${Math.round(settings.click * 100)}%`;
   el('harmony-value').textContent = `${Math.round(settings.harmony * 100)}%`;
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
+  if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
   node?.port.postMessage({ type: 'settings', settings });
   el('space-value').textContent = `${input('space').value}%`;
   if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
@@ -234,6 +275,7 @@ function reflectPlayback() {
   el('live-dot').classList.toggle('on', playing);
   select('beats').disabled = input('count-in').disabled = playing;
   if (!playing) { renderBeats(); el('play-status').textContent = 'Take a breath. Start again when you’re ready.'; }
+  reflectPresetButtons();
 }
 async function stop() {
   if (!playing || stopping) return;
@@ -245,6 +287,7 @@ async function stop() {
   await new Promise(resolve => setTimeout(resolve, 250));
   await context?.suspend();
   stopping = false;
+  reflectPresetButtons();
 }
 function stopPreview() {
   previewGeneration++;
@@ -265,7 +308,7 @@ async function prepareAudio() {
     let kit: Record<string, Float32Array>;
     try { kit = await loadDrumKit(context); }
     catch (error) { await context.close(); throw error; }
-    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 3, outputChannelCount: [2, 2, 2] });
+    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 4, outputChannelCount: [2, 2, 2, 1] });
     node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));
     master = context.createGain();
     master.gain.value = 0;
@@ -286,11 +329,15 @@ async function prepareAudio() {
     }
     wet = context.createGain();
     wet.gain.value = Number(input('space').value) / 100 * .65;
+    reverbGate = context.createGain();
+    reverbGate.gain.value = 0;
+    node.connect(reverbGate.gain,3);
+    wet.connect(reverbGate).connect(master);
     node.port.onmessage = ({ data }) => {
       if (!playing) return;
       if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
       renderBeats(data.beat);
-      el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `Playing · Bar ${data.bar} · Beat ${data.beat + 1}`;
+      el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
       if (step !== data.step) { step = data.step; renderMusic(); }
     };
     node.onprocessorerror = () => {
@@ -317,7 +364,7 @@ async function prepareAudio() {
   reverb = context.createConvolver();
   reverb.buffer = impulse!;
   node!.connect(reverb, 1);
-  reverb.connect(wet!).connect(master!);
+  reverb.connect(wet!);
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
 async function previewChord(index: number, hold: string) {
@@ -391,12 +438,13 @@ async function toggle() {
   if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
   busy = true;
+  reflectPresetButtons();
   el<HTMLButtonElement>('play').disabled = true;
   el('error').hidden = true;
   try {
     stopPreview();
     await prepareAudio();
-    step = 0;
+    step = settings.progression ? progressionStep(settings,0) : 0;
     playing = true;
     node!.port.postMessage({ type: 'start', settings });
     renderMusic();
@@ -410,7 +458,7 @@ async function toggle() {
     await context?.close().catch(() => {});
     context = undefined;
     node = undefined;
-  } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; }
+  } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; reflectPresetButtons(); }
 }
 
 for (const id of ['voicing-type','voicing-strings','voicing-labels']) select(id).addEventListener('input', renderVoicings);
@@ -422,7 +470,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -482,3 +530,94 @@ function applyTheme(palette: string) {
 select('palette').addEventListener('input', () => applyTheme(select('palette').value));
 el('theme').addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 reflectTheme();
+
+type PracticePreset = {id:string; name:string; progression:boolean; controls:Record<string,string | boolean>};
+let presets: PracticePreset[] = [];
+try { presets = readPresets(localStorage.getItem(PRESET_KEY)); }
+catch { el('preset-status').textContent = 'Saved presets are unavailable. Browser storage may be disabled or the saved data could not be read.'; }
+function renderPresets(selected = '') {
+  select('preset-list').replaceChildren(new Option('Choose a preset',''),...presets.map(p => new Option(p.name,p.id)));
+  select('preset-list').value = selected;
+  reflectPresetButtons();
+}
+function reflectPresetButtons() {
+  const selected = presets.some(p => p.id === select('preset-list').value);
+  for (const id of ['preset-load','preset-update','preset-delete']) el<HTMLButtonElement>(id).disabled = !selected || busy || stopping;
+}
+function snapshotPreset(id: string = crypto.randomUUID()) {
+  const name = input('preset-name').value.trim().slice(0,60);
+  if (!name) throw new Error('Give your preset a name first.');
+  const controls = Object.fromEntries(PRESET_CONTROLS.map(key => {
+    const control = el<HTMLInputElement | HTMLSelectElement>(key);
+    return [key,control instanceof HTMLInputElement && control.type === 'checkbox' ? control.checked : control.value];
+  }));
+  return {id,name,controls,progression:settings.progression};
+}
+function persistPresets(next: typeof presets, selected: string, message: string) {
+  try {
+    writePresets(localStorage,next);
+    presets = next;
+    renderPresets(selected);
+    el('preset-status').textContent = message;
+  } catch (error) {
+    el('preset-status').textContent = error instanceof Error && error.message.includes('50 presets') ? error.message : 'Could not save changes. Browser storage may be full or disabled.';
+  }
+}
+select('preset-list').addEventListener('change',()=>{
+  const preset = presets.find(p => p.id === select('preset-list').value);
+  if (preset) input('preset-name').value = preset.name;
+  reflectPresetButtons();
+});
+for (const action of ['save','update']) el(`preset-${action}`).addEventListener('click',()=>{
+  try {
+    const id = action === 'update' ? select('preset-list').value : crypto.randomUUID();
+    const preset = snapshotPreset(id);
+    const next = action === 'update' ? presets.map(p => p.id === id ? preset : p) : [...presets,preset];
+    persistPresets(next,id,`Saved “${preset.name}” on this browser.`);
+  } catch (error) { el('preset-status').textContent = (error as Error).message; input('preset-name').focus(); }
+});
+el('preset-delete').addEventListener('click',()=>{
+  const id = select('preset-list').value;
+  persistPresets(presets.filter(p => p.id !== id),'','Preset deleted.');
+});
+function restoreControl(id: string, value: unknown) {
+  const control = el<HTMLInputElement | HTMLSelectElement>(id);
+  if (control instanceof HTMLSelectElement) {
+    if (typeof value === 'string' && Array.from(control.options).some(option => option.value === value && !option.disabled)) control.value = value;
+  } else if (control.type === 'checkbox') {
+    if (typeof value === 'boolean') control.checked = value;
+  } else if (typeof value === 'string' && Number.isFinite(Number(value))) {
+    const number = Number(value);
+    control.value = String(Math.max(Number(control.min),Math.min(Number(control.max),number)));
+  }
+}
+el('preset-load').addEventListener('click',async()=>{
+  const preset = presets.find(p => p.id === select('preset-list').value);
+  if (!preset || busy || stopping) return;
+  busy = true;
+  reflectPresetButtons();
+  try {
+    stopPreview();
+    if (playing) await stop();
+    restoreControl('quality',preset.controls.quality);
+    restoreControl('key',preset.controls.key);
+    restoreControl('template',preset.controls.template);
+    settings.progression = preset.progression;
+    for (const id of ['pedal','progression']) {
+      const selected = (id === 'progression') === settings.progression;
+      el(id).classList.toggle('selected',selected);
+      el(id).setAttribute('aria-pressed',String(selected));
+    }
+    fillChords();
+    for (const id of PRESET_CONTROLS) if (!['quality','key','template','loop-enabled','loop-start','loop-end','voicing-strings'].includes(id)) restoreControl(id,preset.controls[id]);
+    tempo(Number(input('bpm').value));
+    guitarDegrees = select('fret-labels').value === 'degrees';
+    step = 0;
+    update();
+    for (const id of ['loop-enabled','loop-start','loop-end','voicing-strings']) restoreControl(id,preset.controls[id]);
+    update();
+    input('preset-name').value = preset.name;
+    el('preset-status').textContent = `Loaded “${preset.name}”. Ready to practice.`;
+  } finally { busy = false; reflectPresetButtons(); }
+});
+renderPresets();
