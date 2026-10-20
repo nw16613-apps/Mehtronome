@@ -20,6 +20,7 @@ function table(partials, limit) {
   return values;
 }
 export const SINE = table([1], 1);
+export const BASS_WAVE = table([1, .3, .12, .04], 4);
 export const SEQUENCE_WAVE = table([1, .18, .05], 3);
 export const WAVES = Object.fromEntries(Object.entries(SOUNDS).map(([id, sound]) => [
   id, BANDS.map(limit => table(sound.partials || [1, ...sound.harmonics], limit)),

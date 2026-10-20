@@ -1,10 +1,12 @@
 import { WAVES, readWave, bandFor } from './waves.js';
+import { Rhythm } from './rhythm.js';
 import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
+  drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   sequence:false, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
 };
@@ -32,6 +34,9 @@ export class Engine {
   reset() {
     this.auditioning = false;
     this.sequence = new Sequence(this.rate);
+    this.rhythm = new Rhythm(this.rate);
+    this.drumsLevel = 0;
+    this.bassLevel = 0;
     this.sequenceLevel = 0;
     this.echoLeft = this.echoLeft || new Float32Array(this.rate);
     this.echoRight = this.echoRight || new Float32Array(this.rate);
@@ -70,6 +75,7 @@ export class Engine {
   }
 
   configure(settings) {
+    const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousGroove=this.settings.drumGroove;
     const previousSound=this.settings.sound;
     const previousSequenceRate=this.settings.sequenceRate;
     const previousSwing=this.settings.sequenceSwing;
@@ -82,6 +88,11 @@ export class Engine {
       this.waveCurrent = WAVES[s.sound] || WAVES.warm;
       this.soundBlend = 0;
       this.echoLeft.fill(0); this.echoRight.fill(0);
+    }
+    if (!previousDrums && s.drums) this.rhythm.clearDrums();
+    if (!previousBass && s.bass) this.rhythm.clearBass();
+    if (previousDrums!==s.drums || previousBass!==s.bass || previousGroove!==s.drumGroove) {
+      this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
@@ -111,7 +122,7 @@ export class Engine {
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
   }
 
-  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP) {
+  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP) {
     const s = this.settings;
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
@@ -155,6 +166,12 @@ export class Engine {
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render();
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
+      const rhythmActive=backingActive && !this.auditioning;
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm);
+      this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
+      this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
+      this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
+      const rhythmSample=this.level*(.28*this.drumsLevel*this.rhythm.drums+.2*this.bassLevel*this.rhythm.bass);
       // Control-rate updates are independent of callback block boundaries.
       // Interpolate their results per sample to avoid audible stepping.
       if ((this.age & 31) === 0) {
@@ -228,7 +245,8 @@ export class Engine {
       }
       const backingSample=this.level*left;
       const rightSample=this.level*right;
-      output[i] = harmonyOutput ? clickSample : clickSample + backingSample;
+      output[i] = (harmonyOutput ? clickSample : clickSample + backingSample) + (rhythmOutput ? 0 : rhythmSample);
+      if (rhythmOutput) rhythmOutput[i] = rhythmSample;
       if (harmonyOutput) harmonyOutput[i] = backingSample;
       if (harmonyRight) harmonyRight[i] = rightSample;
       // Integer units avoid drift and preserve position when the tempo changes.

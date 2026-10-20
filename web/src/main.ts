@@ -2,6 +2,7 @@ import './style.css';
 import './themes.css';
 import { POSITIONS, fretboardFor, diagramSvg } from './guitar/fretboard.js';
 import { DROP_TYPES, STRING_SETS, guitarVoicings, voicingSvg } from './guitar/voicings.js';
+import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, harmonyAt } from './audio/music.js';
@@ -51,6 +52,14 @@ app.innerHTML = `
       <div id="sequence-controls" hidden>
         <div class="field-row"><label>Pattern<select id="sequence-pattern"><option value="sparse">Sparse melody</option><option value="pulse">Root pulse</option><option value="up">Ascending arpeggio</option><option value="down">Descending arpeggio</option><option value="updown">Up & down arpeggio</option></select></label><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label></div>
         <div class="sequence-sliders"><label class="volume-label" for="sequence-density">Density <output id="sequence-density-value">65%</output></label><input id="sequence-density" type="range" min="0" max="100" value="65"><label class="volume-label" for="sequence-swing">Swing <output id="sequence-swing-value">0%</output></label><input id="sequence-swing" type="range" min="0" max="60" value="0"><label class="volume-label" for="sequence-volume">Sequence volume <output id="sequence-volume-value">25%</output></label><input id="sequence-volume" type="range" min="0" max="100" value="25"></div>
+      </div>
+    </section>
+    <section class="rhythm panel" aria-labelledby="rhythm-title">
+      <div class="section-heading"><h2 id="rhythm-title">Drums & bass</h2><span class="small-label">BUILD YOUR BACKING</span></div>
+      <p class="sequence-help">Follows your tempo, beats per bar and chord changes. Starts after the count-in; chord previews stay sustained.</p>
+      <div class="field-row rhythm-instruments">
+        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="drums" type="checkbox">Drums</label><div id="drums-controls" hidden><label>Groove<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label class="volume-label" for="drums-volume">Drums volume <output id="drums-volume-value">35%</output></label><input id="drums-volume" type="range" min="0" max="100" value="35"></div></div>
+        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label><div id="bass-controls" hidden><label>Pattern<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label class="volume-label" for="bass-volume">Bass volume <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40"></div></div>
       </div>
     </section>
     <section class="guitar panel" aria-labelledby="guitar-title">
@@ -166,6 +175,16 @@ function update() {
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
   settings.sound = select('sound').value;
+  settings.drums=input('drums').checked;
+  settings.bass=input('bass').checked;
+  settings.drumGroove=select('drum-groove').value;
+  settings.bassPattern=select('bass-pattern').value;
+  settings.drumsVolume=Number(input('drums-volume').value)/100;
+  settings.bassVolume=Number(input('bass-volume').value)/100;
+  for(const name of ['drums','bass']) {
+    el(`${name}-controls`).hidden=!input(name).checked;
+    el(`${name}-volume-value`).textContent=`${input(`${name}-volume`).value}%`;
+  }
   settings.sequence = input('sequence').checked;
   settings.sequencePattern = select('sequence-pattern').value;
   settings.sequenceRate = Number(select('sequence-rate').value);
@@ -242,12 +261,13 @@ async function prepareAudio() {
     context = new AudioContext({ latencyHint: 'balanced', sampleRate: 48000 });
     reverb = undefined;
     await context.audioWorklet.addModule(workletUrl);
-    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 2, outputChannelCount: [2, 2] });
+    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 3, outputChannelCount: [2, 2, 2] });
     master = context.createGain();
     master.gain.value = 0;
     master.connect(context.destination);
     node.connect(master, 0); // Click stays dry and rhythmically clear.
     node.connect(master, 1);
+    node.connect(master, 2); // Drums and bass bypass pad reverb and echoes.
     impulse = context.createBuffer(2, Math.ceil(context.sampleRate * 3.5), context.sampleRate);
     let seed = 42;
     for (let channel = 0; channel < 2; channel++) {
@@ -397,7 +417,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';

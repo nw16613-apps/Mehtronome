@@ -8,7 +8,8 @@ for (const rate of [44100, 48000, 96000]) {
   for (const sound of ['bloom', 'strings', 'atmosphere']) {
     const engine = new Engine(rate);
     engine.configure({sound, mode:'lydian', chord:'maj9sharp11', countIn:false,
-      sequence:true, sequenceRate:4, sequenceDensity:1, sequenceVolume:1});
+      sequence:true, sequenceRate:4, sequenceDensity:1, sequenceVolume:1,
+      drums:true, drumsVolume:1, bass:true, bassVolume:1, bassPattern:'walk'});
     engine.reset();
     const click = new Float32Array(128);
     const left = new Float32Array(128), right = new Float32Array(128);

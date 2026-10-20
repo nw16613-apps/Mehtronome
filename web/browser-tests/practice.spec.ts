@@ -625,3 +625,54 @@ test('evolving sounds produce stereo audio and the optional sequencer works inde
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('drums and bass have independent controls and reach the speakers through their dry bus',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{
+    const Original=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Original{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);
+        const dry=context.createAnalyser(),pad=context.createAnalyser();
+        this.connect(dry,2);this.connect(pad,1);
+        (window as any).__bandAudio={dry,pad};
+        const originalGain=context.createGain.bind(context);let count=0;
+        context.createGain=()=>{
+          const gain=originalGain();
+          if(count++===0){const master=context.createAnalyser();gain.connect(master);(window as any).__bandAudio.master=master;}
+          return gain;
+        };
+      }
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('#drums')).not.toBeChecked();await expect(page.locator('#bass')).not.toBeChecked();
+  await expect(page.locator('#drums-controls')).toBeHidden();await expect(page.locator('#bass-controls')).toBeHidden();
+  await page.locator('#click').fill('0');await page.locator('#harmony').fill('0');await page.locator('#count-in').uncheck();
+  await page.locator('#drums').check();await expect(page.locator('#drums-controls')).toBeVisible();
+  await page.locator('#play').click();await expect(page.locator('#play-status')).toContainText('Playing');
+  const peak=(bus:string)=>page.evaluate(bus=>{
+    const analyser=(window as any).__bandAudio[bus] as AnalyserNode;
+    const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);
+    return Math.max(...samples.map(Math.abs));
+  },bus);
+  await expect.poll(()=>peak('master')).toBeGreaterThan(.005);
+  await expect.poll(()=>peak('dry')).toBeGreaterThan(.005);
+  expect(await peak('pad')).toBe(0);
+  await page.locator('#drums-volume').fill('0');await expect.poll(()=>peak('master')).toBeLessThan(.0001);
+  await page.locator('#bass').check();await expect(page.locator('#bass-controls')).toBeVisible();
+  await page.locator('#bass-volume').fill('70');
+  await expect.poll(()=>peak('master')).toBeGreaterThan(.005);
+  for(const pattern of ['fifths','walk','roots'])await page.locator('#bass-pattern').selectOption(pattern);
+  await page.locator('#drums-volume').fill('40');
+  for(const groove of ['shuffle','swing','halftime','straight'])await page.locator('#drum-groove').selectOption(groove);
+  await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
+  await page.locator('#play').click();await page.waitForTimeout(300);
+  await page.locator('#progression-strip>button').nth(1).hover();await page.mouse.down();
+  await expect(page.locator('#preview-status')).toBeVisible();
+  await expect.poll(()=>peak('dry')).toBeLessThan(.0001);
+  await page.mouse.up();
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});

@@ -31,6 +31,13 @@ from a single sample clock, with smooth volume changes. It includes:
   and triplets share the metronome's sample clock. Density, swing amount and
   sequence volume are independent controls; triplets stay straight. Sequences
   respect the count-in, follow every chord change and stay off during held previews.
+- Optional **Drums & bass**, both off by default, with independent switches and
+  volume controls. Drums offer straight eighths, shuffle, swing ride and half-time
+  grooves; bass offers root pulses, root-and-fifth and a chord-tone walk. Patterns
+  adapt to beats per bar, share the sample clock, respect the count-in and follow
+  the current chord. Both stay silent during held chord previews. Drums and bass
+  have a separate dry output, bypassing pad reverb and echoes. Drum samples are
+  synthesized and cached locally; no downloads, soundfonts or extra permissions.
 - 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
   sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,
@@ -142,8 +149,8 @@ Chromium exists it is used; set `CHROMIUM_PATH` to override its location. On Lin
 Playwright may require `npx playwright install --with-deps chromium`.
 
 For audio performance work, run `npm run bench:audio` from `web/`. It measures
-128-sample render blocks at 44.1, 48 and 96 kHz with six chord voices and a dense
-sequencer, reporting mean/p95/p99 times against each block's deadline. It measures
+128-sample render blocks at 44.1, 48 and 96 kHz with six chord voices, a dense
+sequencer, drums and bass, reporting mean/p95/p99 times against each block's deadline. It measures
 the synth only; browser scheduling, reverb and output-device costs are additional.
 Compare runs on the same machine without concurrent builds.
 
