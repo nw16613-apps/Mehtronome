@@ -9,8 +9,9 @@ export const SHAPES = {
     // and the A-string root anchor.
     stringWindows: [[0,3],[-1,3],[-1,3],[-1,3],[0,4],[0,4]] },
   G: { tonic: 7, rootString: 0, rootOffset: 3, leadIn: 1, span: 5,
-    // Shift the D string's far-edge note onto the G string at the same pitch.
-    stringWindows: [[-3,1],[-3,1],[-3,0],[-4,1],[-3,1],[-3,1]] },
+    // Shift the D string's far-edge note onto the G string at the same pitch,
+    // and end the G string before its far-edge extension.
+    stringWindows: [[-3,1],[-3,1],[-3,0],[-4,0],[-3,1],[-3,1]] },
   E: { tonic: 4, rootString: 0, rootOffset: 0, leadIn: 1 },
   D: { tonic: 2, rootString: 2, rootOffset: 0, leadIn: 1 },
 };

@@ -138,13 +138,14 @@ test('G-form C-major B moves from D-string fret nine to G-string fret four',()=>
     const board=fretboardFor(info,'G',chordOnly);
     assert.equal(board.start,4);assert.equal(board.end,9);assert.equal(board.rootFret,8);
     assert.ok(!board.notes.some(n=>n.string===2&&n.fret===9));
+    assert.ok(!board.notes.some(n=>n.string===3&&n.fret===9));
     const note=board.notes.find(n=>n.string===3&&n.fret===4);
     assert.equal(note?.name,'B');assert.equal(note.midi,59);assert.ok(note.chord&&note.characteristic);
     assert.equal(board.notes.find(n=>n.string===2&&n.fret===7)?.name,chordOnly?undefined:'A');
   }
 });
 
-test('G-form relocation preserves every pitch across modes and keys without open strings',()=>{
+test('G-form relocation and shorter G-string boundary transpose across modes and keys without open strings',()=>{
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'G',chordOnly);
     const expected=[];
@@ -152,6 +153,9 @@ test('G-form relocation preserves every pitch across modes and keys without open
       const midi=tuning+fret,pc=midi%12;
       if(chordOnly?info.chordPcs.includes(pc):info.chordPcs.includes(pc)||info.scalePcs.includes(pc))expected.push(midi);
     }
+    const endpoint=expected.indexOf(TUNING[3]+board.rootFret+1);
+    if(endpoint>=0)expected.splice(endpoint,1);
+    assert.ok(!board.notes.some(n=>n.string===3&&n.fret===board.rootFret+1));
     assert.deepEqual(board.notes.map(n=>n.midi).sort((a,b)=>a-b),expected.sort((a,b)=>a-b));
     assert.ok(board.notes.every(n=>n.fret>=board.start&&n.fret<=board.end&&n.fret>0));
     assert.ok(!board.notes.some(n=>n.string===2&&n.fret===board.rootFret+1));
