@@ -1,5 +1,6 @@
 import { recommendedGrip } from './guitar/grips.js';
 import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets } from './practice/presets.js';
+import { SEQUENCE_PATTERNS } from './audio/sequence.js';
 import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
@@ -68,9 +69,9 @@ app.innerHTML = `
     </section>
     <section class="sequence mix-group" aria-labelledby="sequence-title">
       <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
-      <p class="sequence-help">A quiet chord-tone pattern, locked to the pulse and current harmony. Chord previews stay sustained.</p>
+      <p id="sequence-help" class="sequence-help">A quiet chord-tone pattern, locked to the pulse and current harmony.</p>
       <div id="sequence-controls" hidden>
-        <div class="field-row"><label>Pattern<select id="sequence-pattern"><option value="sparse">Sparse melody</option><option value="pulse">Root pulse</option><option value="up">Ascending arpeggio</option><option value="down">Descending arpeggio</option><option value="updown">Up & down arpeggio</option></select></label><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label></div>
+        <div class="field-row"><label>Pattern<select id="sequence-pattern">${Object.entries(SEQUENCE_PATTERNS).map(([id,pattern])=>`<option value="${id}">${pattern.name}</option>`).join('')}</select></label><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label></div>
         <div class="sequence-sliders"><label class="volume-label" for="sequence-density">Density <output id="sequence-density-value">65%</output></label><input id="sequence-density" type="range" min="0" max="100" value="65"><label class="volume-label" for="sequence-swing">Swing <output id="sequence-swing-value">0%</output></label><input id="sequence-swing" type="range" min="0" max="60" value="0"><label class="volume-label" for="sequence-volume">Sequence volume <output id="sequence-volume-value">25%</output></label><input id="sequence-volume" type="range" min="0" max="100" value="25"></div>
       </div>
     </section>
@@ -240,6 +241,7 @@ function update() {
   }
   settings.sequence = input('sequence').checked;
   settings.sequencePattern = select('sequence-pattern').value;
+  el('sequence-help').textContent = `${SEQUENCE_PATTERNS[settings.sequencePattern as keyof typeof SEQUENCE_PATTERNS].help} Follows the current chord; Timing sets the step length.`;
   settings.sequenceRate = Number(select('sequence-rate').value);
   settings.sequenceSwing = Number(input('sequence-swing').value)/100;
   settings.sequenceDensity = Number(input('sequence-density').value)/100;

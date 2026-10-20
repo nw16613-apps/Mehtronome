@@ -51,3 +51,21 @@ test('voicings start on the highest strings and all backing controls share the m
     }
   }
 });
+
+test('new melodic patterns play, describe their movement and restore from presets',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');await page.locator('#sequence').check();
+  await page.locator('#play').click();await expect(page.locator('#play-status')).toContainText('Playing');
+  for(const pattern of ['rootColours','alberti','skips','cascade','offbeat','tresillo','clave','wander']){
+    await page.locator('#sequence-pattern').selectOption(pattern);
+    await expect(page.locator('#sequence-help')).toContainText('Follows the current chord');
+    await expect(page.locator('#error')).toBeHidden();
+  }
+  await page.locator('#play').click();
+  await page.locator('#preset-name').fill('Wandering Dorian');await page.locator('#preset-save').click();
+  await page.locator('#sequence-pattern').selectOption('pulse');
+  await page.locator('#preset-load').click();
+  await expect(page.locator('#sequence-pattern')).toHaveValue('wander');
+  await expect(page.locator('#sequence-help')).toContainText('repeatable');
+  expect(errors).toEqual([]);
+});

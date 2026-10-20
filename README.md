@@ -32,7 +32,10 @@ from a single sample clock, with smooth volume changes. It includes:
   band-limited waveforms and interpolated control-rate modulation to reduce
   work on the audio thread; the sequencer uses cached decay envelopes.
 - Optional **Melodic movement**, off by default: sparse melody, root pulse,
-  ascending, descending or up/down chord-tone arpeggios. Eighth notes, sixteenths
+  ascending, descending or up/down chord-tone arpeggios, root & colours, Alberti
+  figures, skipping arpeggios, descending cascades, offbeat answers, 3–3–2 ostinatos,
+  3–2 clave melodies and repeatable wandering chord tones. Each pattern has an
+  on-screen description. Eighth notes, sixteenths
   and triplets share the metronome's sample clock. Density, swing amount and
   sequence volume are independent controls; triplets stay straight. Sequences
   respect the count-in, follow every chord change and stay off during held previews.

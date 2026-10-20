@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {SEQUENCE_PATTERNS,sequenceStep} from '../src/audio/sequence.js';
 import {Engine} from '../src/audio/engine.js';
 import {harmonyAt} from '../src/audio/music.js';
 
@@ -23,13 +24,13 @@ test('sequence subdivisions and swing use exact sample-clock boundaries',()=>{
 });
 
 test('all sequence patterns follow the current chord, respect count-in and are silent during chord previews',()=>{
-  for(const pattern of ['pulse','up','down','updown','sparse']){
+  for(const pattern of Object.keys(SEQUENCE_PATTERNS)){
     const engine=setup({countIn:true,progression:true,template:'major251',sequencePattern:pattern});
     const notes=[];const output=new Float32Array(8000*12);
     engine.render(output,()=>{},null,null,note=>notes.push(note));
     assert.ok(output.subarray(0,16000).every(x=>x===0));
     assert.ok(notes.length>4);
-    assert.equal(notes[0].sample,16000);
+    assert.ok(notes[0].sample>=16000 && notes[0].sample<20000);
     for(const note of notes)assert.ok(harmonyAt(engine.settings,note.step).midi.includes(note.midi-12));
     assert.ok(notes.some(n=>n.step===1));
     engine.audition(1);const previews=[];
@@ -70,4 +71,31 @@ test('enabling a sequence mid-beat waits for the next subdivision',()=>{
   engine.configure({sequence:true});
   engine.render(new Float32Array(3000),()=>{},null,null,note=>notes.push(note));
   assert.deepEqual(notes.map(n=>n.sample),[2000,4000]);
+});
+
+
+test('new melodic contours and rhythmic rests form distinct, repeatable phrases',()=>{
+  const phrase=pattern=>Array.from({length:16},(_,grid)=>sequenceStep(pattern,grid,4,2)?.index??null);
+  assert.deepEqual(phrase('rootColours').slice(0,8),[0,1,0,2,0,3,0,1]);
+  assert.deepEqual(phrase('alberti').slice(0,8),[0,3,1,3,0,3,1,3]);
+  assert.deepEqual(phrase('skips').slice(0,8),[0,2,1,3,2,0,3,1]);
+  assert.deepEqual(phrase('cascade').slice(0,8),[3,2,1,0,2,1,0,3]);
+  assert.deepEqual(phrase('offbeat').slice(0,8),[null,0,null,1,null,2,null,3]);
+  assert.deepEqual(phrase('tresillo').slice(0,8),[0,null,null,1,null,null,3,null]);
+  assert.deepEqual(phrase('clave'),[0,null,null,2,null,null,1,null,null,null,3,null,1,null,null,null]);
+  assert.deepEqual(phrase('wander'),phrase('wander'));
+  assert.ok(phrase('wander').includes(null));
+  for(const pattern of Object.keys(SEQUENCE_PATTERNS))for(const length of [1,2,3,4,6])for(let grid=0;grid<100;grid++){
+    const note=sequenceStep(pattern,grid,length,3);
+    if(note){assert.ok(note.index>=0&&note.index<length);assert.ok(note.velocity>0&&note.velocity<=1);}
+  }
+});
+
+test('wandering sequence is independent of render block size across chord changes',()=>{
+  const settings={sequencePattern:'wander',progression:true,template:'major251'};
+  const a=setup(settings),b=setup(settings),expected=[],actual=[];
+  a.render(new Float32Array(80000),undefined,null,null,n=>expected.push(n));
+  for(let i=0;i<80000;i+=128)b.render(new Float32Array(Math.min(128,80000-i)),undefined,null,null,n=>actual.push(n));
+  assert.deepEqual(actual,expected);
+  assert.ok(new Set(expected.map(n=>n.step)).size>1);
 });
