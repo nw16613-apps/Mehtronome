@@ -85,7 +85,8 @@ from a single sample clock, with smooth volume changes. It includes:
   position diagrams appear together, with Roman numbering: I = E form,
   II = D form, III = C form, IV = A form, V = G form. Each preserves its
   CAGED root layout and fret window; the fret numbers identify its location.
-  Positions IV and V use string-specific boundaries across six frets. Position IV
+  Positions IV and V use string-specific boundaries that follow the current scale
+  degrees, including flattened thirds, sixths and sevenths in other modes. Position IV
   relocates the lower strings’ far-edge notes and ends the G string earlier;
   Position V relocates the D string’s far-edge note onto the G string at the same
   pitch and also ends the G string earlier.

@@ -128,3 +128,20 @@ test('all-sound gaps silence the actual master including long reverb tails, then
   await expect(page.locator('#play-status')).toContainText('Playing · Bar 3');await expect.poll(peak).toBeGreaterThan(.005);
   await page.locator('#play').click();expect(errors).toEqual([]);
 });
+
+test('major-scale modes share degree-correct A- and G-form fingerings',async({page})=>{
+  await page.goto('/');
+  // C-root fret locations vary with the mode's altered degrees.
+  const cases=[
+    ['major',2,2,2,7,4,9],['dorian',1,1,2,7,3,8],['phrygian',1,1,1,6,3,8],
+    ['lydian',2,2,2,7,4,9],['mixolydian',1,2,2,7,3,9],['minor',1,1,1,7,3,8],['locrian',1,1,1,6,3,8],
+  ] as const;
+  for(const [mode,seventh,third,sixth,omitSecond,gSeventh,omitThird] of cases){
+    await page.locator('#quality').selectOption(mode);
+    const a=page.locator('[data-position="IV"]'),g=page.locator('[data-position="V"]');
+    for(const [string,fret] of [[1,seventh],[2,third],[3,sixth]])await expect(a.locator(`.fret-note[data-string="${string}"][data-fret="${fret}"]`)).toHaveCount(1);
+    await expect(a.locator(`.fret-note[data-string="3"][data-fret="${omitSecond}"]`)).toHaveCount(0);
+    await expect(g.locator(`.fret-note[data-string="3"][data-fret="${gSeventh}"]`)).toHaveCount(1);
+    await expect(g.locator(`.fret-note[data-string="3"][data-fret="${omitThird}"]`)).toHaveCount(0);
+  }
+});
