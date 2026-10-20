@@ -123,11 +123,16 @@ export class Engine {
     this.setChord(this.auditioning ? this.step : s.progression ? progressionStep(s, bar) : 0);
   }
 
-  audition(step) {
+  /** @param {number[] | null} [notes] */
+  audition(step, notes = null) {
     this.reset();
     this.auditioning = true;
     this.nextBeat = false;
     this.setChord(step);
+    if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 4 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
+      this.chordMidi = [...notes];
+      this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
+    }
   }
 
   setChord(step) {

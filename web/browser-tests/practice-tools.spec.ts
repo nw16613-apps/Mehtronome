@@ -23,7 +23,7 @@ test('practice presets restore the complete setup, stop playback, persist, updat
   await page.locator('#voicing-type').selectOption('drop24');
   const stringSet=await page.locator('#voicing-strings option').last().getAttribute('value');
   await page.locator('#voicing-strings').selectOption(stringSet!);await page.locator('#voicing-labels').selectOption('intervals');
-  await page.locator('#highlight-mode').uncheck();await page.locator('#audition').uncheck();
+  await page.locator('#highlight-mode').uncheck();await page.locator('#show-grip').uncheck();await page.locator('#audition').uncheck();
   const values=()=>page.evaluate(ids=>Object.fromEntries(ids.map(id=>{
     const c=document.getElementById(id) as HTMLInputElement|HTMLSelectElement;
     return [id,c instanceof HTMLInputElement&&c.type==='checkbox'?c.checked:c.value];

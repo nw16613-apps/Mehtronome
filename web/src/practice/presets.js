@@ -3,7 +3,7 @@ export const PRESET_CONTROLS = [
   'bpm','beats','count-in','subdivision','accent','key','quality','sound','chord','template',
   'exercise','click','harmony','space','sequence','sequence-pattern','sequence-rate','sequence-density',
   'sequence-swing','sequence-volume','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume',
-  'fret-labels','voicing-type','voicing-strings','voicing-labels','audition','highlight-mode',
+  'fret-labels','voicing-type','voicing-strings','voicing-labels','audition','highlight-mode','show-grip',
   'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end',
 ];
 export function readPresets(raw) {

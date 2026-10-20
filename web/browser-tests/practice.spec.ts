@@ -257,7 +257,7 @@ test('CAGED positions, labels and chord-only view track the selected mode and ch
     await expect(page.locator(`[data-position=${position}] svg`)).toBeVisible();
     await expect(page.locator(`[data-position=${position}] svg`)).toHaveAttribute('aria-label',new RegExp(`Cm13, position ${position},`));
   }
-  await expect(page.locator('#guitar-diagrams button')).toHaveCount(0);
+  await expect(page.locator('#guitar-diagrams button[data-grip]')).toHaveCount(5);
   await page.locator('#fret-labels').selectOption('degrees');
   await expect(page.locator('#guitar-diagrams .fret-note text')).toContainText(['♭3']);
   await page.locator('#fret-view').selectOption('arpeggio');
