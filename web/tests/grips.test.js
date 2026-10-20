@@ -80,7 +80,8 @@ test('acoustic grips strum exact pitches independently of the backing sound and 
     const dry=new Float32Array(48000), left=new Float32Array(48000), right=new Float32Array(48000), rhythm=new Float32Array(48000), wet=new Float32Array(48000);
     engine.render(dry,undefined,left,right,undefined,rhythm,undefined,wet);
     assert.ok(left.some(v=>Math.abs(v)>.01));
-    for(const buffer of [dry,rhythm,wet]) assert.ok(buffer.every(v=>v===0));
+    assert.ok(wet.every(v=>v===1));
+    for(const buffer of [dry,rhythm]) assert.ok(buffer.every(v=>v===0));
     assert.deepEqual(left,right);
     engine.running=false;
     const release=new Float32Array(48000);

@@ -152,7 +152,7 @@ export class Engine {
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
     const s = this.settings;
     if (this.guitar) {
-      // A dry acoustic preview bypasses pad effects and all accompaniment.
+      // Guitar bypasses pad layers and echoes, but feeds the shared room reverb.
       for (let i = 0; i < output.length; i++) {
         this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
         const value = this.guitar.sample() * this.level * s.harmony;
@@ -160,7 +160,7 @@ export class Engine {
         if (harmonyOutput) harmonyOutput[i] = value;
         if (harmonyRight) harmonyRight[i] = value;
         if (rhythmOutput) rhythmOutput[i] = 0;
-        if (gapOutput) gapOutput[i] = 0;
+        if (gapOutput) gapOutput[i] = 1;
       }
       return;
     }

@@ -105,7 +105,7 @@ from a single sample clock, with smooth volume changes. It includes:
   when needed. **Strum grip** previews the exact fretted MIDI pitches using
   a modeled nylon-string guitar down-strum and Harmony volume, while stopped. Each
   string is picked from low to high and rings with a natural decay; grip previews
-  bypass ambient pad effects. Click, tap, or activate the button with Space or Enter
+  bypass pad layers and echoes, with warm stereo reverb controlled by Ambient space. Click, tap, or activate the button with Space or Enter
   to strum and let the chord ring out. Another click strums again; blur, a diagram
   change or starting playback stops the preview. The overlay
   toggle removes the grip rings, finger numbers and mute marks when switched off,

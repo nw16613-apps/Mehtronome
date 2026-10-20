@@ -102,3 +102,37 @@ test('changing diagrams before a strum loads prevents a stale note',async({page}
   expect(await page.evaluate(()=>(window as any).__gripMessages.includes('audition'))).toBe(false);
   await expect(page.locator('#grip-preview-status')).toBeHidden();
 });
+
+test('guitar strums feed stereo reverb controlled by Ambient space',async({page})=>{
+  await page.addInitScript(()=>{
+    const Original=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Original{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);
+        const create=context.createGain.bind(context);let count=0;
+        context.createGain=()=>{
+          const gain=create();
+          if(count++===1){
+            const split=context.createChannelSplitter(2),left=context.createAnalyser(),right=context.createAnalyser();
+            gain.connect(split);split.connect(left,0);split.connect(right,1);
+            (window as any).__guitarWet=[left,right];
+          }
+          return gain;
+        };
+      }
+    };
+  });
+  await page.goto('/');await page.locator('#space').fill('0');
+  const button=page.locator('[data-position="III"] .grip-preview');await button.click();
+  const wet=()=>page.evaluate(()=>{
+    const channels=((window as any).__guitarWet as AnalyserNode[]).map(a=>{const values=new Float32Array(a.fftSize);a.getFloatTimeDomainData(values);return values;});
+    return {peak:Math.max(...channels[0].map(Math.abs)),difference:Math.max(...channels[0].map((v,i)=>Math.abs(v-channels[1][i])))};
+  });
+  await page.waitForTimeout(150);expect((await wet()).peak).toBe(0);
+  await page.locator('#space').fill('75');
+  await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await expect.poll(async()=>(await wet()).peak).toBeGreaterThan(.001);
+  await expect.poll(async()=>(await wet()).difference).toBeGreaterThan(.001);
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  await expect(page.locator('#grip-preview-status')).toBeHidden();
+});

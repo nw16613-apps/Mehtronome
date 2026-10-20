@@ -80,7 +80,7 @@ app.innerHTML = `
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord ringing · click a grip to strum again.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Grip · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the grip overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum grip while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Let it ring, or click again to strum again.</p>
+      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the grip overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum grip while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Let it ring, or click again to strum again.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </div>
     </section>
@@ -211,6 +211,10 @@ function fillLoopOptions(reset = false) {
     select(id).value = String(Math.min(count-1,value));
   }
 }
+function updateSpace() {
+  el('space-value').textContent = `${input('space').value}%`;
+  if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
+}
 function update() {
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|');
@@ -272,8 +276,7 @@ function update() {
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
   node?.port.postMessage({ type: 'settings', settings });
-  el('space-value').textContent = `${input('space').value}%`;
-  if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
+  updateSpace();
   renderMusic();
   if (!playing) renderBeats();
 }
@@ -491,6 +494,7 @@ progressionStrip.addEventListener('click', event => {
   const button = chordButton(event.target);
   if (button && !playing) { step = Number(button.dataset.step); renderMusic(); }
 });
+input('space').addEventListener('input', updateSpace);
 input('audition').addEventListener('input', () => { if (!input('audition').checked) stopPreview(); });
 async function toggle() {
   if (busy || stopping || previewPreparation) return;
@@ -528,7 +532,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'space', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
