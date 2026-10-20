@@ -77,10 +77,10 @@ app.innerHTML = `
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
         <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees">Scale degrees</option></select></label></div>
-        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Release to stop the grip preview.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Grip · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
+        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord ringing · click a grip to strum again.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Grip · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the grip overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Hold grip previews while stopped to hear a warm nylon-string guitar down-strum at your Harmony volume. Release to stop.</p>
+      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the grip overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum grip while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Let it ring, or click again to strum again.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </div>
     </section>
@@ -113,6 +113,7 @@ let node: AudioWorkletNode | undefined;
 let stopping = false;
 let guitarDegrees = false;
 let previewHold: string | null = null;
+let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
 let previewPreparation: Promise<void> | undefined;
 let previewing = false;
 let previewGripShape: string | null = null;
@@ -169,7 +170,7 @@ function renderGuitar() {
     const board = fretboardFor(info, position.shape, select('exercise').value === 'arpeggio');
     const grip = showGrip ? recommendedGrip(info, board) : null;
     positionGrips.set(position.shape,grip);
-    const gripDetails = !showGrip ? '' : grip ? `<div class="grip-details"><p class="grip-tones">Grip: ${grip.notes.map((n: any,i: number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p class="grip-help">${grip.omitted.length ? `Omitted: ${grip.omitted.join(' · ')}. ` : ''}${grip.barres.map((b: any)=>`Finger ${b.finger}: barre strings ${6-b.from}–${6-b.to} at fret ${b.fret}. `).join('')}Mute × strings when playing the grip.</p><button type="button" class="practice-button grip-preview" data-grip="${position.shape}" aria-label="Hold to hear grip, position ${position.numeral}" aria-pressed="false" ${playing ? 'disabled' : ''}>Hold to hear grip</button></div>` : '<p class="grip-help">No compact grip fits this position.</p>';
+    const gripDetails = !showGrip ? '' : grip ? `<div class="grip-details"><p class="grip-tones">Grip: ${grip.notes.map((n: any,i: number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p class="grip-help">${grip.omitted.length ? `Omitted: ${grip.omitted.join(' · ')}. ` : ''}${grip.barres.map((b: any)=>`Finger ${b.finger}: barre strings ${6-b.from}–${6-b.to} at fret ${b.fret}. `).join('')}Mute × strings when playing the grip.</p><button type="button" class="practice-button grip-preview" data-grip="${position.shape}" aria-label="Strum grip, position ${position.numeral}" ${playing ? 'disabled' : ''}>Strum grip</button></div>` : '<p class="grip-help">No compact grip fits this position.</p>';
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip)}<p class="position-anchor">Shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
@@ -305,12 +306,13 @@ async function stop() {
   reflectPresetButtons();
 }
 function stopPreview() {
+  clearTimeout(gripRingTimer);
+  gripRingTimer = undefined;
   previewGeneration++;
   previewHold = null;
   previewing = false;
   previewGripShape = null;
   el('grip-preview-status').hidden = true;
-  el('guitar-diagrams').querySelectorAll<HTMLButtonElement>('[data-grip]').forEach(button=>button.setAttribute('aria-pressed','false'));
   el('preview-status').hidden = true;
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
@@ -413,26 +415,25 @@ async function previewChord(index: number, hold: string) {
     node = undefined;
   }
 }
-async function previewGrip(shape: string, hold: string) {
+async function previewGrip(shape: string) {
   if (playing || busy || stopping) return;
   const grip = positionGrips.get(shape);
   if (!grip) return;
   stopPreview();
   const generation = previewGeneration;
   previewGripShape = shape;
-  previewHold = hold;
-  el('guitar-diagrams').querySelector<HTMLButtonElement>('[data-grip='+shape+']')?.setAttribute('aria-pressed','true');
   el('error').hidden = true;
   try {
     previewPreparation ??= prepareAudio().finally(()=>{previewPreparation=undefined;});
     await previewPreparation;
     if (generation !== previewGeneration || document.hidden) {
-      if (!previewHold || document.hidden) stopPreview();
+      if ((!previewGripShape && !previewHold) || document.hidden) stopPreview();
       return;
     }
     previewing = true;
     node!.port.postMessage({type:'audition',settings,step,acoustic:true,notes:grip.notes.map((note: any)=>note.midi)});
     el('grip-preview-status').hidden = false;
+    gripRingTimer = setTimeout(() => { if (generation === previewGeneration) stopPreview(); }, 8000);
   } catch (error) {
     el('error').textContent = error instanceof Error ? error.message : 'Could not preview this grip.';
     el('error').hidden = false;
@@ -443,23 +444,15 @@ async function previewGrip(shape: string, hold: string) {
 }
 const guitarDiagrams = el('guitar-diagrams');
 const gripButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-grip]') : null;
-guitarDiagrams.addEventListener('pointerdown',event=>{
+guitarDiagrams.addEventListener('click',event=>{
   const button=gripButton(event.target);
-  if (!button || button.disabled || event.button!==0 || !event.isPrimary) return;
-  event.preventDefault();button.focus();
-  void previewGrip(button.dataset.grip!,`pointer:${event.pointerId}`);
-  guitarDiagrams.setPointerCapture(event.pointerId);
+  if (!button || button.disabled) return;
+  void previewGrip(button.dataset.grip!);
 });
+// Native buttons activate on mouse click, touch tap, Space and Enter.
 guitarDiagrams.addEventListener('keydown',event=>{
-  const button=gripButton(event.target);
-  if(!button || button.disabled || !['Space','Enter'].includes(event.code))return;
-  event.preventDefault();
-  if(!event.repeat)void previewGrip(button.dataset.grip!,`key:${event.code}`);
+  if (gripButton(event.target) && event.repeat && ['Space','Enter'].includes(event.code)) event.preventDefault();
 });
-guitarDiagrams.addEventListener('focusout',()=>queueMicrotask(()=>{
-  if(previewGripShape && previewHold?.startsWith('key:') && !guitarDiagrams.contains(document.activeElement))stopPreview();
-}));
-guitarDiagrams.addEventListener('contextmenu',event=>{if(previewGripShape)event.preventDefault();});
 const progressionStrip = el('progression-strip');
 const chordButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-step]') : null;
 progressionStrip.addEventListener('pointerdown', event => {

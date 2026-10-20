@@ -31,7 +31,7 @@ test('grip overlay keeps the established fingerings, labels fingers and mutes, a
   expect(errors).toEqual([]);
 });
 
-test('holding a grip previews its exact guitar pitches and release, keyboard and blur stop it',async({page})=>{
+test('clicking a grip strums exact pitches, rings after release, and supports keyboard and retrigger',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
     const Original=window.AudioWorkletNode;(window as any).__gripMessages=[];
@@ -48,38 +48,40 @@ test('holding a grip previews its exact guitar pitches and release, keyboard and
   await page.goto('/');await page.locator('#sequence').check();await page.locator('#drums').check();await page.locator('#bass').check();
   const button=page.locator('[data-position="III"] .grip-preview');
   const expected=await page.locator('[data-position="III"] .grip-note').evaluateAll(notes=>notes.map(n=>[40,45,50,55,59,64][Number(n.getAttribute('data-string'))]+Number(n.getAttribute('data-fret'))));
-  await button.hover();await page.mouse.down();await expect(page.locator('#grip-preview-status')).toBeVisible();
-  await expect(button).toHaveAttribute('aria-pressed','true');
+  await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
   expect(await page.evaluate(()=>(window as any).__gripMessages.filter((d:any)=>d.type==='audition').at(-1).notes)).toEqual(expected);
   expect(await page.evaluate(()=>(window as any).__gripMessages.filter((d:any)=>d.type==='audition').at(-1).acoustic)).toBe(true);
   const peak=(bus:string)=>page.evaluate(bus=>{const a=(window as any).__gripAudio[bus] as AnalyserNode;const data=new Float32Array(a.fftSize);a.getFloatTimeDomainData(data);return Math.max(...data.map(Math.abs));},bus);
   await expect.poll(()=>peak('pad')).toBeGreaterThan(.005);expect(await peak('click')).toBe(0);expect(await peak('rhythm')).toBe(0);
-  await page.mouse.up();await expect(page.locator('#grip-preview-status')).toBeHidden();await expect(button).toHaveAttribute('aria-pressed','false');
-  await expect.poll(()=>peak('pad')).toBeLessThan(.0001);
-  await button.focus();await page.keyboard.down('Space');await expect(page.locator('#grip-preview-status')).toBeVisible();
-  await page.keyboard.up('Space');await expect(page.locator('#grip-preview-status')).toBeHidden();
-  await page.keyboard.down('Enter');await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await page.waitForTimeout(250);await expect(page.locator('#grip-preview-status')).toBeVisible();
+  expect(await peak('pad')).toBeGreaterThan(.001);
+  await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await button.focus();await page.keyboard.press('Space');await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await page.keyboard.press('Enter');await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>(window as any).__gripMessages.filter((d:any)=>d.type==='audition').length)).toBe(4);
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('#grip-preview-status')).toBeHidden();await page.keyboard.up('Enter');
-  await button.hover();await page.mouse.down();await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await expect.poll(()=>peak('pad')).toBeLessThan(.0001);
+  await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
   await page.locator('#quality').selectOption('dorian');await expect(page.locator('#grip-preview-status')).toBeHidden();await page.mouse.up();
   await page.locator('#count-in').uncheck();await page.locator('#play').click();await expect(page.locator('#play-status')).toContainText('Playing');
   for(const b of await page.locator('.grip-preview').all())await expect(b).toBeDisabled();
   await page.locator('#play').click();expect(errors).toEqual([]);
 });
 
-test('grip preview stops on touch release and touch cancellation',async({page})=>{
+test('touch tap strums and rings until its natural tail ends',async({page})=>{
   await page.goto('/');await page.setViewportSize({width:390,height:844});
   const button=page.locator('[data-position="IV"] .grip-preview');await button.scrollIntoViewIfNeeded();
   const box=await button.boundingBox(),point={x:box!.x+box!.width/2,y:box!.y+box!.height/2};
   const session=await page.context().newCDPSession(page);
-  for(const type of ['touchEnd','touchCancel']){
-    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});await expect(page.locator('#grip-preview-status')).toBeVisible();
-    await session.send('Input.dispatchTouchEvent',{type,touchPoints:[]});await expect(page.locator('#grip-preview-status')).toBeHidden();
-    await expect(button).toHaveAttribute('aria-pressed','false');
-  }
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+  await expect(page.locator('#grip-preview-status')).toBeHidden();
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await expect(page.locator('#grip-preview-status')).toBeHidden({timeout:10000});
+
 });
 
-test('releasing a grip before audio loads prevents a delayed note',async({page})=>{
+test('changing diagrams before a strum loads prevents a stale note',async({page})=>{
   await page.addInitScript(()=>{
     (window as any).__gripMessages=[];
     const Context=window.AudioContext;
@@ -93,10 +95,10 @@ test('releasing a grip before audio loads prevents a delayed note',async({page})
         this.port.postMessage=(data:any,transfer?:Transferable[])=>{(window as any).__gripMessages.push(data.type);if(transfer)post(data,transfer);else post(data);};}
     };
   });
-  await page.goto('/');const button=page.locator('[data-position="I"] .grip-preview');await button.hover();await page.mouse.down();
-  await expect.poll(()=>page.evaluate(()=>typeof (window as any).__finishGripLoad)).toBe('function');await page.mouse.up();
+  await page.goto('/');const button=page.locator('[data-position="I"] .grip-preview');await button.click();
+  await expect.poll(()=>page.evaluate(()=>typeof (window as any).__finishGripLoad)).toBe('function');await page.locator('#quality').selectOption('dorian');
   await page.evaluate(()=>(window as any).__finishGripLoad());
   await expect.poll(()=>page.evaluate(()=>(window as any).__gripMessages.includes('stop'))).toBe(true);
   expect(await page.evaluate(()=>(window as any).__gripMessages.includes('audition'))).toBe(false);
-  await expect(button).toHaveAttribute('aria-pressed','false');await expect(page.locator('#grip-preview-status')).toBeHidden();
+  await expect(page.locator('#grip-preview-status')).toBeHidden();
 });

@@ -102,12 +102,12 @@ from a single sample clock, with smooth volume changes. It includes:
   marks muted strings. Other scale notes are dimmed, and modal colour rings remain
   dashed. The grip voices the current chord, even when the position uses a different
   parent-major anchor. Reductions list omitted tones; barre instructions appear
-  when needed. **Hold to hear grip** previews the exact fretted MIDI pitches using
+  when needed. **Strum grip** previews the exact fretted MIDI pitches using
   a modeled nylon-string guitar down-strum and Harmony volume, while stopped. Each
   string is picked from low to high and rings with a natural decay; grip previews
-  bypass ambient pad effects. Release, touch
-  cancellation, keyboard release, blur or a diagram change stops the preview.
-  Short taps released before audio loads never trigger a late note. The overlay
+  bypass ambient pad effects. Click, tap, or activate the button with Space or Enter
+  to strum and let the chord ring out. Another click strums again; blur, a diagram
+  change or starting playback stops the preview. The overlay
   toggle removes the grip rings, finger numbers and mute marks when switched off,
   restoring all scale notes to full brightness. Its setting is included in saved practice presets.
   Chord roots, other chord tones, and scale tones have distinct colors.
