@@ -56,3 +56,23 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-str
 .grip-toggle{grid-column:1/-1;font-size:12px;gap:8px;margin:16px 0 0}.guitar-overview #grip-preview-status{grid-column:1/-1;margin:10px 0;color:var(--grip-ink)}.grip-active .fret-note:not(.grip-note){opacity:.3}.fretboard .grip-ring{fill:none!important;stroke:var(--grip-ink)!important;stroke-width:2.4!important}.fretboard .grip-finger circle{fill:var(--grip-ink)!important;stroke:var(--grip-paper)!important;stroke-width:1!important}.fretboard .grip-finger text{fill:var(--grip-paper)!important;font-size:9px!important;font-weight:700}.grip-mute{fill:var(--grip-ink);font-size:14px;font-weight:700}.guitar-legend i.grip{background:transparent;border:2px solid var(--grip-ink)}.grip-details{border-top:1px solid var(--line,#899b8370);margin:12px 4px 0;padding-top:10px}.grip-details p{margin:0 0 8px;line-height:1.6;color:var(--muted,var(--practice-muted,#64735f))}.grip-tones{font-size:11px}.grip-help{font-size:10px;color:var(--muted,var(--practice-muted,#64735f));line-height:1.6}.grip-preview{touch-action:pan-y;user-select:none;-webkit-user-select:none}.grip-preview[aria-pressed=true]{outline:2px solid var(--grip-ink);outline-offset:2px}
 
 .guitar-overview #grip-toggle-help{grid-column:1/-1;margin:6px 0 0;font-size:11px}
+
+/* Keep all sound controls in one mixer, with clear instrument groups. */
+.workspace>.notes,.workspace>.mix{grid-column:1/-1}
+.mix-sections{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:start}
+.mix .mix-group{min-width:0;grid-column:auto;grid-row:auto}
+.mix-group h3{font-size:13px;font-weight:600;margin:0}
+.mix-group .section-heading{margin-bottom:12px;align-items:start;flex-wrap:wrap}
+.mix-group .sequence-help{font-size:11px;line-height:1.6;margin:0 0 16px}
+.mix .sequence-sliders{grid-template-columns:124px minmax(0,1fr);gap:0 12px}
+.mix .rhythm-instruments{gap:16px}
+.mix-group+.mix-group{border-left:1px solid var(--line,#dedfd4);padding-left:24px}
+@media(min-width:761px) and (max-width:1050px){
+  .mix-sections{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .mix .sequence{grid-column:1/-1;border-left:0;border-top:1px solid var(--line,#dedfd4);padding:22px 0 0}
+}
+@media(max-width:760px){
+  .mix-sections{grid-template-columns:minmax(0,1fr);gap:24px}
+  .mix-group+.mix-group{border-left:0;border-top:1px solid var(--line,#dedfd4);padding:22px 0 0}
+  .workspace>.guitar,.workspace>.voicings{grid-row:auto}
+}

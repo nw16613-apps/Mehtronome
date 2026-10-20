@@ -3,18 +3,18 @@ import { TUNING, diagramSvg } from './fretboard.js';
 export const DROP_TYPES = {drop2:{name:'Drop 2',voices:[2]},drop3:{name:'Drop 3',voices:[3]},drop24:{name:'Drop 2 & 4',voices:[2,4]},drop4:{name:'Drop 4',voices:[4]}};
 export const STRING_SETS = {
   drop2: [
-    {id:'6543',strings:[0,1,2,3],label:'6–5–4–3 · E–A–D–G'},
-    {id:'5432',strings:[1,2,3,4],label:'5–4–3–2 · A–D–G–B'},
     {id:'4321',strings:[2,3,4,5],label:'4–3–2–1 · D–G–B–E'},
+    {id:'5432',strings:[1,2,3,4],label:'5–4–3–2 · A–D–G–B'},
+    {id:'6543',strings:[0,1,2,3],label:'6–5–4–3 · E–A–D–G'},
   ],
   drop24: [
-    {id:'6532',strings:[0,1,3,4],label:'6–5–3–2 · E–A–G–B'},
     {id:'5421',strings:[1,2,4,5],label:'5–4–2–1 · A–D–B–E'},
+    {id:'6532',strings:[0,1,3,4],label:'6–5–3–2 · E–A–G–B'},
   ],
   drop4: [{id:'6321',strings:[0,3,4,5],label:'6–3–2–1 · E–G–B–E'}],
   drop3: [
-    {id:'6432',strings:[0,2,3,4],label:'6–4–3–2 · E–D–G–B'},
     {id:'5321',strings:[1,3,4,5],label:'5–3–2–1 · A–G–B–E'},
+    {id:'6432',strings:[0,2,3,4],label:'6–4–3–2 · E–D–G–B'},
   ],
 };
 const INVERSION_NAMES = ['Root position','1st inversion','2nd inversion','3rd inversion'];
