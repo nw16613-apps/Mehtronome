@@ -5,9 +5,12 @@ export const SHAPES = {
   C: { tonic: 0, rootString: 1, rootOffset: 3, leadIn: 0 },
   A: { tonic: 9, rootString: 1, rootOffset: 0, leadIn: 1, span: 5,
     // Move each lower string's far-edge note onto the next string, five frets
-    // lower. Keep the upper strings' reach and the A-string root anchor.
-    stringWindows: [[0,3],[-1,3],[-1,3],[-1,4],[0,4],[0,4]] },
-  G: { tonic: 7, rootString: 0, rootOffset: 3, leadIn: 0 },
+    // lower. End the G string one fret earlier; retain the two highest strings
+    // and the A-string root anchor.
+    stringWindows: [[0,3],[-1,3],[-1,3],[-1,3],[0,4],[0,4]] },
+  G: { tonic: 7, rootString: 0, rootOffset: 3, leadIn: 1, span: 5,
+    // Shift the D string's far-edge note onto the G string at the same pitch.
+    stringWindows: [[-3,1],[-3,1],[-3,0],[-4,1],[-3,1],[-3,1]] },
   E: { tonic: 4, rootString: 0, rootOffset: 0, leadIn: 1 },
   D: { tonic: 2, rootString: 2, rootOffset: 0, leadIn: 1 },
 };
