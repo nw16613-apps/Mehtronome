@@ -649,6 +649,10 @@ test('drums and bass have independent controls and reach the speakers through th
   await expect(page.locator('#drums')).not.toBeChecked();await expect(page.locator('#bass')).not.toBeChecked();
   await expect(page.locator('#drums-controls')).toBeHidden();await expect(page.locator('#bass-controls')).toBeHidden();
   await page.locator('#click').fill('0');await page.locator('#harmony').fill('0');await page.locator('#count-in').uncheck();
+  await expect(page.locator('#drum-groove option')).toHaveCount(5);
+  await expect(page.locator('#bass-pattern option')).toHaveCount(5);
+  const sampleResponses:string[]=[];
+  page.on('response',response=>{if(response.url().endsWith('.wav')&&response.ok())sampleResponses.push(response.url());});
   await page.locator('#drums').check();await expect(page.locator('#drums-controls')).toBeVisible();
   await page.locator('#play').click();await expect(page.locator('#play-status')).toContainText('Playing');
   const peak=(bus:string)=>page.evaluate(bus=>{
@@ -659,13 +663,14 @@ test('drums and bass have independent controls and reach the speakers through th
   await expect.poll(()=>peak('master')).toBeGreaterThan(.005);
   await expect.poll(()=>peak('dry')).toBeGreaterThan(.005);
   expect(await peak('pad')).toBe(0);
+  expect(new Set(sampleResponses).size).toBe(5);
   await page.locator('#drums-volume').fill('0');await expect.poll(()=>peak('master')).toBeLessThan(.0001);
   await page.locator('#bass').check();await expect(page.locator('#bass-controls')).toBeVisible();
   await page.locator('#bass-volume').fill('70');
   await expect.poll(()=>peak('master')).toBeGreaterThan(.005);
-  for(const pattern of ['fifths','walk','roots'])await page.locator('#bass-pattern').selectOption(pattern);
+  for(const pattern of ['fifths','walk','bossa','funk','roots'])await page.locator('#bass-pattern').selectOption(pattern);
   await page.locator('#drums-volume').fill('40');
-  for(const groove of ['shuffle','swing','halftime','straight'])await page.locator('#drum-groove').selectOption(groove);
+  for(const groove of ['shuffle','swing','halftime','bossa','straight'])await page.locator('#drum-groove').selectOption(groove);
   await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
   await page.locator('#play').click();await page.waitForTimeout(300);
   await page.locator('#progression-strip>button').nth(1).hover();await page.mouse.down();

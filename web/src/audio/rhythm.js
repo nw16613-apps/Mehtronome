@@ -1,10 +1,11 @@
 import { BASS_WAVE, readWave } from './waves.js';
 
 export const DRUM_GROOVES = {
-  straight: 'Straight eighths', shuffle: 'Shuffle', swing: 'Swing ride', halftime: 'Half-time',
+  straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
 };
 export const BASS_PATTERNS = {
-  roots: 'Root pulse', fifths: 'Root & fifth', walk: 'Chord-tone walk',
+  roots: 'Ambient · sustained roots', fifths: 'Pop / rock · root & fifth', walk: 'Jazz · walking chord tones',
+  bossa: 'Bossa nova · syncopated fifths', funk: 'Funk · syncopated chord tones',
 };
 const KITS = new Map();
 function drumSamples(rate) {
@@ -35,24 +36,24 @@ function drumSamples(rate) {
     for (let i = 0; i < samples.length; i++) samples[i] *= .85 / (peak || 1);
     kit[name] = samples;
   }
+  kit.rim = kit.snare;
   KITS.set(rate, kit);
   return kit;
 }
 
-// All scheduling uses the metronome's sample clock. Drum synthesis is cached
-// ahead of playback; realtime rendering uses sample reads and table lookups.
+// All scheduling uses the metronome's sample clock. The browser installs decoded
+// samples before playback; cached synthesis is the standalone/test fallback.
 export class Rhythm {
-  constructor(rate) {
+  constructor(rate, kit = null) {
     this.rate = rate;
-    this.kit = drumSamples(rate);
-    this.bassDecay = Math.exp(-1 / (rate * .85));
+    this.kit = kit || drumSamples(rate);
     this.releaseDecay = Math.exp(-1 / (rate * .025));
     this.attackFrames = Math.max(1, Math.round(rate * .006));
     this.lastGrid = -1;
     this.drumCursor = 0;
     this.bassCursor = 0;
     this.drumVoices = Array.from({length:12}, () => ({sample:null, position:0, gain:0}));
-    this.bassVoices = Array.from({length:2}, () => ({phase:0, increment:0, age:Infinity, envelope:0, releasing:false}));
+    this.bassVoices = Array.from({length:2}, () => ({phase:0, increment:0, age:Infinity, envelope:0, releasing:false, decay:1, gain:1}));
     this.drums = 0;
     this.bass = 0;
   }
@@ -75,7 +76,10 @@ export class Rhythm {
         voice.sample = this.kit[name]; voice.position = 0; voice.gain = gain;
         onEvent({type:name, sample, step, beat:inBar});
       };
-      if (down) {
+      if (groove === 'bossa') {
+        if (down && inBar % 2 === 0 || !down && inBar % 2 === 1) hit('kick', .55);
+        if ((inBar * 2 + (down ? 0 : 1)) % 8 === 0 || [3,6].includes((inBar * 2 + (down ? 0 : 1)) % 8)) hit('rim', .65);
+      } else if (down) {
         const backbeat = groove === 'halftime' ? inBar === Math.floor(settings.beats / 2) : inBar % 2 === 1;
         if (backbeat) hit('snare', groove === 'swing' ? .32 : .65);
         if (inBar === 0 || !backbeat && inBar % 2 === 0) hit('kick', groove === 'swing' ? .45 : .8);
@@ -84,15 +88,20 @@ export class Rhythm {
         hit(groove === 'swing' ? 'ride' : 'hat', down ? .27 : .18);
       }
     }
-    if (settings.bass && down && (settings.bassPattern !== 'roots' || inBar % 2 === 0)) {
+    const pattern = settings.bassPattern;
+    const bassHit = pattern === 'bossa' || pattern === 'funk'
+      ? down && inBar % 2 === 0 || !down && inBar % 2 === 1
+      : down && (pattern !== 'roots' || inBar % 2 === 0);
+    if (settings.bass && bassHit) {
       const root = notes[0] % 12;
       const fifth = notes.findIndex(note => [6,7,8].includes((note - notes[0]) % 12));
-      const index = settings.bassPattern === 'walk' ? inBar % notes.length : settings.bassPattern === 'fifths' && inBar % 2 ? Math.max(0, fifth) : 0;
+      const index = pattern === 'walk' || pattern === 'funk' ? inBar % notes.length : ['fifths','bossa'].includes(pattern) && inBar % 2 ? Math.max(0, fifth) : 0;
+      const seconds = pattern === 'roots' ? 1.8 : pattern === 'funk' ? .22 : pattern === 'walk' ? .5 : .7;
       const midi = 36 + notes[index] % 12;
       for (const voice of this.bassVoices) voice.releasing = true;
       const voice = this.bassVoices[this.bassCursor++ % this.bassVoices.length];
-      Object.assign(voice, {phase:0, increment:440 * 2 ** ((midi - 69) / 12) / this.rate, age:0, envelope:1, releasing:false});
-      onEvent({type:'bass', sample, step, beat:inBar, midi, root});
+      Object.assign(voice, {phase:0, increment:440 * 2 ** ((midi - 69) / 12) / this.rate, age:0, envelope:1, releasing:false, decay:Math.exp(-1 / (this.rate * seconds)), gain:down ? 1 : .8});
+      onEvent({type:'bass', sample, step, beat:inBar, midi, root, offbeat:!down});
     }
   }
   render(drumsActive, bassActive) {
@@ -105,10 +114,10 @@ export class Rhythm {
     if (bassActive) for (const voice of this.bassVoices) {
       if (voice.envelope < .00001 || !Number.isFinite(voice.age)) continue;
       const envelope = Math.min(1, voice.age / this.attackFrames) * voice.envelope;
-      bass += readWave(BASS_WAVE, voice.phase) * envelope;
+      bass += readWave(BASS_WAVE, voice.phase) * envelope * voice.gain;
       voice.phase += voice.increment;
       if (voice.phase >= 1) voice.phase -= 1;
-      voice.envelope *= voice.releasing ? this.releaseDecay : this.bassDecay;
+      voice.envelope *= voice.releasing ? this.releaseDecay : voice.decay;
       voice.age++;
     }
     this.drums = drums;

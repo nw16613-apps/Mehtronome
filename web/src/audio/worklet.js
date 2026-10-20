@@ -7,7 +7,9 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     this.active = false;
     this.onBeat = event => this.port.postMessage(event);
     this.port.onmessage = ({ data }) => {
-      if (data.type === 'start') {
+      if (data.type === 'drum-kit') {
+        this.engine.installDrumKit(data.kit);
+      } else if (data.type === 'start') {
         this.engine.configure(data.settings);
         this.engine.reset();
         this.active = true;

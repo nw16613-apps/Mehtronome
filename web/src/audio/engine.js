@@ -31,10 +31,16 @@ export class Engine {
     this.reset();
   }
 
+  installDrumKit(kit) {
+    this.drumKit = kit;
+    this.rhythm.clearDrums();
+    this.rhythm.kit = kit;
+  }
+
   reset() {
     this.auditioning = false;
     this.sequence = new Sequence(this.rate);
-    this.rhythm = new Rhythm(this.rate);
+    this.rhythm = new Rhythm(this.rate, this.drumKit);
     this.drumsLevel = 0;
     this.bassLevel = 0;
     this.sequenceLevel = 0;

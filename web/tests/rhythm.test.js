@@ -82,3 +82,49 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
   for(let i=0;i<actual.length;i++)assert.ok(Number.isFinite(actual[i]+dry[i]+pad[i])&&Math.abs(actual[i]+dry[i]+pad[i])<1);
   a.running=false;render(a,16000);assert.ok(render(a,8000).dry.every(x=>Math.abs(x)<1e-8));
 });
+
+test('five styles produce distinct event patterns and bass articulations',()=>{
+  assert.equal(Object.keys(DRUM_GROOVES).length,5);
+  assert.equal(Object.keys(BASS_PATTERNS).length,5);
+  const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
+  assert.equal(new Set(drumSignatures).size,5);
+  const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{
+    const engine=setup({bassPattern,drums:false});
+    const result=render(engine,16000);
+    return JSON.stringify(result.events)+engine.rhythm.bassVoices.map(v=>v.decay).join();
+  });
+  assert.equal(new Set(bassSignatures).size,5);
+  const bossa=render(setup({drumGroove:'bossa',bassPattern:'bossa'}),16000);
+  assert.deepEqual(bossa.events.filter(e=>e.type==='rim').map(e=>e.sample),[0,6000,12000]);
+  assert.deepEqual(bossa.events.filter(e=>e.type==='bass').map(e=>e.sample),[0,6000,8000,14000]);
+});
+
+test('bundled WAV kit is valid, survives transport resets and renders safely in every style',async()=>{
+  const {readFile}=await import('node:fs/promises');
+  const kit={};
+  for(const name of ['kick','snare','hat','ride','rim']){
+    const bytes=await readFile(new URL(`../src/audio/samples/${name}.wav`,import.meta.url));
+    assert.equal(bytes.toString('ascii',0,4),'RIFF');
+    assert.equal(bytes.toString('ascii',8,12),'WAVE');
+    let data;
+    for(let offset=12;offset+8<=bytes.length;){
+      const size=bytes.readUInt32LE(offset+4),tag=bytes.toString('ascii',offset,offset+4);
+      if(tag==='fmt '){assert.equal(bytes.readUInt16LE(offset+8),1);assert.equal(bytes.readUInt16LE(offset+10),1);assert.equal(bytes.readUInt32LE(offset+12),24000);assert.equal(bytes.readUInt16LE(offset+22),16);}
+      if(tag==='data')data=bytes.subarray(offset+8,offset+8+size);
+      offset+=8+size+(size%2);
+    }
+    assert.ok(data&&data.length>4000);
+    const pcm=new Float32Array(data.length/2);let peak=0;
+    for(let i=0;i<pcm.length;i++){pcm[i]=data.readInt16LE(i*2)/32768;peak=Math.max(peak,Math.abs(pcm[i]));}
+    assert.ok(peak>.01);for(let i=0;i<pcm.length;i++)pcm[i]*=.85/peak;
+    kit[name]=pcm;
+  }
+  for(const drumGroove of Object.keys(DRUM_GROOVES)){
+    const engine=new Engine(24000);
+    engine.installDrumKit(kit);engine.configure({countIn:false,drums:true,bass:true,drumGroove,drumsVolume:1,bassVolume:1});engine.reset();
+    assert.equal(engine.rhythm.kit,kit);
+    const result=render(engine,96000);
+    assert.ok(result.dry.some(x=>Math.abs(x)>.05));
+    for(let i=0;i<result.dry.length;i++)assert.ok(Number.isFinite(result.dry[i])&&Math.abs(result.dry[i]+result.pad[i]+result.click[i])<1);
+  }
+});

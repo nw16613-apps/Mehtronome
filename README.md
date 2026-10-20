@@ -32,12 +32,16 @@ from a single sample clock, with smooth volume changes. It includes:
   sequence volume are independent controls; triplets stay straight. Sequences
   respect the count-in, follow every chord change and stay off during held previews.
 - Optional **Drums & bass**, both off by default, with independent switches and
-  volume controls. Drums offer straight eighths, shuffle, swing ride and half-time
-  grooves; bass offers root pulses, root-and-fifth and a chord-tone walk. Patterns
+  volume controls. Five drum styles: pop/rock, blues shuffle, jazz swing, neo-soul
+  half-time and bossa nova. Five bass styles: sustained ambient roots, pop/rock
+  root-and-fifth, jazz chord-tone walking, bossa and syncopated funk. Bass styles
+  also vary note length and articulation. Patterns
   adapt to beats per bar, share the sample clock, respect the count-in and follow
   the current chord. Both stay silent during held chord previews. Drums and bass
   have a separate dry output, bypassing pad reverb and echoes. Drum samples are
-  synthesized and cached locally; no downloads, soundfonts or extra permissions.
+  bundled CC0 recordings, decoded once before playback and cached in memory
+  (about 153 KB of WAV assets). No third-party audio service or soundfont is needed.
+  Sources, modifications and licenses: [sample credits](web/src/audio/samples/README.md).
 - 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
   sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,
