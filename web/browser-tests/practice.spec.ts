@@ -268,7 +268,8 @@ test('CAGED positions, labels and chord-only view track the selected mode and ch
   await expect(page.locator('#fret-view')).toHaveValue('scale');
   await page.locator('#key').selectOption('2');
   await expect(page.locator('#guitar-context')).toHaveText('Dm13');
-  await expect(page.locator('[data-position=III] .position-anchor')).toContainText('A string, fret 5');
+  await expect(page.locator('[data-position=III] .position-anchor')).toContainText('A string, fret 15');
+  await expect(page.locator('#guitar-parent')).toContainText('CAGED shapes: C major');
   for(const position of ['I','II','III','IV','V']) await expect(page.locator(`[data-position=${position}] svg`)).toHaveAttribute('aria-label',new RegExp(`Dm13, position ${position},`));
   await page.locator('#theme').click();
   await page.setViewportSize({width:390,height:844});

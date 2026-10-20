@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {TUNING, SHAPES, POSITIONS, positionFor, fretboardFor, diagramSvg} from '../src/guitar/fretboard.js';
+import {TUNING, SHAPES, POSITIONS, positionFor, fretboardFor, diagramSvg, parentMajorFor} from '../src/guitar/fretboard.js';
 import {MODES, CHORDS, harmonyAt} from '../src/audio/music.js';
 
 test('CAGED root anchors stay correct in fully fretted positions in every key',()=>{
@@ -72,7 +72,8 @@ test('SVG identifies frets, tuning and note roles and changes to degree labels',
   const svg=diagramSvg(board,false,MODES.dorian.degrees,'C Dorian reference');
   assert.ok(svg.includes('role="img"'));
   assert.ok(!svg.includes('class="fret-wire nut"'));
-  assert.ok(svg.includes('string 5, fret 15, chord root'));
+  assert.ok(svg.includes('string 4, fret 10, chord root'));
+  assert.equal(board.anchorName,'B♭');
   assert.ok(diagramSvg(board,true,MODES.dorian.degrees,'Degrees').includes('>♭3</text>'));
 });
 
@@ -115,16 +116,17 @@ test('A-form string windows omit the far G-string endpoint, transpose across all
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'A',chordOnly);
     const expected=[];
+    const fingeringIntervals=parentMajorFor(info)?MODES.major.intervals:definition.intervals;
     // Compare against the original rectangular pitch collection at the same root.
     for(const [string,tuning] of TUNING.entries())for(let fret=board.rootFret;fret<=board.rootFret+4;fret++){
       const midi=tuning+fret,pc=midi%12;
-      if(string===3 && midi>=TUNING[1]+board.rootFret+12+definition.intervals[1])continue;
+      if(string===3 && midi>=TUNING[1]+board.rootFret+12+fingeringIntervals[1])continue;
       if(chordOnly?info.chordPcs.includes(pc):info.chordPcs.includes(pc)||info.scalePcs.includes(pc))expected.push(midi);
     }
-    assert.ok(!board.notes.some(n=>n.string===3&&n.midi===TUNING[1]+board.rootFret+12+definition.intervals[1]));
+    assert.ok(!board.notes.some(n=>n.string===3&&n.midi===TUNING[1]+board.rootFret+12+fingeringIntervals[1]));
     assert.deepEqual(board.notes.map(n=>n.midi).sort((a,b)=>a-b),expected.sort((a,b)=>a-b));
     assert.ok(board.notes.every(n=>n.fret>=board.start&&n.fret<=board.end&&n.fret>0));
-    assert.ok(board.notes.some(n=>n.root&&n.string===1&&n.fret===board.rootFret));
+    if(!chordOnly||info.chordPcs.includes(board.anchorPc))assert.ok(board.notes.some(n=>n.pc===board.anchorPc&&n.string===1&&n.fret===board.rootFret));
     const svg=diagramSvg(board,true,definition.degrees,'Position IV',true);
     assert.ok(!svg.includes('data-fret="0"'));assert.ok(svg.includes(`>${board.start}</text>`));
   }
@@ -148,36 +150,55 @@ test('G-form relocation and shorter G-string boundary transpose across modes and
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'G',chordOnly);
     const expected=[];
+    const fingeringIntervals=parentMajorFor(info)?MODES.major.intervals:definition.intervals;
     for(const [string,tuning] of TUNING.entries())for(let fret=board.rootFret-3;fret<=board.rootFret+1;fret++){
       const midi=tuning+fret,pc=midi%12;
-      if(string===3 && midi>=TUNING[0]+board.rootFret+12+definition.intervals[2])continue;
+      if(string===3 && midi>=TUNING[0]+board.rootFret+12+fingeringIntervals[2])continue;
       if(chordOnly?info.chordPcs.includes(pc):info.chordPcs.includes(pc)||info.scalePcs.includes(pc))expected.push(midi);
     }
-    assert.ok(!board.notes.some(n=>n.string===3&&n.midi===TUNING[0]+board.rootFret+12+definition.intervals[2]));
+    assert.ok(!board.notes.some(n=>n.string===3&&n.midi===TUNING[0]+board.rootFret+12+fingeringIntervals[2]));
     assert.deepEqual(board.notes.map(n=>n.midi).sort((a,b)=>a-b),expected.sort((a,b)=>a-b));
     assert.ok(board.notes.every(n=>n.fret>=board.start&&n.fret<=board.end&&n.fret>0));
-    assert.ok(!board.notes.some(n=>n.string===2&&n.midi===TUNING[0]+board.rootFret+definition.intervals[6]));
-    assert.ok(board.notes.some(n=>n.root&&n.string===0&&n.fret===board.rootFret));
+    assert.ok(!board.notes.some(n=>n.string===2&&n.midi===TUNING[0]+board.rootFret+fingeringIntervals[6]));
+    if(!chordOnly||info.chordPcs.includes(board.anchorPc))assert.ok(board.notes.some(n=>n.pc===board.anchorPc&&n.string===0&&n.fret===board.rootFret));
   }
 });
 
-test('all seven major-scale modes relocate the same degrees, including flat thirds, sixths and sevenths',()=>{
-  for(const mode of ['major','dorian','phrygian','lydian','mixolydian','minor','locrian'])for(let key=0;key<12;key++){
-    const definition=MODES[mode],info=harmonyAt({key,mode,chord:definition.chord});
-    const a=fretboardFor(info,'A'),aRoot=TUNING[1]+a.rootFret;
-    for(const [source,target,midi] of [[0,1,aRoot-12+definition.intervals[6]],[1,2,aRoot+definition.intervals[2]],[2,3,aRoot+definition.intervals[5]]]){
-      assert.ok(!a.notes.some(n=>n.string===source&&n.midi===midi),`${key} ${mode}: A source ${source}`);
-      assert.ok(a.notes.some(n=>n.string===target&&n.midi===midi),`${key} ${mode}: A destination ${target}`);
+test('all major-scale modes share the exact parent-major shapes in all keys with modal root highlights',()=>{
+  const modes=['major','dorian','phrygian','lydian','mixolydian','minor','locrian'];
+  for(let parent=0;parent<12;parent++)for(const [rotation,mode] of modes.entries()){
+    const key=(parent+MODES.major.intervals[rotation])%12;
+    const info=harmonyAt({key,mode,chord:MODES[mode].chord});
+    assert.equal(parentMajorFor(info).pc,parent);
+    for(const shape of Object.keys(SHAPES)){
+      const board=fretboardFor(info,shape),reference=fretboardFor(harmonyAt({key:parent,mode:'major',chord:'maj9'}),shape);
+      const coordinates=board=>board.notes.map(n=>[n.string,n.fret,n.midi]);
+      assert.deepEqual(coordinates(board),coordinates(reference),`${parent}: ${mode} ${shape}`);
+      assert.equal(board.start,reference.start);assert.equal(board.end,reference.end);
+      assert.equal(board.anchorPc,parent);assert.equal(board.rootPc,key);
+      assert.ok(board.notes.some(n=>n.root));
+      for(const note of board.notes)assert.equal(note.root,note.pc===key);
+      const arpeggio=fretboardFor(info,shape,true);
+      assert.ok(arpeggio.notes.every(n=>n.chord));assert.ok(arpeggio.notes.some(n=>n.root));
     }
-    assert.ok(!a.notes.some(n=>n.string===3&&n.midi>=aRoot+12+definition.intervals[1]));
-    const g=fretboardFor(info,'G'),gRoot=TUNING[0]+g.rootFret,seventh=gRoot+definition.intervals[6];
-    assert.ok(!g.notes.some(n=>n.string===2&&n.midi===seventh),`${key} ${mode}: G source`);
-    assert.ok(g.notes.some(n=>n.string===3&&n.midi===seventh),`${key} ${mode}: G destination`);
-    assert.ok(!g.notes.some(n=>n.string===3&&n.midi>=gRoot+12+definition.intervals[2]));
   }
-  const dorian=harmonyAt({key:0,mode:'dorian',chord:'min13'});
-  assert.equal(fretboardFor(dorian,'A').notes.find(n=>n.string===1&&n.fret===1)?.name,'B♭');
-  assert.equal(fretboardFor(dorian,'A').notes.find(n=>n.string===2&&n.fret===1)?.name,'E♭');
-  assert.equal(fretboardFor(dorian,'G').notes.find(n=>n.string===3&&n.fret===3)?.name,'B♭');
-  assert.ok(!fretboardFor(dorian,'G').notes.some(n=>n.string===3&&n.fret===8));
+  const cMixolydian=harmonyAt({key:0,mode:'mixolydian',chord:'dom13'});
+  assert.deepEqual(parentMajorFor(cMixolydian),{pc:5,name:'F'});
+  assert.equal(fretboardFor(cMixolydian,'A').rootFret,8);
+  assert.equal(parentMajorFor(harmonyAt({key:0,mode:'melodic_minor'})),null);
+});
+
+test('diatonic harmony keeps its parent shapes while chord roots change, and jazz follows each scale',()=>{
+  for(const mode of ['major','minor'])for(const step of [0,1,2,3]){
+    const info=harmonyAt({key:0,mode,progression:true,template:'diatonic'},step);
+    const reference=harmonyAt({key:0,mode});
+    for(const shape of Object.keys(SHAPES)){
+      const board=fretboardFor(info,shape),base=fretboardFor(reference,shape);
+      assert.deepEqual(board.notes.map(n=>[n.string,n.fret,n.pc]),base.notes.map(n=>[n.string,n.fret,n.pc]));
+      assert.ok(board.notes.filter(n=>n.root).every(n=>n.pc===info.midi[0]%12));
+    }
+  }
+  assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},0)).name,'C');
+  assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},1)),null);
+  assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},2)).name,'G');
 });

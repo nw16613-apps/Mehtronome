@@ -2,7 +2,7 @@ import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets } from './practi
 import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
-import { POSITIONS, fretboardFor, diagramSvg } from './guitar/fretboard.js';
+import { POSITIONS, fretboardFor, diagramSvg, parentMajorFor } from './guitar/fretboard.js';
 import { DROP_TYPES, STRING_SETS, guitarVoicings, voicingSvg } from './guitar/voicings.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
@@ -74,12 +74,12 @@ app.innerHTML = `
     <section class="guitar panel" aria-labelledby="guitar-title">
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
       <div class="guitar-guide guitar-overview">
-        <h3 id="guitar-context"></h3><p id="guitar-scale"></p>
+        <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
         <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees">Scale degrees</option></select></label></div>
         <div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">All five positions use CAGED root locations. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
+      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. Dots are choices for scale or arpeggio practice, rather than a chord grip to strum all at once.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </div>
     </section>
@@ -161,8 +161,11 @@ function renderGuitar() {
   el('guitar-diagrams').innerHTML = POSITIONS.map(position => {
     const board = fretboardFor(info, position.shape, select('exercise').value === 'arpeggio');
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
-    return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked)}<p class="position-anchor">Root anchor: ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p></article>`;
+    return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked)}<p class="position-anchor">Shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p></article>`;
   }).join('');
+  const parentMajor = parentMajorFor(info);
+  el('guitar-parent').hidden = !parentMajor;
+  el('guitar-parent').textContent = parentMajor ? `CAGED shapes: ${parentMajor.name} major · chord/modal root: ${info.name}.` : '';
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
   select('fret-view').value = select('exercise').value;

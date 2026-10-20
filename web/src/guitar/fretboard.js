@@ -15,6 +15,13 @@ export const POSITIONS = [
   { numeral: 'V', shape: 'G' },
 ];
 const CHROMATIC_DEGREES = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
+const MAJOR_MODE_ROTATIONS = {major:0,dorian:1,phrygian:2,lydian:3,mixolydian:4,minor:5,locrian:6};
+export function parentMajorFor(harmony) {
+  const rotation = MAJOR_MODE_ROTATIONS[harmony.mode];
+  if (rotation === undefined) return null;
+  const index = (7 - rotation) % 7;
+  return {pc:harmony.scalePcs[index],name:harmony.scaleNames[index]};
+}
 export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11]) {
   const definition = SHAPES[shape];
   const [,second,third,,,sixth,seventh] = intervals;
@@ -34,8 +41,13 @@ export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11]) {
 }
 export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const rootPc = harmony.midi[0] % 12;
-  const intervals = harmony.scalePcs.map(pc=>(pc-rootPc+12)%12).sort((a,b)=>a-b);
-  const position = positionFor(rootPc, shape, intervals);
+  // Related major-scale modes share the parent's exact fingering. Chord roots,
+  // interval labels and colour notes still refer to the selected modal harmony.
+  const parentMajor = parentMajorFor(harmony);
+  const anchorPc = parentMajor ? parentMajor.pc : rootPc;
+  const anchorName = parentMajor ? parentMajor.name : harmony.name;
+  const intervals = harmony.scalePcs.map(pc=>(pc-anchorPc+12)%12).sort((a,b)=>a-b);
+  const position = positionFor(anchorPc, shape, intervals);
   const notes = [];
   const colourPcs = characteristicNotes(harmony).map(note => note.pc);
   for (let string = 0; string < TUNING.length; string++) {
@@ -53,7 +65,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
         characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
   }
-  return { ...position, rootPc, notes };
+  return { ...position, rootPc, anchorPc, anchorName, parentMajor, notes };
 }
 function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

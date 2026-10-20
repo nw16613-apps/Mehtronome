@@ -129,19 +129,30 @@ test('all-sound gaps silence the actual master including long reverb tails, then
   await page.locator('#play').click();expect(errors).toEqual([]);
 });
 
-test('major-scale modes share degree-correct A- and G-form fingerings',async({page})=>{
+test('related modes use identical parent-major fingerings with modal root colours and labels',async({page})=>{
   await page.goto('/');
-  // C-root fret locations vary with the mode's altered degrees.
-  const cases=[
-    ['major',2,2,2,7,4,9],['dorian',1,1,2,7,3,8],['phrygian',1,1,1,6,3,8],
-    ['lydian',2,2,2,7,4,9],['mixolydian',1,2,2,7,3,9],['minor',1,1,1,7,3,8],['locrian',1,1,1,6,3,8],
-  ] as const;
-  for(const [mode,seventh,third,sixth,omitSecond,gSeventh,omitThird] of cases){
-    await page.locator('#quality').selectOption(mode);
-    const a=page.locator('[data-position="IV"]'),g=page.locator('[data-position="V"]');
-    for(const [string,fret] of [[1,seventh],[2,third],[3,sixth]])await expect(a.locator(`.fret-note[data-string="${string}"][data-fret="${fret}"]`)).toHaveCount(1);
-    await expect(a.locator(`.fret-note[data-string="3"][data-fret="${omitSecond}"]`)).toHaveCount(0);
-    await expect(g.locator(`.fret-note[data-string="3"][data-fret="${gSeventh}"]`)).toHaveCount(1);
-    await expect(g.locator(`.fret-note[data-string="3"][data-fret="${omitThird}"]`)).toHaveCount(0);
+  const readBoards=()=>page.locator('#guitar-diagrams .position-card').evaluateAll(cards=>cards.map(card=>({
+    position:(card as HTMLElement).dataset.position,
+    notes:Array.from(card.querySelectorAll('.fret-note')).map(note=>[note.getAttribute('data-string'),note.getAttribute('data-fret'),note.getAttribute('data-pc')]),
+  })));
+  const baseline=await readBoards();
+  for(const [mode,key] of [['major','0'],['dorian','2'],['phrygian','4'],['lydian','5'],['mixolydian','7'],['minor','9'],['locrian','11']]){
+    await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
+    expect(await readBoards()).toEqual(baseline);
+    await expect(page.locator('#guitar-parent')).toContainText('CAGED shapes: C major');
+    expect(await page.locator('#guitar-diagrams .fret-note.root').evaluateAll((notes,key)=>notes.length>0&&notes.every(n=>n.getAttribute('data-pc')===key),key)).toBe(true);
   }
+  await page.locator('#quality').selectOption('major');await page.locator('#key').selectOption('5');
+  const fMajor=await readBoards();
+  await page.locator('#quality').selectOption('mixolydian');await page.locator('#key').selectOption('0');
+  expect(await readBoards()).toEqual(fMajor);
+  await expect(page.locator('#guitar-parent')).toHaveText('CAGED shapes: F major · chord/modal root: C.');
+  await expect(page.locator('[data-position="IV"] .position-anchor')).toContainText('Shape anchor: F · A string, fret 8');
+  await expect(page.locator('#characteristic-notes')).toContainText('B♭ (♭7)');
+  await page.locator('#fret-labels').selectOption('degrees');
+  await expect(page.locator('.fret-note.characteristic text').first()).toHaveText('♭7');
+  await page.locator('#fret-view').selectOption('arpeggio');
+  await expect(page.locator('#guitar-diagrams .fret-note.scale')).toHaveCount(0);
+  await expect(page.locator('#guitar-parent')).toContainText('F major');
+  for(const width of [1440,760,390]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
 });
