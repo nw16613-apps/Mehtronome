@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "bench:audio": "node scripts/benchmark-audio.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",

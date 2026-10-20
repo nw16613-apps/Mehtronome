@@ -17,10 +17,15 @@ from a single sample clock, with smooth volume changes. It includes:
   ascending and descending). Each family contains all seven rotations, with
   correctly spelled notes, characteristic degrees, and compatible backing chords.
 - Seven synthesized backing sounds. Bloom Pad (the browser default), Velvet
-  Strings and Glass Atmosphere add layered detuning, slow brightness changes,
-  stereo movement and gently modulated echoes. Warm Pad, Glass Cloud, Velvet Drone
+  Strings and Glass Atmosphere have distinct sources: a rounded, odd-harmonic pad,
+  a brighter saw-derived string texture, and a softer bell-like glass tone.
+  They add layered detuning, slow brightness changes, stereo movement and soft
+  fixed-delay echoes. Warm Pad, Glass Cloud, Velvet Drone
   and Air Choir remain available. Ambient space defaults to 75% and adds stereo
   reverb to harmony only, keeping the click dry. Sound changes fade smoothly.
+  Playback requests a buffered 48 kHz audio context. The synth uses precomputed,
+  band-limited waveforms and interpolated control-rate modulation to reduce
+  work on the audio thread; the sequencer uses cached decay envelopes.
 - Optional **Melodic movement**, off by default: sparse melody, root pulse,
   ascending, descending or up/down chord-tone arpeggios. Eighth notes, sixteenths
   and triplets share the metronome's sample clock. Density, swing amount and
@@ -135,6 +140,12 @@ Browser tests run against the production build, checking actual audio-worklet
 output, progression, controls, count-in/restart, and mobile layout. If a system
 Chromium exists it is used; set `CHROMIUM_PATH` to override its location. On Linux,
 Playwright may require `npx playwright install --with-deps chromium`.
+
+For audio performance work, run `npm run bench:audio` from `web/`. It measures
+128-sample render blocks at 44.1, 48 and 96 kHz with six chord voices and a dense
+sequencer, reporting mean/p95/p99 times against each block's deadline. It measures
+the synth only; browser scheduling, reverb and output-device costs are additional.
+Compare runs on the same machine without concurrent builds.
 
 ### Publish a testing link
 

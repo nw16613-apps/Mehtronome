@@ -239,7 +239,7 @@ function stopPreview() {
 async function prepareAudio() {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
-    context = new AudioContext({ latencyHint: 'interactive' });
+    context = new AudioContext({ latencyHint: 'balanced', sampleRate: 48000 });
     reverb = undefined;
     await context.audioWorklet.addModule(workletUrl);
     node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 2, outputChannelCount: [2, 2] });

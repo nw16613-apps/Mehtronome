@@ -76,9 +76,9 @@ export const CHORDS = {
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {
-  bloom: { name: 'Bloom pad', harmonics: [.22,.09], detune: .003, speed: .075, depth: .24, evolve: 1, echo: .12, brightness: .65 },
-  strings: { name: 'Velvet strings', harmonics: [.36,.16], detune: .0017, speed: .045, depth: .16, evolve: 1, echo: .07, brightness: .4 },
-  atmosphere: { name: 'Glass atmosphere', harmonics: [.06,.22], detune: .004, speed: .11, depth: .21, evolve: 1, echo: .24, brightness: 1 },
+  bloom: { name: 'Bloom pad', harmonics: [.22,.09], detune: .003, speed: .075, depth: .24, evolve: 1, echo: .08, brightness: .32, partials: [1,0,.18,0,.07,0,.03], filterBase: 550, filterSweep: 1100 },
+  strings: { name: 'Velvet strings', harmonics: [.36,.16], detune: .0017, speed: .045, depth: .16, evolve: 1, echo: .035, brightness: .9, partials: [1,.6,.38,.28,.18,.14,.11,.08,.06,.04], filterBase: 1800, filterSweep: 3200 },
+  atmosphere: { name: 'Glass atmosphere', harmonics: [.06,.22], detune: .004, speed: .11, depth: .21, evolve: 1, echo: .16, brightness: 1, partials: [.7,.12,.3,.02,.25,0,.13], filterBase: 2200, filterSweep: 2200 },
   warm: { name: 'Warm pad', harmonics: [.14,.035], detune: .002, speed: .12, depth: .12 },
   glass: { name: 'Glass cloud', harmonics: [.025,.12], detune: .003, speed: .18, depth: .18 },
   velvet: { name: 'Velvet drone', harmonics: [.24,.07], detune: .001, speed: .07, depth: .08 },
