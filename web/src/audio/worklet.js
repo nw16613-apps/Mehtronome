@@ -15,7 +15,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
         this.active = true;
       } else if (data.type === 'audition') {
         this.engine.configure(data.settings);
-        this.engine.audition(data.step, data.notes);
+        this.engine.audition(data.step, data.notes, data.acoustic);
         this.active = true;
       } else if (data.type === 'stop') {
         this.engine.running = false;

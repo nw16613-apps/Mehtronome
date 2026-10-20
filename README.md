@@ -103,7 +103,9 @@ from a single sample clock, with smooth volume changes. It includes:
   dashed. The grip voices the current chord, even when the position uses a different
   parent-major anchor. Reductions list omitted tones; barre instructions appear
   when needed. **Hold to hear grip** previews the exact fretted MIDI pitches using
-  the selected backing sound and Harmony volume, while stopped. Release, touch
+  a modeled acoustic guitar down-strum and Harmony volume, while stopped. Each
+  string is picked from low to high and rings with a natural decay; grip previews
+  bypass ambient pad effects. Release, touch
   cancellation, keyboard release, blur or a diagram change stops the preview.
   Short taps released before audio loads never trigger a late note. The overlay
   toggle removes the grip rings, finger numbers and mute marks when switched off,

@@ -51,6 +51,7 @@ test('holding a grip previews its exact guitar pitches and release, keyboard and
   await button.hover();await page.mouse.down();await expect(page.locator('#grip-preview-status')).toBeVisible();
   await expect(button).toHaveAttribute('aria-pressed','true');
   expect(await page.evaluate(()=>(window as any).__gripMessages.filter((d:any)=>d.type==='audition').at(-1).notes)).toEqual(expected);
+  expect(await page.evaluate(()=>(window as any).__gripMessages.filter((d:any)=>d.type==='audition').at(-1).acoustic)).toBe(true);
   const peak=(bus:string)=>page.evaluate(bus=>{const a=(window as any).__gripAudio[bus] as AnalyserNode;const data=new Float32Array(a.fftSize);a.getFloatTimeDomainData(data);return Math.max(...data.map(Math.abs));},bus);
   await expect.poll(()=>peak('pad')).toBeGreaterThan(.005);expect(await peak('click')).toBe(0);expect(await peak('rhythm')).toBe(0);
   await page.mouse.up();await expect(page.locator('#grip-preview-status')).toBeHidden();await expect(button).toHaveAttribute('aria-pressed','false');

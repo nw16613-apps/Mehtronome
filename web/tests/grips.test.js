@@ -69,3 +69,24 @@ test('grip audition sounds the exact fretted pitches and stays off the metronome
   engine.render(click,()=>{},left,right,undefined,rhythm);assert.ok(left.every(x=>Math.abs(x)<1e-8));
   engine.reset();assert.deepEqual(engine.chordMidi,info.midi);
 });
+
+test('acoustic grips strum exact pitches independently of the backing sound and stop cleanly', () => {
+  const render = sound => {
+    const engine = new Engine(48000);
+    engine.configure({sound,harmony:.7,sequence:true,drums:true,bass:true});
+    engine.audition(0,[48,55,59,64],true);
+    assert.deepEqual(engine.chordMidi,[48,55,59,64]);
+    assert.deepEqual(engine.guitar.voices.map(v=>v.start),[0,1056,2112,3168]);
+    const dry=new Float32Array(48000), left=new Float32Array(48000), right=new Float32Array(48000), rhythm=new Float32Array(48000), wet=new Float32Array(48000);
+    engine.render(dry,undefined,left,right,undefined,rhythm,undefined,wet);
+    assert.ok(left.some(v=>Math.abs(v)>.01));
+    for(const buffer of [dry,rhythm,wet]) assert.ok(buffer.every(v=>v===0));
+    assert.deepEqual(left,right);
+    engine.running=false;
+    const release=new Float32Array(48000);
+    engine.render(release);
+    assert.ok(release.slice(-1000).every(v=>Math.abs(v)<.00001));
+    return left;
+  };
+  assert.deepEqual(render('warm'),render('glass'));
+});

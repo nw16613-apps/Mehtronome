@@ -1,3 +1,4 @@
+import { GuitarStrum } from './guitar.js';
 import { WAVES, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { Sequence } from './sequence.js';
@@ -48,6 +49,7 @@ export class Engine {
 
   reset() {
     this.auditioning = false;
+    this.guitar = null;
     this.gapGain = 1;
     this.gapMuted = false;
     this.sequence = new Sequence(this.rate);
@@ -124,7 +126,7 @@ export class Engine {
   }
 
   /** @param {number[] | null} [notes] */
-  audition(step, notes = null) {
+  audition(step, notes = null, acoustic = false) {
     this.reset();
     this.auditioning = true;
     this.nextBeat = false;
@@ -132,6 +134,7 @@ export class Engine {
     if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 4 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
       this.chordMidi = [...notes];
       this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
+      if (acoustic) this.guitar = new GuitarStrum(this.rate, notes);
     }
   }
 
@@ -148,6 +151,19 @@ export class Engine {
 
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
     const s = this.settings;
+    if (this.guitar) {
+      // A dry acoustic preview bypasses pad effects and all accompaniment.
+      for (let i = 0; i < output.length; i++) {
+        this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
+        const value = this.guitar.sample() * this.level * s.harmony;
+        output[i] = harmonyOutput ? 0 : value;
+        if (harmonyOutput) harmonyOutput[i] = value;
+        if (harmonyRight) harmonyRight[i] = value;
+        if (rhythmOutput) rhythmOutput[i] = 0;
+        if (gapOutput) gapOutput[i] = 0;
+      }
+      return;
+    }
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
