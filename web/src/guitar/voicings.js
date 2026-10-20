@@ -1,11 +1,17 @@
 import { TUNING, diagramSvg } from './fretboard.js';
 
+export const DROP_TYPES = {drop2:{name:'Drop 2',voices:[2]},drop3:{name:'Drop 3',voices:[3]},drop24:{name:'Drop 2 & 4',voices:[2,4]},drop4:{name:'Drop 4',voices:[4]}};
 export const STRING_SETS = {
   drop2: [
     {id:'6543',strings:[0,1,2,3],label:'6–5–4–3 · E–A–D–G'},
     {id:'5432',strings:[1,2,3,4],label:'5–4–3–2 · A–D–G–B'},
     {id:'4321',strings:[2,3,4,5],label:'4–3–2–1 · D–G–B–E'},
   ],
+  drop24: [
+    {id:'6532',strings:[0,1,3,4],label:'6–5–3–2 · E–A–G–B'},
+    {id:'5421',strings:[1,2,4,5],label:'5–4–2–1 · A–D–B–E'},
+  ],
+  drop4: [{id:'6321',strings:[0,3,4,5],label:'6–3–2–1 · E–G–B–E'}],
   drop3: [
     {id:'6432',strings:[0,2,3,4],label:'6–4–3–2 · E–D–G–B'},
     {id:'5321',strings:[1,3,4,5],label:'5–3–2–1 · A–G–B–E'},
@@ -48,7 +54,7 @@ export function guitarVoicings(harmony, type = 'drop2', stringSet = STRING_SETS[
   const candidates = [];
   for (const close of fifths ? [[0,7,12,19],[7,12,19,24]] : closedPositions(pcs)) {
     const dropped = [...close];
-    if (!fifths) dropped[dropped.length - (type === 'drop3' ? 3 : 2)] -= 12;
+    if (!fifths) for(const voice of DROP_TYPES[type].voices) dropped[dropped.length-voice]-=12;
     dropped.sort((a,b) => a-b);
     for (let octave = 2; octave <= 7; octave++) {
       const pitches = dropped.map(note => root + octave * 12 + note);

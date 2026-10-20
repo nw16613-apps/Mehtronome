@@ -2,10 +2,10 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {CHORDS,harmonyAt} from '../src/audio/music.js';
 import {TUNING} from '../src/guitar/fretboard.js';
-import {STRING_SETS,guitarVoicings,voicingSvg} from '../src/guitar/voicings.js';
+import {DROP_TYPES,STRING_SETS,guitarVoicings,voicingSvg} from '../src/guitar/voicings.js';
 
 test('every string set and key shows all distinct inversions with genuine drop ordering',()=>{
-  for(const chord of Object.keys(CHORDS))for(let key=0;key<12;key++)for(const type of ['drop2','drop3'])for(const set of STRING_SETS[type]){
+  for(const chord of Object.keys(CHORDS))for(let key=0;key<12;key++)for(const type of Object.keys(DROP_TYPES))for(const set of STRING_SETS[type]){
     const harmony=harmonyAt({key,mode:'major',chord});
     const result=guitarVoicings(harmony,type,set.id);
     const count=new Set(result.indices.map(i=>harmony.chordPcs[i])).size;
@@ -27,10 +27,11 @@ test('every string set and key shows all distinct inversions with genuine drop o
       if(!result.fifths){
         // Raising the bass must reconstruct a closed chord and identify exactly
         // the second- or third-highest voice, rather than an arbitrary spread.
-        const raised=board.notes[0].midi+12;
-        const close=[raised,...board.notes.slice(1).map(n=>n.midi)].sort((a,b)=>a-b);
+        const count=DROP_TYPES[type].voices.length;
+        const raised=board.notes.slice(0,count).map(n=>n.midi+12);
+        const close=[...raised,...board.notes.slice(count).map(n=>n.midi)].sort((a,b)=>a-b);
         assert.ok(close[3]-close[0]<=12);
-        assert.equal(close[type==='drop2'?2:1],raised);
+        assert.deepEqual(new Set(raised),new Set(DROP_TYPES[type].voices.map(v=>close[4-v])));
       }
     }
   }

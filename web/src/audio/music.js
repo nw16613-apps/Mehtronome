@@ -76,6 +76,9 @@ export const CHORDS = {
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {
+  bloom: { name: 'Bloom pad', harmonics: [.22,.09], detune: .003, speed: .075, depth: .24, evolve: 1, echo: .12, brightness: .65 },
+  strings: { name: 'Velvet strings', harmonics: [.36,.16], detune: .0017, speed: .045, depth: .16, evolve: 1, echo: .07, brightness: .4 },
+  atmosphere: { name: 'Glass atmosphere', harmonics: [.06,.22], detune: .004, speed: .11, depth: .21, evolve: 1, echo: .24, brightness: 1 },
   warm: { name: 'Warm pad', harmonics: [.14,.035], detune: .002, speed: .12, depth: .12 },
   glass: { name: 'Glass cloud', harmonics: [.025,.12], detune: .003, speed: .18, depth: .18 },
   velvet: { name: 'Velvet drone', harmonics: [.24,.07], detune: .001, speed: .07, depth: .08 },

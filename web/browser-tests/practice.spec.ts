@@ -536,7 +536,7 @@ test('drop chord grips show real four-note fingerings and follow stopped and pla
 test('string-set dropdown shows all four inversions on exactly the chosen strings',async({page})=>{
   await page.goto('/');
   await page.locator('#chord').selectOption('maj7');
-  for(const [type,sets] of [['drop2',['6543','5432','4321']],['drop3',['6432','5321']]] as const){
+  for(const [type,sets] of [['drop2',['6543','5432','4321']],['drop3',['6432','5321']],['drop24',['6532','5421']],['drop4',['6321']]] as const){
     await page.locator('#voicing-type').selectOption(type);
     await expect(page.locator('#voicing-strings option')).toHaveCount(sets.length);
     for(const set of sets){
@@ -548,6 +548,7 @@ test('string-set dropdown shows all four inversions on exactly the chosen string
       expect(strings).toEqual([set,set,set,set]);
     }
   }
+  await page.locator('#voicing-type').selectOption('drop3');
   await page.locator('#voicing-strings').selectOption('5321');
   await page.locator('#key').selectOption('6');
   await expect(page.locator('#voicing-strings')).toHaveValue('5321');
@@ -561,4 +562,66 @@ test('string-set dropdown shows all four inversions on exactly the chosen string
   await page.setViewportSize({width:390,height:844});
   await expect(page.locator('#voicing-strings')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('evolving sounds produce stereo audio and the optional sequencer works independently of the pad',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{
+    const Original=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Original{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);
+        const splitter=context.createChannelSplitter(2);this.connect(splitter,1);
+        const analysers=[context.createAnalyser(),context.createAnalyser()];
+        analysers.forEach((a,i)=>splitter.connect(a,i));
+        (window as any).__stereo=analysers;
+      }
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('#sound')).toHaveValue('bloom');
+  await expect(page.locator('#sequence')).not.toBeChecked();
+  await expect(page.locator('#sequence-controls')).toBeHidden();
+  await page.locator('#count-in').uncheck();
+  await page.locator('#click').fill('0');
+  await page.locator('#play').click();
+  await expect(page.locator('#play-status')).toContainText('Playing');
+  for(const sound of ['bloom','strings','atmosphere']){
+    await page.locator('#sound').selectOption(sound);
+    await expect.poll(()=>page.evaluate(()=>{
+      const analysers=(window as any).__stereo as AnalyserNode[] | undefined;
+      if(!analysers) return 0;
+      const [a,b]=analysers;
+      const left=new Float32Array(a.fftSize),right=new Float32Array(b.fftSize);
+      a.getFloatTimeDomainData(left);b.getFloatTimeDomainData(right);
+      return Math.max(...left.map((v,i)=>Math.abs(v-right[i])));
+    })).toBeGreaterThan(.001);
+  }
+  await page.locator('#harmony').fill('0');
+  await page.locator('#sequence').check();
+  await expect(page.locator('#sequence-controls')).toBeVisible();
+  await page.locator('#sequence-pattern').selectOption('pulse');
+  await page.locator('#sequence-density').fill('100');
+  await page.locator('#sequence-volume').fill('80');
+  await expect.poll(()=>page.evaluate(()=>{
+    const a=(window as any).__stereo[0] as AnalyserNode;
+    const data=new Float32Array(a.fftSize);a.getFloatTimeDomainData(data);
+    return Math.max(...data.map(Math.abs));
+  })).toBeGreaterThan(.01);
+  await page.locator('#sequence-rate').selectOption('3');
+  await expect(page.locator('#sequence-swing')).toBeDisabled();
+  await page.locator('#sequence-rate').selectOption('4');
+  await expect(page.locator('#sequence-swing')).toBeEnabled();
+  await page.locator('#sequence-swing').fill('40');
+  await page.locator('#progression').click();
+  await page.locator('#template').selectOption('major251');
+  await page.locator('#sequence-pattern').selectOption('updown');
+  await page.locator('#play').click();
+  await page.waitForTimeout(300);
+  await page.locator('#play').click();
+  await expect(page.locator('#play-status')).toContainText('Playing');
+  await page.locator('#play').click();
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
 });

@@ -16,9 +16,16 @@ from a single sample clock, with smooth volume changes. It includes:
   minor parent scales. Melodic minor follows the jazz convention (same notes
   ascending and descending). Each family contains all seven rotations, with
   correctly spelled notes, characteristic degrees, and compatible backing chords.
-- Four synthesized ambient backing sounds: Warm Pad, Glass Cloud, Velvet Drone,
-  and Air Choir. Ambient space defaults to 75% and adds adjustable stereo reverb to harmony only,
-  keeping the click dry. Sound and chord changes fade smoothly.
+- Seven synthesized backing sounds. Bloom Pad (the browser default), Velvet
+  Strings and Glass Atmosphere add layered detuning, slow brightness changes,
+  stereo movement and gently modulated echoes. Warm Pad, Glass Cloud, Velvet Drone
+  and Air Choir remain available. Ambient space defaults to 75% and adds stereo
+  reverb to harmony only, keeping the click dry. Sound changes fade smoothly.
+- Optional **Melodic movement**, off by default: sparse melody, root pulse,
+  ascending, descending or up/down chord-tone arpeggios. Eighth notes, sixteenths
+  and triplets share the metronome's sample clock. Density, swing amount and
+  sequence volume are independent controls; triplets stay straight. Sequences
+  respect the count-in, follow every chord change and stay off during held previews.
 - 33 pedal-chord types, filtered to chords whose notes fit the selected mode.
   Each mode selects a suggested starting chord. Choices include major/minor
   sevenths, ninths, elevenths, sixths, thirteenths, suspended chords, open fifths,
@@ -89,16 +96,17 @@ Use **Compare themes** in the footer for the screenshot gallery at `themes.html`
 Links such as `?theme=midnight` preview a palette without overwriting a saved
 preference; choosing from the menu saves the choice and clears that preview URL.
 
-The **Guitar chord voicings** section follows the current chord. Choose Drop 2
-or Drop 3, a string set, and note-name or interval labels. Drop 2 offers strings
-6–5–4–3, 5–4–3–2 and 4–3–2–1; Drop 3 offers 6–4–3–2 and 5–3–2–1.
+The **Guitar chord voicings** section follows the current chord. Choose Drop 2,
+Drop 3, Drop 2 & 4 or Drop 4, a string set, and note-name or interval labels.
+Drop 2 offers strings 6–5–4–3, 5–4–3–2 and 4–3–2–1; Drop 3 offers 6–4–3–2 and
+5–3–2–1; Drop 2 & 4 offers 6–5–3–2 and 5–4–2–1; Drop 4 uses 6–3–2–1.
 Each selected string set shows root position and all three inversions for a
 four-note chord, in that order. Play the four marked notes together and mute ×.
 Extended chords disclose their four-note reduction; inversion names refer to that
 selection. Triads double one tone and show root position plus two inversions;
 open-fifth chords show two spread root/fifth bass choices. All notes are fretted
 within frets 1–24. Wide stretches are marked and diagrams expand to show every
-fret needed. Backing audio is unchanged.
+fret needed. These diagram selections do not change the backing audio voicing.
 
 ### Develop
 
