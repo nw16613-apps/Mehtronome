@@ -84,7 +84,9 @@ from a single sample clock, with smooth volume changes. It includes:
 - A guitar reference panel in standard E–A–D–G–B–e tuning. All five horizontal
   position diagrams appear together, with Roman numbering: I = E form,
   II = D form, III = C form, IV = A form, V = G form. Each preserves its
-  CAGED root layout and five-fret window; the fret numbers identify its location.
+  CAGED root layout and fret window; the fret numbers identify its location.
+  Position IV uses string-specific boundaries across six frets, relocating the
+  lower strings’ far-edge notes onto the next string at the same pitch.
   High E is at the top, low E at the bottom, and frets increase left to right.
   All positions use fretted notes; open-position forms move up an octave,
   preserving their CAGED patterns and root anchors.

@@ -3,7 +3,10 @@ import { characteristicNotes } from '../audio/music.js';
 export const TUNING = [40,45,50,55,59,64];
 export const SHAPES = {
   C: { tonic: 0, rootString: 1, rootOffset: 3, leadIn: 0 },
-  A: { tonic: 9, rootString: 1, rootOffset: 0, leadIn: 0 },
+  A: { tonic: 9, rootString: 1, rootOffset: 0, leadIn: 1, span: 5,
+    // Move each lower string's far-edge note onto the next string, five frets
+    // lower. Keep the upper strings' reach and the A-string root anchor.
+    stringWindows: [[0,3],[-1,3],[-1,3],[-1,4],[0,4],[0,4]] },
   G: { tonic: 7, rootString: 0, rootOffset: 3, leadIn: 0 },
   E: { tonic: 4, rootString: 0, rootOffset: 0, leadIn: 1 },
   D: { tonic: 2, rootString: 2, rootOffset: 0, leadIn: 1 },
@@ -21,7 +24,7 @@ export function positionFor(rootPc, shape) {
   let transposition = (rootPc - definition.tonic + 12) % 12;
   if (transposition - definition.leadIn < 1) transposition += 12;
   const start = transposition - definition.leadIn;
-  return { shape, start, end: start + 4, rootString: definition.rootString, rootFret: transposition + definition.rootOffset };
+  return { shape, start, end: start + (definition.span || 4), rootString: definition.rootString, rootFret: transposition + definition.rootOffset };
 }
 export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const rootPc = harmony.midi[0] % 12;
@@ -29,7 +32,10 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const notes = [];
   const colourPcs = characteristicNotes(harmony).map(note => note.pc);
   for (let string = 0; string < TUNING.length; string++) {
-    for (let fret = position.start; fret <= position.end; fret++) {
+    const window = SHAPES[shape].stringWindows?.[string];
+    const from = window ? position.rootFret + window[0] : position.start;
+    const to = window ? position.rootFret + window[1] : position.end;
+    for (let fret = from; fret <= to; fret++) {
       const midi = TUNING[string] + fret;
       const pc = midi % 12;
       const scaleIndex = harmony.scalePcs.indexOf(pc);

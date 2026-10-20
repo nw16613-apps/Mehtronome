@@ -9,10 +9,10 @@ test('CAGED root anchors stay correct in fully fretted positions in every key',(
     const position=positionFor(root,shape);
     assert.equal((TUNING[position.rootString]+position.rootFret)%12,root);
     assert.ok(position.rootFret>=position.start&&position.rootFret<=position.end);
-    assert.equal(position.end-position.start,4);
-    assert.ok(position.start>=1&&position.end<=16);
+    assert.equal(position.end-position.start,shape==='A'?5:4);
+    assert.ok(position.start>=1&&position.end<=17);
   }
-  assert.deepEqual(Object.keys(SHAPES).map(shape=>positionFor(0,shape).start),[12,3,5,7,9]);
+  assert.deepEqual(Object.keys(SHAPES).map(shape=>positionFor(0,shape).start),[12,2,5,7,9]);
 });
 
 test('C major C form moves up an octave with the same notes and root pattern',()=>{
@@ -80,7 +80,7 @@ test('SVG identifies frets, tuning and note roles and changes to degree labels',
 test('Roman positions follow the E-D-C-A-G sequence without changing fretboard pitch data',()=>{
   assert.deepEqual(POSITIONS.map(position=>[position.numeral,position.shape]),[['I','E'],['II','D'],['III','C'],['IV','A'],['V','G']]);
   const harmony=harmonyAt({key:0,mode:'major',chord:'maj7'});
-  assert.deepEqual(POSITIONS.map(position=>fretboardFor(harmony,position.shape).start),[7,9,12,3,5]);
+  assert.deepEqual(POSITIONS.map(position=>fretboardFor(harmony,position.shape).start),[7,9,12,2,5]);
 });
 
 test('horizontal diagrams have horizontal strings, vertical frets, high E above low E, and no open strings',()=>{
@@ -94,4 +94,35 @@ test('horizontal diagrams have horizontal strings, vertical frets, high E above 
   for(const line of frets){ assert.equal(line[1],line[2]);assert.notEqual(line[3],line[4]); }
   assert.ok(!svg.includes('data-fret="0"'));
   assert.ok(!svg.includes('fret-wire nut'));
+});
+
+
+test('A-form C-major fingering relocates B, E and A to the next string at fret two',()=>{
+  const info=harmonyAt({key:0,mode:'major',chord:'maj9'});
+  for(const chordOnly of [false,true]){
+    const board=fretboardFor(info,'A',chordOnly);
+    assert.equal(board.start,2);assert.equal(board.end,7);assert.equal(board.rootFret,3);
+    for(const [string,name] of [[1,'B'],[2,'E'],[3,'A']]){
+      assert.ok(!board.notes.some(n=>n.string===string-1&&n.fret===7));
+      if(!chordOnly||name!=='A')assert.equal(board.notes.find(n=>n.string===string&&n.fret===2)?.name,name);
+    }
+    assert.equal(board.notes.find(n=>n.string===5&&n.fret===7)?.name,'B');
+  }
+});
+
+test('A-form string windows preserve pitches, transpose across all modes and avoid open frets',()=>{
+  for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
+    const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'A',chordOnly);
+    const expected=[];
+    // Compare against the original rectangular pitch collection at the same root.
+    for(const tuning of TUNING)for(let fret=board.rootFret;fret<=board.rootFret+4;fret++){
+      const midi=tuning+fret,pc=midi%12;
+      if(chordOnly?info.chordPcs.includes(pc):info.chordPcs.includes(pc)||info.scalePcs.includes(pc))expected.push(midi);
+    }
+    assert.deepEqual(board.notes.map(n=>n.midi).sort((a,b)=>a-b),expected.sort((a,b)=>a-b));
+    assert.ok(board.notes.every(n=>n.fret>=board.start&&n.fret<=board.end&&n.fret>0));
+    assert.ok(board.notes.some(n=>n.root&&n.string===1&&n.fret===board.rootFret));
+    const svg=diagramSvg(board,true,definition.degrees,'Position IV',true);
+    assert.ok(!svg.includes('data-fret="0"'));assert.ok(svg.includes(`>${board.start}</text>`));
+  }
 });
