@@ -97,7 +97,7 @@ from a single sample clock, with smooth volume changes. It includes:
   All positions use fretted notes; open-position forms move up an octave,
   preserving their CAGED patterns and root anchors.
   Scale/arpeggio note maps keep their established fingering boundaries. An optional
-  **Show chord grip** overlay recommends one compact 3–4-string grip per position:
+  **Highlight chord shapes** overlay recommends one compact 3–4-string grip per position:
   solid rings select the sounding notes, numbered badges show fingers 1–4, and ×
   marks muted strings. Other scale notes are dimmed, and modal colour rings remain
   dashed. The grip voices the current chord, even when the position uses a different
@@ -106,7 +106,8 @@ from a single sample clock, with smooth volume changes. It includes:
   the selected backing sound and Harmony volume, while stopped. Release, touch
   cancellation, keyboard release, blur or a diagram change stops the preview.
   Short taps released before audio loads never trigger a late note. The overlay
-  toggle is included in saved practice presets.
+  toggle removes the grip rings, finger numbers and mute marks when switched off,
+  restoring all scale notes to full brightness. Its setting is included in saved practice presets.
   Chord roots, other chord tones, and scale tones have distinct colors.
   Choose note names or scale degrees, and scale-plus-chord or chord-only view;
   these controls update all five diagrams at once and stay synchronized with
