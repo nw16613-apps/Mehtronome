@@ -57,7 +57,7 @@ app.innerHTML = `
     </section>
     <section class="rhythm panel" aria-labelledby="rhythm-title">
       <div class="section-heading"><h2 id="rhythm-title">Drums & bass</h2><span class="small-label">BUILD YOUR BACKING</span></div>
-      <p class="sequence-help">Acoustic drums and five styles for each instrument. Follows your tempo, beats per bar and chord changes. Starts after the count-in; chord previews stay sustained.</p>
+      <p class="sequence-help">Five styles for each instrument, with syncopated bass lines, drum ghost notes and four-bar turnarounds. Follows your tempo, beats per bar and chord changes. Starts after the count-in; chord previews stay sustained.</p>
       <div class="field-row rhythm-instruments">
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="drums" type="checkbox">Drums</label><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label class="volume-label" for="drums-volume">Drums volume <output id="drums-volume-value">35%</output></label><input id="drums-volume" type="range" min="0" max="100" value="35"></div></div>
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label class="volume-label" for="bass-volume">Bass volume <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40"></div></div>

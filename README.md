@@ -35,7 +35,10 @@ from a single sample clock, with smooth volume changes. It includes:
   volume controls. Five drum styles: pop/rock, blues shuffle, jazz swing, neo-soul
   half-time and bossa nova. Five bass styles: sustained ambient roots, pop/rock
   root-and-fifth, jazz chord-tone walking, bossa and syncopated funk. Bass styles
-  also vary note length and articulation. Patterns
+  also vary note length and articulation, with octave movement and syncopated pickups.
+  Drum grooves include velocity accents, ghost notes, two-bar kick variations
+  and restrained fourth-bar turnarounds. Bass timing stays independent when
+  mixing a straight bass pattern with swung drums. Patterns
   adapt to beats per bar, share the sample clock, respect the count-in and follow
   the current chord. Both stay silent during held chord previews. Drums and bass
   have a separate dry output, bypassing pad reverb and echoes. Drum samples are

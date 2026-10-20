@@ -98,6 +98,7 @@ export class Engine {
     if (!previousDrums && s.drums) this.rhythm.clearDrums();
     if (!previousBass && s.bass) this.rhythm.clearBass();
     if (previousDrums!==s.drums || previousBass!==s.bass || previousGroove!==s.drumGroove) {
+      this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));

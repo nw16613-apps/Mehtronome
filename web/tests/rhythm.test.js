@@ -1,7 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Engine} from '../src/audio/engine.js';
-import {harmonyAt} from '../src/audio/music.js';
+import {Rhythm} from '../src/audio/rhythm.js';
+import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
 const noop=()=>{};
 function setup(settings={}){
@@ -16,15 +17,15 @@ function render(engine,length){
 
 test('drum grooves hit sample-clock beats and shuffled offbeats exactly',()=>{
   const straight=render(setup({bass:false}),16000);
-  assert.deepEqual(straight.events.filter(e=>e.type==='kick').map(e=>e.sample),[0,8000]);
-  assert.deepEqual(straight.events.filter(e=>e.type==='snare').map(e=>e.sample),[4000,12000]);
+  assert.deepEqual(straight.events.filter(e=>e.type==='kick').map(e=>e.sample),[0,6000,8000,11000]);
+  assert.deepEqual(straight.events.filter(e=>e.type==='snare'&&e.gain>.5).map(e=>e.sample),[4000,12000]);
   assert.deepEqual(straight.events.filter(e=>e.type==='hat').map(e=>e.sample),[0,2000,4000,6000,8000,10000,12000,14000]);
   const shuffle=render(setup({bass:false,drumGroove:'shuffle'}),8000);
   assert.deepEqual(shuffle.events.filter(e=>e.type==='hat').map(e=>e.sample),[0,2667,4000,6667]);
   const swing=render(setup({bass:false,drumGroove:'swing'}),16000);
   assert.deepEqual(swing.events.filter(e=>e.type==='ride').map(e=>e.sample),[0,4000,6667,8000,12000,14667]);
   const half=render(setup({bass:false,drumGroove:'halftime'}),16000);
-  assert.deepEqual(half.events.filter(e=>e.type==='snare').map(e=>e.sample),[8000]);
+  assert.deepEqual(half.events.filter(e=>e.type==='snare'&&e.gain>.5).map(e=>e.sample),[8000]);
 });
 
 test('bass patterns follow actual chord tones and land on the root each bar in every meter',()=>{
@@ -36,7 +37,7 @@ test('bass patterns follow actual chord tones and land on the root each bar in e
       const info=harmonyAt(engine.settings,event.step);
       assert.equal(event.type,'bass');
       assert.ok(info.chordPcs.includes(event.midi%12));
-      assert.ok(event.midi>=36&&event.midi<=47);
+      assert.ok(event.midi>=36&&event.midi<=59);
       if(event.beat===0)assert.equal(event.midi%12,info.midi[0]%12);
     }
   }
@@ -63,9 +64,9 @@ test('drum and bass switches and volumes are independent; enabling waits for the
   }
   for(const settings of [{drums:false},{bass:false}])assert.ok(render(setup(settings),8000).dry.some(x=>Math.abs(x)>.005));
   const engine=setup({drums:false,bass:false,bassPattern:'fifths'});render(engine,1500);
-  engine.configure({drums:true,bass:true});const active=render(engine,3000);
+  engine.configure({drums:true,bass:true});const active=render(engine,5500);
   assert.equal(active.events[0].sample,2000);
-  assert.equal(active.events.find(e=>e.type==='bass').sample,4000);
+  assert.equal(active.events.find(e=>e.type==='bass').sample,6000);
   engine.configure({drums:false,bass:false});render(engine,16000);
   assert.ok(render(engine,8000).dry.every(x=>Math.abs(x)<1e-8));
 });
@@ -126,5 +127,65 @@ test('bundled WAV kit is valid, survives transport resets and renders safely in 
     const result=render(engine,96000);
     assert.ok(result.dry.some(x=>Math.abs(x)>.05));
     for(let i=0;i<result.dry.length;i++)assert.ok(Number.isFinite(result.dry[i])&&Math.abs(result.dry[i]+result.pad[i]+result.click[i])<1);
+  }
+});
+
+
+test('phrases vary over four bars with ghost notes, pickups, dynamics and bass octaves',()=>{
+  for(const drumGroove of Object.keys(DRUM_GROOVES)){
+    const result=render(setup({drumGroove,bass:false}),64000);
+    const phrase=bar=>result.events.filter(e=>Math.floor(e.sample/16000)===bar)
+      .map(e=>[e.type,e.sample%16000,e.gain]);
+    assert.notDeepEqual(phrase(0),phrase(3),drumGroove);
+    assert.ok(result.events.some(e=>['snare','rim'].includes(e.type)&&e.gain<.2),drumGroove);
+  }
+  for(const bassPattern of ['fifths','funk']){
+    const {events}=render(setup({drums:false,bassPattern}),16000);
+    assert.ok(events.some(e=>e.midi>=48));
+    assert.ok(events.some(e=>e.sub%2===1||e.sub===2));
+    assert.ok(new Set(events.map(e=>e.gain)).size>2);
+  }
+  for(const bassPattern of ['roots','walk']){
+    const {events}=render(setup({drums:false,bassPattern}),32000);
+    const phrase=bar=>events.filter(e=>Math.floor(e.sample/16000)===bar).map(e=>[e.sample%16000,e.midi]);
+    assert.notDeepEqual(phrase(0),phrase(1));
+  }
+});
+
+test('bass ostinato timing stays independent of drum swing and uses exact sixteenths',()=>{
+  const signature=drumGroove=>render(setup({drumGroove,bassPattern:'funk'}),16000).events.filter(e=>e.type==='bass');
+  const straight=signature('straight');
+  assert.deepEqual(straight.map(e=>e.sample),[0,3000,6000,9000,11000,14000,15000]);
+  assert.deepEqual(signature('swing'),straight);
+  assert.deepEqual(signature('shuffle'),straight);
+  const {events}=render(setup({bass:false,drumGroove:'shuffle'}),16000);
+  assert.ok(events.some(e=>e.type==='snare'&&e.sample===3334&&e.gain<.2));
+});
+
+test('sixteenth ostinatos stay block independent through fills at awkward tempos',()=>{
+  for(const [drumGroove,bassPattern] of [['halftime','funk'],['shuffle','fifths'],['swing','walk'],['bossa','bossa']]){
+    const settings={drumGroove,bassPattern,bpm:137,beats:5};
+    const whole=setup(settings),blocks=setup(settings);
+    const expected=render(whole,48000);
+    const actual=new Float32Array(48000),events=[];
+    for(let offset=0;offset<actual.length;offset+=127){
+      const count=Math.min(127,actual.length-offset);
+      const block=render(blocks,count);actual.set(block.dry,offset);events.push(...block.events);
+    }
+    assert.deepEqual(actual,expected.dry);assert.deepEqual(events,expected.events);
+    for(const value of actual)assert.ok(Number.isFinite(value)&&Math.abs(value)<1);
+  }
+});
+
+
+test('bass variations remain valid for every chord size, including dyads',()=>{
+  for(const chord of Object.keys(CHORDS))for(const bassPattern of Object.keys(BASS_PATTERNS)){
+    const engine=setup({chord,bassPattern,drums:false});
+    const rhythm=new Rhythm(8000),events=[];
+    for(let beat=0;beat<16;beat++)for(let sub=0;sub<4;sub++){
+      rhythm.tick(engine.settings,beat,sub/4,engine.chordMidi,beat*4000+sub*1000,0,e=>events.push(e));
+    }
+    assert.ok(events.length>0);
+    for(const event of events){assert.ok(Number.isFinite(event.midi),`${chord}: ${bassPattern}`);assert.ok(engine.chordMidi.some(n=>n%12===event.midi%12));}
   }
 });
