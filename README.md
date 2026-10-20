@@ -111,9 +111,11 @@ from a single sample clock, with smooth volume changes. It includes:
   dashed. The grip voices the current chord, even when the position uses a different
   parent-major anchor. Reductions list omitted tones; barre instructions appear
   when needed. **Strum grip** previews the exact fretted MIDI pitches using
-  a modeled nylon-string guitar down-strum and Harmony volume, while stopped. Each
+  a modeled, lightly bright nylon-string guitar down-strum and Harmony volume, while stopped. Each
   string is picked from low to high and rings with a natural decay; grip previews
   bypass pad layers and echoes, with warm stereo reverb controlled by Ambient space.
+  Every drop-voicing diagram also has a **Strum voicing** button that plays its
+  exact pitches, including the selected inversion and string set.
   Guitar output leaves headroom for reverb, and re-strums briefly fade the previous
   chord to keep attacks clean. Click, tap, or activate the button with Space or Enter
   to strum and let the chord ring out. Another click strums again; blur, a diagram

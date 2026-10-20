@@ -160,9 +160,10 @@ test('guitar dry and reverb sum with headroom at full volume, including repeated
   await page.goto('/');await page.locator('#harmony').fill('100');await page.locator('#space').fill('100');
   for(const [mode,key] of [['dorian','9'],['lydian','0'],['altered','7']]){
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
-    for(let position=0;position<5;position++){
-      const button=page.locator('.grip-preview').nth(position);
-      await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
+    for(const [selector,status,count] of [['.grip-preview','#grip-preview-status',5],['.voicing-preview','#voicing-preview-status',4]] as const){
+    for(let position=0;position<count;position++){
+      const button=page.locator(selector).nth(position);
+      await button.click();await expect(page.locator(status)).toBeVisible();
       const peak=await page.evaluate(async()=>{
         let peak=0;const data=new Float32Array(8192);
         for(let i=0;i<10;i++){
@@ -176,9 +177,49 @@ test('guitar dry and reverb sum with headroom at full volume, including repeated
       });
       expect(peak).toBeGreaterThan(.005);expect(peak).toBeLessThan(.85);
     }
+    }
   }
   const button=page.locator('.grip-preview').first();
   await button.click({clickCount:3,delay:5});
   await expect(page.locator('#grip-preview-status')).toBeVisible();
   await expect(page.locator('#error')).toBeHidden();
+});
+
+test('each drop-voicing strum plays the exact inversion and string-set notes',async({page})=>{
+  await page.addInitScript(()=>{
+    const Node=window.AudioWorkletNode;(window as any).__voicingMessages=[];
+    window.AudioWorkletNode=class extends Node{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);const post=this.port.postMessage.bind(this.port);
+        this.port.postMessage=(data:any,transfer?:Transferable[])=>{
+          if(data.type==='audition')(window as any).__voicingMessages.push(data);
+          if(transfer)post(data,transfer);else post(data);
+        };
+      }
+    };
+  });
+  await page.goto('/');await page.locator('#show-grip').uncheck();
+  for(const type of ['drop2','drop3','drop24','drop4']){
+    await page.locator('#voicing-type').selectOption(type);
+    const sets=await page.locator('#voicing-strings option').evaluateAll(options=>options.map(n=>(n as HTMLOptionElement).value));
+    for(const set of sets){
+      await page.locator('#voicing-strings').selectOption(set);
+      await expect(page.locator('.voicing-preview')).toHaveCount(4);
+      for(const card of await page.locator('.voicing-card').all()){
+        const expected=await card.locator('.fret-note').evaluateAll(notes=>notes.map(n=>[40,45,50,55,59,64][Number(n.getAttribute('data-string'))]+Number(n.getAttribute('data-fret'))));
+        await card.locator('.voicing-preview').click();
+        await expect(page.locator('#voicing-preview-status')).toBeVisible();
+        const message=await page.evaluate(()=>(window as any).__voicingMessages.at(-1));
+        expect(message.notes).toEqual(expected);expect(message.acoustic).toBe(true);
+        await expect(page.locator('#grip-preview-status')).toBeHidden();
+      }
+    }
+  }
+  const button=page.locator('.voicing-preview').first();
+  await button.focus();await page.keyboard.press('Space');await expect(page.locator('#voicing-preview-status')).toBeVisible();
+  await page.locator('#voicing-labels').selectOption('notes');await expect(page.locator('#voicing-preview-status')).toBeHidden();
+  await page.locator('#play').click();
+  for(const b of await page.locator('.voicing-preview').all())await expect(b).toBeDisabled();
+  await page.locator('#play').click();
+  for(const b of await page.locator('.voicing-preview').all())await expect(b).toBeEnabled();
 });

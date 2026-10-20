@@ -1,4 +1,4 @@
-// A soft nylon-string pluck: a displaced string excites a waveguide, then
+// A warm, lightly bright nylon-string pluck: a displaced string excites a waveguide, then
 // couples into the guitar body. All filters are allocated before rendering.
 export class GuitarStrum {
   constructor(rate, notes) {
@@ -11,7 +11,7 @@ export class GuitarStrum {
     this.tone = 0;
     this.dc = 0;
     this.dcCoefficient = 1 - Math.exp(-2 * Math.PI * 20 / rate);
-    this.toneCoefficient = 1 - Math.exp(-2 * Math.PI * 2300 / rate);
+    this.toneCoefficient = 1 - Math.exp(-2 * Math.PI * 3000 / rate);
     this.voices = notes.map((note, index) => {
       const frequency = 440 * 2 ** ((note - 69) / 12);
       const delay = rate / frequency - .5;
@@ -20,7 +20,7 @@ export class GuitarStrum {
       let seed = note * 1009 + 17, mean = 0;
       // Pluck near the middle of the string: a strong fundamental and rounded
       // upper harmonics, rather than noise with a randomly weak fundamental.
-      const pick = .32;
+      const pick = .29;
       for (let i = 0; i < length; i++) {
         seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
         const phase = i / length;

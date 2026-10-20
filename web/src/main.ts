@@ -92,9 +92,9 @@ app.innerHTML = `
     <section class="voicings panel" aria-labelledby="voicings-title">
       <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE CHORD SHAPES · × = MUTE</span></div>
       <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls voicing-controls"><label>Voicing<select id="voicing-type">${Object.entries(DROP_TYPES).map(([id,type])=>`<option value="${id}">${type.name}</option>`).join('')}</select></label><label>String set<select id="voicing-strings"></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals" selected>Chord intervals</option></select></label></div></div>
-      <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p></div>
+      <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p><p id="voicing-preview-status" class="guitar-help" role="status" hidden>Chord ringing · click a voicing to strum again.</p></div>
       <div id="voicing-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All grips use fretted notes. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></div>
+      <div class="guitar-guide"><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All grips use fretted notes. Click Strum voicing while stopped to hear the exact diagram notes on guitar. Harmony controls volume; Ambient space adds reverb. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></div>
     </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
@@ -122,6 +122,7 @@ let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
 let previewPreparation: Promise<void> | undefined;
 let previewing = false;
 let previewGripShape: string | null = null;
+const voicingGrips = new Map<string, {notes:{midi:number}[]}>();
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let previewGeneration = 0;
 
@@ -187,6 +188,8 @@ function renderGuitar() {
   select('fret-view').value = select('exercise').value;
 }
 function renderVoicings() {
+  if (previewGripShape?.startsWith('voicing:')) stopPreview();
+  voicingGrips.clear();
   const info = chordInfo(step);
   const chord = `${info.name}${info.suffix}`;
   const type = select('voicing-type').value;
@@ -199,8 +202,10 @@ function renderVoicings() {
   el('voicings-tones').textContent = `Included: ${result.indices.map((i: number) => `${info.tones[i]} (${info.intervals[i]})`).join(' · ')}${result.omitted.length ? `. Omitted: ${result.omitted.join(' · ')}.` : ''}`;
   el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth grips rather than four-part drop voicings.' : `${DROP_TYPES[type as keyof typeof DROP_TYPES].name} lowers ${type==='drop24'?'the second- and fourth-highest voices':type==='drop4'?'the lowest voice':type==='drop3'?'the third-highest voice':'the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone, with root position and two inversions.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above; inversion names refer to that selection.' : ''}`;
   el('voicing-diagrams').innerHTML = result.voicings.map((board: any) => {
+    const gripId = `voicing:${board.inversion}`;
+    voicingGrips.set(gripId, {notes:board.notes});
     const title = `${chord}, ${result.fifths ? 'spread fifths' : DROP_TYPES[type as keyof typeof DROP_TYPES].name.toLowerCase()}, ${board.inversionName.toLowerCase()}, ${board.bass} bass, strings ${board.strings.join(', ')}`;
-    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p></article>`;
+    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p><button type="button" class="practice-button voicing-preview" data-grip="${gripId}" aria-label="Strum voicing, ${board.inversionName}" ${playing ? 'disabled' : ''}>Strum voicing</button></article>`;
   }).join('') || '<p class="guitar-help">No fretted grip found within frets 1–24 for this string set.</p>';
 }
 function renderBeats(active = -1) {
@@ -292,7 +297,7 @@ function tempo(value: number) {
   node?.port.postMessage({ type: 'settings', settings });
 }
 function reflectPlayback() {
-  el('guitar-diagrams').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
+  document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button, #voicing-diagrams button').forEach(button => { button.disabled = playing; });
   el('progression-strip').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
   el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
   el('play-icon').textContent = playing ? '■' : '▶';
@@ -322,6 +327,7 @@ function stopPreview() {
   previewing = false;
   previewGripShape = null;
   el('grip-preview-status').hidden = true;
+  el('voicing-preview-status').hidden = true;
   el('preview-status').hidden = true;
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
@@ -426,7 +432,7 @@ async function previewChord(index: number, hold: string) {
 }
 async function previewGrip(shape: string) {
   if (playing || busy || stopping) return;
-  const grip = positionGrips.get(shape);
+  const grip = shape.startsWith('voicing:') ? voicingGrips.get(shape) : positionGrips.get(shape);
   if (!grip) return;
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
@@ -450,7 +456,7 @@ async function previewGrip(shape: string) {
     }
     previewing = true;
     node!.port.postMessage({type:'audition',settings,step,acoustic:true,notes:grip.notes.map((note: any)=>note.midi)});
-    el('grip-preview-status').hidden = false;
+    el(shape.startsWith('voicing:') ? 'voicing-preview-status' : 'grip-preview-status').hidden = false;
     gripRingTimer = setTimeout(() => { if (generation === previewGeneration) stopPreview(); }, 8000);
   } catch (error) {
     el('error').textContent = error instanceof Error ? error.message : 'Could not preview this grip.';
@@ -462,15 +468,17 @@ async function previewGrip(shape: string) {
 }
 const guitarDiagrams = el('guitar-diagrams');
 const gripButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-grip]') : null;
-guitarDiagrams.addEventListener('click',event=>{
+for (const diagrams of [guitarDiagrams, el('voicing-diagrams')]) {
+diagrams.addEventListener('click',event=>{
   const button=gripButton(event.target);
   if (!button || button.disabled) return;
   void previewGrip(button.dataset.grip!);
 });
 // Native buttons activate on mouse click, touch tap, Space and Enter.
-guitarDiagrams.addEventListener('keydown',event=>{
+diagrams.addEventListener('keydown',event=>{
   if (gripButton(event.target) && event.repeat && ['Space','Enter'].includes(event.code)) event.preventDefault();
 });
+}
 const progressionStrip = el('progression-strip');
 const chordButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-step]') : null;
 progressionStrip.addEventListener('pointerdown', event => {
