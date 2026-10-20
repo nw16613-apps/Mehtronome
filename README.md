@@ -105,22 +105,23 @@ from a single sample clock, with smooth volume changes. It includes:
   All positions use fretted notes; open-position forms move up an octave,
   preserving their CAGED patterns and root anchors.
   Scale/arpeggio note maps keep their established fingering boundaries. An optional
-  **Highlight chord shapes** overlay recommends one compact 3–4-string grip per position:
+  **Highlight chord shapes** overlay recommends one compact 3–4-string chord shape per position:
   solid rings select the sounding notes, numbered badges show fingers 1–4, and ×
   marks muted strings. Other scale notes are dimmed, and modal colour rings remain
-  dashed. The grip voices the current chord, even when the position uses a different
+  dashed. The chord shape voices the current chord, even when the position uses a different
   parent-major anchor. Reductions list omitted tones; barre instructions appear
-  when needed. **Strum grip** previews the exact fretted MIDI pitches using
+  when needed. **Strum chord** previews the exact fretted MIDI pitches using
   a modeled, lightly bright nylon-string guitar down-strum and Harmony volume, while stopped. Each
-  string is picked from low to high and rings with a natural decay; grip previews
+  string is picked from low to high and rings with a natural decay; chord previews
   bypass pad layers and echoes, with warm stereo reverb controlled by Ambient space.
-  Every drop-voicing diagram also has a **Strum voicing** button that plays its
+  Every drop-voicing diagram also has a **Strum chord** button that plays its
   exact pitches, including the selected inversion and string set.
   Guitar output leaves headroom for reverb, and re-strums briefly fade the previous
   chord to keep attacks clean. Click, tap, or activate the button with Space or Enter
-  to strum and let the chord ring out. Another click strums again; blur, a diagram
+  to strum and let the chord ring out. The button changes to **Stop chord** while active; clicking it again stops
+  the sound. Selecting another chord switches the preview. Blur, a diagram
   change or starting playback stops the preview. The overlay
-  toggle removes the grip rings, finger numbers and mute marks when switched off,
+  toggle removes the chord rings, finger numbers and mute marks when switched off,
   restoring all scale notes to full brightness. Its setting is included in saved practice presets.
   Chord roots, other chord tones, and scale tones have distinct colors.
   Choose note names or scale degrees, and scale-plus-chord or chord-only view;

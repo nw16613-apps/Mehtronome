@@ -528,7 +528,7 @@ test('drop chord grips show real four-note fingerings and follow stopped and pla
   await expect(page.locator('#voicings-description')).toContainText('Triads use four voices');
   await page.locator('#quality').selectOption('major');
   await page.locator('#chord').selectOption('fifth');
-  await expect(page.locator('#voicings-description')).toContainText('spread root/fifth grips');
+  await expect(page.locator('#voicings-description')).toContainText('spread root/fifth chords');
   await page.locator('#palette').selectOption('midnight');
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

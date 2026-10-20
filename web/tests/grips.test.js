@@ -51,7 +51,7 @@ test('Cmaj9 recommendation retains root, third, seventh and ninth and discloses 
   assert.equal((svg.match(/class="grip-ring"/g)||[]).length,4);
   assert.equal((svg.match(/class="grip-finger"/g)||[]).length,4);
   assert.equal((svg.match(/class="grip-mute"/g)||[]).length,2);
-  assert.ok(svg.includes('recommended chord grip, finger'));
+  assert.ok(svg.includes('recommended chord, finger'));
   assert.ok(svg.includes('characteristic-ring'));
   assert.ok(!diagramSvg(fretboardFor(info,'A'),false,MODES.major.degrees,'Scale',true).includes('grip-active'));
 });

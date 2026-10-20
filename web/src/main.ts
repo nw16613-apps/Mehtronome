@@ -82,19 +82,19 @@ app.innerHTML = `
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
         <div class="guitar-controls"><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
-        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord ringing · click a grip to strum again.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Grip · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
+        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the grip overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum grip while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Let it ring, or click again to strum again.</p>
+      <div class="guitar-guide"><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the chord overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </div>
     </section>
     <section class="voicings panel" aria-labelledby="voicings-title">
       <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE CHORD SHAPES · × = MUTE</span></div>
       <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls voicing-controls"><label>Voicing<select id="voicing-type">${Object.entries(DROP_TYPES).map(([id,type])=>`<option value="${id}">${type.name}</option>`).join('')}</select></label><label>String set<select id="voicing-strings"></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals" selected>Chord intervals</option></select></label></div></div>
-      <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p><p id="voicing-preview-status" class="guitar-help" role="status" hidden>Chord ringing · click a voicing to strum again.</p></div>
+      <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p><p id="voicing-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p></div>
       <div id="voicing-diagrams" class="guitar-diagrams"></div>
-      <div class="guitar-guide"><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All grips use fretted notes. Click Strum voicing while stopped to hear the exact diagram notes on guitar. Harmony controls volume; Ambient space adds reverb. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></div>
+      <div class="guitar-guide"><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All chord shapes use fretted notes. Click Strum chord while stopped to hear the exact diagram notes on guitar; click again to stop. Harmony controls volume; Ambient space adds reverb. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></div>
     </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
@@ -176,7 +176,7 @@ function renderGuitar() {
     const board = fretboardFor(info, position.shape, select('exercise').value === 'arpeggio');
     const grip = showGrip ? recommendedGrip(info, board) : null;
     positionGrips.set(position.shape,grip);
-    const gripDetails = !showGrip ? '' : grip ? `<div class="grip-details"><p class="grip-tones">Grip: ${grip.notes.map((n: any,i: number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p class="grip-help">${grip.omitted.length ? `Omitted: ${grip.omitted.join(' · ')}. ` : ''}${grip.barres.map((b: any)=>`Finger ${b.finger}: barre strings ${6-b.from}–${6-b.to} at fret ${b.fret}. `).join('')}Mute × strings when playing the grip.</p><button type="button" class="practice-button grip-preview" data-grip="${position.shape}" aria-label="Strum grip, position ${position.numeral}" ${playing ? 'disabled' : ''}>Strum grip</button></div>` : '<p class="grip-help">No compact grip fits this position.</p>';
+    const gripDetails = !showGrip ? '' : grip ? `<div class="grip-details"><p class="grip-tones">Chord: ${grip.notes.map((n: any,i: number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p class="grip-help">${grip.omitted.length ? `Omitted: ${grip.omitted.join(' · ')}. ` : ''}${grip.barres.map((b: any)=>`Finger ${b.finger}: barre strings ${6-b.from}–${6-b.to} at fret ${b.fret}. `).join('')}Mute × strings when playing the chord.</p><button type="button" class="practice-button grip-preview" data-grip="${position.shape}" data-preview-label="position ${position.numeral}" aria-label="Strum chord, position ${position.numeral}" aria-pressed="false" ${playing ? 'disabled' : ''}>Strum chord</button></div>` : '<p class="grip-help">No compact chord shape fits this position.</p>';
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     return `<article class="position-card" data-position="${position.numeral}"><div class="position-heading"><h4>Position ${position.numeral}</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip)}<p class="position-anchor">Shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
@@ -200,13 +200,13 @@ function renderVoicings() {
   const result = guitarVoicings(info, type, select('voicing-strings').value);
   el('voicings-chord').textContent = chord;
   el('voicings-tones').textContent = `Included: ${result.indices.map((i: number) => `${info.tones[i]} (${info.intervals[i]})`).join(' · ')}${result.omitted.length ? `. Omitted: ${result.omitted.join(' · ')}.` : ''}`;
-  el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth grips rather than four-part drop voicings.' : `${DROP_TYPES[type as keyof typeof DROP_TYPES].name} lowers ${type==='drop24'?'the second- and fourth-highest voices':type==='drop4'?'the lowest voice':type==='drop3'?'the third-highest voice':'the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone, with root position and two inversions.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above; inversion names refer to that selection.' : ''}`;
+  el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth chords rather than four-part drop voicings.' : `${DROP_TYPES[type as keyof typeof DROP_TYPES].name} lowers ${type==='drop24'?'the second- and fourth-highest voices':type==='drop4'?'the lowest voice':type==='drop3'?'the third-highest voice':'the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone, with root position and two inversions.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above; inversion names refer to that selection.' : ''}`;
   el('voicing-diagrams').innerHTML = result.voicings.map((board: any) => {
     const gripId = `voicing:${board.inversion}`;
     voicingGrips.set(gripId, {notes:board.notes});
     const title = `${chord}, ${result.fifths ? 'spread fifths' : DROP_TYPES[type as keyof typeof DROP_TYPES].name.toLowerCase()}, ${board.inversionName.toLowerCase()}, ${board.bass} bass, strings ${board.strings.join(', ')}`;
-    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p><button type="button" class="practice-button voicing-preview" data-grip="${gripId}" aria-label="Strum voicing, ${board.inversionName}" ${playing ? 'disabled' : ''}>Strum voicing</button></article>`;
-  }).join('') || '<p class="guitar-help">No fretted grip found within frets 1–24 for this string set.</p>';
+    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p><button type="button" class="practice-button voicing-preview" data-grip="${gripId}" data-preview-label="${board.inversionName}" aria-label="Strum chord, ${board.inversionName}" aria-pressed="false" ${playing ? 'disabled' : ''}>Strum chord</button></article>`;
+  }).join('') || '<p class="guitar-help">No fretted chord shape found within frets 1–24 for this string set.</p>';
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -319,6 +319,14 @@ async function stop() {
   stopping = false;
   reflectPresetButtons();
 }
+function reflectChordPreviews() {
+  document.querySelectorAll<HTMLButtonElement>('button[data-grip]').forEach(button => {
+    const active = button.dataset.grip === previewGripShape;
+    button.setAttribute('aria-pressed', String(active));
+    button.textContent = active ? 'Stop chord' : 'Strum chord';
+    button.setAttribute('aria-label', `${active ? 'Stop' : 'Strum'} chord, ${button.dataset.previewLabel}`);
+  });
+}
 function stopPreview() {
   clearTimeout(gripRingTimer);
   gripRingTimer = undefined;
@@ -326,6 +334,7 @@ function stopPreview() {
   previewHold = null;
   previewing = false;
   previewGripShape = null;
+  reflectChordPreviews();
   el('grip-preview-status').hidden = true;
   el('voicing-preview-status').hidden = true;
   el('preview-status').hidden = true;
@@ -432,12 +441,14 @@ async function previewChord(index: number, hold: string) {
 }
 async function previewGrip(shape: string) {
   if (playing || busy || stopping) return;
+  if (previewGripShape === shape) { stopPreview(); return; }
   const grip = shape.startsWith('voicing:') ? voicingGrips.get(shape) : positionGrips.get(shape);
   if (!grip) return;
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
   const generation = previewGeneration;
   previewGripShape = shape;
+  reflectChordPreviews();
   el('error').hidden = true;
   try {
     if (replacing && master && context?.state === 'running') {
@@ -459,7 +470,7 @@ async function previewGrip(shape: string) {
     el(shape.startsWith('voicing:') ? 'voicing-preview-status' : 'grip-preview-status').hidden = false;
     gripRingTimer = setTimeout(() => { if (generation === previewGeneration) stopPreview(); }, 8000);
   } catch (error) {
-    el('error').textContent = error instanceof Error ? error.message : 'Could not preview this grip.';
+    el('error').textContent = error instanceof Error ? error.message : 'Could not preview this chord.';
     el('error').hidden = false;
     stopPreview();
     await context?.close().catch(()=>{});
