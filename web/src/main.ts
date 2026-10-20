@@ -428,11 +428,20 @@ async function previewGrip(shape: string) {
   if (playing || busy || stopping) return;
   const grip = positionGrips.get(shape);
   if (!grip) return;
+  const replacing = previewing || previewGripShape !== null;
   stopPreview();
   const generation = previewGeneration;
   previewGripShape = shape;
   el('error').hidden = true;
   try {
+    if (replacing && master && context?.state === 'running') {
+      // Finish fading the previous waveform before resetting strings/reverb.
+      const now = context.currentTime;
+      master.gain.cancelAndHoldAtTime(now);
+      master.gain.linearRampToValueAtTime(0, now + .012);
+      await new Promise(resolve => setTimeout(resolve, 25));
+      if (generation !== previewGeneration || document.hidden) return;
+    }
     previewPreparation ??= prepareAudio().finally(()=>{previewPreparation=undefined;});
     await previewPreparation;
     if (generation !== previewGeneration || document.hidden) {

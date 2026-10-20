@@ -69,7 +69,8 @@ export class GuitarStrum {
       body += value;
     }
     const value = .85 * this.tone + .4 * body;
-    // Gentle saturation keeps low grips full without clipping at full volume.
-    return value / (1 + Math.abs(value));
+    // Keep the pluck linear: saturation flattened the warm body resonances.
+    // Leave headroom for the dry chord and stereo reverb to sum cleanly.
+    return value * .3;
   }
 }

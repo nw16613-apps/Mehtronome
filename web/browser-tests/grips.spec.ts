@@ -137,3 +137,48 @@ test('guitar strums feed stereo reverb controlled by Ambient space',async({page}
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
   await expect(page.locator('#grip-preview-status')).toBeHidden();
 });
+
+test('guitar dry and reverb sum with headroom at full volume, including repeated strums',async({page})=>{
+  await page.addInitScript(()=>{
+    const Node=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Node{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);
+        const create=context.createGain.bind(context);let count=0;
+        context.createGain=()=>{
+          const gain=create();
+          if(count++===0){
+            const split=context.createChannelSplitter(2),left=context.createAnalyser(),right=context.createAnalyser();
+            left.fftSize=right.fftSize=8192;gain.connect(split);split.connect(left,0);split.connect(right,1);
+            (window as any).__guitarMaster=[left,right];
+          }
+          return gain;
+        };
+      }
+    };
+  });
+  await page.goto('/');await page.locator('#harmony').fill('100');await page.locator('#space').fill('100');
+  for(const [mode,key] of [['dorian','9'],['lydian','0'],['altered','7']]){
+    await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
+    for(let position=0;position<5;position++){
+      const button=page.locator('.grip-preview').nth(position);
+      await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
+      const peak=await page.evaluate(async()=>{
+        let peak=0;const data=new Float32Array(8192);
+        for(let i=0;i<10;i++){
+          for(const analyser of (window as any).__guitarMaster as AnalyserNode[]){
+            analyser.getFloatTimeDomainData(data);
+            for(const value of data){if(!Number.isFinite(value))return Infinity;peak=Math.max(peak,Math.abs(value));}
+          }
+          await new Promise(resolve=>setTimeout(resolve,40));
+        }
+        return peak;
+      });
+      expect(peak).toBeGreaterThan(.005);expect(peak).toBeLessThan(.85);
+    }
+  }
+  const button=page.locator('.grip-preview').first();
+  await button.click({clickCount:3,delay:5});
+  await expect(page.locator('#grip-preview-status')).toBeVisible();
+  await expect(page.locator('#error')).toBeHidden();
+});
