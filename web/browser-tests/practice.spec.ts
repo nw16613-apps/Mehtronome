@@ -1,3 +1,4 @@
+import {openReference} from './open-reference';
 import { test, expect } from '@playwright/test';
 
 test('real worklet generates audio, controls respond, and playback restarts', async ({ page }) => {
@@ -15,7 +16,7 @@ test('real worklet generates audio, controls respond, and playback restarts', as
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await expect(page.getByRole('heading', { name: 'The pulse' })).toBeVisible();
   await page.locator('#count-in').uncheck();
   await page.getByRole('button', { name: 'Start practicing' }).click();
@@ -62,14 +63,14 @@ test('ambient sounds and modal chord palette work during playback', async ({ pag
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#quality').selectOption('lydian');
-  await expect(page.locator('#chord')).toHaveValue('maj9sharp11');
+  await expect(page.locator('#chord')).toHaveValue('maj7sharp11');
   await expect(page.locator('#note-list')).toContainText('F♯');
   await expect(page.locator('#chord-notes')).toContainText('F♯');
   await expect(page.getByRole('button', { name: 'Chord progression' })).toBeEnabled();
   await page.locator('#exercise').selectOption('arpeggio');
-  await expect(page.locator('.note')).toHaveCount(6);
+  await expect(page.locator('.note')).toHaveCount(5);
   await page.locator('#count-in').uncheck();
   await page.getByRole('button', { name: 'Start practicing' }).click();
   await expect(page.locator('#play-status')).toContainText('Playing');
@@ -103,7 +104,7 @@ test('ambient sounds and modal chord palette work during playback', async ({ pag
 
 test('small screen fits without horizontal scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await openReference(page);
   await expect(page.getByRole('button', { name: 'Start practicing' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', {name:'Chord progression'}).click();
@@ -114,10 +115,10 @@ test('small screen fits without horizontal scrolling', async ({ page }) => {
 test('minor mode families, simple chords, rhythm options and persisted dark mode', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('#quality option')).toHaveCount(21);
   await page.locator('#quality').selectOption('melodic_minor');
-  await expect(page.locator('#chord')).toHaveValue('minMaj9');
+  await expect(page.locator('#chord')).toHaveValue('minMaj7');
   await expect(page.locator('#note-list')).toContainText('B');
   await page.locator('#quality').selectOption('phrygian_dominant');
   await expect(page.locator('#chord')).toHaveValue('dom7b9');
@@ -152,7 +153,7 @@ test('minor mode families, simple chords, rhythm options and persisted dark mode
 test('parallel chord templates offer every chord type and both bar lengths', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#quality').selectOption('dorian');
   await page.getByRole('button', {name: 'Chord progression'}).click();
   await expect(page.locator('#chord option')).toHaveCount(33);
@@ -184,7 +185,7 @@ test('parallel chord templates offer every chord type and both bar lengths', asy
 });
 
 test('pulse dropdowns and checkboxes share columns at every layout size', async ({page}) => {
-  await page.goto('/');
+  await openReference(page);
   for(const width of [1440,1000,760,640,390]) {
     await page.setViewportSize({width,height:1000});
     const beats=await page.locator('#beats').boundingBox();
@@ -203,7 +204,7 @@ test('pulse dropdowns and checkboxes share columns at every layout size', async 
 test('I–IV and jazz presets display their complete changes and scale guides during playback', async ({page}) => {
   const errors:string[]=[];
   page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await page.getByRole('button',{name:'Chord progression'}).click();
   await page.locator('#chord').selectOption('min9');
   await page.locator('#template').selectOption('oneFour2');
@@ -244,7 +245,7 @@ test('I–IV and jazz presets display their complete changes and scale guides du
 
 test('CAGED positions, labels and chord-only view track the selected mode and chord',async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await expect(page.getByRole('heading',{name:'Guitar reference'})).toBeVisible();
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveCount(5);
   await expect(page.locator('#guitar-diagrams svg')).toHaveCount(5);
@@ -285,7 +286,7 @@ test('CAGED positions, labels and chord-only view track the selected mode and ch
 
 test('fourths progression and guitar diagrams update together in live playback, including jazz guides',async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await page.getByRole('button',{name:'Chord progression'}).click();
   await page.locator('#template').selectOption('fourths2');
   await page.locator('#chord').selectOption('maj7');
@@ -320,7 +321,7 @@ test('stopped progression selection updates all diagrams, previews harmony only,
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#theme').click();
   await expect(page.locator('.fret-note.chord circle').first()).toHaveCSS('fill', 'rgb(101, 216, 207)');
   await expect(page.locator('.note.chord-tone').first()).toHaveCSS('border-top-color', 'rgb(101, 216, 207)');
@@ -389,7 +390,7 @@ test('stopped progression selection updates all diagrams, previews harmony only,
 });
 
 test('fretted diagrams and alternative themes work across reloads and mobile layouts', async ({page}) => {
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('.fret-note[data-fret="0"]')).toHaveCount(0);
   await expect(page.locator('[data-position=III] .position-anchor')).toContainText('fret 15');
   for (const key of ['2','4','7']) {
@@ -439,7 +440,7 @@ test('theme gallery loads four real previews and links to the matching live them
 });
 
 test('touch release and cancellation stop held previews', async ({page}) => {
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#progression').click();
   const session = await page.context().newCDPSession(page);
   await page.locator('#progression-strip>button').nth(1).scrollIntoViewIfNeeded();
@@ -477,7 +478,7 @@ test('releasing before audio finishes loading never starts a late preview', asyn
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#progression').click();
   await page.locator('#progression-strip>button').nth(1).hover();
   await page.mouse.down();
@@ -496,7 +497,7 @@ test('releasing before audio finishes loading never starts a late preview', asyn
 });
 
 test('drop chord grips show real four-note fingerings and follow stopped and playing harmony',async({page})=>{
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('.guitar .section-heading .small-label')).toHaveText('STANDARD TUNING · E A D G B E');
   await expect(page.locator('#voicings-chord')).toHaveText('Cmaj9');
   await expect(page.locator('#voicings-tones')).toContainText('Omitted: G');
@@ -535,7 +536,7 @@ test('drop chord grips show real four-note fingerings and follow stopped and pla
 });
 
 test('string-set dropdown shows all four inversions on exactly the chosen strings',async({page})=>{
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#chord').selectOption('maj7');
   for(const [type,sets] of [['drop2',['6543','5432','4321']],['drop3',['6432','5321']],['drop24',['6532','5421']],['drop4',['6321']]] as const){
     await page.locator('#voicing-type').selectOption(type);
@@ -579,7 +580,7 @@ test('evolving sounds produce stereo audio and the optional sequencer works inde
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('#sound')).toHaveValue('bloom');
   await expect(page.locator('#sequence')).not.toBeChecked();
   await expect(page.locator('#sequence-controls')).toBeHidden();
@@ -646,7 +647,7 @@ test('drums and bass have independent controls and reach the speakers through th
       }
     };
   });
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('#drums')).not.toBeChecked();await expect(page.locator('#bass')).not.toBeChecked();
   await expect(page.locator('#drums-controls')).toBeHidden();await expect(page.locator('#bass-controls')).toBeHidden();
   await page.locator('#click').fill('0');await page.locator('#harmony').fill('0');await page.locator('#count-in').uncheck();

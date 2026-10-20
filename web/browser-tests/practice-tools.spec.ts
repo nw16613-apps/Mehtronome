@@ -1,9 +1,10 @@
+import {openReference} from './open-reference';
 import {test,expect} from '@playwright/test';
 import {PRESET_CONTROLS} from '../src/practice/presets.js';
 
 test('practice presets restore the complete setup, stop playback, persist, update and delete',async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');
+  await openReference(page);
   await page.locator('#preset-save').click();
   await expect(page.locator('#preset-status')).toContainText('name first');
   await page.locator('#quality').selectOption('lydian');await page.locator('#key').selectOption('7');
@@ -55,7 +56,7 @@ test('practice presets restore the complete setup, stop playback, persist, updat
 
 test('preset storage failures are visible and do not pretend a setup was saved',async({page})=>{
   await page.addInitScript(()=>{Storage.prototype.setItem=()=>{throw new Error('Unavailable');};});
-  await page.goto('/');await page.locator('#preset-name').fill('Practice');await page.locator('#preset-save').click();
+  await openReference(page);await page.locator('#preset-name').fill('Practice');await page.locator('#preset-save').click();
   await expect(page.locator('#preset-status')).toContainText('Could not save');
   await expect(page.locator('#preset-list option')).toHaveCount(1);
   await expect(page.locator('#preset-name')).toHaveValue('Practice');
@@ -70,7 +71,7 @@ test('selected loops drive playback and diagrams, keep tonic holds and reset saf
       }
     };
   });
-  await page.goto('/');await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
+  await openReference(page);await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
   await page.locator('#loop-enabled').check();await page.locator('#loop-start').selectOption('1');await page.locator('#loop-end').selectOption('2');
   await expect(page.locator('#loop-summary')).toContainText('3 bars');
   await expect(page.locator('#chord-caption')).toHaveText('3-BAR SELECTED LOOP');
@@ -86,7 +87,7 @@ test('selected loops drive playback and diagrams, keep tonic holds and reset saf
 });
 
 test('colour-note rings follow modal harmony and remain optional in scale and arpeggio views',async({page})=>{
-  await page.goto('/');await page.locator('#quality').selectOption('dorian');
+  await openReference(page);await page.locator('#quality').selectOption('dorian');
   await expect(page.locator('#characteristic-notes')).toContainText('A (6)');
   await expect(page.locator('#note-list .characteristic strong')).toHaveText('A');
   expect(await page.locator('.fret-note.characteristic').count()).toBeGreaterThan(5);
@@ -115,7 +116,7 @@ test('all-sound gaps silence the actual master including long reverb tails, then
       }
     };
   });
-  await page.goto('/');await page.locator('#gap-enabled').check();await page.locator('#gap-play').selectOption('1');
+  await openReference(page);await page.locator('#gap-enabled').check();await page.locator('#gap-play').selectOption('1');
   await page.locator('#bpm').fill('240');await page.locator('#bpm').blur();await page.locator('#beats').selectOption('3');await page.locator('#count-in').uncheck();
   await page.locator('#sound').selectOption('atmosphere');await page.locator('#space').fill('100');
   await page.locator('#drums').check();await page.locator('#bass').check();await page.locator('#sequence').check();
@@ -130,7 +131,7 @@ test('all-sound gaps silence the actual master including long reverb tails, then
 });
 
 test('related modes use identical parent-major fingerings with modal root colours and labels',async({page})=>{
-  await page.goto('/');
+  await openReference(page);
   const readBoards=()=>page.locator('#guitar-diagrams .position-card').evaluateAll(cards=>cards.map(card=>({
     position:(card as HTMLElement).dataset.position,
     notes:Array.from(card.querySelectorAll('.fret-note')).map(note=>[note.getAttribute('data-string'),note.getAttribute('data-fret'),note.getAttribute('data-pc')]),

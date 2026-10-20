@@ -1,8 +1,9 @@
+import {openReference} from './open-reference';
 import {test,expect} from '@playwright/test';
 
 test('grip overlay keeps the established fingerings, labels fingers and mutes, and follows the current chord',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/');
+  await openReference(page);
   await expect(page.locator('#show-grip')).toBeChecked();await expect(page.locator('.grip-preview')).toHaveCount(5);
   for(const position of ['I','II','III','IV','V']){
     const card=page.locator(`[data-position="${position}"]`);
@@ -45,7 +46,7 @@ test('clicking a grip strums exact pitches, rings after release, and supports ke
       }
     };
   });
-  await page.goto('/');await page.locator('#sequence').check();await page.locator('#drums').check();await page.locator('#bass').check();
+  await openReference(page);await page.locator('#sequence').check();await page.locator('#drums').check();await page.locator('#bass').check();
   const button=page.locator('[data-position="III"] .grip-preview');
   const expected=await page.locator('[data-position="III"] .grip-note').evaluateAll(notes=>notes.map(n=>[40,45,50,55,59,64][Number(n.getAttribute('data-string'))]+Number(n.getAttribute('data-fret'))));
   await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
@@ -69,7 +70,7 @@ test('clicking a grip strums exact pitches, rings after release, and supports ke
 });
 
 test('touch tap strums and rings until its natural tail ends',async({page})=>{
-  await page.goto('/');await page.setViewportSize({width:390,height:844});
+  await openReference(page);await page.setViewportSize({width:390,height:844});
   const button=page.locator('[data-position="IV"] .grip-preview');await button.scrollIntoViewIfNeeded();
   const box=await button.boundingBox(),point={x:box!.x+box!.width/2,y:box!.y+box!.height/2};
   const session=await page.context().newCDPSession(page);
@@ -95,7 +96,7 @@ test('changing diagrams before a strum loads prevents a stale note',async({page}
         this.port.postMessage=(data:any,transfer?:Transferable[])=>{(window as any).__gripMessages.push(data.type);if(transfer)post(data,transfer);else post(data);};}
     };
   });
-  await page.goto('/');const button=page.locator('[data-position="I"] .grip-preview');await button.click();
+  await openReference(page);const button=page.locator('[data-position="I"] .grip-preview');await button.click();
   await expect.poll(()=>page.evaluate(()=>typeof (window as any).__finishGripLoad)).toBe('function');await page.locator('#quality').selectOption('dorian');
   await page.evaluate(()=>(window as any).__finishGripLoad());
   await expect.poll(()=>page.evaluate(()=>(window as any).__gripMessages.includes('stop'))).toBe(true);
@@ -122,7 +123,7 @@ test('guitar strums feed stereo reverb controlled by Ambient space',async({page}
       }
     };
   });
-  await page.goto('/');await page.locator('#space').fill('0');
+  await openReference(page);await page.locator('#space').fill('0');
   const button=page.locator('[data-position="III"] .grip-preview');await button.click();
   const wet=()=>page.evaluate(()=>{
     const channels=((window as any).__guitarWet as AnalyserNode[]).map(a=>{const values=new Float32Array(a.fftSize);a.getFloatTimeDomainData(values);return values;});

@@ -7,6 +7,9 @@ The browser version lives in `web/`. It uses TypeScript and the Web Audio API;
 Python is not required. A dedicated audio worklet drives both click and harmony
 from a single sample clock, with smooth volume changes. It includes:
 
+- Fresh sessions start in A Dorian over Am13, with the count-in off and numeric
+  degree labels in both guitar sections. Mode suggestions use seventh chords,
+  retaining colour extensions for Dorian, Lydian and other distinctive modes.
 - 30–240 BPM, optional downbeat accent, 3–7 beats/bar, and a one-bar count-in.
 - Quarter notes, eighth notes, eighth-note triplets, sixteenth notes, and
   sixteenth-note sextuplets, all locked to the same audio sample clock.
