@@ -133,7 +133,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .theory-legend>span { display:flex; gap:6px; align-items:center; }
 .theory-legend i { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:2px solid var(--theory-a-ring); background:var(--theory-a); font-style:normal; font-weight:700; color:var(--theory-a-ink); }
 .theory-legend i.theory-pentatonic-key { background:var(--theory-pentatonic); border-color:var(--theory-pentatonic-ring); color:var(--theory-pentatonic-ink); }
-.theory-legend i.theory-pentatonic-root-key { background:transparent; border:3px double var(--theory-pentatonic-root-ring); box-shadow:inset 0 0 0 2px var(--panel,var(--practice-panel)); }
+.theory-legend i.theory-pentatonic-root-key { background:var(--theory-pentatonic); border:3px solid var(--theory-pentatonic-root-ring); }
 .theory-legend .theory-group-b i { border-style:dashed; border-color:var(--theory-b-ring); background:var(--theory-b); color:var(--theory-b-ink); }
 .theory-active .fret-note:not(.theory-note) { opacity:.22; }
 .theory-active .theory-note { opacity:1; }
@@ -143,7 +143,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .fretboard.theory-pentatonic .theory-ring { stroke:var(--theory-pentatonic-ring)!important; stroke-width:3!important; }
 .fretboard.theory-pentatonic .theory-note.root>circle:first-of-type { fill:var(--root,#e4b98a)!important; stroke:var(--root,#ae794b)!important; }
 .fretboard.theory-pentatonic .theory-note.root>text { fill:#293a2b!important; }
-.fretboard.theory-pentatonic .pentatonic-root-ring { fill:none!important; stroke:var(--theory-pentatonic-root-ring)!important; stroke-width:3!important; }
+.fretboard.theory-pentatonic .pentatonic-root .theory-ring { stroke:var(--theory-pentatonic-root-ring)!important; }
 .fretboard.theory-triads .theory-a>circle:first-of-type { fill:var(--theory-a)!important; stroke:var(--theory-a)!important; }
 .fretboard.theory-triads .theory-b>circle:first-of-type { fill:var(--theory-b)!important; stroke:var(--theory-b)!important; }
 .fretboard.theory-triads .theory-a>text { fill:var(--theory-a-ink)!important; }

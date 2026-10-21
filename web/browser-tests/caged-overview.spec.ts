@@ -61,11 +61,11 @@ test('pentatonic overlay preserves modal-root colour and marks its own root',asy
   const modalRoot=page.locator('#guitar-diagrams .fret-note.root>circle').first();
   const normalFill=await modalRoot.evaluate(element=>getComputedStyle(element).fill);
   await page.locator('#theory-view').selectOption('pentatonic');
-  await expect(page.locator('#guitar-diagrams .pentatonic-root-ring').first()).toBeVisible();
+  await expect(page.locator('#guitar-diagrams .pentatonic-root .theory-ring').first()).toBeVisible();
   await expect(modalRoot).toHaveCSS('fill',normalFill);
   const colours=await page.locator('#guitar-diagrams').evaluate(element=>{
     const pentatonic=getComputedStyle(element.querySelector('.theory-ring')!).stroke;
-    const root=getComputedStyle(element.querySelector('.pentatonic-root-ring')!).stroke;
+    const root=getComputedStyle(element.querySelector('.pentatonic-root .theory-ring')!).stroke;
     return {pentatonic,root};
   });
   expect(colours.root).not.toBe(colours.pentatonic);

@@ -46,7 +46,7 @@ test('pentatonic roots receive their own ring without replacing the modal root',
   assert.ok(modalRoots.length>0);
   assert.ok(pentatonicRoots.every(note=>note.classes.includes('pentatonic-root')));
   assert.ok(modalRoots.every(note=>note.classes.includes('root')));
-  assert.equal((svg.match(/class="pentatonic-root-ring"/g)||[]).length,pentatonicRoots.length);
+  assert.ok(!svg.includes('pentatonic-root-ring'));
   assert.match(svg,/pentatonic root/);
 });
 
