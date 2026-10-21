@@ -25,6 +25,9 @@ export const SEQUENCE_WAVE = table([1, .18, .05], 3);
 export const WAVES = Object.fromEntries(Object.entries(SOUNDS).map(([id, sound]) => [
   id, BANDS.map(limit => table(sound.partials || [1, ...sound.harmonics], limit)),
 ]));
+export const WAVE_LAYERS = Object.fromEntries(Object.entries(SOUNDS).map(([id, sound]) => [
+  id, BANDS.map(limit => table(sound.layerPartials || sound.partials || [1, ...sound.harmonics], limit)),
+]));
 export function readWave(values, phase) {
   const position = phase * TABLE_SIZE;
   const index = position | 0;

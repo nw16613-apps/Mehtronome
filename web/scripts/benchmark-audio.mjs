@@ -1,12 +1,15 @@
 import { Engine } from '../src/audio/engine.js';
+import {readSampleBank} from './read-sample-bank.mjs';
 
 // Measures the synth only; browser/device scheduling and reverb have their own
 // costs. Run on the same machine when comparing changes, outside other builds.
 const noop = () => {};
 const rows = [];
 for (const rate of [44100, 48000, 96000]) {
+  const kit=await readSampleBank(rate);
   for (const sound of ['bloom', 'strings', 'atmosphere']) {
     const engine = new Engine(rate);
+    engine.installDrumKit(kit);
     engine.configure({sound, mode:'lydian', chord:'maj9sharp11', countIn:false,
       sequence:true, sequenceRate:4, sequenceDensity:1, sequenceVolume:1,
       drums:true, drumsVolume:1, bass:true, bassVolume:1, bassPattern:'walk'});

@@ -76,7 +76,7 @@ test('training clocks, sequence notes and rhythm envelopes remain synchronized a
     const item={...event};
     if(event.type==='bass'&&event.beat===0&&event.sub===0){
       item.gate=engine.rhythm.bassVoices[(engine.rhythm.bassCursor-1)%engine.rhythm.bassVoices.length].gate;
-      assert.equal(item.gate,Math.round(1.5*60/engine.currentBpm*engine.rate));
+      assert.equal(item.gate,Math.round(event.durationBeats*60/engine.currentBpm*engine.rate));
     }
     events.push(item);
   };

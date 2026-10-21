@@ -48,16 +48,18 @@ from a single sample clock, with smooth volume changes. It includes:
   minor parent scales. Melodic minor follows the jazz convention (same notes
   ascending and descending). Each family contains all seven rotations, with
   correctly spelled notes, characteristic degrees, and compatible backing chords.
-- Seven synthesized backing sounds. Bloom Pad (the browser default), Velvet
-  Strings and Glass Atmosphere have distinct sources: a rounded, odd-harmonic pad,
-  a brighter saw-derived string texture, and a softer bell-like glass tone.
-  They add layered detuning, slow brightness changes, stereo movement and soft
-  fixed-delay echoes. Warm Pad, Glass Cloud, Velvet Drone
-  and Air Choir remain available. Ambient space defaults to 75% and adds stereo
-  reverb to harmony only, keeping the click dry. Sound changes fade smoothly.
-  Playback requests a buffered 48 kHz audio context. The synth uses precomputed,
-  band-limited waveforms and interpolated control-rate modulation to reduce
-  work on the audio thread; the sequencer uses cached decay envelopes.
+- Seven backing sounds retain their existing names and preset IDs. Bloom Pad
+  blends two rounded analogue spectra; Velvet Strings adds a richer ensemble
+  texture; Glass Atmosphere brings out bell-like upper partials. Warm Pad, Glass
+  Cloud, Velvet Drone and Air Choir have their own layered colours and slow
+  filter/timbre movement. Independent stereo layers add width. Chord changes
+  crossfade changed notes while retaining shared notes, instead of sliding
+  oscillator pitch between chords. Band-limited lookup tables and interpolated
+  control-rate modulation keep expensive maths off the per-sample path.
+  Ambient space still defaults to 75%, now with a short pre-delay, early room
+  reflections and a diffuse stereo tail that darkens as it decays. The native
+  convolver handles the room; click, drums and bass retain their dry bus.
+  Playback requests a buffered 48 kHz audio context.
 - Optional **Melodic movement**, off by default: sparse melody, root pulse,
   ascending, descending or up/down chord-tone arpeggios, root & colours, Alberti
   figures, skipping arpeggios, descending cascades, offbeat answers, 3–3–2 ostinatos,
@@ -69,17 +71,23 @@ from a single sample clock, with smooth volume changes. It includes:
 - Optional **Drums & bass**, both off by default, with independent switches and
   volume controls. Five drum styles: pop/rock, blues shuffle, jazz swing, neo-soul
   half-time and bossa nova. Five bass styles: sustained ambient roots, pop/rock
-  root-and-fifth, jazz chord-tone walking, bossa and syncopated funk. Bass styles
-  also vary note length and articulation, with octave movement and syncopated pickups.
-  Drum grooves include velocity accents, ghost notes, two-bar kick variations
-  and restrained fourth-bar turnarounds. Bass timing stays independent when
-  mixing a straight bass pattern with swung drums. Patterns
-  adapt to beats per bar, share the sample clock, respect the count-in and follow
-  the current chord. Both stay silent during held chord previews. Drums and bass
-  have a separate dry output, bypassing pad reverb and echoes. Drum samples are
-  bundled CC0 recordings, decoded once before playback and cached in memory
-  (about 153 KB of WAV assets). No third-party audio service or soundfont is needed.
-  Sources, modifications and licenses: [sample credits](web/src/audio/samples/README.md).
+  root-and-fifth, jazz chord-tone walking, bossa and syncopated funk. Four-bar
+  phrases answer and vary, with restrained eight-bar turnarounds. Recorded drum
+  takes alternate, with genuine soft snare hits, open/pedal hats, ride bell,
+  cross-stick, toms and occasional phrase-ending cymbals. Closed/pedal hats choke
+  open hats. Bass uses recorded fingerstyle electric-bass multisamples across
+  six pitches with two takes each; note length, articulation, octave choices
+  and chord-tone connections vary by style. Walking lines connect to the next
+  chord without introducing notes outside the current harmony.
+  Patterns adapt to beats per bar, share the metronome's sample clock, respect
+  count-in and follow chord changes. Bass timing remains independent of drum
+  swing. Both stay silent during chord previews and use a separate dry output.
+  The app bundles 36 CC0 recordings (about 4.6 MiB of WAV assets), including a
+  coherent acoustic drum kit and fingerstyle electric bass. Samples load and
+  decode before the first playback, then remain cached; no hit fetches or
+  decodes a recording on the audio thread. A failed load can be retried.
+  Sources, exact file mappings and processing:
+  [sample credits](web/src/audio/samples/README.md).
 - **Practice presets**: name and save up to 50 setups in this browser, then load,
   update/rename or delete them. Presets recall tempo, meter, harmony, mix, rhythm,
   sequence, gap/loop settings and guitar display choices. Loading stops playback;

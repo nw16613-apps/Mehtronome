@@ -1,59 +1,69 @@
-# Credits
+# Recording credits
 
-Every sample in this repository is in the public domain (CC0 1.0). Credit is not required; it is given here so that the origin of each file stays traceable.
+All recordings bundled here are released under **CC0 1.0 Universal**. The complete legal dedication is in [LICENSE](LICENSE). Retrieved 2026-10-21.
 
-| Key | File | Source | Original |
-| --- | --- | --- | --- |
-| `Fischer808_bd` | Fischer808/bd.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | bd8/BD2575.WAV |
-| `Fischer808_sd` | Fischer808/sd.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | sd8/SD2550.WAV |
-| `Fischer808_hh` | Fischer808/hh.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | ch8/CH.WAV |
-| `Fischer808_oh` | Fischer808/oh.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | oh8/OH50.WAV |
-| `Fischer808_cp` | Fischer808/cp.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | cp8/CP.WAV |
-| `Fischer808_rim` | Fischer808/rim.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | rs8/RS.WAV |
-| `Fischer808_lt` | Fischer808/lt.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | lt8/LT50.WAV |
-| `Fischer808_mt` | Fischer808/mt.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | mt8/MT50.WAV |
-| `Fischer808_ht` | Fischer808/ht.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | ht8/HT50.WAV |
-| `Fischer808_cr` | Fischer808/cr.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | cy8/CY5050.WAV |
-| `Fischer808_cb` | Fischer808/cb.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | cb8/CB.WAV |
-| `Fischer808_sh` | Fischer808/sh.wav | [tidalcycles/sounds-tr808-fischer](https://github.com/tidalcycles/sounds-tr808-fischer) | ma8/MA.WAV |
-| `SonicPiAcoustic_bd` | SonicPiAcoustic/bd.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_heavy_kick.flac](http://freesound.org/people/Zajo/sounds/4832/) |
-| `SonicPiAcoustic_sd` | SonicPiAcoustic/sd.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_snare_hard.flac](http://www.freesound.org/people/menegass/sounds/100058/) |
-| `SonicPiAcoustic_hh` | SonicPiAcoustic/hh.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_cymbal_closed.flac](http://www.freesound.org/people/menegass/sounds/100053/) |
-| `SonicPiAcoustic_oh` | SonicPiAcoustic/oh.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_cymbal_open.flac](http://www.freesound.org/people/menegass/sounds/100055/) |
-| `SonicPiAcoustic_lt` | SonicPiAcoustic/lt.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_tom_lo_hard.flac](http://www.freesound.org/people/menegass/sounds/100064/) |
-| `SonicPiAcoustic_mt` | SonicPiAcoustic/mt.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_tom_mid_hard.flac](http://www.freesound.org/people/menegass/sounds/100066/) |
-| `SonicPiAcoustic_ht` | SonicPiAcoustic/ht.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_tom_hi_hard.flac](http://www.freesound.org/people/menegass/sounds/100062/) |
-| `SonicPiAcoustic_cr` | SonicPiAcoustic/cr.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_cymbal_hard.flac](http://www.freesound.org/people/menegass/sounds/100056/) |
-| `SonicPiAcoustic_rd` | SonicPiAcoustic/rd.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [ride_via.flac](https://freesound.org/people/trivialAccapella/sounds/425448/) |
-| `SonicPiAcoustic_cb` | SonicPiAcoustic/cb.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [drum_cowbell.flac](http://freesound.org/people/Neotone/sounds/75338/) |
-| `SonicPiElectro_bd` | SonicPiElectro/bd.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [bd_haus.flac](http://freesound.org/people/Rodrigo%20The%20Mad/sounds/137722/) |
-| `SonicPiElectro_sd` | SonicPiElectro/sd.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [sn_dub.flac](http://freesound.org/people/Adriak909/sounds/173142/) |
-| `SonicPiElectro_hh` | SonicPiElectro/hh.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [hat_snap.flac](https://freesound.org/people/TheEndOfACycle/sounds/674294/) |
-| `SonicPiElectro_oh` | SonicPiElectro/oh.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [hat_metal.flac](https://Freesound.Org/People/Stereo%20surgeon/Sounds/262516/) |
-| `SonicPiElectro_cp` | SonicPiElectro/cp.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [perc_snap.flac](http://www.freesound.org/people/SoundCollectah/sounds/109400/) |
-| `SonicPiElectro_rim` | SonicPiElectro/rim.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [elec_wood.flac](http://www.freesound.org/people/looppool/sounds/13135/) |
-| `SonicPiElectro_lt` | SonicPiElectro/lt.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [elec_fuzz_tom.flac](http://www.freesound.org/people/looppool/sounds/13140/) |
-| `SonicPiElectro_cr` | SonicPiElectro/cr.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [elec_cymbal.flac](http://www.freesound.org/people/looppool/sounds/13143/) |
-| `SonicPiElectro_cb` | SonicPiElectro/cb.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [elec_bong.flac](http://www.freesound.org/people/looppool/sounds/13137/) |
-| `KringelPercussion_ta` | KringelPercussion/ta.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_tas1.flac](http://freesound.org/people/dio_333/sounds/130427/) |
-| `KringelPercussion_na` | KringelPercussion/na.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_na.flac](http://freesound.org/people/dio_333/sounds/130421/) |
-| `KringelPercussion_ghe` | KringelPercussion/ghe.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_ghe1.flac](http://freesound.org/people/dio_333/sounds/130406/) |
-| `KringelPercussion_tun` | KringelPercussion/tun.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_tun1.flac](http://freesound.org/people/dio_333/sounds/130416/) |
-| `KringelPercussion_ke` | KringelPercussion/ke.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_ke3.flac](http://freesound.org/people/dio_333/sounds/130423/) |
-| `KringelPercussion_te` | KringelPercussion/te.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [tabla_te1.flac](http://freesound.org/people/dio_333/sounds/130429/) |
-| `KringelPercussion_clap` | KringelPercussion/clap.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | handclap_vl2_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelPercussion_snap` | KringelPercussion/snap.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | snap_r_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelPercussion_stomp` | KringelPercussion/stomp.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | stomp_r_vl2_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelPercussion_chest` | KringelPercussion/chest.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | chestthump_l_vl2_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelPercussion_belly` | KringelPercussion/belly.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | bellycenter_r_vl2_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelPercussion_heel` | KringelPercussion/heel.wav | [sfzinstruments/body_percussion](https://github.com/sfzinstruments/body_percussion) | heel_r_vl2_rr1.wav (normalized to -3 dBFS, 16-bit) |
-| `KringelTextures_drone` | KringelTextures/drone.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [ambi_drone.flac](http://freesound.org/people/Autistic%20Lucario/sounds/195341/) |
-| `KringelTextures_choir` | KringelTextures/choir.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [ambi_choir.flac](http://freesound.org/people/Exsomniel/sounds/207809/) |
-| `KringelTextures_glass` | KringelTextures/glass.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [ambi_glass_hum.flac](http://freesound.org/people/kaligari/sounds/35391/) |
-| `KringelTextures_swoosh` | KringelTextures/swoosh.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [ambi_swoosh.flac](http://freesound.org/people/Halgrimm/sounds/169867/) |
-| `KringelTextures_pad` | KringelTextures/pad.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | tbd_pad_1.flac (donated by The Black Dog under CC0) |
-| `KringelTextures_hiss` | KringelTextures/hiss.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [vinyl_hiss.flac](http://freesound.org/people/veezay/sounds/130393/) |
-| `KringelTextures_scratch` | KringelTextures/scratch.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [vinyl_scratch.flac](http://freesound.org/people/hello_flowers/sounds/28681/) |
-| `KringelTextures_rewind` | KringelTextures/rewind.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [vinyl_rewind.flac](http://freesound.org/people/TasmanianPower/sounds/162493/) |
-| `KringelTextures_glitch` | KringelTextures/glitch.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [glitch_perc1.flac](https://freesound.org/people/hullum/sounds/415548/) |
-| `KringelTextures_robot` | KringelTextures/robot.flac | [Sonic Pi samples](https://github.com/sonic-pi-net/sonic-pi/tree/main/etc/samples) | [glitch_robot1.flac](https://freesound.org/people/hullum/sounds/415557/) |
+## Acoustic drums
+
+[Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums), performed by **Austin McMahon**, recorded at **Virtuosity Musical Instruments, Boston**, produced by **Versilian Studios**. The upstream [README](https://github.com/sfzinstruments/virtuosity_drums/blob/master/README.md) describes the kit and microphone positions; [license](https://github.com/sfzinstruments/virtuosity_drums/blob/master/LICENSE) is CC0.
+
+Source revision: `9f04cf9a734527edfbb0a4eee1f674e45bbf71bc`.
+
+OH means the overhead microphone. Where listed, the corresponding kick/snare close microphone is blended into that same overhead performance, preserving a consistent room sound. These are separate real hits, not synthetic pitch variations. Snare variants use nearby performance/dynamic layers; kick, hats and rides use upstream round robins.
+
+| Local WAV | Upstream recording(s) | Maximum duration |
+| --- | --- | --- |
+| kick.wav | `Samples/oh/kick/oh_kick_snoff_vl3_rr1.flac`<br>`Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr1.flac` | 1.3 s |
+| kick2.wav | `Samples/oh/kick/oh_kick_snoff_vl3_rr2.flac`<br>`Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr2.flac` | 1.3 s |
+| snare.wav | `Samples/oh/snare/oh_snare_center_vl20.flac`<br>`Samples/snaremic/snare/snaremic_snare_center_vl20.flac` | 1.4 s |
+| snare2.wav | `Samples/oh/snare/oh_snare_center_vl23.flac`<br>`Samples/snaremic/snare/snaremic_snare_center_vl23.flac` | 1.4 s |
+| snare3.wav | `Samples/oh/snare/oh_snare_center_vl25.flac`<br>`Samples/snaremic/snare/snaremic_snare_center_vl25.flac` | 1.4 s |
+| snareGhost.wav | `Samples/oh/snare/oh_snare_center_vl4.flac`<br>`Samples/snaremic/snare/snaremic_snare_center_vl4.flac` | 0.9 s |
+| snareGhost2.wav | `Samples/oh/snare/oh_snare_center_vl6.flac`<br>`Samples/snaremic/snare/snaremic_snare_center_vl6.flac` | 0.9 s |
+| hat.wav | `Samples/oh/hh/oh_hh_closed_vl2_rr1.flac` | 0.5 s |
+| hat2.wav | `Samples/oh/hh/oh_hh_closed_vl2_rr2.flac` | 0.5 s |
+| hat3.wav | `Samples/oh/hh/oh_hh_closed_vl2_rr3.flac` | 0.5 s |
+| hatOpen.wav | `Samples/oh/hh/oh_hh_open_vl2_rr1.flac` | 2.2 s |
+| hatOpen2.wav | `Samples/oh/hh/oh_hh_open_vl2_rr2.flac` | 2.2 s |
+| hatPedal.wav | `Samples/oh/hh/oh_hh_pedal_vl2_rr1.flac` | 0.5 s |
+| hatPedal2.wav | `Samples/oh/hh/oh_hh_pedal_vl2_rr2.flac` | 0.5 s |
+| ride.wav | `Samples/oh/ride/oh_ride_ride_vl2_rr1.flac` | 3.2 s |
+| ride2.wav | `Samples/oh/ride/oh_ride_ride_vl2_rr2.flac` | 3.2 s |
+| rideBell.wav | `Samples/oh/ride/oh_ride_bell_vl2_rr1.flac` | 2.8 s |
+| rim.wav | `Samples/oh/snare/oh_snare_crossstick_vl10.flac`<br>`Samples/snaremic/snare/snaremic_snare_crossstick_vl10.flac` | 0.7 s |
+| rim2.wav | `Samples/oh/snare/oh_snare_crossstick_vl12.flac`<br>`Samples/snaremic/snare/snaremic_snare_crossstick_vl12.flac` | 0.7 s |
+| tomLow.wav | `Samples/oh/ltom/oh_ltom_center_vl12.flac` | 1.8 s |
+| tomLow2.wav | `Samples/oh/ltom/oh_ltom_center_vl14.flac` | 1.8 s |
+| tomHigh.wav | `Samples/oh/htom/oh_htom_center_vl12.flac` | 1.8 s |
+| tomHigh2.wav | `Samples/oh/htom/oh_htom_center_vl14.flac` | 1.8 s |
+| crash.wav | `Samples/oh/crash/oh_crash_crash_vl2_rr1.flac` | 3.5 s |
+
+## Fingerstyle electric bass
+
+[Black And Blue Basses](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses), **Karoryfer Samples / D. Smolken**. The Darkblack bass is a **Washburn AB-95**, played with fingers and recorded through its neck pickup. The upstream [user guide](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses/blob/main/Black_And_Blue_Basses_user_guide.pdf) describes the instrument and sampling; its [license](https://github.com/sfzinstruments/karoryfer.black-and-blue-basses/blob/main/license) is CC0.
+
+Source revision: `6e7d674cdb41be7a54dbccb15472401ad01099b9`.
+
+These are the warm `mp` plucks, with two independent round robins at each pitch. The source uses written bass pitch names/SFZ key centres an octave above the sounding note. Mehtronome zones identify the actual sounding MIDI pitch; for example, `darkblack_e2` is the fundamental E1 / MIDI 28. This keeps the sampler in tune with the backing harmony.
+
+| Local WAV | Sounding MIDI root | Upstream recording |
+| --- | --- | --- |
+| bass28.wav | 28 | `Samples/darkblack/reg/darkblack_e2_mp_rr1.wav` |
+| bass28b.wav | 28 | `Samples/darkblack/reg/darkblack_e2_mp_rr2.wav` |
+| bass33.wav | 33 | `Samples/darkblack/reg/darkblack_a2_mp_rr1.wav` |
+| bass33b.wav | 33 | `Samples/darkblack/reg/darkblack_a2_mp_rr2.wav` |
+| bass38.wav | 38 | `Samples/darkblack/reg/darkblack_d3_mp_rr1.wav` |
+| bass38b.wav | 38 | `Samples/darkblack/reg/darkblack_d3_mp_rr2.wav` |
+| bass43.wav | 43 | `Samples/darkblack/reg/darkblack_g3_mp_rr1.wav` |
+| bass43b.wav | 43 | `Samples/darkblack/reg/darkblack_g3_mp_rr2.wav` |
+| bass48.wav | 48 | `Samples/darkblack/reg/darkblack_c4_mp_rr1.wav` |
+| bass48b.wav | 48 | `Samples/darkblack/reg/darkblack_c4_mp_rr2.wav` |
+| bass52.wav | 52 | `Samples/darkblack/reg/darkblack_e4_mp_rr1.wav` |
+| bass52b.wav | 52 | `Samples/darkblack/reg/darkblack_e4_mp_rr2.wav` |
+
+## Derivative processing
+
+Converted from the original lossless FLAC/WAV recordings using FFmpeg and a deterministic PCM finishing step. All bundled files are mono, 32,000 Hz, signed 16-bit PCM WAV. Overhead/close weights are 0.40/0.85 for kick and 0.75/0.45 for snare/cross-stick; the mix is not dynamically normalized before finishing. Filters: mixed close/overhead drums 32 Hz high-pass / 12.5 kHz low-pass; other cymbal/tom overheads 100 Hz high-pass / 13 kHz low-pass; bass 24 Hz high-pass / 7.5 kHz low-pass.
+
+Recording preroll is trimmed to one millisecond before the first attack crossing (3.5% of peak for bass, 2.2% for drums). A one-millisecond attack fade prevents hard edges. Long endings fade over 120 ms for drums or 200 ms for bass. Each finished file is peak-normalized to 0.85, leaving headroom for the mixer. Bass plucks also receive a small fixed sample-rate correction (0.6–7.8 cents) to bring the measured fundamental onto concert pitch; `sourceDetuneCents` and `tuningPlaybackRatio` record each correction. The actual per-file trim, duration, byte size and SHA-256 are preserved in [sources.json](sources.json).
+
+No previous Sonic Pi/808 recordings are used by this bank. No soundfont or external sample service is needed at playback.

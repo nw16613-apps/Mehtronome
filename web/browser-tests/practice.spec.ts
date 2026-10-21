@@ -1,3 +1,4 @@
+import {SAMPLE_FILES} from '../src/audio/sample-manifest.js';
 import {openReference} from './open-reference';
 import { test, expect } from '@playwright/test';
 
@@ -665,7 +666,7 @@ test('drums and bass have independent controls and reach the speakers through th
   await expect.poll(()=>peak('master')).toBeGreaterThan(.005);
   await expect.poll(()=>peak('dry')).toBeGreaterThan(.005);
   expect(await peak('pad')).toBe(0);
-  expect(new Set(sampleResponses).size).toBe(5);
+  expect(new Set(sampleResponses).size).toBe(Object.keys(SAMPLE_FILES).length);
   await page.locator('#drums-volume').fill('0');await expect.poll(()=>peak('master')).toBeLessThan(.0001);
   await page.locator('#bass').check();await expect(page.locator('#bass-controls')).toBeVisible();
   await page.locator('#bass-volume').fill('70');

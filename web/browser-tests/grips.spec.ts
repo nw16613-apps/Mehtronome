@@ -131,6 +131,7 @@ test('guitar strums feed stereo reverb controlled by Ambient space',async({page}
   });
   await openReference(page);await page.locator('#space').fill('0');
   const button=page.locator('[data-position="III"] .grip-preview');await button.click();
+  await expect(page.locator('#grip-preview-status')).toBeVisible();
   const wet=()=>page.evaluate(()=>{
     const channels=((window as any).__guitarWet as AnalyserNode[]).map(a=>{const values=new Float32Array(a.fftSize);a.getFloatTimeDomainData(values);return values;});
     return {peak:Math.max(...channels[0].map(Math.abs)),difference:Math.max(...channels[0].map((v,i)=>Math.abs(v-channels[1][i])))};

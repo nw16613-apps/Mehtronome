@@ -76,13 +76,15 @@ export const CHORDS = {
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {
-  bloom: { name: 'Bloom pad', harmonics: [.22,.09], detune: .003, speed: .075, depth: .24, evolve: 1, echo: .08, brightness: .32, partials: [1,0,.18,0,.07,0,.03], filterBase: 550, filterSweep: 1100 },
-  strings: { name: 'Velvet strings', harmonics: [.36,.16], detune: .0017, speed: .045, depth: .16, evolve: 1, echo: .035, brightness: .9, partials: [1,.6,.38,.28,.18,.14,.11,.08,.06,.04], filterBase: 1800, filterSweep: 3200 },
-  atmosphere: { name: 'Glass atmosphere', harmonics: [.06,.22], detune: .004, speed: .11, depth: .21, evolve: 1, echo: .16, brightness: 1, partials: [.7,.12,.3,.02,.25,0,.13], filterBase: 2200, filterSweep: 2200 },
-  warm: { name: 'Warm pad', harmonics: [.14,.035], detune: .002, speed: .12, depth: .12 },
-  glass: { name: 'Glass cloud', harmonics: [.025,.12], detune: .003, speed: .18, depth: .18 },
-  velvet: { name: 'Velvet drone', harmonics: [.24,.07], detune: .001, speed: .07, depth: .08 },
-  air: { name: 'Air choir', harmonics: [.04,.2], detune: .004, speed: .23, depth: .2 },
+  // Paired harmonic layers share a tuned fundamental. Slow, independent motion
+  // changes their blend, colour and stereo position without changing harmony.
+  bloom: { name:'Bloom pad', harmonics:[.22,.09], partials:[1,0,.18,0,.055,0,.018], layerPartials:[1,0,.44,0,.15,0,.045], detune:.0024, speed:.037, depth:.15, evolve:1, echo:.065, brightness:.35, filterBase:650, filterSweep:1550, morph:.29, morphDepth:.19, width:.48, halo:.018, attack:.26, release:.24 },
+  strings: { name:'Velvet strings', harmonics:[.36,.16], partials:[1,.6,.32,.19,.12,.075,.045,.026,.016,.009], layerPartials:[1,.45,.28,.17,.18,.09,.06,.035,.02,.012], detune:.0015, speed:.026, depth:.1, evolve:1, echo:.035, brightness:.9, filterBase:1700, filterSweep:2800, morph:.34, morphDepth:.13, width:.58, halo:.012, attack:.2, release:.21 },
+  atmosphere: { name:'Glass atmosphere', harmonics:[.06,.22], partials:[1,.035,.3,0,.32,0,.14,0,.045], layerPartials:[1,0,.17,0,.56,0,.16,0,.07], detune:.0011, speed:.051, depth:.2, evolve:1, echo:.14, brightness:1, filterBase:2300, filterSweep:2600, morph:.3, morphDepth:.22, width:.68, halo:.045, attack:.09, release:.28 },
+  warm: { name:'Warm pad', harmonics:[.14,.035], partials:[1,.085,.026], layerPartials:[1,.15,.035,0,.012], detune:.0014, speed:.019, depth:.09, evolve:1, echo:0, brightness:.2, filterBase:450, filterSweep:620, morph:.25, morphDepth:.1, width:.28, halo:0, attack:.32, release:.22 },
+  glass: { name:'Glass cloud', harmonics:[.025,.12], partials:[1,0,.14,0,.06,0,.024], layerPartials:[1,.02,.24,0,.12,0,.035], detune:.0018, speed:.043, depth:.13, evolve:1, echo:.1, brightness:.65, filterBase:1300, filterSweep:1600, morph:.28, morphDepth:.18, width:.6, halo:.075, attack:.36, release:.28 },
+  velvet: { name:'Velvet drone', harmonics:[.24,.07], partials:[1,0,.3,0,.13,0,.04], layerPartials:[1,.055,.2,0,.065,0,.018], detune:.00085, speed:.013, depth:.06, evolve:1, echo:.04, brightness:.25, filterBase:360, filterSweep:760, morph:.22, morphDepth:.12, width:.32, halo:0, attack:.6, release:.26 },
+  air: { name:'Air choir', harmonics:[.04,.2], partials:[1,.03,.14,.25,.24,.085,.024,0,.008], layerPartials:[1,.12,.35,.13,.055,.18,.06,.035,.015], detune:.0022, speed:.029, depth:.15, evolve:1, echo:.085, brightness:.75, filterBase:1700, filterSweep:2400, morph:.38, morphDepth:.25, width:.62, halo:.022, attack:.43, release:.24 },
 };
 export function modeId(settings) { return settings.mode || (settings.minor ? 'minor' : 'major'); }
 export function compatibleChords(mode) {

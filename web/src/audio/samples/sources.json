@@ -1,0 +1,589 @@
+{
+  "license": "CC0-1.0",
+  "retrieved": "2026-10-21",
+  "revisions": {
+    "sfzinstruments/virtuosity_drums": "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc",
+    "sfzinstruments/karoryfer.black-and-blue-basses": "6e7d674cdb41be7a54dbccb15472401ad01099b9"
+  },
+  "format": {
+    "sampleRate": 32000,
+    "channels": 1,
+    "bits": 16,
+    "peak": 0.85
+  },
+  "files": [
+    {
+      "id": "kick",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/kick/oh_kick_snoff_vl3_rr1.flac",
+        "Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr1.flac"
+      ],
+      "duration": 1.3,
+      "kind": "drum",
+      "blend": "kickmic",
+      "trimMilliseconds": 4.031,
+      "seconds": 1.3,
+      "bytes": 83244,
+      "sha256": "5dc91905a54c653fd0a09a5f85397aa4a5c10736c38ed3f72d2c750c0704b171"
+    },
+    {
+      "id": "kick2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/kick/oh_kick_snoff_vl3_rr2.flac",
+        "Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr2.flac"
+      ],
+      "duration": 1.3,
+      "kind": "drum",
+      "blend": "kickmic",
+      "trimMilliseconds": 4.438,
+      "seconds": 1.3,
+      "bytes": 83244,
+      "sha256": "746723bdde45a84a6d3799a5ccb0c1cc360856edbab8b85a5c695f5de300fc98"
+    },
+    {
+      "id": "snare",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_center_vl20.flac",
+        "Samples/snaremic/snare/snaremic_snare_center_vl20.flac"
+      ],
+      "duration": 1.4,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 4.906,
+      "seconds": 1.4,
+      "bytes": 89644,
+      "sha256": "ec9f5991fb3c38b011913410eff6c139999946ce0722e552377fb9463ddd41f5"
+    },
+    {
+      "id": "snare2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_center_vl23.flac",
+        "Samples/snaremic/snare/snaremic_snare_center_vl23.flac"
+      ],
+      "duration": 1.4,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 5.281,
+      "seconds": 1.4,
+      "bytes": 89644,
+      "sha256": "b76c691dea867c175f5ced1e081ca3b7830c42d40dea326c743de9152777463d"
+    },
+    {
+      "id": "snare3",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_center_vl25.flac",
+        "Samples/snaremic/snare/snaremic_snare_center_vl25.flac"
+      ],
+      "duration": 1.4,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 5.125,
+      "seconds": 1.4,
+      "bytes": 89644,
+      "sha256": "a18d29adbf74ab27939b2055c9787c782e6336c4b8e6a7f9a99cb80228e2807f"
+    },
+    {
+      "id": "snareGhost",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_center_vl4.flac",
+        "Samples/snaremic/snare/snaremic_snare_center_vl4.flac"
+      ],
+      "duration": 0.9,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 4.156,
+      "seconds": 0.9,
+      "bytes": 57644,
+      "sha256": "ceb862192def2ca9d0f2e1f600f07eb8123ee12722a969c931139d77adfbe1ab"
+    },
+    {
+      "id": "snareGhost2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_center_vl6.flac",
+        "Samples/snaremic/snare/snaremic_snare_center_vl6.flac"
+      ],
+      "duration": 0.9,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 4.281,
+      "seconds": 0.9,
+      "bytes": 57644,
+      "sha256": "c4ae97c106c4370aa67db3a9e7e0e5edde18661ebf4ad61b64bf5e069d86005c"
+    },
+    {
+      "id": "hat",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_closed_vl2_rr1.flac"
+      ],
+      "duration": 0.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.438,
+      "seconds": 0.5,
+      "bytes": 32044,
+      "sha256": "90a235f60c6b0a175273df9d714a9085b95460f2a9c38421787ed330e9901883"
+    },
+    {
+      "id": "hat2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_closed_vl2_rr2.flac"
+      ],
+      "duration": 0.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.531,
+      "seconds": 0.5,
+      "bytes": 32044,
+      "sha256": "25e99ddee8598b8a6e4a908e94439d358ba042f90bb967692e2fc87849782119"
+    },
+    {
+      "id": "hat3",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_closed_vl2_rr3.flac"
+      ],
+      "duration": 0.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.344,
+      "seconds": 0.5,
+      "bytes": 32044,
+      "sha256": "fa429d14d43556ca405379d328f53b4a61bf8875b0682580eb0fcf806acfd150"
+    },
+    {
+      "id": "hatOpen",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_open_vl2_rr1.flac"
+      ],
+      "duration": 2.2,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.344,
+      "seconds": 2.2,
+      "bytes": 140844,
+      "sha256": "2018867852503235be1654f6e44638ab1d56c7b657fb338467bf81f2c0549a73"
+    },
+    {
+      "id": "hatOpen2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_open_vl2_rr2.flac"
+      ],
+      "duration": 2.2,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.594,
+      "seconds": 2.2,
+      "bytes": 140844,
+      "sha256": "bbc7ea57888da7480f7a4e9c6b2b06ab4a61bb52c8ddae492f104b779c8080b8"
+    },
+    {
+      "id": "hatPedal",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_pedal_vl2_rr1.flac"
+      ],
+      "duration": 0.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 43.281,
+      "seconds": 0.5,
+      "bytes": 32044,
+      "sha256": "6cc458a43433579fb44e221ae795d5fc57ff32f34a8da7090c5387ee85188d69"
+    },
+    {
+      "id": "hatPedal2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/hh/oh_hh_pedal_vl2_rr2.flac"
+      ],
+      "duration": 0.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 45.031,
+      "seconds": 0.5,
+      "bytes": 32044,
+      "sha256": "2129b9195ad62a407d67c32396d296ec304e91b00d162670e1980280dfb7e75c"
+    },
+    {
+      "id": "ride",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/ride/oh_ride_ride_vl2_rr1.flac"
+      ],
+      "duration": 3.2,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 3.5,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "0b1db26742cc861b5468ff11a7669e62727541d6f69231e6596f0b7403f0ee70"
+    },
+    {
+      "id": "ride2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/ride/oh_ride_ride_vl2_rr2.flac"
+      ],
+      "duration": 3.2,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 3.25,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "3e68028e825a3e80fbe7f84b003181594b27cfd34559f45e56dde05ad8eea8ae"
+    },
+    {
+      "id": "rideBell",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/ride/oh_ride_bell_vl2_rr1.flac"
+      ],
+      "duration": 2.8,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 3.438,
+      "seconds": 2.8,
+      "bytes": 179244,
+      "sha256": "192f71ef32605efc44aa0a202d8c31712c301ad77eb6e16a34fca82e02ec1ed1"
+    },
+    {
+      "id": "rim",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_crossstick_vl10.flac",
+        "Samples/snaremic/snare/snaremic_snare_crossstick_vl10.flac"
+      ],
+      "duration": 0.7,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 3.656,
+      "seconds": 0.7,
+      "bytes": 44844,
+      "sha256": "4fd9fbacc4e75ff8e992b35b2082b332a93c2825e08a21959124ae7644df0785"
+    },
+    {
+      "id": "rim2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/snare/oh_snare_crossstick_vl12.flac",
+        "Samples/snaremic/snare/snaremic_snare_crossstick_vl12.flac"
+      ],
+      "duration": 0.7,
+      "kind": "drum",
+      "blend": "snaremic",
+      "trimMilliseconds": 3.25,
+      "seconds": 0.7,
+      "bytes": 44844,
+      "sha256": "96d49c261a59e822c5bb9ee306e672a8d6774e422550754d7ddebec20c8c9cbf"
+    },
+    {
+      "id": "tomLow",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/ltom/oh_ltom_center_vl12.flac"
+      ],
+      "duration": 1.8,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.938,
+      "seconds": 1.8,
+      "bytes": 115244,
+      "sha256": "16e25cb2176441f3e69948f58d48d4f987b231357bc498d9cc89823b47ce8711"
+    },
+    {
+      "id": "tomLow2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/ltom/oh_ltom_center_vl14.flac"
+      ],
+      "duration": 1.8,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.875,
+      "seconds": 1.8,
+      "bytes": 115244,
+      "sha256": "dd5926d0c3882e00f4a775482f358c813588fd1efb7389b317643fe4e586bf96"
+    },
+    {
+      "id": "tomHigh",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/htom/oh_htom_center_vl12.flac"
+      ],
+      "duration": 1.8,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 5.719,
+      "seconds": 1.8,
+      "bytes": 115244,
+      "sha256": "e3e7e31490991b2560696f9604da99581e5609a12a5a6ad16025f5c55cf71028"
+    },
+    {
+      "id": "tomHigh2",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/htom/oh_htom_center_vl14.flac"
+      ],
+      "duration": 1.8,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 4.375,
+      "seconds": 1.8,
+      "bytes": 115244,
+      "sha256": "26608fa809b30c96a3355f604073bba02f9eed9c2ee2039d0b37d42e7f0f8a99"
+    },
+    {
+      "id": "crash",
+      "repo": "sfzinstruments/virtuosity_drums",
+      "branch": "master",
+      "sources": [
+        "Samples/oh/crash/oh_crash_crash_vl2_rr1.flac"
+      ],
+      "duration": 3.5,
+      "kind": "drum",
+      "blend": null,
+      "trimMilliseconds": 3.406,
+      "seconds": 3.5,
+      "bytes": 224044,
+      "sha256": "d8b897a0581875d27a6efb62e77059dee5fbe20ac6edba51b29889abb6908232"
+    },
+    {
+      "id": "bass28",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_e2_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 28,
+      "trimMilliseconds": 23.094,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "86f3501c760e486e4e7db5d6acc5835f6039b75d78ade457c7c3388786ae93ce",
+      "sourceDetuneCents": 1.1509,
+      "tuningPlaybackRatio": 0.9993354283958622
+    },
+    {
+      "id": "bass28b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_e2_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 28,
+      "trimMilliseconds": 22.219,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "608935ba87bd905f4abdb970565e0bef08c8738398e098b012e10c6d2a22b970",
+      "sourceDetuneCents": -0.6382,
+      "tuningPlaybackRatio": 1.000368729937945
+    },
+    {
+      "id": "bass33",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_a2_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 33,
+      "trimMilliseconds": 22.031,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "a0551fa311ffd44b1777aac36fdc0005653f7a0b8254faefce4f6418ec72a7e2",
+      "sourceDetuneCents": -4.2884,
+      "tuningPlaybackRatio": 1.0024801558129197
+    },
+    {
+      "id": "bass33b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_a2_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 33,
+      "trimMilliseconds": 22.031,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "4fb327e4cf8e3ce90fb8621ecf55830e1d6fcf06fbc52faf9c89af02dc6273a7",
+      "sourceDetuneCents": -4.3587,
+      "tuningPlaybackRatio": 1.0025208398504137
+    },
+    {
+      "id": "bass38",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_d3_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 38,
+      "trimMilliseconds": 24.281,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "d7fb806d380c56176643a51352c6600872f56614a108d499fb0ef69144acc242",
+      "sourceDetuneCents": -3.0008,
+      "tuningPlaybackRatio": 1.0017348337429328
+    },
+    {
+      "id": "bass38b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_d3_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 38,
+      "trimMilliseconds": 22.781,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "6fb2d0738ad068c82faa77623ea972e2c7cd968183f51bd51ed707c6f131ef5a",
+      "sourceDetuneCents": -2.7988,
+      "tuningPlaybackRatio": 1.0016179605290936
+    },
+    {
+      "id": "bass43",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_g3_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 43,
+      "trimMilliseconds": 17.875,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "b964d0a907073130cd7592bed1fdf81661d6b2d5503ad9f7004ece343dfc815b",
+      "sourceDetuneCents": -7.1359,
+      "tuningPlaybackRatio": 1.0041303870917673
+    },
+    {
+      "id": "bass43b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_g3_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 43,
+      "trimMilliseconds": 18.969,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "2169016aa90952990f5945aad10a2850c62c77da253e33a2e158caf11ce9083f",
+      "sourceDetuneCents": -6.7066,
+      "tuningPlaybackRatio": 1.0038813794658359
+    },
+    {
+      "id": "bass48",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_c4_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 48,
+      "trimMilliseconds": 21.031,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "7e37fa8de1702dd822ca1bb32829bab6e5c948270521e632d481d4c20636e1fe",
+      "sourceDetuneCents": -3.9367,
+      "tuningPlaybackRatio": 1.0022765010530348
+    },
+    {
+      "id": "bass48b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_c4_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 48,
+      "trimMilliseconds": 21.469,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "c82e38564ce547ce98c7216858bc888fe8206ab1c81643be7653c992e944bf3b",
+      "sourceDetuneCents": -3.4065,
+      "tuningPlaybackRatio": 1.0019696031107055
+    },
+    {
+      "id": "bass52",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_e4_mp_rr1.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 52,
+      "trimMilliseconds": 12.125,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "65724c8446783e6f799d14ce7c42425cd63e10c474f8fc49d4708d6e90689448",
+      "sourceDetuneCents": -7.7936,
+      "tuningPlaybackRatio": 1.0045118940173101
+    },
+    {
+      "id": "bass52b",
+      "repo": "sfzinstruments/karoryfer.black-and-blue-basses",
+      "branch": "main",
+      "sources": [
+        "Samples/darkblack/reg/darkblack_e4_mp_rr2.wav"
+      ],
+      "duration": 3.2,
+      "kind": "bass",
+      "rootMidi": 52,
+      "trimMilliseconds": 16.062,
+      "seconds": 3.2,
+      "bytes": 204844,
+      "sha256": "8bb47528359908cf63d1a73214206df4ed0b0ef17a6a306c5f7f910cff550c80",
+      "sourceDetuneCents": -7.216,
+      "tuningPlaybackRatio": 1.004176822383078
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { roomImpulse } from './audio/ambience.js';
 import { theoryOptions } from './guitar/superimposition.js';
 import { recommendedGrip } from './guitar/grips.js';
 import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets, exportPresets, importPresets, MAX_PRESET_FILE_BYTES } from './practice/presets.js';
@@ -72,7 +73,7 @@ app.innerHTML = `
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="drums" type="checkbox">Drums</label><label class="volume-label" for="drums-volume">Volume <output id="drums-volume-value">35%</output></label><input id="drums-volume" type="range" min="0" max="100" value="35"></div>
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label><label class="volume-label" for="bass-volume">Volume <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40"></div>
       </div>
-      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div></div><p class="practice-help">Follows your tempo and harmony, with four-bar variations.</p></details>
+      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div></div><p class="practice-help">Recorded drums and bass follow your tempo and harmony, with four- and eight-bar phrases.</p></details>
     </section>
     <section class="sequence mix-group" aria-labelledby="sequence-title">
       <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
@@ -415,17 +416,9 @@ async function prepareAudio() {
     node.connect(master, 0); // Click stays dry and rhythmically clear.
     node.connect(master, 1);
     node.connect(master, 2); // Drums and bass bypass pad reverb and echoes.
-    impulse = context.createBuffer(2, Math.ceil(context.sampleRate * 3.5), context.sampleRate);
-    let seed = 42;
-    for (let channel = 0; channel < 2; channel++) {
-      const samples = impulse.getChannelData(channel);
-      let filtered = 0;
-      for (let i = 0; i < samples.length; i++) {
-        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-        filtered = .65 * filtered + .35 * (seed / 2147483648 - 1);
-        samples[i] = i < context.sampleRate * .025 ? 0 : filtered * Math.exp(-i / (context.sampleRate * .65));
-      }
-    }
+    const room = roomImpulse(context.sampleRate);
+    impulse = context.createBuffer(2, room[0].length, context.sampleRate);
+    room.forEach((samples,channel)=>impulse!.getChannelData(channel).set(samples));
     wet = context.createGain();
     wet.gain.value = Number(input('space').value) / 100 * .65;
     reverbGate = context.createGain();
@@ -621,6 +614,7 @@ async function toggle() {
   el('error').hidden = true;
   try {
     stopPreview();
+    el('play-status').textContent='Preparing sounds…';
     await prepareAudio();
     currentBpm = settings.bpm;
     step = settings.progression ? progressionStep(settings,0) : 0;
@@ -634,6 +628,7 @@ async function toggle() {
     reflectPlayback();
     el('error').textContent = error instanceof Error ? error.message : 'Could not start audio. Please try again.';
     el('error').hidden = false;
+    el('play-status').textContent='Playback stopped. Try Start again.';
     await context?.close().catch(() => {});
     context = undefined;
     node = undefined;

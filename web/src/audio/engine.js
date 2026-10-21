@@ -1,5 +1,5 @@
 import { GuitarStrum } from './guitar.js';
-import { WAVES, readWave, bandFor } from './waves.js';
+import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
@@ -44,8 +44,7 @@ export class Engine {
 
   installDrumKit(kit) {
     this.drumKit = kit;
-    this.rhythm.clearDrums();
-    this.rhythm.kit = kit;
+    this.rhythm.installKit(kit);
   }
 
   reset() {
@@ -65,17 +64,23 @@ export class Engine {
     this.echoMix = 0;
     this.tapLeft = Math.round(.31 * this.rate);
     this.tapRight = Math.round(.43 * this.rate);
-    this.voices = Array.from({length:6}, (_, index) => ({
-      phase:0, detuned:0, frequency:0, level:0, filter:0,
-      coefficient:1, coefficientDelta:0, pan:0, panDelta:0,
-      detune:0, detuneDelta:0, gain:1, gainDelta:0, band:3, index,
+    // Six sounding chord tones plus six release tails: common notes keep their
+    // oscillator phase; changed notes crossfade at their true pitches.
+    this.voices = Array.from({length:12}, (_, index) => ({
+      phase:0, detuned:0, haloPhase:0, frequency:0, level:0, targetLevel:0,
+      filter:0, sideFilter:0, coefficient:0, coefficientDelta:0, pan:0, panDelta:0,
+      detune:0, detuneDelta:0, gain:1, gainDelta:0, mix:.3, mixDelta:0,
+      width:0, widthDelta:0, halo:0, haloDelta:0, band:3, index,
     }));
     this.waveCurrent = WAVES[this.settings.sound] || WAVES.warm;
     this.wavePrevious = this.waveCurrent;
+    this.layerCurrent = WAVE_LAYERS[this.settings.sound] || WAVE_LAYERS.warm;
+    this.layerPrevious = this.layerCurrent;
     this.soundBlend = 1;
     this.chordSignature = null;
     this.chordAge = 0;
     this.breath = 1;
+    this.breathDelta = 0;
     this.phase = 0;
     this.currentBpm = this.settings.bpm;
     this.trainerNextBar = this.settings.trainerBars;
@@ -108,9 +113,10 @@ export class Engine {
     const s = this.settings;
     if(previousSound!==s.sound){
       this.wavePrevious = this.waveCurrent;
+      this.layerPrevious = this.layerCurrent;
       this.waveCurrent = WAVES[s.sound] || WAVES.warm;
+      this.layerCurrent = WAVE_LAYERS[s.sound] || WAVE_LAYERS.warm;
       this.soundBlend = 0;
-      this.echoLeft.fill(0); this.echoRight.fill(0);
     }
     if (!previousDrums && s.drums) this.rhythm.clearDrums();
     if (!previousBass && s.bass) this.rhythm.clearBass();
@@ -154,6 +160,7 @@ export class Engine {
     if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 4 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
       this.chordMidi = [...notes];
       this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
+      this.assignPadVoices();
       if (acoustic) this.guitar = new GuitarStrum(this.rate, notes);
     }
   }
@@ -167,6 +174,30 @@ export class Engine {
     this.chordAge = 0;
     this.chordMidi = this.settings.progression ? harmonyAt(this.settings, step).midi : pedalNotes(this.settings);
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
+    this.assignPadVoices();
+    const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
+    this.nextChordMidi = s.progression ? harmonyAt(s,progressionStep(s,bar+1)).midi : this.chordMidi;
+  }
+
+  assignPadVoices() {
+    for (const voice of this.voices) voice.targetLevel = 0;
+    for (let index=0;index<this.frequencies.length;index++) {
+      const frequency=this.frequencies[index];
+      let voice=this.voices.find(candidate=>candidate.frequency===frequency && candidate.targetLevel===0);
+      if (!voice) {
+        voice=this.voices.find(candidate=>candidate.level<.000001 && candidate.targetLevel===0);
+        if (!voice) for (const candidate of this.voices) if (candidate.targetLevel===0 && (!voice || candidate.level<voice.level)) voice=candidate;
+        // A quiet release can be stolen after unusually rapid UI chord changes.
+        voice.frequency=frequency;
+        voice.phase=(index*.173+frequency*.001)%1;
+        voice.detuned=(voice.phase+.19)%1;
+        voice.haloPhase=voice.phase;
+        voice.filter=0;voice.sideFilter=0;
+      }
+      voice.index=index;
+      voice.targetLevel=1/this.frequencies.length;
+      voice.band=bandFor(frequency,this.rate);
+    }
   }
 
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
@@ -187,8 +218,9 @@ export class Engine {
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
-    const evolving = !!sound.evolve;
     const echoTarget = sound.echo || 0;
+    const attack = 1-Math.exp(-1/(this.rate*sound.attack));
+    const release = 1-Math.exp(-1/(this.rate*sound.release));
     const inverseRate = this.inverseRate;
     for (let i = 0; i < output.length; i++) {
       if (this.nextBeat && !this.auditioning) {
@@ -204,6 +236,7 @@ export class Engine {
         }
         const step = s.progression ? progressionStep(s, bar) : 0;
         this.setChord(step);
+        this.nextChordMidi = s.progression ? harmonyAt(s,progressionStep(s,bar+1)).midi : this.chordMidi;
         this.clickAge = 0;
         this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
         this.clickStrength = 1;
@@ -234,63 +267,80 @@ export class Engine {
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
-      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm);
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm,this.nextChordMidi);
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
       const rhythmSample=this.level*(.28*this.drumsLevel*this.rhythm.drums+.2*this.bassLevel*this.rhythm.bass);
       // Control-rate updates are independent of callback block boundaries.
-      // Interpolate their results per sample to avoid audible stepping.
+      // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {
         const time = this.age * inverseRate;
-        this.breath = 1 - sound.depth / 2 + sound.depth / 2 * Math.sin(2 * Math.PI * sound.speed * time);
+        const breath = 1-sound.depth*.5+sound.depth*.5*Math.sin(2*Math.PI*sound.speed*time);
+        this.breathDelta=(breath-this.breath)/32;
         for (const voice of this.voices) {
-          const target = this.frequencies[voice.index] || this.frequencies[0];
-          const motion = .5 + .5 * Math.sin(time * .22 + voice.index * 1.1);
-          const coefficient = evolving ? 1 - Math.exp(-2 * Math.PI * Math.min(this.rate * .3, sound.filterBase + motion * sound.filterSweep) * inverseRate) : 1;
-          const pan = evolving ? .3 * Math.sin(time * .14 + voice.index * 1.4) : 0;
-          const detune = sound.detune * (evolving ? 1 + .2 * Math.sin(time * .17 + voice.index * 1.7) : 1);
-          const glass = s.sound === 'atmosphere';
-          const gain = glass ? (.7 + .3 * Math.exp(-this.chordAge * inverseRate / 1.1)) * (.8 + .2 * motion * motion) : 1;
-          voice.coefficientDelta = (coefficient - voice.coefficient) / 32;
-          voice.panDelta = (pan - voice.pan) / 32;
-          voice.detuneDelta = (detune - voice.detune) / 32;
-          voice.gainDelta = (gain - voice.gain) / 32;
-          voice.band = bandFor(Math.max(target, voice.frequency), this.rate);
+          if (!voice.targetLevel && voice.level<.000001) continue;
+          const offset=voice.index*1.31;
+          const motion=.5+.5*Math.sin(time*.19+offset);
+          const slow=.5+.5*Math.sin(time*.071+offset*1.73);
+          const cutoff=Math.min(this.rate*.32,sound.filterBase+sound.filterSweep*(motion*.62+slow*.38));
+          const coefficient=1-Math.exp(-2*Math.PI*cutoff*inverseRate);
+          const pan=.18*Math.sin(time*.11+offset);
+          const detune=sound.detune*(.8+.2*Math.sin(time*.23+offset*1.4));
+          const mix=sound.morph+sound.morphDepth*(slow-.5)*2;
+          const glass=s.sound==='atmosphere'||s.sound==='glass';
+          const gain=(.92+.08*Math.sin(time*.31+offset*.8))*(glass?.82+.18*Math.exp(-this.chordAge*inverseRate/1.4):1);
+          const halo=sound.halo*(.45+.55*motion*motion);
+          voice.coefficientDelta=(coefficient-voice.coefficient)/32;
+          voice.panDelta=(pan-voice.pan)/32;
+          voice.detuneDelta=(detune-voice.detune)/32;
+          voice.gainDelta=(gain-voice.gain)/32;
+          voice.mixDelta=(mix-voice.mix)/32;
+          voice.widthDelta=(sound.width-voice.width)/32;
+          voice.haloDelta=(halo-voice.halo)/32;
         }
       }
+      this.breath+=this.breathDelta;
       if (this.soundBlend < 1) {
-        this.soundBlend += (1 - this.soundBlend) * this.blendSmoothing;
-        if (this.soundBlend > .9999) this.soundBlend = 1;
+        this.soundBlend += (1-this.soundBlend)*this.blendSmoothing;
+        if (this.soundBlend>.9999) this.soundBlend=1;
       }
-      let chord = 0, chordRight = 0;
+      let chord=0,chordRight=0;
       for (const voice of this.voices) {
-        const active = voice.index < this.frequencies.length;
-        voice.level += ((active ? 1 / this.frequencies.length : 0) - voice.level) * voiceSmoothing;
-        if (!active && voice.level < .000001) continue;
-        const target = this.frequencies[voice.index] || this.frequencies[0];
-        if (!voice.frequency) voice.frequency = target;
-        voice.frequency += (target - voice.frequency) * voiceSmoothing;
-        const increment = (evolving ? voice.frequency : target) * inverseRate;
-        voice.coefficient += voice.coefficientDelta;
-        voice.pan += voice.panDelta;
-        voice.detune += voice.detuneDelta;
-        voice.gain += voice.gainDelta;
-        voice.phase += increment;
-        if (voice.phase >= 1) voice.phase -= 1;
-        voice.detuned += increment * (1 + voice.detune);
-        if (voice.detuned >= 1) voice.detuned -= 1;
-        const table = this.waveCurrent[voice.band];
-        let wave = .7 * readWave(table, voice.phase) + .3 * readWave(table, voice.detuned);
-        if (this.soundBlend < 1) {
-          const previous = this.wavePrevious[voice.band];
-          const old = .7 * readWave(previous, voice.phase) + .3 * readWave(previous, voice.detuned);
-          wave = old + (wave - old) * this.soundBlend;
+        voice.level+=(voice.targetLevel-voice.level)*(voice.targetLevel>voice.level?attack:release);
+        if (!voice.targetLevel && voice.level<.000001) { voice.level=0; continue; }
+        const increment=voice.frequency*inverseRate;
+        voice.coefficient+=voice.coefficientDelta;
+        voice.pan+=voice.panDelta;
+        voice.detune+=voice.detuneDelta;
+        voice.gain+=voice.gainDelta;
+        voice.mix+=voice.mixDelta;
+        voice.width+=voice.widthDelta;
+        voice.halo+=voice.haloDelta;
+        voice.phase+=increment*(1-voice.detune*.5);
+        voice.detuned+=increment*(1+voice.detune*.5);
+        voice.haloPhase+=increment*2;
+        if(voice.phase>=1)voice.phase-=Math.floor(voice.phase);
+        if(voice.detuned>=1)voice.detuned-=Math.floor(voice.detuned);
+        if(voice.haloPhase>=1)voice.haloPhase-=Math.floor(voice.haloPhase);
+        let base=readWave(this.waveCurrent[voice.band],voice.phase);
+        let layer=readWave(this.layerCurrent[voice.band],voice.detuned);
+        if(this.soundBlend<1){
+          const previous=readWave(this.wavePrevious[voice.band],voice.phase);
+          const previousLayer=readWave(this.layerPrevious[voice.band],voice.detuned);
+          base=previous+(base-previous)*this.soundBlend;
+          layer=previousLayer+(layer-previousLayer)*this.soundBlend;
         }
-        voice.filter += (wave - voice.filter) * voice.coefficient;
-        const shaped = voice.filter * voice.level * voice.gain;
-        chord += shaped * (1 - voice.pan);
-        chordRight += shaped * (1 + voice.pan);
+        const halo=voice.frequency*2<this.rate*.45?readWave(SINE,voice.haloPhase)*voice.halo:0;
+        const wave=(base*(1-voice.mix)+layer*voice.mix)*(1-voice.halo)+halo;
+        voice.filter+=(wave-voice.filter)*voice.coefficient;
+        // The difference between two pitched layers provides a restrained side
+        // signal. The shared centre keeps the pad full when summed to mono.
+        const side=(base-layer)*voice.width*.18;
+        voice.sideFilter+=(side-voice.sideFilter)*voice.coefficient;
+        const gain=voice.level*voice.gain;
+        chord+=(voice.filter+voice.sideFilter)*gain*(1-voice.pan);
+        chordRight+=(voice.filter-voice.sideFilter)*gain*(1+voice.pan);
       }
       const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
       let left=.4*this.harmonyLevel*chord*this.breath+.15*this.sequenceLevel*this.sequence.left;

@@ -4,6 +4,7 @@ import {Engine} from '../src/audio/engine.js';
 import {Rhythm} from '../src/audio/rhythm.js';
 import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
+import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
   const engine=new Engine(8000);
@@ -37,7 +38,7 @@ test('bass patterns follow actual chord tones and land on the root each bar in e
       const info=harmonyAt(engine.settings,event.step);
       assert.equal(event.type,'bass');
       assert.ok(info.chordPcs.includes(event.midi%12));
-      assert.ok(event.midi>=36&&event.midi<=59);
+      assert.ok(event.midi>=28&&event.midi<=59);
       if(event.beat===0)assert.equal(event.midi%12,info.midi[0]%12);
     }
   }
@@ -103,21 +104,29 @@ test('five styles produce distinct event patterns and bass articulations',()=>{
 test('bundled WAV kit is valid, survives transport resets and renders safely in every style',async()=>{
   const {readFile}=await import('node:fs/promises');
   const kit={};
-  for(const name of ['kick','snare','hat','ride','rim']){
-    const bytes=await readFile(new URL(`../src/audio/samples/${name}.wav`,import.meta.url));
+  for(const [name,url]of Object.entries(SAMPLE_FILES)){
+    const bytes=await readFile(url);
     assert.equal(bytes.toString('ascii',0,4),'RIFF');
     assert.equal(bytes.toString('ascii',8,12),'WAVE');
-    let data;
+    let data,sourceRate;
     for(let offset=12;offset+8<=bytes.length;){
       const size=bytes.readUInt32LE(offset+4),tag=bytes.toString('ascii',offset,offset+4);
-      if(tag==='fmt '){assert.equal(bytes.readUInt16LE(offset+8),1);assert.equal(bytes.readUInt16LE(offset+10),1);assert.equal(bytes.readUInt32LE(offset+12),24000);assert.equal(bytes.readUInt16LE(offset+22),16);}
+      if(tag==='fmt '){
+        assert.equal(bytes.readUInt16LE(offset+8),1);assert.equal(bytes.readUInt16LE(offset+10),1);
+        sourceRate=bytes.readUInt32LE(offset+12);assert.ok([24000,32000].includes(sourceRate));
+        assert.equal(bytes.readUInt16LE(offset+22),16);
+      }
       if(tag==='data')data=bytes.subarray(offset+8,offset+8+size);
       offset+=8+size+(size%2);
     }
     assert.ok(data&&data.length>4000);
-    const pcm=new Float32Array(data.length/2);let peak=0;
-    for(let i=0;i<pcm.length;i++){pcm[i]=data.readInt16LE(i*2)/32768;peak=Math.max(peak,Math.abs(pcm[i]));}
-    assert.ok(peak>.01);for(let i=0;i<pcm.length;i++)pcm[i]*=.85/peak;
+    const frames=data.length/2,pcm=new Float32Array(Math.floor(frames*24000/sourceRate));let peak=0;
+    for(let i=0;i<pcm.length;i++){
+      const position=i*sourceRate/24000,index=Math.floor(position),fraction=position-index;
+      const from=data.readInt16LE(index*2)/32768,to=index+1<frames?data.readInt16LE((index+1)*2)/32768:0;
+      pcm[i]=from+(to-from)*fraction;peak=Math.max(peak,Math.abs(pcm[i]));
+    }
+    assert.ok(peak>.01,name);for(let i=0;i<pcm.length;i++)pcm[i]*=.75/peak;
     kit[name]=pcm;
   }
   for(const drumGroove of Object.keys(DRUM_GROOVES)){
@@ -188,4 +197,67 @@ test('bass variations remain valid for every chord size, including dyads',()=>{
     assert.ok(events.length>0);
     for(const event of events){assert.ok(Number.isFinite(event.midi),`${chord}: ${bassPattern}`);assert.ok(engine.chordMidi.some(n=>n%12===event.midi%12));}
   }
+});
+
+test('recorded hits alternate takes, soft snares use real ghost takes, and closed hats choke open hats',()=>{
+  const kit=Object.fromEntries(Object.values(DRUM_SAMPLE_GROUPS).flat().map((id,index)=>[id,new Float32Array(4000).fill(.1+index*.002)]));
+  const rhythm=new Rhythm(8000,kit),events=[];
+  for(let i=0;i<4;i++)rhythm.hitDrum('snare',.65,i,0,0,0,event=>events.push(event));
+  const takes=DRUM_SAMPLE_GROUPS.snare;
+  assert.deepEqual(events.map(event=>event.sampleId),[0,1,2,3].map(index=>takes[index%takes.length]));
+  rhythm.hitDrum('snare',.12,4,0,0,0,event=>events.push(event));
+  assert.ok(DRUM_SAMPLE_GROUPS.snareGhost.includes(events.at(-1).sampleId));
+  assert.equal(events.at(-1).type,'snare');
+  rhythm.hitDrum('hatOpen',.2,5,0,0,0,noop);
+  const open=rhythm.drumVoices.find(voice=>voice.kind==='hatOpen');
+  assert.equal(open.choking,false);
+  for(let i=0;i<100;i++)rhythm.render(true,false);
+  rhythm.hitDrum('hat',.2,105,0,0,0,noop);
+  assert.equal(open.choking,true);
+  for(let i=0;i<800;i++)rhythm.render(true,false);
+  assert.equal(open.sample,null);
+});
+
+test('eight-bar drum phrases make different answers and resolve fills without overloading the kit',()=>{
+  for(const drumGroove of Object.keys(DRUM_GROOVES)){
+    const {events}=render(setup({drumGroove,bass:false}),128000);
+    const signatures=Array.from({length:4},(_,bar)=>JSON.stringify(events.filter(event=>Math.floor(event.sample/16000)===bar)
+      .map(event=>[event.type,event.sample%16000,event.gain])));
+    assert.equal(new Set(signatures).size,4,drumGroove);
+    assert.ok(events.every(event=>event.gain<=.85),drumGroove);
+    // Strong kicks and the main backbeat remain on the same reliable pulse.
+    assert.ok(events.some(event=>event.type==='kick'&&event.sample===7*16000),drumGroove);
+  }
+});
+
+test('walking bass connects chord-tone octaves and approaches the next root with a consonant note',()=>{
+  const {events}=render(setup({drums:false,bassPattern:'walk'}),32000);
+  const bass=events.filter(event=>event.type==='bass');
+  assert.ok(bass.slice(1).every((event,index)=>Math.abs(event.midi-bass[index].midi)<=7));
+  assert.equal(bass[4].midi%12,bass[0].midi%12);
+  assert.notEqual(bass[4].midi,bass[0].midi);
+  const rhythm=new Rhythm(8000),approaches=[];
+  const current=[50,53,57,60],next=[55,59,62,65];
+  rhythm.lastBassMidi=45;
+  rhythm.playBass({bassPattern:'walk',beats:4,bpm:120},0,3,0,current,12000,0,event=>approaches.push(event),next);
+  const last=approaches.at(-1);
+  assert.equal(last.approaching,true);
+  assert.ok(current.some(note=>note%12===last.midi%12));
+  assert.ok(Math.abs(last.midi-31)<=2);
+});
+
+test('mixer-muted voices continue aging instead of replaying frozen attacks when raised',()=>{
+  const kit={kick:new Float32Array(256).fill(.2)};
+  const rhythm=new Rhythm(8000,kit);
+  rhythm.hitDrum('kick',.5,0,0,0,0,noop);
+  rhythm.bassInstrument.noteOn(40,.04,.6,'funk');
+  const bass=rhythm.bassInstrument.voices[0];
+  for(let i=0;i<8000;i++){
+    rhythm.render(false,false);
+    assert.equal(rhythm.drums,0);assert.equal(rhythm.bass,0);
+  }
+  assert.equal(rhythm.drumVoices[0].sample,null);
+  assert.ok(bass.age>320);
+  rhythm.render(true,true);
+  assert.ok(Math.abs(rhythm.drums)+Math.abs(rhythm.bass)<.0001);
 });
