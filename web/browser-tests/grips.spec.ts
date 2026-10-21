@@ -4,7 +4,8 @@ import {test,expect} from '@playwright/test';
 test('chord overlay keeps the established shapes and mutes without prescribing fingers',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await openReference(page);
-  await expect(page.locator('#show-grip')).toBeChecked();await expect(page.locator('.grip-preview')).toHaveCount(5);
+  await expect(page.locator('#show-grip')).not.toBeChecked();await expect(page.locator('.grip-preview')).toHaveCount(0);
+  await page.locator('#show-grip').check();await expect(page.locator('.grip-preview')).toHaveCount(5);
   for(const position of ['I','II','III','IV','V']){
     const card=page.locator(`[data-position="${position}"]`);
     const count=await card.locator('.grip-note').count();expect(count).toBeGreaterThanOrEqual(3);expect(count).toBeLessThanOrEqual(4);
@@ -46,7 +47,7 @@ test('clicking a grip strums exact pitches, rings after release, and toggles off
       }
     };
   });
-  await openReference(page);await page.locator('#sequence').check();await page.locator('#drums').check();await page.locator('#bass').check();
+  await openReference(page);await page.locator('#show-grip').check();await page.locator('#sequence').check();await page.locator('#drums').check();await page.locator('#bass').check();
   const button=page.locator('[data-position="III"] .grip-preview');
   const expected=await page.locator('[data-position="III"] .grip-note').evaluateAll(notes=>notes.map(n=>[40,45,50,55,59,64][Number(n.getAttribute('data-string'))]+Number(n.getAttribute('data-fret'))));
   await button.click();await expect(page.locator('#grip-preview-status')).toBeVisible();
@@ -74,7 +75,7 @@ test('clicking a grip strums exact pitches, rings after release, and toggles off
 });
 
 test('touch tap strums and rings until its natural tail ends',async({page})=>{
-  await openReference(page);await page.setViewportSize({width:390,height:844});
+  await openReference(page);await page.locator('#show-grip').check();await page.setViewportSize({width:390,height:844});
   const button=page.locator('[data-position="IV"] .grip-preview');await button.scrollIntoViewIfNeeded();
   const box=await button.boundingBox(),point={x:box!.x+box!.width/2,y:box!.y+box!.height/2};
   const session=await page.context().newCDPSession(page);
@@ -102,7 +103,7 @@ test('changing diagrams before a strum loads prevents a stale note',async({page}
         this.port.postMessage=(data:any,transfer?:Transferable[])=>{(window as any).__gripMessages.push(data.type);if(transfer)post(data,transfer);else post(data);};}
     };
   });
-  await openReference(page);const button=page.locator('[data-position="I"] .grip-preview');await button.click();
+  await openReference(page);await page.locator('#show-grip').check();const button=page.locator('[data-position="I"] .grip-preview');await button.click();
   await expect.poll(()=>page.evaluate(()=>typeof (window as any).__finishGripLoad)).toBe('function');await page.locator('#quality').selectOption('dorian');
   await page.evaluate(()=>(window as any).__finishGripLoad());
   await expect.poll(()=>page.evaluate(()=>(window as any).__gripMessages.includes('stop'))).toBe(true);
@@ -129,7 +130,7 @@ test('guitar strums feed stereo reverb controlled by Ambient space',async({page}
       }
     };
   });
-  await openReference(page);await page.locator('#space').fill('0');
+  await openReference(page);await page.locator('#show-grip').check();await page.locator('#space').fill('0');
   const button=page.locator('[data-position="III"] .grip-preview');await button.click();
   await expect(page.locator('#grip-preview-status')).toBeVisible();
   const wet=()=>page.evaluate(()=>{
@@ -164,7 +165,7 @@ test('guitar dry and reverb sum with headroom at full volume, including repeated
       }
     };
   });
-  await page.goto('/');await page.locator('#harmony').fill('100');await page.locator('#space').fill('100');
+  await page.goto('/');await page.locator('#show-grip').check();await page.locator('#harmony').fill('100');await page.locator('#space').fill('100');
   for(const [mode,key] of [['dorian','9'],['lydian','0'],['altered','7']]){
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
     for(const [selector,status,count] of [['.grip-preview','#grip-preview-status',5]] as const){
@@ -250,7 +251,7 @@ test('toggling a chord off before audio loads cancels the pending sound',async({
         this.port.postMessage=(data:any,transfer?:Transferable[])=>{(window as any).__gripMessages.push(data.type);if(transfer)post(data,transfer);else post(data);};}
     };
   });
-  await openReference(page);const button=page.locator('.grip-preview').first();await button.click();
+  await openReference(page);await page.locator('#show-grip').check();const button=page.locator('.grip-preview').first();await button.click();
   await expect.poll(()=>page.evaluate(()=>typeof (window as any).__finishGripLoad)).toBe('function');await expect(button).toHaveAttribute('aria-pressed','true');
   await button.click();await expect(button).toHaveAttribute('aria-pressed','false');
   await page.evaluate(()=>(window as any).__finishGripLoad());

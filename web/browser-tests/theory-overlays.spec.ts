@@ -45,6 +45,8 @@ test('the shared Explore control overlays every CAGED position without changing 
   for(const position of ['I','II','III','IV','V'])await expectOverlay(page,position,'triads',harmony);
   await page.locator('#theory-view').selectOption('none');
   expect(await coordinates(page)).toEqual(before);
+  await expect(card(page,'I').locator('.grip-ring')).toHaveCount(0);
+  await page.locator('#show-grip').check();
   await expect(card(page,'I').locator('.grip-ring')).not.toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -82,6 +84,18 @@ test('pentatonic notes use a distinct colour from chord tones in every theme',as
       return {pentatonic:style('.theory-note > circle:first-of-type'),chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
     });
     expect(colours.pentatonic,`${palette} pentatonic colour`).not.toBe(colours.chord);
+  }
+});
+
+test('triad-pair A and B notes use two colours distinct from chord tones in every theme',async({page})=>{
+  await page.goto('/');await page.locator('#theory-view').selectOption('triads');
+  for(const palette of ['light','dark','midnight','paper','plum','slate']){
+    await page.locator('#palette').selectOption(palette);
+    const colours=await card(page,'I').evaluate(node=>{
+      const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
+      return {a:style('.theory-a > circle:first-of-type'),b:style('.theory-b > circle:first-of-type'),chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
+    });
+    expect(new Set(Object.values(colours)).size,`${palette} triad and chord colours`).toBe(3);
   }
 });
 

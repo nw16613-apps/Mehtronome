@@ -104,12 +104,12 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .check { min-height:44px; }
 }
 
-:root { --theory-b:#a65a18; --theory-b-ink:#fff; --theory-pentatonic:#8642b8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#d6b5ee; }
-html[data-theme=dark] { --theory-b:#ffd28f; --theory-b-ink:#243535; --theory-pentatonic:#ff75b5; --theory-pentatonic-ink:#321225; --theory-pentatonic-ring:#ffd1e7; }
-:root[data-palette=midnight] { --theory-pentatonic:#b7df65; --theory-pentatonic-ink:#17250a; --theory-pentatonic-ring:#e4f5bd; }
-:root[data-palette=paper] { --theory-pentatonic:#3478c8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#a9cbf2; }
-:root[data-palette=plum] { --theory-pentatonic:#65dcb0; --theory-pentatonic-ink:#13271f; --theory-pentatonic-ring:#baf3de; }
-:root[data-palette=slate] { --theory-pentatonic:#b52e76; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#eda8ce; }
+:root { --theory-a:#3478c8; --theory-a-ink:#fff; --theory-a-ring:#a9cbf2; --theory-b:#ce572e; --theory-b-ink:#fff; --theory-b-ring:#f0b39d; --theory-pentatonic:#8642b8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#d6b5ee; }
+html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-ring:#c1e3ff; --theory-b:#ff9562; --theory-b-ink:#32180c; --theory-b-ring:#ffd1ba; --theory-pentatonic:#ff75b5; --theory-pentatonic-ink:#321225; --theory-pentatonic-ring:#ffd1e7; }
+:root[data-palette=midnight] { --theory-a:#b7df65; --theory-a-ink:#17250a; --theory-a-ring:#e4f5bd; --theory-b:#ff7f73; --theory-b-ink:#30100e; --theory-b-ring:#ffc2bd; --theory-pentatonic:#b7df65; --theory-pentatonic-ink:#17250a; --theory-pentatonic-ring:#e4f5bd; }
+:root[data-palette=paper] { --theory-a:#3478c8; --theory-a-ink:#fff; --theory-a-ring:#a9cbf2; --theory-b:#39855a; --theory-b-ink:#fff; --theory-b-ring:#a9d6ba; --theory-pentatonic:#3478c8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#a9cbf2; }
+:root[data-palette=plum] { --theory-a:#65dcb0; --theory-a-ink:#13271f; --theory-a-ring:#baf3de; --theory-b:#ff9a62; --theory-b-ink:#30170c; --theory-b-ring:#ffd0b5; --theory-pentatonic:#65dcb0; --theory-pentatonic-ink:#13271f; --theory-pentatonic-ring:#baf3de; }
+:root[data-palette=slate] { --theory-a:#2f8b5c; --theory-a-ink:#fff; --theory-a-ring:#9bd2b5; --theory-b:#b52e76; --theory-b-ink:#fff; --theory-b-ring:#eda8ce; --theory-pentatonic:#b52e76; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#eda8ce; }
 
 /* Explore melodic materials without replacing established CAGED fingerings. */
 .theory-controls { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; margin:14px 0 10px; }
@@ -125,19 +125,24 @@ html[data-theme=dark] { --theory-b:#ffd28f; --theory-b-ink:#243535; --theory-pen
 .theory-tones { font-variant-numeric:tabular-nums; }
 .theory-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin:8px 0; font-size:10px; }
 .theory-legend>span { display:flex; gap:6px; align-items:center; }
-.theory-legend i { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:2px solid var(--accent,var(--practice-accent)); font-style:normal; font-weight:700; color:var(--ink,var(--practice-ink,#243535)); }
-.theory-legend i.theory-pentatonic-key { background:var(--theory-pentatonic); border-color:var(--theory-pentatonic-ring); }
-.theory-legend .theory-group-b i { border-style:dashed; border-color:var(--theory-b); }
+.theory-legend i { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:2px solid var(--theory-a-ring); background:var(--theory-a); font-style:normal; font-weight:700; color:var(--theory-a-ink); }
+.theory-legend i.theory-pentatonic-key { background:var(--theory-pentatonic); border-color:var(--theory-pentatonic-ring); color:var(--theory-pentatonic-ink); }
+.theory-legend .theory-group-b i { border-style:dashed; border-color:var(--theory-b-ring); background:var(--theory-b); color:var(--theory-b-ink); }
 .theory-active .fret-note:not(.theory-note) { opacity:.22; }
 .theory-active .theory-note { opacity:1; }
 .fretboard .theory-ring { fill:none!important; stroke:var(--accent,var(--practice-accent))!important; stroke-width:2.5!important; }
 .fretboard.theory-pentatonic .theory-note>circle:first-of-type { fill:var(--theory-pentatonic)!important; stroke:var(--theory-pentatonic)!important; }
 .fretboard.theory-pentatonic .theory-note>text { fill:var(--theory-pentatonic-ink)!important; }
 .fretboard.theory-pentatonic .theory-ring { stroke:var(--theory-pentatonic-ring)!important; stroke-width:3!important; }
-.fretboard .theory-b .theory-ring { stroke:var(--theory-b)!important; }
-.fretboard .theory-badge circle { fill:var(--accent,var(--practice-accent))!important; stroke:var(--panel,var(--practice-panel))!important; stroke-width:1!important; }
+.fretboard.theory-triads .theory-a>circle:first-of-type { fill:var(--theory-a)!important; stroke:var(--theory-a)!important; }
+.fretboard.theory-triads .theory-b>circle:first-of-type { fill:var(--theory-b)!important; stroke:var(--theory-b)!important; }
+.fretboard.theory-triads .theory-a>text { fill:var(--theory-a-ink)!important; }
+.fretboard.theory-triads .theory-b>text { fill:var(--theory-b-ink)!important; }
+.fretboard .theory-a .theory-ring { stroke:var(--theory-a-ring)!important; stroke-width:3!important; }
+.fretboard .theory-b .theory-ring { stroke:var(--theory-b-ring)!important; stroke-width:3!important; }
+.fretboard .theory-badge circle { fill:var(--theory-a)!important; stroke:var(--panel,var(--practice-panel))!important; stroke-width:1!important; }
 .fretboard .theory-b .theory-badge circle { fill:var(--theory-b)!important; }
-.fretboard .theory-badge text { fill:var(--on-accent,var(--practice-on-accent))!important; font-size:9px!important; font-weight:700; }
+.fretboard .theory-badge text { fill:var(--theory-a-ink)!important; font-size:9px!important; font-weight:700; }
 .fretboard .theory-b .theory-badge text { fill:var(--theory-b-ink)!important; }
 .guitar.has-featured .featured-position .theory-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
 @media(max-width:760px) {
