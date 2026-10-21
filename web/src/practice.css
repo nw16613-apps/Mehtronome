@@ -40,7 +40,7 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mixer-details[open]>summary { margin-bottom:6px; }
 .guitar-controls { align-items:end; }
 .workspace>.guitar.has-featured { grid-column:1/-1; }
-.guitar.has-featured #guitar-diagrams { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.guitar.has-featured #guitar-diagrams { display:grid; grid-template-columns:minmax(0,1fr); gap:20px; max-width:900px; margin-inline:auto; }
 .guitar.has-featured .featured-position { grid-column:1/-1; order:-1; border:2px solid var(--accent,var(--practice-accent)); padding:22px; }
 .featured-position .position-heading h4::after { content:' · Practising'; font-size:11px; font-weight:400; }
 .guitar.has-featured .featured-position svg { display:block; max-width:800px; margin-inline:auto; }
@@ -151,19 +151,28 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .guitar.has-featured .featured-position .theory-controls { grid-template-columns:minmax(0,1fr); }
 }
 
-/* Keep the complete CAGED map in one row. Narrow screens pan this row instead
-   of turning five related positions into a long vertical list. */
+/* A compact map keeps all five positions visible; one full diagram carries the detail. */
 .workspace>.guitar { grid-column:1/-1; }
-.guitar:not(.has-featured) #guitar-diagrams {
-  display:grid;
-  grid-template-columns:repeat(5,minmax(300px,1fr));
-  gap:14px;
-  overflow-x:auto;
-  padding-bottom:8px;
-  scroll-snap-type:x proximity;
-  scrollbar-gutter:stable;
+.position-overview { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:0 0 18px; }
+.position-thumbnail { min-width:0; padding:10px 8px 7px; border:1px solid var(--line,#899b83); border-radius:9px; background:var(--panel,var(--practice-panel)); color:var(--ink,var(--practice-ink,#243535)); cursor:pointer; text-align:left; transition:border-color .15s,background .15s,transform .15s; }
+.position-thumbnail:hover { transform:translateY(-2px); border-color:var(--accent,var(--practice-accent)); }
+.position-thumbnail:focus-visible { outline:2px solid var(--accent,var(--practice-accent)); outline-offset:3px; }
+.position-thumbnail.current { border:2px solid var(--accent,var(--practice-accent)); background:color-mix(in srgb,var(--accent,var(--practice-accent)) 10%,var(--panel,var(--practice-panel))); padding:9px 7px 6px; }
+.position-thumbnail>span,.position-thumbnail>small { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.position-thumbnail>span { font-size:12px; font-weight:700; }
+.position-thumbnail>small { margin-top:2px; color:var(--muted,var(--practice-muted,#64735f)); font-size:9px; }
+.position-thumbnail .fretboard { display:block; width:100%; height:auto; margin:5px 0 0; }
+.position-thumbnail .fret-note text,.position-thumbnail .string-name,.position-thumbnail .fret-number,.position-thumbnail .theory-badge { display:none; }
+.position-navigation { display:flex; align-items:center; justify-content:center; gap:16px; margin:14px auto 4px; }
+.position-navigation>span { min-width:170px; text-align:center; font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); }
+.position-navigation .practice-button { min-width:110px; }
+@media(max-width:760px) {
+  .position-overview { gap:5px; }
+  .position-thumbnail { padding:8px 4px 5px; text-align:center; }
+  .position-thumbnail.current { padding:7px 3px 4px; }
+  .position-thumbnail>span { font-size:10px; }
+  .position-thumbnail>small { display:none; }
+  .position-navigation { gap:8px; }
+  .position-navigation>span { min-width:0; flex:1; }
+  .position-navigation .practice-button { min-width:92px; padding-inline:9px; }
 }
-.guitar:not(.has-featured) .position-card { scroll-snap-align:start; }
-.guitar:not(.has-featured) .position-heading { align-items:flex-start; gap:5px; }
-.guitar:not(.has-featured) .position-heading h4 { font-size:14px; }
-.guitar:not(.has-featured) .position-heading span { font-size:10px; white-space:nowrap; }
