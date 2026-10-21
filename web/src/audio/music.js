@@ -112,6 +112,55 @@ export function pedalLabels(settings) {
 }
 
 
+// Modal vamps keep a single tonic pitch collection while the backing changes.
+// Tonic chords retain the mode's suggested colour; supporting seventh chords
+// are built from that same scale instead of transposing the mode to each root.
+const MODAL_PLANS = {
+  major:{degrees:[0,3,4,0],explanation:'Return to the major tonic through IV and V. Listen for the natural 7 resolving to the root.'},
+  dorian:{degrees:[0,3],explanation:'The minor tonic and major IV share Dorian’s natural 6. Keep the minor tonic as your point of rest.'},
+  phrygian:{degrees:[0,1],explanation:'Alternate the minor tonic with the major chord a semitone above it to hear Phrygian’s flat 2.'},
+  lydian:{degrees:[0,1],explanation:'The tonic’s sharp 11 and the II chord’s major third reveal Lydian’s raised 4 without a V–I cadence.'},
+  mixolydian:{degrees:[0,6,3,0],explanation:'Move through flat VII and IV, then return to the dominant tonic. The flat 7 gives this loop its Mixolydian colour.'},
+  minor:{degrees:[0,5,6,0],explanation:'Flat VI brings out Aeolian’s flat 6, then flat VII leads back to the minor tonic without a raised leading note.'},
+  locrian:{degrees:[0,1],explanation:'Hold the half-diminished tonic against flat II. The tonic’s flat 5 and its neighbour’s flat 2 keep Locrian unsettled.'},
+  melodic_minor:{degrees:[0,3,4,0],explanation:'The minor-major tonic supplies the natural 7; the major IV supplies the natural 6. All chords stay inside jazz melodic minor.'},
+  dorian_b2:{degrees:[0,1],explanation:'The augmented flat-II chord combines the flat 2 and natural 6, then returns to the minor tonic.'},
+  lydian_augmented:{degrees:[0,1],explanation:'The augmented tonic exposes the sharp 5, while II brings out the raised 4. Hear both against the same modal tonic.'},
+  lydian_dominant:{degrees:[0,1],explanation:'Alternate dominant chords a whole step apart. The tonic’s flat 7 and sharp 11 distinguish this sound from ordinary Lydian.'},
+  mixolydian_b6:{degrees:[0,5],explanation:'The dominant tonic moves to an augmented flat-VI chord. Its root makes the lowered 6 especially clear.'},
+  locrian_natural2:{degrees:[0,1],explanation:'Two half-diminished chords a whole step apart bring the natural 2 into focus while preserving the tonic’s flat 5.'},
+  altered:{degrees:[0,4],explanation:'The altered tonic alternates with its tritone-related dominant. Both chords share the altered pitch collection; let the tensions remain unresolved.'},
+  harmonic_minor:{degrees:[0,3,4,0],overrides:{2:'dom7b9'},explanation:'Minor iv and V7 flat 9 frame the minor-major tonic. Listen for the contrast between flat 6 and the raised leading note.'},
+  locrian_natural6:{degrees:[0,1],explanation:'The half-diminished tonic moves to augmented flat II, whose raised fifth supplies this mode’s unusual natural 6.'},
+  ionian_sharp5:{degrees:[0,3],explanation:'An augmented major-seventh tonic alternates with IV. Keep returning to the tonic’s raised 5 to distinguish this from ordinary major.'},
+  dorian_sharp4:{degrees:[0,3],explanation:'The sharp-IV diminished chord brings the raised 4 into focus, while the tonic minor 13 keeps Dorian’s natural 6 audible.'},
+  phrygian_dominant:{degrees:[0,1],explanation:'The dominant tonic and flat-II major seventh emphasise the flat 2 and flat 6 against the tonic’s major third.'},
+  lydian_sharp2:{degrees:[0,1],explanation:'The sharp-II diminished chord contains both the raised 2 and raised 4. Resolve your phrases back to the major tonic.'},
+  ultralocrian:{degrees:[0,1],explanation:'The diminished tonic alternates with flat-II minor-major seventh. Hear the diminished seventh as flat-flat 7 against the tonic.'},
+};
+function modalSeventh(mode, degree) {
+  const scale=MODES[mode].intervals;
+  const tones=[0,2,4,6].map(skip=>scale[(degree+skip)%7]+12*Math.floor((degree+skip)/7)-scale[degree]);
+  return Object.keys(CHORDS).find(id=>CHORDS[id].intervals.length===4 && CHORDS[id].intervals.every((interval,i)=>interval===tones[i]));
+}
+function modalRoman(mode,degree,chord) {
+  const roman=['I','II','III','IV','V','VI','VII'][degree];
+  const accidental=MODES[mode].degrees[degree].replace(/[1-7]/g,'');
+  const minor=['min7','min13','minMaj7','halfDim','halfDim9','dim7'].includes(chord);
+  const suffix={min7:'7',min13:'13',minMaj7:'(maj7)',halfDim:'ø7',halfDim9:'ø9',dim7:'°7'}[chord] || CHORDS[chord].symbol;
+  return accidental+(minor?roman.toLowerCase():roman)+suffix;
+}
+export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS).map(([mode,plan])=>{
+  const steps=plan.degrees.map((degree,index)=>({
+    root:MODES[mode].intervals[degree],letter:degree,mode,
+    chord:plan.overrides?.[index] || (degree===0?MODES[mode].chord:modalSeventh(mode,degree)),
+    bars:plan.degrees.length===2?2:index===0||index===plan.degrees.length-1?2:1,
+  }));
+  const roman=steps.map((step,index)=>modalRoman(mode,plan.degrees[index],step.chord));
+  return [`modal_${mode}`,{name:`${MODES[mode].name} · ${roman.join('–')} · ${steps.reduce((sum,step)=>sum+step.bars,0)} bars`,
+    kind:'modal',mode,bars:1,roman,steps,explanation:plan.explanation}];
+}));
+
 export const PROGRESSIONS = {
   parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
   parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
@@ -150,10 +199,11 @@ export const PROGRESSIONS = {
     { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
   ] },
   diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['I','vi','IV','V'] },
+  ...MODAL_PROGRESSIONS,
 };
 export function progressionDurations(settings) {
   const template = PROGRESSIONS[settings.template || 'parallel1'];
-  return template.kind === 'jazz' ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
+  return template.steps ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
 }
 // Inclusive ranges may cross the end of a template (for example V back to ii).
 export function progressionOrder(settings) {
@@ -199,7 +249,9 @@ export function harmonyAt(settings, step = 0) {
   const definition = PROGRESSIONS[template];
   step = ((step % definition.roman.length) + definition.roman.length) % definition.roman.length;
   const jazz = settings.progression && definition.kind === 'jazz' ? definition.steps[step] : null;
-  const mode = jazz ? jazz.mode : modeId(settings);
+  const modal = settings.progression && definition.kind === 'modal' ? definition.steps[step] : null;
+  const change = jazz || modal;
+  const mode = modal ? definition.mode : jazz ? jazz.mode : modeId(settings);
   if (settings.progression && template === 'diatonic') {
     const scale = MODES[mode].intervals;
     const degree = [0,5,3,4][step];
@@ -211,14 +263,14 @@ export function harmonyAt(settings, step = 0) {
       scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
       mode, roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
   }
-  const offset = jazz ? jazz.root : settings.progression ? definition.roots[step] : 0;
+  const offset = change ? change.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;
   const cycleNames = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
-  const name = settings.progression ? definition.cycle ? (step === 0 ? ROOT_NAMES[key] : cycleNames[key]) : spellPitch(settings.key, jazz ? jazz.letter : definition.letters[step], offset) : ROOT_NAMES[key];
-  const chordId = jazz ? jazz.chord : settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
+  const name = settings.progression ? definition.cycle ? (step === 0 ? ROOT_NAMES[key] : cycleNames[key]) : spellPitch(settings.key, change ? change.letter : definition.letters[step], offset) : ROOT_NAMES[key];
+  const chordId = change ? change.chord : settings.chord || (settings.mode ? MODES[mode].chord : settings.minor ? 'minor' : 'major');
   const chord = CHORDS[chordId];
-  const scaleNames = modeNotes(key, mode, name);
-  const scalePcs = MODES[mode].intervals.map(i => (key + i) % 12);
+  const scaleNames = modal ? modeNotes(settings.key, mode) : modeNotes(key, mode, name);
+  const scalePcs = MODES[mode].intervals.map(i => ((modal ? settings.key : key) + i) % 12);
   const midi = chord.intervals.map(i => 48 + key + i);
   const chordDegrees = {0:0,2:1,3:2,4:2,5:3,6:4,7:4,8:4,9:5,10:6,11:6,12:7,13:8,14:8,15:8,17:10,18:10,20:12,21:12};
   const tones = chord.intervals.map(interval => spellPitch(key, chordId === 'dim7' && interval === 9 ? 6 : chordDegrees[interval], interval, name));

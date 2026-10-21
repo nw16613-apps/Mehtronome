@@ -9,6 +9,7 @@ export const DEFAULTS = {
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
+  trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   sequence:false, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
@@ -76,6 +77,8 @@ export class Engine {
     this.chordAge = 0;
     this.breath = 1;
     this.phase = 0;
+    this.currentBpm = this.settings.bpm;
+    this.trainerNextBar = this.settings.trainerBars;
     this.beat = -1;
     this.remainingCount = this.settings.countIn ? this.settings.beats : 0;
     this.nextBeat = true;
@@ -94,6 +97,7 @@ export class Engine {
   }
 
   configure(settings) {
+    const previousTrainer = [this.settings.bpm,this.settings.trainerEnabled,this.settings.trainerBars,this.settings.trainerIncrement,this.settings.trainerTarget,this.settings.beats].join('/');
     const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousGroove=this.settings.drumGroove;
     const previousSound=this.settings.sound;
     const previousSequenceRate=this.settings.sequenceRate;
@@ -115,6 +119,22 @@ export class Engine {
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
+    s.trainerBars = Math.max(1,Math.min(32,Math.floor(Number(s.trainerBars)||4)));
+    s.trainerIncrement = Math.max(1,Math.min(30,Math.floor(Number(s.trainerIncrement)||2)));
+    s.trainerTarget = Math.max(30,Math.min(240,Number(s.trainerTarget)||120));
+    const nextTrainer = [s.bpm,s.trainerEnabled,s.trainerBars,s.trainerIncrement,s.trainerTarget,s.beats].join('/');
+    if (previousTrainer !== nextTrainer) {
+      this.currentBpm = s.bpm;
+      const musicalBeat = this.beat - this.remainingCount;
+      const bar = Math.max(0,Math.floor(musicalBeat / s.beats));
+      // A mid-bar edit waits until the next complete bar before counting.
+      const partial = musicalBeat >= 0 && (musicalBeat % s.beats !== 0 || this.phase !== 0);
+      this.trainerNextBar = bar + (partial ? 1 : 0) + s.trainerBars;
+    }
+    // Rhythm envelopes need the current tempo; the public setting remains the
+    // user's starting tempo so unrelated UI edits never reset a trained tempo.
+    this.clockSettings = this.clockSettings || {};
+    Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
     if(!previousSequence && s.sequence) for(const voice of this.sequence.voices) voice.age=Infinity;
     if(previousSequenceRate!==s.sequenceRate || previousSequence!==s.sequence || previousSwing!==s.sequenceSwing){
@@ -177,6 +197,11 @@ export class Engine {
         const counting = this.beat < this.remainingCount;
         const musicalBeat = Math.max(0, this.beat - this.remainingCount);
         const bar = Math.floor(musicalBeat / s.beats);
+        if (this.running && !counting && s.trainerEnabled && musicalBeat % s.beats === 0 && bar >= this.trainerNextBar) {
+          this.currentBpm = Math.min(Math.max(s.bpm,s.trainerTarget),this.currentBpm+s.trainerIncrement);
+          this.clockSettings.bpm = this.currentBpm;
+          this.trainerNextBar = bar + s.trainerBars;
+        }
         const step = s.progression ? progressionStep(s, bar) : 0;
         this.setChord(step);
         this.clickAge = 0;
@@ -184,7 +209,8 @@ export class Engine {
         this.clickStrength = 1;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
-        onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step });
+        onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+          bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
       const subdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
       if (!this.auditioning && subdivision !== this.lastSubdivision && subdivision > 0) {
@@ -208,7 +234,7 @@ export class Engine {
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
-      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm);
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm);
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
@@ -297,7 +323,7 @@ export class Engine {
       if (harmonyOutput) harmonyOutput[i] = backingSample;
       if (harmonyRight) harmonyRight[i] = rightSample;
       // Integer units avoid drift and preserve position when the tempo changes.
-      this.phase += s.bpm;
+      this.phase += this.currentBpm;
       if (this.phase >= 60 * this.rate) {
         this.phase -= 60 * this.rate;
         this.nextBeat = true;

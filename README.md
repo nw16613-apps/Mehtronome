@@ -7,7 +7,25 @@ The browser version lives in `web/`. It uses TypeScript and the Web Audio API;
 Python is not required. A dedicated audio worklet drives both click and harmony
 from a single sample clock, with smooth volume changes. It includes:
 
-- The mixer groups levels, ambience, drums, bass and melodic movement in one panel.
+- A compact transport appears while you scroll: play/stop, editable tempo and the
+  current chord remain available beside the diagrams. **Focus view** keeps the
+  harmony and guitar references visible while hiding setup and mixer panels.
+- The mixer keeps instrument switches and volumes visible, with drum/bass styles
+  and melodic movement settings in independently collapsible groups. Longer
+  explanations sit behind **Learn more** disclosures.
+- **Tempo trainer** adds a selected BPM increment after a chosen number of complete
+  musical bars, up to a target. Count-in bars are excluded; click, harmony, bass,
+  drums and sequence share the changing audio clock. The starting BPM is retained
+  for restart and presets; the compact transport shows the live BPM.
+- **Try mode progression** provides a dedicated loop for each of the 21 modes,
+  with compatible supporting chords and a short listening guide. The modal tonic
+  and scale stay fixed through the loop, including the CAGED reference.
+- **Compare two chords** captures the current harmony in A and B. Listen to either
+  while stopped, alternate between them, or click the active preview to stop.
+- Presets can be exported as JSON and imported into another browser. Imports merge
+  with existing setups, validate the file and keep existing presets intact.
+- **Practise position** enlarges a chosen CAGED position and places it first while
+  keeping the other four available. The selection is saved with practice presets.
 - Fresh sessions start in A Dorian over Am13, with the count-in off and numeric
   degree labels in both guitar sections. Drop voicings default to their highest
   available string set. Mode suggestions use seventh chords,

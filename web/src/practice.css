@@ -1,0 +1,105 @@
+/* Practice navigation and shared control rhythm across all existing palettes. */
+:root { --practice-accent:#365d49; --practice-on-accent:#fff; --practice-panel:#fcfcf8; }
+html[data-theme=dark] { --practice-accent:#e4b98a; --practice-on-accent:#23342a; --practice-panel:#192d28; }
+html { scroll-padding-block:24px 120px; }
+body { padding-bottom:110px; }
+header { height:auto; min-height:94px; padding-block:16px; }
+.theme-controls { flex-wrap:wrap; justify-content:flex-end; gap:10px; }
+.theme-controls .practice-button { white-space:nowrap; }
+.panel { min-width:0; }
+.panel>.section-heading h2 { font-size:18px; letter-spacing:-.35px; }
+.panel>.section-heading { margin-bottom:24px; }
+.workspace { gap:24px; }
+.preset-transfer { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.practice-button { min-height:40px; }
+.practice-button[aria-pressed=true],.progression-strip>button.current {
+  background:var(--accent,var(--practice-accent)); color:var(--on-accent,var(--practice-on-accent));
+  border-color:var(--accent,var(--practice-accent)); outline:2px solid var(--accent,var(--practice-accent)); outline-offset:2px;
+}
+.progression-strip>button.current small { color:inherit; }
+.trainer-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.trainer-fields label { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:11px; }
+.trainer-fields input,.trainer-fields select { width:100%; min-width:0; border:1px solid var(--line,#496056); border-radius:5px; padding:8px; background:var(--field,#29413b); color:var(--ink,#e3e9da); }
+.tempo-training { color:inherit; border-color:var(--line,#496056); }
+.tempo-training .practice-help { color:var(--muted,#b4c2af); }
+summary { cursor:pointer; font-size:12px; font-weight:600; padding:12px 0; color:var(--ink,var(--practice-ink,#365d49)); }
+summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:4px; border-radius:4px; }
+.learn-more,.compare-panel,.mixer-details { border-top:1px solid var(--line,#899b8350); margin-top:18px; }
+.learn-more p { line-height:1.8; }
+.guitar-guide.learn-more { padding-bottom:12px; }
+.compare-slots { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
+.compare-slots>div { display:grid; gap:8px; align-content:start; }
+.compare-slots p { margin:4px 0; font-size:12px; color:var(--muted,var(--practice-muted,#64735f)); }
+.mixer-details .field-row { margin-top:8px; }
+.mixer-details .field-row label { display:block; }
+.mixer-details .sequence-help { margin-top:8px; }
+.mix .volume-label { margin-top:18px; }
+.mix .mix-group>input[type=range] { margin-bottom:20px; }
+.mix-group .section-heading { min-height:24px; }
+.mix-group .check { gap:8px; }
+.mixer-details[open]>summary { margin-bottom:6px; }
+.guitar-controls { align-items:end; }
+.workspace>.guitar.has-featured { grid-column:1/-1; }
+.guitar.has-featured #guitar-diagrams { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.guitar.has-featured .featured-position { grid-column:1/-1; order:-1; border:2px solid var(--accent,var(--practice-accent)); padding:22px; }
+.featured-position .position-heading h4::after { content:' · Practising'; font-size:11px; font-weight:400; }
+.guitar.has-featured .featured-position svg { display:block; max-width:800px; margin-inline:auto; }
+.mini-transport {
+  position:fixed; z-index:50; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
+  width:calc(100% - 36px); max-width:820px; box-sizing:border-box; display:flex; align-items:center; gap:20px;
+  border:1px solid var(--line,#8c9d8b); border-radius:14px; background:var(--panel,var(--practice-panel));
+  color:var(--ink,var(--practice-ink,#243535)); padding:12px 16px; box-shadow:0 8px 36px #0003;
+}
+.mini-transport[hidden] { display:none; }
+.mini-transport>label { display:flex; align-items:center; gap:8px; font-size:10px; letter-spacing:1px; }
+#mini-bpm { width:70px; min-width:0; padding:9px 7px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:inherit; font-variant-numeric:tabular-nums; font-size:16px; }
+#mini-play { min-width:88px; font-weight:600; }
+.mini-harmony { display:grid; min-width:0; flex:1; gap:2px; }
+.mini-harmony strong { font-size:18px; }
+.mini-harmony span { font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#mini-beat { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted,var(--practice-muted,#64735f)); }
+.focus-view .intro,.focus-view .presets,.focus-view .transport,.focus-view .notes,.focus-view .mix,.focus-view footer { display:none!important; }
+.focus-view main { padding-top:24px; }
+.focus-view .harmony { grid-column:1/-1; }
+.focus-view .harmony>:not(.section-heading):not(.chord-stage):not(.progression-strip) { display:none!important; }
+.focus-view .harmony .section-heading { margin-bottom:0; }
+.focus-view .harmony .chord-stage { padding:0 0 8px; }
+.focus-view .guitar .learn-more,.focus-view .voicings .learn-more { display:none; }
+.focus-view .workspace>.harmony,.focus-view .workspace>.guitar,.focus-view .workspace>.voicings { grid-row:auto; }
+@media(max-width:760px) {
+  header { display:block; padding:16px 20px; }
+  .theme-controls { justify-content:space-between; margin-top:14px; gap:8px; }
+  .theme-picker select { max-width:132px; }
+  .workspace { gap:16px; }
+  .panel { padding:22px; }
+  .panel>.section-heading { flex-wrap:wrap; gap:10px; }
+  .practice-button,summary,.guitar-controls select,.field-row select,.theme-picker select { min-height:44px; }
+  .check { min-height:38px; }
+  .guitar.has-featured #guitar-diagrams { grid-template-columns:minmax(0,1fr); }
+  .guitar.has-featured .featured-position { padding:14px; }
+  .mini-transport { width:calc(100% - 20px); gap:10px; padding:10px; bottom:max(10px,env(safe-area-inset-bottom)); }
+  #mini-play { min-width:70px; padding-inline:9px; }
+  .mini-transport>label { display:grid; gap:3px; text-align:center; }
+  #mini-bpm { width:61px; padding:6px; }
+  .mini-harmony strong { font-size:15px; }
+  .mini-harmony span { font-size:10px; }
+  #mini-beat { display:none; }
+  #exit-focus { font-size:11px; padding-inline:8px; }
+  .compare-slots { gap:8px; }
+  .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
+  .trainer-fields { gap:8px; }
+  .trainer-fields input,.trainer-fields select { padding:7px; }
+}
+.mode-template-button { width:100%; margin-top:10px; }
+.guitar.has-featured .guitar-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.guitar.has-featured .section-heading>.small-label { max-width:none; }
+.focus-view .guitar-overview #guitar-scale,.focus-view .guitar-overview #guitar-parent,.focus-view #grip-toggle-help { display:none; }
+.focus-view .guitar-overview>h3 { margin-block:10px; }
+.focus-view .guitar-guide.guitar-overview { padding-block:8px 18px; }
+@media(max-width:760px) { .guitar.has-featured .guitar-controls { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:760px) {
+  .round { min-width:44px; width:44px; height:44px; }
+  .tempo-controls { gap:16px; }
+  .tempo-controls>div { width:156px; }
+  .check { min-height:44px; }
+}
