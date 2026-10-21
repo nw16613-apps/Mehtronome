@@ -233,7 +233,9 @@ function renderGuitar() {
   el('position-overview').innerHTML = displayedPositions.map(position=>{
     const board=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
-    return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}"><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)}</button>`;
+    const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
+      .replace('viewBox="0 0 480 218"','viewBox="24 5 432 192"');
+    return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}"><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
   }).join('');
   el('position-indicator').textContent=`Position ${selectedPosition.numeral} of V · ${selectedPosition.shape} shape`;
   for(const id of ['position-previous','position-next']) (el(id) as HTMLButtonElement).disabled=following;
