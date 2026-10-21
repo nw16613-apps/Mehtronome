@@ -37,3 +37,10 @@ test('changing fretboard region moves the progression route and nearby chords av
 test('empty progressions produce an empty route',()=>{
   assert.deepEqual(progressionPositionPath([],FRET_REGIONS.middle),[]);
 });
+
+test('position numerals always retain the E D C A G shape mapping',()=>{
+  assert.deepEqual(POSITIONS.map(({numeral,shape})=>`${numeral}:${shape}`),['I:E','II:D','III:C','IV:A','V:G']);
+  const path=progressionPositionPath(harmonies({key:0,mode:'major',chord:'maj7',template:'major251'}));
+  const shapeFor=Object.fromEntries(POSITIONS.map(position=>[position.numeral,position.shape]));
+  for(const choice of path)assert.equal(choice.shape,shapeFor[choice.numeral]);
+});

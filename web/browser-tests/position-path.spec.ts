@@ -15,8 +15,11 @@ test('a progression can follow the nearest CAGED positions in a chosen fretboard
   await expect(route.first()).toHaveClass(/current/);
 
   const assertRecommendedPosition=async(index:number)=>{
-    const numeral=(await route.nth(index).locator('span').textContent())!.replace('Position ','');
+    const numeral=await route.nth(index).getAttribute('data-position');
+    const shape=await route.nth(index).getAttribute('data-shape');
+    expect({I:'E',II:'D',III:'C',IV:'A',V:'G'}[numeral! as 'I'|'II'|'III'|'IV'|'V']).toBe(shape);
     await expect(page.locator('#guitar-diagrams .position-card').first()).toHaveAttribute('data-position',numeral);
+    await expect(page.locator('#guitar-diagrams .position-card').first()).toHaveAttribute('data-shape',shape);
     await expect(page.locator('#guitar-diagrams .featured-position')).toHaveAttribute('data-position',numeral);
   };
   await assertRecommendedPosition(0);
@@ -29,7 +32,7 @@ test('a progression can follow the nearest CAGED positions in a chosen fretboard
   await page.locator('#position-region').selectOption('high');
   const high=await route.allTextContents();
   expect(high).not.toEqual(middle);
-  for(const text of high)expect(text).toMatch(/Position I{1,3}|Position IV|Position V/);
+  for(const text of high)expect(text).toMatch(/Position (I · E|II · D|III · C|IV · A|V · G) shape/);
 
   for(const width of [760,390]){
     await page.setViewportSize({width,height:900});
