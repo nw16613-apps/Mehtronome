@@ -34,15 +34,16 @@ export function parentMajorFor(harmony) {
   const family=MODES[harmony.mode]?.family || 'Major scale';
   return {pc:harmony.scalePcs[index],name:harmony.scaleNames[index],family};
 }
-export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11]) {
+export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11], family = 'Major scale') {
   const definition = SHAPES[shape];
   const [,second,third,,,sixth,seventh] = intervals;
+  const melodicMinor = family === 'Melodic minor';
   // Boundaries follow degrees rather than fixed frets: a flattened seventh
   // moves to the next string just as the natural seventh does in Ionian.
   const windows = shape === 'A'
-    ? [[0,seventh-8],[seventh-12,third-1],[third-5,sixth-6],[sixth-10,second+1],[0,4],[0,4]]
+    ? [[0,seventh-8],[seventh-12,melodicMinor?third:third-1],[melodicMinor?Math.max(third-5,-1):third-5,sixth-6],[sixth-10,second+1],[0,4],[0,4]]
     : shape === 'G'
-      ? [[-3,1],[-3,1],[-3,seventh-11],[seventh-15,third-4],[-3,1],[-3,1]]
+      ? [[-3,1],[-3,1],[-3,seventh-11],[seventh-15,melodicMinor?Math.max(third-4,0):third-4],[-3,1],[-3,1]]
       : null;
   let rootFret = (rootPc - definition.tonic + 12) % 12 + definition.rootOffset;
   let start = windows ? rootFret + Math.min(...windows.map(window=>window[0])) : rootFret - definition.rootOffset - definition.leadIn;
@@ -59,7 +60,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const anchorPc = parentMajor ? parentMajor.pc : rootPc;
   const anchorName = parentMajor ? parentMajor.name : harmony.name;
   const intervals = harmony.scalePcs.map(pc=>(pc-anchorPc+12)%12).sort((a,b)=>a-b);
-  const position = positionFor(anchorPc, shape, intervals);
+  const position = positionFor(anchorPc, shape, intervals, parentMajor?.family);
   const notes = [];
   const colourPcs = characteristicNotes(harmony).map(note => note.pc);
   for (let string = 0; string < TUNING.length; string++) {

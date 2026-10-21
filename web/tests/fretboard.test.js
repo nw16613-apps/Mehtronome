@@ -151,12 +151,13 @@ test('G-form relocation and shorter G-string boundary transpose across modes and
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'G',chordOnly);
     const expected=[];
     const fingeringIntervals=info.scalePcs.map(pc=>(pc-board.anchorPc+12)%12).sort((a,b)=>a-b);
+    const melodicMinor=definition.family==='Melodic minor';
     for(const [string,tuning] of TUNING.entries())for(let fret=board.rootFret-3;fret<=board.rootFret+1;fret++){
       const midi=tuning+fret,pc=midi%12;
-      if(string===3 && midi>=TUNING[0]+board.rootFret+12+fingeringIntervals[2])continue;
+      if(string===3 && midi>=TUNING[0]+board.rootFret+12+fingeringIntervals[2] && !melodicMinor)continue;
       if(chordOnly?info.chordPcs.includes(pc):info.chordPcs.includes(pc)||info.scalePcs.includes(pc))expected.push(midi);
     }
-    assert.ok(!board.notes.some(n=>n.string===3&&n.midi===TUNING[0]+board.rootFret+12+fingeringIntervals[2]));
+    assert.equal(board.notes.some(n=>n.string===3&&n.midi===TUNING[0]+board.rootFret+12+fingeringIntervals[2]),melodicMinor&&(!chordOnly||info.chordPcs.includes((board.anchorPc+fingeringIntervals[2])%12)));
     assert.deepEqual(board.notes.map(n=>n.midi).sort((a,b)=>a-b),expected.sort((a,b)=>a-b));
     assert.ok(board.notes.every(n=>n.fret>=board.start&&n.fret<=board.end&&n.fret>0));
     assert.ok(!board.notes.some(n=>n.string===2&&n.midi===TUNING[0]+board.rootFret+fingeringIntervals[6]));
@@ -202,6 +203,22 @@ test('melodic-minor and harmonic-minor modes retain their parent-scale fingering
         const coordinates=board=>board.notes.map(note=>[note.string,note.fret,note.pc]);
         assert.deepEqual(coordinates(fretboardFor(info,shape)),coordinates(fretboardFor(parentHarmony,shape)),`${parent} ${mode} ${shape}`);
       }
+    }
+  }
+});
+
+test('melodic-minor parent geometry places the flat third correctly in A and G forms for every mode and key',()=>{
+  const modes=['melodic_minor','dorian_b2','lydian_augmented','lydian_dominant','mixolydian_b6','locrian_natural2','altered'];
+  for(let parent=0;parent<12;parent++){
+    const parentHarmony=harmonyAt({key:parent,mode:'melodic_minor',chord:MODES.melodic_minor.chord});
+    const flatThird=(parent+3)%12;
+    for(const [rotation,mode] of modes.entries()){
+      const key=parentHarmony.scalePcs[rotation];
+      const info=harmonyAt({key,mode,chord:MODES[mode].chord});
+      const a=fretboardFor(info,'A'),g=fretboardFor(info,'G');
+      assert.ok(a.notes.some(note=>note.string===1&&note.pc===flatThird),`${parent} ${mode} A form keeps ♭3 on A string`);
+      assert.ok(!a.notes.some(note=>note.string===2&&note.pc===flatThird),`${parent} ${mode} A form removes ♭3 from D string`);
+      assert.ok(g.notes.some(note=>note.string===3&&note.pc===flatThird),`${parent} ${mode} G form includes ♭3 on G string`);
     }
   }
 });

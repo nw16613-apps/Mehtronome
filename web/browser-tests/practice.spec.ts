@@ -150,6 +150,14 @@ test('minor mode families, simple chords, rhythm options and persisted dark mode
   expect(errors).toEqual([]);
 });
 
+test('melodic-minor A and G parent shapes place the flat third on the intended strings',async({page})=>{
+  await page.goto('/');await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('melodic_minor');
+  const position=(numeral:string)=>page.locator(`#guitar-diagrams [data-position="${numeral}"]`);
+  await expect(position('IV').locator('.fret-note[data-string="1"][data-pc="3"]')).not.toHaveCount(0);
+  await expect(position('IV').locator('.fret-note[data-string="2"][data-pc="3"]')).toHaveCount(0);
+  await expect(position('V').locator('.fret-note[data-string="3"][data-pc="3"]')).not.toHaveCount(0);
+});
+
 
 test('parallel chord templates offer every chord type and both bar lengths', async ({page}) => {
   const errors: string[] = [];
