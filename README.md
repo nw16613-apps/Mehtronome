@@ -26,6 +26,9 @@ from a single sample clock, with smooth volume changes. It includes:
   with existing setups, validate the file and keep existing presets intact.
 - **Practise position** enlarges a chosen CAGED position and places it first while
   keeping the other four available. The selection is saved with practice presets.
+- With a progression selected, **Follow nearest positions** maps every chord to
+  the closest displayed CAGED shape in a chosen fretboard region. Its route can
+  be clicked without starting playback and follows the current chord as it plays.
 - Every CAGED position has an **Explore** selector for pentatonic superimposition
   or triad pairs, with several suggestions per mode. Pentatonics highlight five
   mode-compatible notes; triad pairs highlight six notes from two disjoint triads.
@@ -36,8 +39,7 @@ from a single sample clock, with smooth volume changes. It includes:
   an explicitly named five-note mode selection. Suggestions follow the tonic
   scale through modal vamps and update with other chord/scale changes.
 - Fresh sessions start in A Dorian over Am13, with the count-in off and numeric
-  degree labels in both guitar sections. Drop voicings default to their highest
-  available string set. Mode suggestions use seventh chords,
+  degree labels in the guitar diagrams. Mode suggestions use seventh chords,
   retaining colour extensions for Dorian, Lydian and other distinctive modes.
 - 30–240 BPM, optional downbeat accent, 3–7 beats/bar, and a one-bar count-in.
 - Quarter notes, eighth notes, eighth-note triplets, sixteenth notes, and
@@ -149,8 +151,6 @@ from a single sample clock, with smooth volume changes. It includes:
   a modeled, lightly bright nylon-string guitar down-strum and Harmony volume, while stopped. Each
   string is picked from low to high and rings with a natural decay; chord previews
   bypass pad layers and echoes, with warm stereo reverb controlled by Ambient space.
-  Every drop-voicing diagram also has a **Strum chord** button that plays its
-  exact pitches, including the selected inversion and string set.
   Guitar output leaves headroom for reverb, and re-strums briefly fade the previous
   chord to keep attacks clean. Click, tap, or activate the button with Space or Enter
   to strum and let the chord ring out. The button changes to **Stop chord** while active; clicking it again stops
@@ -203,18 +203,6 @@ Original light and dark remain available, and explicit choices persist locally.
 Use **Compare themes** in the footer for the screenshot gallery at `themes.html`.
 Links such as `?theme=midnight` preview a palette without overwriting a saved
 preference; choosing from the menu saves the choice and clears that preview URL.
-
-The **Guitar chord voicings** section follows the current chord. Choose Drop 2,
-Drop 3, Drop 2 & 4 or Drop 4, a string set, and note-name or interval labels.
-Drop 2 offers strings 6–5–4–3, 5–4–3–2 and 4–3–2–1; Drop 3 offers 6–4–3–2 and
-5–3–2–1; Drop 2 & 4 offers 6–5–3–2 and 5–4–2–1; Drop 4 uses 6–3–2–1.
-Each selected string set shows root position and all three inversions for a
-four-note chord, in that order. Play the four marked notes together and mute ×.
-Extended chords disclose their four-note reduction; inversion names refer to that
-selection. Triads double one tone and show root position plus two inversions;
-open-fifth chords show two spread root/fifth bass choices. All notes are fretted
-within frets 1–24. Wide stretches are marked and diagrams expand to show every
-fret needed. These diagram selections do not change the backing audio voicing.
 
 ### Develop
 

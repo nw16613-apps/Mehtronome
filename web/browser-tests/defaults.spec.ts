@@ -9,7 +9,6 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await expect(page.locator('#chord-name')).toHaveText('Am13');
   await expect(page.locator('#count-in')).not.toBeChecked();
   await expect(page.locator('#fret-labels')).toHaveValue('degrees');
-  await expect(page.locator('#voicing-labels')).toHaveValue('intervals');
   await expect(page.locator('.fret-note.root text').first()).toHaveText('1');
   for(const [id,mode] of Object.entries(MODES)){
     await page.locator('#quality').selectOption(id);
@@ -25,16 +24,8 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await page.locator('#play').click();
 });
 
-test('voicings start on the highest strings and all backing controls share the mixer',async({page})=>{
+test('all backing controls share the mixer',async({page})=>{
   await page.goto('/');
-  for(const [type,set] of [['drop2','4321'],['drop3','5321'],['drop24','5421'],['drop4','6321'],['drop2','4321']]){
-    await page.locator('#voicing-type').selectOption(type);
-    await expect(page.locator('#voicing-strings')).toHaveValue(set);
-    const strings=await page.locator('#voicing-diagrams svg').evaluateAll(svgs=>svgs.map(svg=>Array.from(svg.querySelectorAll('.fret-note')).map(n=>6-Number(n.getAttribute('data-string'))).join('')));
-    expect(strings).toEqual([set,set,set,set]);
-  }
-  await page.locator('#voicing-strings').selectOption('6543');
-  await page.locator('#key').selectOption('0');await expect(page.locator('#voicing-strings')).toHaveValue('6543');
   const mixer=page.locator('section.mix');
   for(const id of ['click','harmony','space','drums','bass','sequence'])await expect(mixer.locator('#'+id)).toHaveCount(1);
   await mixer.locator('#drums').check();await mixer.locator('#bass').check();await mixer.locator('#sequence').check();

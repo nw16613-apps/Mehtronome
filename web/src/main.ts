@@ -8,7 +8,7 @@ import './style.css';
 import './themes.css';
 import './practice.css';
 import { POSITIONS, fretboardFor, diagramSvg, parentMajorFor } from './guitar/fretboard.js';
-import { DROP_TYPES, STRING_SETS, guitarVoicings, voicingSvg } from './guitar/voicings.js';
+import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
@@ -89,20 +89,14 @@ app.innerHTML = `
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
-        <div class="guitar-controls"><label>Practise position<select id="featured-position"><option value="all">All positions</option>${POSITIONS.map(p=>`<option value="${p.numeral}">Position ${p.numeral}</option>`).join('')}</select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
+        <div class="guitar-controls"><label>Practise position<select id="featured-position"><option value="all">All positions</option><option value="path">Follow nearest positions</option>${POSITIONS.map(p=>`<option value="${p.numeral}">Position ${p.numeral}</option>`).join('')}</select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
+        <div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><p>Nearest CAGED route through this progression</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help" checked>Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn off to show all scale notes at full brightness.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p><div class="guitar-legend"><span><i class="root"></i>Chord root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord · numbers = fingers</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major CAGED fingerings. Gold dots mark the current chord/modal root. With the chord overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. Each position also has an Explore selector for pentatonic superimposition or triad pairs. These highlight notes within the same CAGED fingering, with modal degrees and A/B triad markers. Chord fingers and modal rings return when exploration is off.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </details>
-    </section>
-    <section class="voicings panel" aria-labelledby="voicings-title">
-      <div class="section-heading"><div><p class="eyebrow">PLAY THE HARMONY</p><h2 id="voicings-title">Guitar chord voicings</h2></div><span class="small-label">FOUR-NOTE CHORD SHAPES · × = MUTE</span></div>
-      <div class="guitar-guide guitar-overview"><h3 id="voicings-chord"></h3><p id="voicings-tones"></p><div class="guitar-controls voicing-controls"><label>Voicing<select id="voicing-type">${Object.entries(DROP_TYPES).map(([id,type])=>`<option value="${id}">${type.name}</option>`).join('')}</select></label><label>String set<select id="voicing-strings"></select></label><label>Labels<select id="voicing-labels"><option value="notes">Note names</option><option value="intervals" selected>Chord intervals</option></select></label></div></div>
-      <div class="guitar-guide"><p id="voicings-description" class="guitar-help"></p><p id="voicing-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p></div>
-      <div id="voicing-diagrams" class="guitar-diagrams"></div>
-      <details class="guitar-guide learn-more"><summary>Learn more about chord voicings</summary><p class="guitar-help">Play the four marked notes together; mute strings marked ×. All chord shapes use fretted notes. Click Strum chord while stopped to hear the exact diagram notes on guitar; click again to stop. Harmony controls volume; Ambient space adds reverb. These diagrams follow the current chord; backing audio keeps its existing voicing.</p></details>
     </section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
@@ -131,7 +125,6 @@ let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
 let previewPreparation: Promise<void> | undefined;
 let previewing = false;
 let previewGripShape: string | null = null;
-const voicingGrips = new Map<string, {notes:{midi:number}[]}>();
 type TheorySuggestion = {id:string; name:string; pcs:number[]; names:string[]; degrees:string[]; explanation:string; groups?:{name:string; pcs:number[]; names:string[]}[]};
 type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryViews = new Map<string,TheoryView>();
@@ -185,14 +178,28 @@ function renderMusic() {
   el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''} ${highlight && colour.some((c: any)=>c.pc === (arpeggio ? info.chordPcs[i] : info.scalePcs[i])) ? 'characteristic' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
   el('exercise-description').textContent = arpeggio ? 'Intervals are measured from the current chord root. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}. Follow the scale guide through the harmony.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
   renderGuitar();
-  renderVoicings();
   syncMiniTransport();
 }
 function renderGuitar() {
   if (previewGripShape) stopPreview();
   positionGrips.clear();
   const showGrip = input('show-grip').checked;
-  const featured = select('featured-position').value;
+  const requestedFeatured = select('featured-position').value;
+  const pathOption=select('featured-position').querySelector<HTMLOptionElement>('option[value="path"]')!;
+  pathOption.disabled=!settings.progression;
+  if(!settings.progression&&requestedFeatured==='path')select('featured-position').value='all';
+  const pathRegion=FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS] || FRET_REGIONS.middle;
+  const path=settings.progression?progressionPositionPath(
+    Array.from({length:PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].roman.length},(_,index)=>chordInfo(index)),
+    pathRegion,
+  ):[];
+  const following=settings.progression&&requestedFeatured==='path';
+  const featured=following?path[step]?.numeral||'all':select('featured-position').value;
+  el('position-path-guide').hidden=!following;
+  el('position-path').innerHTML=following?path.map((choice,index)=>{
+    const harmony=chordInfo(index);
+    return `<button type="button" data-position-step="${index}" class="${index===step?'current':''}" aria-pressed="${index===step}" ${playing?'disabled':''}><strong>${escapeHtml(harmony.name+harmony.suffix)}</strong><span>Position ${choice.numeral}</span><small>Frets ${choice.start}–${choice.end}</small></button>`;
+  }).join(''):'';
   el('guitar-title').closest('section')!.classList.toggle('has-featured', featured !== 'all');
   el('grip-legend').hidden = !showGrip;
   const info = chordInfo(step);
@@ -223,27 +230,6 @@ function renderGuitar() {
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
   select('fret-view').value = select('exercise').value;
-}
-function renderVoicings() {
-  if (previewGripShape?.startsWith('voicing:')) stopPreview();
-  voicingGrips.clear();
-  const info = chordInfo(step);
-  const chord = `${info.name}${info.suffix}`;
-  const type = select('voicing-type').value;
-  const sets = STRING_SETS[type as keyof typeof STRING_SETS];
-  const previousSet = select('voicing-strings').value;
-  select('voicing-strings').innerHTML = sets.map(set => `<option value="${set.id}">${set.label}</option>`).join('');
-  if (sets.some(set => set.id === previousSet)) select('voicing-strings').value = previousSet;
-  const result = guitarVoicings(info, type, select('voicing-strings').value);
-  el('voicings-chord').textContent = chord;
-  el('voicings-tones').textContent = `Included: ${result.indices.map((i: number) => `${info.tones[i]} (${info.intervals[i]})`).join(' · ')}${result.omitted.length ? `. Omitted: ${result.omitted.join(' · ')}.` : ''}`;
-  el('voicings-description').textContent = result.fifths ? 'An open fifth has only two distinct notes, so these are spread root/fifth chords rather than four-part drop voicings.' : `${DROP_TYPES[type as keyof typeof DROP_TYPES].name} lowers ${type==='drop24'?'the second- and fourth-highest voices':type==='drop4'?'the lowest voice':type==='drop3'?'the third-highest voice':'the second-highest voice'} of a close-position chord by an octave.${result.doubled ? ' Triads use four voices by doubling one chord tone, with root position and two inversions.' : ''} ${result.omitted.length ? 'Extended chords use the four-note selection shown above; inversion names refer to that selection.' : ''}`;
-  el('voicing-diagrams').innerHTML = result.voicings.map((board: any) => {
-    const gripId = `voicing:${board.inversion}`;
-    voicingGrips.set(gripId, {notes:board.notes});
-    const title = `${chord}, ${result.fifths ? 'spread fifths' : DROP_TYPES[type as keyof typeof DROP_TYPES].name.toLowerCase()}, ${board.inversionName.toLowerCase()}, ${board.bass} bass, strings ${board.strings.join(', ')}`;
-    return `<article class="position-card voicing-card" data-inversion="${board.inversion}"><div class="position-heading"><h4>${board.inversionName} · ${board.bass} bass</h4><span>Frets ${board.start}–${board.end}</span></div>${voicingSvg(board, info.intervals, select('voicing-labels').value === 'intervals', title)}<p class="position-anchor">Strings ${board.strings.join('–')} · Bass interval ${board.bassInterval}${board.wide ? ' · Wide stretch' : ''}</p><button type="button" class="practice-button voicing-preview" data-grip="${gripId}" data-preview-label="${board.inversionName}" aria-label="Strum chord, ${board.inversionName}" aria-pressed="false" ${playing ? 'disabled' : ''}>Strum chord</button></article>`;
-  }).join('') || '<p class="guitar-help">No fretted chord shape found within frets 1–24 for this string set.</p>';
 }
 function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
@@ -347,8 +333,9 @@ function tempo(value: number) {
   node?.port.postMessage({ type: 'settings', settings });
 }
 function reflectPlayback() {
-  document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button, #voicing-diagrams button').forEach(button => { button.disabled = playing; });
+  document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('progression-strip').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
+  el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
   el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
   el('play-icon').textContent = playing ? '■' : '▶';
   el('play').setAttribute('aria-pressed', String(playing));
@@ -392,7 +379,6 @@ function stopPreview() {
   reflectComparison();
   reflectChordPreviews();
   el('grip-preview-status').hidden = true;
-  el('voicing-preview-status').hidden = true;
   el('preview-status').hidden = true;
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
@@ -494,7 +480,7 @@ async function previewChord(index: number, hold: string) {
 async function previewGrip(shape: string) {
   if (playing || busy || stopping) return;
   if (previewGripShape === shape) { stopPreview(); return; }
-  const grip = shape.startsWith('voicing:') ? voicingGrips.get(shape) : positionGrips.get(shape);
+  const grip = positionGrips.get(shape);
   if (!grip) return;
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
@@ -519,7 +505,7 @@ async function previewGrip(shape: string) {
     }
     previewing = true;
     node!.port.postMessage({type:'audition',settings,step,acoustic:true,notes:grip.notes.map((note: any)=>note.midi)});
-    el(shape.startsWith('voicing:') ? 'voicing-preview-status' : 'grip-preview-status').hidden = false;
+    el('grip-preview-status').hidden = false;
     gripRingTimer = setTimeout(() => { if (generation === previewGeneration) stopPreview(); }, 8000);
   } catch (error) {
     el('error').textContent = error instanceof Error ? error.message : 'Could not preview this chord.';
@@ -554,7 +540,7 @@ function restoreTheoryViews(controls:Record<string,string|boolean>) {
 }
 
 const gripButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-grip]') : null;
-for (const diagrams of [guitarDiagrams, el('voicing-diagrams')]) {
+for (const diagrams of [guitarDiagrams]) {
 diagrams.addEventListener('click',event=>{
   const button=gripButton(event.target);
   if (!button || button.disabled) return;
@@ -635,7 +621,6 @@ async function toggle() {
   } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; reflectPresetButtons(); }
 }
 
-for (const id of ['voicing-type','voicing-strings','voicing-labels']) select(id).addEventListener('input', renderVoicings);
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 
@@ -733,6 +718,14 @@ function setFocusView(value:boolean) {
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 select('featured-position').addEventListener('input',renderGuitar);
+select('position-region').addEventListener('input',renderGuitar);
+el('position-path').addEventListener('click',event=>{
+  const button=event.target instanceof HTMLElement?event.target.closest<HTMLButtonElement>('button[data-position-step]'):null;
+  if(!button||button.disabled)return;
+  stopPreview();
+  step=Number(button.dataset.positionStep);
+  renderMusic();
+});
 function reflectComparison() {
   for(const slot of ['a','b'] as const){
     const captured=comparisons[slot];
@@ -875,13 +868,13 @@ el('preset-load').addEventListener('click',async()=>{
       el(id).setAttribute('aria-pressed',String(selected));
     }
     fillChords();
-    for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','voicing-strings'].includes(id)) restoreControl(id,preset.controls[id]);
+    for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end'].includes(id)) restoreControl(id,preset.controls[id]);
     tempo(Number(input('bpm').value));
     guitarDegrees = select('fret-labels').value === 'degrees';
     restoreTheoryViews(preset.controls);
     step = 0;
     update();
-    for (const id of ['loop-enabled','loop-start','loop-end','voicing-strings']) restoreControl(id,preset.controls[id]);
+    for (const id of ['loop-enabled','loop-start','loop-end']) restoreControl(id,preset.controls[id]);
     update();
     input('preset-name').value = preset.name;
     el('preset-status').textContent = `Loaded “${preset.name}”. Ready to practice.`;

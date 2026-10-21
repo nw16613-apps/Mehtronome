@@ -7,5 +7,4 @@ export async function openReference(page:Page) {
   await page.locator('#chord').selectOption('maj9');
   await page.locator('#count-in').check();
   await page.locator('#fret-labels').selectOption('notes');
-  await page.locator('#voicing-labels').selectOption('notes');
 }

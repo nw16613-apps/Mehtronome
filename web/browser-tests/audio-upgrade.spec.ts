@@ -146,10 +146,10 @@ test('count-in and silent gaps still mute the new samples and chord previews kee
   await expect(page.locator('#play-status')).toContainText('Playing');await expect.poll(()=>peak(page,'dry'),{intervals:[20,30,50],timeout:500}).toBeGreaterThan(.005);
   await expect(page.locator('#play-status')).toContainText('Gap');await expect.poll(()=>peak(page),{intervals:[20,30,50],timeout:600}).toBeLessThan(.000001);
   await stopBand(page);await page.locator('#harmony').fill('50');
-  await page.locator('.voicing-preview').first().click();await expect(page.locator('#voicing-preview-status')).toBeVisible();
+  await page.locator('.grip-preview').first().click();await expect(page.locator('#grip-preview-status')).toBeVisible();
   await expect.poll(()=>peak(page,'pad')).toBeGreaterThan(.005);
   expect(await peak(page,'dry')).toBe(0);
-  await page.locator('.voicing-preview').first().click();await expect(page.locator('#voicing-preview-status')).toBeHidden();expect(errors).toEqual([]);
+  await page.locator('.grip-preview').first().click();await expect(page.locator('#grip-preview-status')).toBeHidden();expect(errors).toEqual([]);
 });
 
 test('a failed instrument download is visible and pressing Start retries successfully',async({page})=>{

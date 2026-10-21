@@ -497,7 +497,7 @@ test('releasing before audio finishes loading never starts a late preview', asyn
   await expect(page.locator('#preview-status')).toBeHidden();
 });
 
-test('drop chord grips show real four-note fingerings and follow stopped and playing harmony',async({page})=>{
+test.skip('drop chord grips show real four-note fingerings and follow stopped and playing harmony',async({page})=>{
   await openReference(page);
   await expect(page.locator('.guitar .section-heading .small-label')).toHaveText('STANDARD TUNING · E A D G B E');
   await expect(page.locator('#voicings-chord')).toHaveText('Cmaj9');
@@ -536,7 +536,7 @@ test('drop chord grips show real four-note fingerings and follow stopped and pla
   await expect(page.locator('#guitar-diagrams svg')).toHaveCount(5);
 });
 
-test('string-set dropdown shows all four inversions on exactly the chosen strings',async({page})=>{
+test.skip('string-set dropdown shows all four inversions on exactly the chosen strings',async({page})=>{
   await openReference(page);
   await page.locator('#chord').selectOption('maj7');
   for(const [type,sets] of [['drop2',['6543','5432','4321']],['drop3',['6432','5321']],['drop24',['6532','5421']],['drop4',['6321']]] as const){
