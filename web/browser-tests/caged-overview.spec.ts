@@ -55,3 +55,18 @@ test('focus bar changes the root, chord and progression',async({page})=>{
   await page.locator('#mini-progression').selectOption('off');
   await expect(page.locator('#pedal')).toHaveAttribute('aria-pressed','true');
 });
+
+test('pentatonic overlay preserves modal-root colour and marks its own root',async({page})=>{
+  await openReference(page);
+  const modalRoot=page.locator('#guitar-diagrams .fret-note.root>circle').first();
+  const normalFill=await modalRoot.evaluate(element=>getComputedStyle(element).fill);
+  await page.locator('#theory-view').selectOption('pentatonic');
+  await expect(page.locator('#guitar-diagrams .pentatonic-root-ring').first()).toBeVisible();
+  await expect(modalRoot).toHaveCSS('fill',normalFill);
+  const colours=await page.locator('#guitar-diagrams').evaluate(element=>{
+    const pentatonic=getComputedStyle(element.querySelector('.theory-ring')!).stroke;
+    const root=getComputedStyle(element.querySelector('.pentatonic-root-ring')!).stroke;
+    return {pentatonic,root};
+  });
+  expect(colours.root).not.toBe(colours.pentatonic);
+});

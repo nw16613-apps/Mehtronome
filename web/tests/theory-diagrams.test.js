@@ -36,6 +36,20 @@ test('pentatonic overlays highlight existing positions without moving or replaci
   }
 });
 
+test('pentatonic roots receive their own ring without replacing the modal root',()=>{
+  const harmony=harmonyAt({key:9,mode:'dorian',chord:'min13'}),board=fretboardFor(harmony,'E');
+  const theory={kind:'pentatonic',name:'B minor pentatonic',rootPc:11,pcs:[11,2,4,6,9]};
+  const svg=diagramSvg(board,true,MODES.dorian.degrees,'A Dorian',false,null,theory);
+  const pentatonicRoots=renderedNotes(svg).filter(note=>note.pc===theory.rootPc);
+  const modalRoots=renderedNotes(svg).filter(note=>note.pc===harmony.scalePcs[0]);
+  assert.ok(pentatonicRoots.length>0);
+  assert.ok(modalRoots.length>0);
+  assert.ok(pentatonicRoots.every(note=>note.classes.includes('pentatonic-root')));
+  assert.ok(modalRoots.every(note=>note.classes.includes('root')));
+  assert.equal((svg.match(/class="pentatonic-root-ring"/g)||[]).length,pentatonicRoots.length);
+  assert.match(svg,/pentatonic root/);
+});
+
 test('triad pairs have distinct A/B badges, solid/dashed rings and descriptive note tooltips',()=>{
   const harmony=harmonyAt({key:0,mode:'lydian',chord:'maj7sharp11'});
   const theory={kind:'triads',name:'C major + D major',pcs:[0,4,7,2,6,9],groups:[

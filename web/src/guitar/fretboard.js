@@ -85,7 +85,7 @@ function escape(text) {
 }
 /**
  * @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip]
- * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],groups?:Array<{name:string,pcs:number[]}>} | null} [theory]
+ * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],rootPc?:number,groups?:Array<{name:string,pcs:number[]}>} | null} [theory]
  */
 export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
   const columns = board.end - board.start + 1;
@@ -114,16 +114,18 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
     const colour = !theory && highlight && note.characteristic;
     const finger = shownGrip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
     const selected = theory?.pcs.includes(note.pc);
+    const pentatonicRoot = selected && theory?.kind === 'pentatonic' && note.pc === theory.rootPc;
     const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
     const group = groupIndex === 0 ? 'a' : groupIndex === 1 ? 'b' : null;
     const groupName = group ? theory.groups[groupIndex].name : null;
     const theoryTitle = !theory ? '' : selected ? group ? `, triad ${group.toUpperCase()}: ${groupName}` : `, ${theory.name}` : ', outside the selected overlay';
-    const theoryClass = selected ? ` theory-note${group ? ` theory-${group}` : ''}` : '';
+    const theoryClass = selected ? ` theory-note${group ? ` theory-${group}` : ''}${pentatonicRoot ? ' pentatonic-root' : ''}` : '';
     const theoryData = selected ? ` data-theory-group="${group || 'pentatonic'}"` : '';
     const ring = selected ? `<circle class="theory-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="16" fill="none"${group === 'b' ? ' stroke-dasharray="3 2"' : ''}/>` : '';
+    const pentatonicRootRing = pentatonicRoot ? `<circle class="pentatonic-root-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="20" fill="none"/>` : '';
     const badge = group ? `<g class="theory-badge" aria-hidden="true"><circle cx="${x(note.fret)+17}" cy="${y(note.string)-13}" r="7"/><text x="${x(note.fret)+17}" y="${y(note.string)-10}" text-anchor="middle">${group.toUpperCase()}</text></g>` : '';
     const kind = note.root ? 'root' : note.chord ? 'chord' : 'scale';
-    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? ', recommended chord tone' : ''}${theoryTitle}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${badge}</g>`;
+    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? ', recommended chord tone' : ''}${theoryTitle}${pentatonicRoot ? ', pentatonic root' : ''}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}${pentatonicRootRing}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${badge}</g>`;
   }
   if (shownGrip) for (const string of shownGrip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
   return svg + '</svg>';
