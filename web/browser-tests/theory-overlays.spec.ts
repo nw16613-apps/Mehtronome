@@ -8,7 +8,7 @@ const coordinates=(page:Page)=>page.locator('#guitar-diagrams .fret-note').evalu
 
 async function expectOverlay(page:Page,position:string,kind:'pentatonic'|'triads',harmony:ReturnType<typeof harmonyAt>){
   const options=theoryOptions(harmony);
-  const selected=await page.locator('#theory-choice-'+position).inputValue();
+  const selected=await page.locator('#theory-choice').inputValue();
   const suggestions=kind==='pentatonic'?options.pentatonics:options.triadPairs;
   const suggestion=suggestions.find((option:any)=>option.id===selected)!;
   expect(suggestion).toBeTruthy();
@@ -31,32 +31,30 @@ async function expectOverlay(page:Page,position:string,kind:'pentatonic'|'triads
   }
 }
 
-test('each CAGED position independently overlays its suggested pentatonic or triad pair without changing fingerings',async({page})=>{
+test('the shared Explore control overlays every CAGED position without changing fingerings',async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
   const before=await coordinates(page);
-  for(const position of ['I','II','III','IV','V'])await expect(page.locator('#theory-view-'+position)).toHaveValue('none');
-  await page.locator('#theory-view-I').selectOption('pentatonic');
-  await page.locator('#theory-view-IV').selectOption('triads');
+  await expect(page.locator('#theory-view')).toHaveValue('none');
+  await page.locator('#theory-view').selectOption('pentatonic');
   const harmony=harmonyAt({key:9,mode:'dorian',chord:'min13'});
-  await expectOverlay(page,'I','pentatonic',harmony);await expectOverlay(page,'IV','triads',harmony);
-  await expect(page.locator('#theory-view-II')).toHaveValue('none');
-  await expect(card(page,'II').locator('.theory-note')).toHaveCount(0);
+  for(const position of ['I','II','III','IV','V'])await expectOverlay(page,position,'pentatonic',harmony);
   expect(await coordinates(page)).toEqual(before);
-  await expect(card(page,'I').locator('.grip-ring')).toHaveCount(0);
-  await expect(card(page,'IV').locator('.characteristic-ring')).toHaveCount(0);
-  await page.locator('#theory-view-I').selectOption('none');await page.locator('#theory-view-IV').selectOption('none');
+  for(const position of ['I','II','III','IV','V'])await expect(card(page,position).locator('.grip-ring')).toHaveCount(0);
+  await page.locator('#theory-view').selectOption('triads');
+  for(const position of ['I','II','III','IV','V'])await expectOverlay(page,position,'triads',harmony);
+  await page.locator('#theory-view').selectOption('none');
   expect(await coordinates(page)).toEqual(before);
   await expect(card(page,'I').locator('.grip-ring')).not.toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
 test('theory suggestions transpose and follow major, melodic-minor and harmonic-minor modes',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view-I').selectOption('pentatonic');await page.locator('#theory-view-II').selectOption('triads');
+  await page.goto('/');await page.locator('#theory-view').selectOption('pentatonic');
   for(const [mode,key] of [['major','0'],['dorian','2'],['lydian','6'],['melodic_minor','9'],['altered','7'],['harmonic_minor','0'],['ultralocrian','6']]){
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
     const harmony=harmonyAt({key:Number(key),mode,chord:MODES[mode as keyof typeof MODES].chord});
-    await expectOverlay(page,'I','pentatonic',harmony);await expectOverlay(page,'II','triads',harmony);
+    await expectOverlay(page,'I','pentatonic',harmony);await expectOverlay(page,'V','pentatonic',harmony);
     const pcs=await page.locator('#guitar-diagrams .theory-note').evaluateAll(notes=>notes.map(n=>Number(n.getAttribute('data-pc'))));
     expect(pcs.every(pc=>harmony.scalePcs.includes(pc))).toBe(true);
   }
@@ -64,8 +62,8 @@ test('theory suggestions transpose and follow major, melodic-minor and harmonic-
 
 test('pentatonic menu lists every parent-scale minor pentatonic and one modal choice',async({page})=>{
   await page.goto('/');
-  await page.locator('#theory-view-I').selectOption('pentatonic');
-  const names=()=>page.locator('#theory-choice-I option').allTextContents();
+  await page.locator('#theory-view').selectOption('pentatonic');
+  const names=()=>page.locator('#theory-choice option').allTextContents();
   expect(await names()).toEqual(['A minor pentatonic','B minor pentatonic','E minor pentatonic','A Dorian modal pentatonic']);
 
   await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('lydian');
@@ -82,25 +80,22 @@ test('turning overlays off restores arpeggio view and related modes retain their
   expect(await coordinates(page)).toEqual(major);
   await page.locator('#exercise').selectOption('arpeggio');
   const arpeggio=await card(page,'I').locator('.fret-note').count();
-  await page.locator('#theory-view-I').selectOption('pentatonic');
+  await page.locator('#theory-view').selectOption('pentatonic');
   expect(await card(page,'I').locator('.fret-note').count()).toBeGreaterThan(arpeggio);
-  await page.locator('#theory-view-I').selectOption('none');
+  await page.locator('#theory-view').selectOption('none');
   await expect(card(page,'I').locator('.fret-note')).toHaveCount(arpeggio);
   await expect(page.locator('#exercise')).toHaveValue('arpeggio');
 });
 
-test('position theory choices survive presets and remain legible in featured Focus view on mobile',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view-I').selectOption('pentatonic');await page.locator('#theory-view-IV').selectOption('triads');
-  for(const position of ['I','IV']){
-    const choices=await page.locator('#theory-choice-'+position+' option').evaluateAll(options=>options.map(n=>(n as HTMLOptionElement).value));
-    await page.locator('#theory-choice-'+position).selectOption(choices.at(-1)!);
-  }
-  const pent=await page.locator('#theory-choice-I').inputValue(),pair=await page.locator('#theory-choice-IV').inputValue();
+test('shared theory choice survives presets and remains legible in featured Focus view on mobile',async({page})=>{
+  await page.goto('/');await page.locator('#theory-view').selectOption('triads');
+  const choices=await page.locator('#theory-choice option').evaluateAll(options=>options.map(n=>(n as HTMLOptionElement).value));
+  await page.locator('#theory-choice').selectOption(choices.at(-1)!);
+  const pair=await page.locator('#theory-choice').inputValue();
   await page.locator('#preset-name').fill('Dorian theory');await page.locator('#preset-save').click();
-  await page.locator('#theory-view-I').selectOption('none');await page.locator('#theory-view-IV').selectOption('none');
+  await page.locator('#theory-view').selectOption('none');
   await page.locator('#preset-load').click();
-  await expect(page.locator('#theory-view-I')).toHaveValue('pentatonic');await expect(page.locator('#theory-choice-I')).toHaveValue(pent);
-  await expect(page.locator('#theory-view-IV')).toHaveValue('triads');await expect(page.locator('#theory-choice-IV')).toHaveValue(pair);
+  await expect(page.locator('#theory-view')).toHaveValue('triads');await expect(page.locator('#theory-choice')).toHaveValue(pair);
   await page.locator('#fret-labels').selectOption('notes');
   await expect(card(page,'I').locator('.fret-note > text').first()).toHaveText(/^[A-G]/);
   await page.locator('#fret-labels').selectOption('degrees');
