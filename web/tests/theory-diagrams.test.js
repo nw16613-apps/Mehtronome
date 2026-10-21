@@ -53,7 +53,7 @@ test('pentatonic roots receive their own ring without replacing the modal root',
 test('triad pairs have distinct A/B badges, solid/dashed rings and descriptive note tooltips',()=>{
   const harmony=harmonyAt({key:0,mode:'lydian',chord:'maj7sharp11'});
   const theory={kind:'triads',name:'C major + D major',pcs:[0,4,7,2,6,9],groups:[
-    {name:'C major',pcs:[0,4,7]}, {name:'D major',pcs:[2,6,9]},
+    {name:'C major',rootPc:0,pcs:[0,4,7]}, {name:'D major',rootPc:2,pcs:[2,6,9]},
   ]};
   for(const {shape} of POSITIONS){
     const board=fretboardFor(harmony,shape);
@@ -69,11 +69,14 @@ test('triad pairs have distinct A/B badges, solid/dashed rings and descriptive n
     }
     assert.ok(notes.some(note=>note.classes.includes('theory-a')));
     assert.ok(notes.some(note=>note.classes.includes('theory-b')));
+    assert.ok(selected.filter(note=>[0,2].includes(note.pc)).every(note=>note.classes.includes('triad-root')));
     assert.match(svg,/triad A: C major/);
     assert.match(svg,/triad B: D major/);
     assert.match(svg,/text-anchor="middle">A<\/text>/);
     assert.match(svg,/text-anchor="middle">B<\/text>/);
     assert.equal((svg.match(/stroke-dasharray="3 2"/g)||[]).length,selected.filter(note=>note.group==='b').length);
+  assert.match(svg,/triad A root/);
+  assert.match(svg,/triad B root/);
   }
 });
 

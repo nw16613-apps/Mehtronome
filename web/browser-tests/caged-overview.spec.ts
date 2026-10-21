@@ -70,3 +70,21 @@ test('pentatonic overlay preserves modal-root colour and marks its own root',asy
   });
   expect(colours.root).not.toBe(colours.pentatonic);
 });
+
+test('triad pairs preserve modal-root colour and mark both triad roots',async({page})=>{
+  await openReference(page);
+  const modalRoot=page.locator('#guitar-diagrams .fret-note.root>circle').first();
+  const normalFill=await modalRoot.evaluate(element=>getComputedStyle(element).fill);
+  await page.locator('#theory-view').selectOption('triads');
+  await expect(page.locator('#guitar-diagrams .theory-a.triad-root .theory-ring').first()).toBeVisible();
+  await expect(page.locator('#guitar-diagrams .theory-b.triad-root .theory-ring').first()).toBeVisible();
+  await expect(modalRoot).toHaveCSS('fill',normalFill);
+  const colours=await page.locator('#guitar-diagrams').evaluate(element=>({
+    a:getComputedStyle(element.querySelector('.theory-a:not(.triad-root) .theory-ring')!).stroke,
+    aRoot:getComputedStyle(element.querySelector('.theory-a.triad-root .theory-ring')!).stroke,
+    b:getComputedStyle(element.querySelector('.theory-b:not(.triad-root) .theory-ring')!).stroke,
+    bRoot:getComputedStyle(element.querySelector('.theory-b.triad-root .theory-ring')!).stroke,
+  }));
+  expect(colours.aRoot).not.toBe(colours.a);
+  expect(colours.bRoot).not.toBe(colours.b);
+});
