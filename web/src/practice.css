@@ -57,7 +57,7 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mini-harmony { display:grid; min-width:0; flex:1; gap:2px; }
 .mini-harmony strong { font-size:18px; }
 .mini-harmony span { font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.mini-harmony-controls { display:grid; grid-template-columns:72px 145px minmax(170px,1fr); gap:8px; flex:1.8; min-width:0; }
+.mini-harmony-controls { display:grid; grid-template-columns:68px 130px 140px minmax(165px,1fr); gap:8px; flex:2.2; min-width:0; }
 .mini-harmony-controls label { display:grid; gap:3px; min-width:0; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted,var(--practice-muted,#64735f)); }
 .mini-harmony-controls select { width:100%; min-width:0; padding:7px 6px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; text-transform:none; letter-spacing:0; }
 #mini-beat { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted,var(--practice-muted,#64735f)); }
@@ -90,7 +90,8 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   #exit-focus { font-size:11px; padding-inline:8px; }
   .mini-transport { flex-wrap:wrap; }
   .mini-harmony { flex:1; }
-  .mini-harmony-controls { flex-basis:100%; order:5; grid-template-columns:65px minmax(90px,1fr) minmax(130px,1.5fr); }
+  .mini-harmony-controls { flex-basis:100%; order:5; grid-template-columns:65px minmax(100px,1fr) minmax(100px,1fr); }
+  .mini-harmony-controls label:last-child { grid-column:1/-1; }
   .compare-slots { gap:8px; }
   .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
   .trainer-fields { gap:8px; }

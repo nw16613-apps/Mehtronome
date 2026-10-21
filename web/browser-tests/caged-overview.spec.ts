@@ -45,9 +45,13 @@ test('focus bar changes the root, chord and progression',async({page})=>{
   await expect(page.locator('#key')).toHaveValue('0');
   await expect(page.locator('#guitar-context')).toContainText('C');
 
-  await page.locator('#mini-chord-select').selectOption('maj7');
-  await expect(page.locator('#chord')).toHaveValue('maj7');
-  await expect(page.locator('#guitar-context')).toHaveText('Cmaj7');
+  await page.locator('#mini-mode-select').selectOption('mixolydian');
+  await expect(page.locator('#quality')).toHaveValue('mixolydian');
+  await expect(page.locator('#mini-chord-select')).toHaveValue('dom7');
+
+  await page.locator('#mini-chord-select').selectOption('dom9');
+  await expect(page.locator('#chord')).toHaveValue('dom9');
+  await expect(page.locator('#guitar-context')).toHaveText('C9');
 
   await page.locator('#mini-progression').selectOption('major251');
   await expect(page.locator('#template')).toHaveValue('major251');
