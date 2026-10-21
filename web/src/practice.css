@@ -111,8 +111,8 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .check { min-height:44px; }
 }
 
-:root { --theory-a:#3478c8; --theory-a-ink:#fff; --theory-a-ring:#a9cbf2; --theory-a-root-ring:#006b91; --theory-b:#ce572e; --theory-b-ink:#fff; --theory-b-ring:#f0b39d; --theory-b-root-ring:#914000; --theory-pentatonic:#8642b8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#d6b5ee; --theory-pentatonic-root-ring:#008fa8; }
-html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-ring:#c1e3ff; --theory-a-root-ring:#4ee6ff; --theory-b:#ff9562; --theory-b-ink:#32180c; --theory-b-ring:#ffd1ba; --theory-b-root-ring:#ffe066; --theory-pentatonic:#ff75b5; --theory-pentatonic-ink:#321225; --theory-pentatonic-ring:#ffd1e7; --theory-pentatonic-root-ring:#5ee7ff; }
+:root { --theory-a:#3478c8; --theory-a-ink:#fff; --theory-a-ring:#a9cbf2; --theory-a-root:#173f82; --theory-a-root-ink:#fff; --theory-b:#ce572e; --theory-b-ink:#fff; --theory-b-ring:#f0b39d; --theory-b-root:#852d18; --theory-b-root-ink:#fff; --theory-pentatonic:#8642b8; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#d6b5ee; --theory-pentatonic-root-ring:#008fa8; }
+html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-ring:#c1e3ff; --theory-a-root:#b8ebff; --theory-a-root-ink:#10243a; --theory-b:#ff9562; --theory-b-ink:#32180c; --theory-b-ring:#ffd1ba; --theory-b-root:#ffd064; --theory-b-root-ink:#32180c; --theory-pentatonic:#ff75b5; --theory-pentatonic-ink:#321225; --theory-pentatonic-ring:#ffd1e7; --theory-pentatonic-root-ring:#5ee7ff; }
 :root[data-palette=midnight] { --theory-a:#b7df65; --theory-a-ink:#17250a; --theory-a-ring:#e4f5bd; --theory-b:#ff7f73; --theory-b-ink:#30100e; --theory-b-ring:#ffc2bd; --theory-pentatonic:#d987f0; --theory-pentatonic-ink:#29102f; --theory-pentatonic-ring:#f1c8fa; }
 :root[data-palette=paper] { --theory-a:#3478c8; --theory-a-ink:#fff; --theory-a-ring:#a9cbf2; --theory-b:#39855a; --theory-b-ink:#fff; --theory-b-ring:#a9d6ba; --theory-pentatonic:#8950b5; --theory-pentatonic-ink:#fff; --theory-pentatonic-ring:#d2b5e8; }
 :root[data-palette=plum] { --theory-a:#65dcb0; --theory-a-ink:#13271f; --theory-a-ring:#baf3de; --theory-b:#ff9a62; --theory-b-ink:#30170c; --theory-b-ring:#ffd0b5; --theory-pentatonic:#58b9f5; --theory-pentatonic-ink:#102638; --theory-pentatonic-ring:#bee6ff; }
@@ -137,8 +137,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .theory-legend i.theory-pentatonic-root-key { background:var(--theory-pentatonic); border:3px solid var(--theory-pentatonic-root-ring); }
 .theory-legend .theory-group-b i { border-style:dashed; border-color:var(--theory-b-ring); background:var(--theory-b); color:var(--theory-b-ink); }
 .theory-legend .triad-root-guide { flex-basis:100%; }
-.theory-legend i.theory-triad-root-a { background:var(--theory-a); border-color:var(--theory-a-root-ring); }
-.theory-legend i.theory-triad-root-b { margin-left:-2px; background:var(--theory-b); border-color:var(--theory-b-root-ring); color:var(--theory-b-ink); }
+.theory-legend i.theory-triad-root-a { background:var(--theory-a-root); border-color:var(--theory-a-ring); color:var(--theory-a-root-ink); }
+.theory-legend i.theory-triad-root-b { margin-left:-2px; background:var(--theory-b-root); border:2px dashed var(--theory-b-ring); color:var(--theory-b-root-ink); }
 .theory-active .fret-note:not(.theory-note) { opacity:.22; }
 .theory-active .theory-note { opacity:1; }
 .fretboard .theory-ring { fill:none!important; stroke:var(--accent,var(--practice-accent))!important; stroke-width:2.5!important; }
@@ -154,8 +154,10 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .fretboard.theory-triads .theory-b>text { fill:var(--theory-b-ink)!important; }
 .fretboard .theory-a .theory-ring { stroke:var(--theory-a-ring)!important; stroke-width:3!important; }
 .fretboard .theory-b .theory-ring { stroke:var(--theory-b-ring)!important; stroke-width:3!important; }
-.fretboard.theory-triads .theory-a.triad-root .theory-ring { stroke:var(--theory-a-root-ring)!important; }
-.fretboard.theory-triads .theory-b.triad-root .theory-ring { stroke:var(--theory-b-root-ring)!important; }
+.fretboard.theory-triads .theory-a.triad-root>circle:first-of-type { fill:var(--theory-a-root)!important; stroke:var(--theory-a-root)!important; }
+.fretboard.theory-triads .theory-b.triad-root>circle:first-of-type { fill:var(--theory-b-root)!important; stroke:var(--theory-b-root)!important; }
+.fretboard.theory-triads .theory-a.triad-root>text { fill:var(--theory-a-root-ink)!important; }
+.fretboard.theory-triads .theory-b.triad-root>text { fill:var(--theory-b-root-ink)!important; }
 .fretboard.theory-triads .theory-note.root>circle:first-of-type { fill:var(--root,#e4b98a)!important; stroke:var(--root,#ae794b)!important; }
 .fretboard.theory-triads .theory-note.root>text { fill:#293a2b!important; }
 .fretboard .theory-badge circle { fill:var(--theory-a)!important; stroke:var(--panel,var(--practice-panel))!important; stroke-width:1!important; }

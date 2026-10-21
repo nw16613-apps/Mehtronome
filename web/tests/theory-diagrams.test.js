@@ -5,7 +5,7 @@ import {recommendedGrip} from '../src/guitar/grips.js';
 import {harmonyAt,MODES} from '../src/audio/music.js';
 
 function renderedNotes(svg) {
-  const pattern=/<g class="fret-note ([^"]+)" data-string="(\d+)" data-fret="(\d+)" data-pc="(\d+)"([^>]*)><title>.*?<\/title><circle cx="([^"]+)" cy="([^"]+)" r="13"/g;
+  const pattern=/<g class="fret-note ([^"]+)" data-string="(\d+)" data-fret="(\d+)" data-pc="(\d+)"([^>]*)><title>.*?<\/title><circle cx="([^"]+)" cy="([^"]+)" r="11"/g;
   return Array.from(svg.matchAll(pattern),match=>({
     classes:match[1].split(' '),string:Number(match[2]),fret:Number(match[3]),pc:Number(match[4]),
     group:/data-theory-group="([^"]+)"/.exec(match[5])?.[1],x:match[6],y:match[7],
