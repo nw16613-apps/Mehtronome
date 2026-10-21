@@ -73,6 +73,18 @@ test('pentatonic menu lists every parent-scale minor pentatonic and one modal ch
   expect(await names()).toEqual(['C Harmonic minor modal pentatonic']);
 });
 
+test('pentatonic notes use a distinct colour from chord tones in every theme',async({page})=>{
+  await page.goto('/');await page.locator('#theory-view').selectOption('pentatonic');
+  for(const palette of ['light','dark','midnight','paper','plum','slate']){
+    await page.locator('#palette').selectOption(palette);
+    const colours=await card(page,'I').evaluate(node=>{
+      const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
+      return {pentatonic:style('.theory-note > circle:first-of-type'),chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
+    });
+    expect(colours.pentatonic,`${palette} pentatonic colour`).not.toBe(colours.chord);
+  }
+});
+
 test('turning overlays off restores arpeggio view and related modes retain their parent-major geometry',async({page})=>{
   await page.goto('/');await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('major');
   const major=await coordinates(page);
