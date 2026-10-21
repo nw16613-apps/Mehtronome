@@ -156,7 +156,7 @@ from a single sample clock, with smooth volume changes. It includes:
   to strum and let the chord ring out. The button changes to **Stop chord** while active; clicking it again stops
   the sound. Selecting another chord switches the preview. Blur, a diagram
   change or starting playback stops the preview. The overlay
-  toggle removes the chord rings, finger numbers and mute marks when switched off,
+  toggle removes the chord rings and mute marks when switched off,
   restoring all scale notes to full brightness. Its setting is included in saved practice presets.
   Chord roots, other chord tones, and scale tones have distinct colors.
   Choose note names or scale degrees, and scale-plus-chord or chord-only view;

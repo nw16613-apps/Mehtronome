@@ -43,11 +43,11 @@ test('each CAGED position independently overlays its suggested pentatonic or tri
   await expect(page.locator('#theory-view-II')).toHaveValue('none');
   await expect(card(page,'II').locator('.theory-note')).toHaveCount(0);
   expect(await coordinates(page)).toEqual(before);
-  await expect(card(page,'I').locator('.grip-finger')).toHaveCount(0);
+  await expect(card(page,'I').locator('.grip-ring')).toHaveCount(0);
   await expect(card(page,'IV').locator('.characteristic-ring')).toHaveCount(0);
   await page.locator('#theory-view-I').selectOption('none');await page.locator('#theory-view-IV').selectOption('none');
   expect(await coordinates(page)).toEqual(before);
-  await expect(card(page,'I').locator('.grip-finger')).not.toHaveCount(0);
+  await expect(card(page,'I').locator('.grip-ring')).not.toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

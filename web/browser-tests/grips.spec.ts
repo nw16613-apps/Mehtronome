@@ -1,14 +1,14 @@
 import {openReference} from './open-reference';
 import {test,expect} from '@playwright/test';
 
-test('grip overlay keeps the established fingerings, labels fingers and mutes, and follows the current chord',async({page})=>{
+test('chord overlay keeps the established shapes and mutes without prescribing fingers',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await openReference(page);
   await expect(page.locator('#show-grip')).toBeChecked();await expect(page.locator('.grip-preview')).toHaveCount(5);
   for(const position of ['I','II','III','IV','V']){
     const card=page.locator(`[data-position="${position}"]`);
     const count=await card.locator('.grip-note').count();expect(count).toBeGreaterThanOrEqual(3);expect(count).toBeLessThanOrEqual(4);
-    await expect(card.locator('.grip-finger')).toHaveCount(count);await expect(card.locator('.grip-mute')).toHaveCount(6-count);
+    await expect(card.locator('.grip-finger')).toHaveCount(0);await expect(card.locator('.grip-mute')).toHaveCount(6-count);
     await expect(card.locator('.grip-help')).toContainText('Omitted: G');
   }
   await expect(page.locator('.grip-note').first()).toHaveCSS('opacity','1');
@@ -26,7 +26,7 @@ test('grip overlay keeps the established fingerings, labels fingers and mutes, a
     await page.locator('#palette').selectOption(palette);
     await expect(page.locator('.grip-ring').first()).toHaveCSS('fill','none');
     expect(await page.locator('.grip-ring').first().evaluate(n=>getComputedStyle(n).stroke)).not.toBe('none');
-    await expect(page.locator('.grip-finger text').first()).toHaveCSS('font-size','9px');
+    await expect(page.locator('.grip-finger')).toHaveCount(0);
   }
   for(const width of [1440,760,390]){await page.setViewportSize({width,height:900});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
   expect(errors).toEqual([]);
