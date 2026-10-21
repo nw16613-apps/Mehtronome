@@ -13,24 +13,6 @@ export const TRIAD_FORMS = {
   major:[0,4,7],minor:[0,3,7],diminished:[0,3,6],augmented:[0,4,8],
 };
 
-// Relative roots make the recommendations identical in every key. The first
-// entries are familiar modal upper structures, not simply the nearest shape.
-const PENTATONIC_PREFERENCES = {
-  major:[[4,'minor'],[0,'major'],[7,'dominant']],
-  dorian:[[2,'minor'],[0,'minor6'],[0,'minor']],
-  phrygian:[[1,'major'],[0,'minor'],[3,'dominant']],
-  lydian:[[2,'major'],[9,'minor6'],[0,'major']],
-  mixolydian:[[0,'dominant'],[7,'minor'],[0,'major']],
-  minor:[[5,'minor'],[0,'minor'],[10,'dominant']],
-  locrian:[[6,'major'],[3,'minor6'],[1,'major']],
-  melodic_minor:[[0,'minor6'],[7,'dominant'],[5,'major']],
-  dorian_b2:[[0,'minor6'],[3,'dominant'],[10,'minor6']],
-  lydian_augmented:[[11,'minor6'],[2,'major'],[4,'dominant']],
-  lydian_dominant:[[2,'dominant'],[7,'minor6'],[0,'dominant']],
-  mixolydian_b6:[[5,'minor6'],[0,'dominant'],[7,'minor']],
-  locrian_natural2:[[3,'minor6'],[5,'minor6'],[8,'dominant']],
-  altered:[[3,'minor'],[1,'minor6'],[6,'dominant']],
-};
 const TRIAD_PREFERENCES = {
   major:[[5,'major',7,'major'],[0,'major',2,'minor']],
   dorian:[[3,'major',5,'major'],[0,'minor',2,'minor']],
@@ -73,36 +55,37 @@ function uniqueChoices(candidates, limit=3) {
     used.add(key);return true;
   }).slice(0,limit).map(({score,...option})=>option);
 }
+function fiveNoteCombinations(items) {
+  const result=[];
+  for(let a=0;a<3;a++)for(let b=a+1;b<4;b++)for(let c=b+1;c<5;c++)for(let d=c+1;d<6;d++)for(let e=d+1;e<7;e++)result.push([items[a],items[b],items[c],items[d],items[e]]);
+  return result;
+}
 function pentatonicsFor(harmony) {
   const mode=MODES[harmony.mode],tonic=harmony.scalePcs[0],tonicName=harmony.scaleNames[0];
-  const preferred=PENTATONIC_PREFERENCES[harmony.mode] || [];
-  const colourPcs=characteristicNotes(harmony).map(note=>note.pc);
-  const candidates=[];
-  for(const [type,form] of Object.entries(PENTATONIC_FORMS))for(let degree=0;degree<7;degree++){
+  const minor=PENTATONIC_FORMS.minor;
+  const parentMinors=[];
+  for(let degree=0;degree<7;degree++){
     const root=harmony.scalePcs[degree],relative=(root-tonic+12)%12;
-    const pcs=form.intervals.map(interval=>(root+interval)%12);
+    const pcs=minor.intervals.map(interval=>(root+interval)%12);
     if(!fits(pcs,harmony.scalePcs))continue;
-    const rank=preferred.findIndex(([pc,quality])=>pc===relative&&quality===type);
-    const colourCount=colourPcs.filter(pc=>pcs.includes(pc)).length;
-    candidates.push({id:`pent-${relative}-${type}`,type,rootPc:root,intervals:[...form.intervals],
-      name:`${harmony.scaleNames[degree]} ${form.name}`,...details(pcs,harmony),
-      explanation:`Use ${harmony.scaleNames[degree]} ${form.name} within ${tonicName} ${mode.name}. The five notes give modal degrees ${details(pcs,harmony).degrees.join('–')}.${colourDescription(pcs,harmony)}`,
-      score:(rank>=0?100-rank*8:0)+colourCount*3+(pcs.includes(tonic)?1:0)+(type==='hirajoshi'?-10:0),
+    parentMinors.push({id:`pent-${relative}-minor`,type:'minor',category:'parent-minor',rootPc:root,intervals:[...minor.intervals],
+      name:`${harmony.scaleNames[degree]} minor pentatonic`,...details(pcs,harmony),
+      explanation:`One of the complete minor pentatonics contained in the parent ${mode.family || 'Major scale'}. Over ${tonicName} ${mode.name}, its notes become ${details(pcs,harmony).degrees.join('–')}.${colourDescription(pcs,harmony)}`,
     });
   }
-  // The harmonic-minor family has no embedded major/minor/minor-6/dominant
-  // pentatonic. Hirajoshi is a conventional contained choice. Offer a second,
-  // explicitly labelled selection retaining the tonic and characteristic notes.
-  if(mode.family==='Harmonic minor'){
-    const indices=[...new Set([0,...characteristicNotes(harmony).map(note=>harmony.scalePcs.indexOf(note.pc)),2,4,6,1,3,5])].slice(0,5).sort((a,b)=>a-b);
-    const pcs=indices.map(index=>harmony.scalePcs[index]);
-    candidates.push({id:'pent-mode-selection',type:'selection',rootPc:tonic,intervals:pcs.map(pc=>(pc-tonic+12)%12),
-      name:`${tonicName} five-note mode selection`,...details(pcs,harmony),
-      explanation:`A selected five-note subset of ${tonicName} ${mode.name}, rather than a standard major or minor pentatonic. Keep the modal degrees ${details(pcs,harmony).degrees.join('–')} in focus.${colourDescription(pcs,harmony)}`,
-      score:-20,
-    });
-  }
-  return uniqueChoices(candidates);
+  const minorKeys=new Set(parentMinors.map(option=>pitchKey(option.pcs)));
+  const colours=characteristicNotes(harmony).map(note=>note.pc);
+  const degreePreference=[0,2,4,6,1,3,5];
+  const modalIndices=fiveNoteCombinations([0,1,2,3,4,5,6]).filter(indices=>!minorKeys.has(pitchKey(indices.map(index=>harmony.scalePcs[index])))).sort((a,b)=>{
+    const score=indices=>indices.reduce((total,index)=>total+(index===0?30:0)+(colours.includes(harmony.scalePcs[index])?50:0)+(7-degreePreference.indexOf(index)),0);
+    return score(b)-score(a)||a.join('').localeCompare(b.join(''));
+  })[0];
+  const pcs=modalIndices.map(index=>harmony.scalePcs[index]);
+  const modal={id:'pent-modal',type:'modal',category:'modal',rootPc:tonic,intervals:pcs.map(pc=>(pc-tonic+12)%12),
+    name:`${tonicName} ${mode.name} modal pentatonic`,...details(pcs,harmony),
+    explanation:`A five-note selection specific to ${tonicName} ${mode.name}, retaining the tonic and its defining colour notes. Use degrees ${details(pcs,harmony).degrees.join('–')} over the current harmony.${colourDescription(pcs,harmony)}`,
+  };
+  return [...parentMinors,modal];
 }
 
 function spelledTone(rootName,letterSteps,pc) {

@@ -62,6 +62,19 @@ test('theory suggestions transpose and follow major, melodic-minor and harmonic-
   }
 });
 
+test('pentatonic menu lists every parent-scale minor pentatonic and one modal choice',async({page})=>{
+  await page.goto('/');
+  await page.locator('#theory-view-I').selectOption('pentatonic');
+  const names=()=>page.locator('#theory-choice-I option').allTextContents();
+  expect(await names()).toEqual(['A minor pentatonic','B minor pentatonic','E minor pentatonic','A Dorian modal pentatonic']);
+
+  await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('lydian');
+  expect(await names()).toEqual(['E minor pentatonic','A minor pentatonic','B minor pentatonic','C Lydian modal pentatonic']);
+
+  await page.locator('#quality').selectOption('harmonic_minor');
+  expect(await names()).toEqual(['C Harmonic minor modal pentatonic']);
+});
+
 test('turning overlays off restores arpeggio view and related modes retain their parent-major geometry',async({page})=>{
   await page.goto('/');await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('major');
   const major=await coordinates(page);

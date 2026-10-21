@@ -30,13 +30,13 @@ from a single sample clock, with smooth volume changes. It includes:
   the closest displayed CAGED shape in a chosen fretboard region. Its route can
   be clicked without starting playback and follows the current chord as it plays.
 - Every CAGED position has an **Explore** selector for pentatonic superimposition
-  or triad pairs, with several suggestions per mode. Pentatonics highlight five
-  mode-compatible notes; triad pairs highlight six notes from two disjoint triads.
+  or triad pairs. Pentatonic choices include every complete minor pentatonic in
+  the parent scale plus a five-note selection specific to the current mode.
+  Triad pairs highlight six notes from two disjoint triads.
   A/B badges and solid/dashed rings distinguish the triads, alongside note names,
   modal degrees and short practice guidance. Established fingerings stay intact;
   chord fingers return when exploration is off. Each position remembers its own
-  choice in practice presets. Harmonic-minor modes offer Hirajoshi pentatonics and
-  an explicitly named five-note mode selection. Suggestions follow the tonic
+  choice in practice presets. Suggestions follow the tonic
   scale through modal vamps and update with other chord/scale changes.
 - Fresh sessions start in A Dorian over Am13, with the count-in off and numeric
   degree labels in the guitar diagrams. Mode suggestions use seventh chords,

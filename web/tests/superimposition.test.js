@@ -24,21 +24,20 @@ test('pentatonics and disjoint true triad pairs fit all 21 modes in all twelve k
     const info=harmonyAt({key,mode,chord:definition.chord}),before=JSON.stringify(info);
     const options=theoryOptions(info);
     assert.equal(JSON.stringify(info),before);
-    for(const choices of Object.values(options)){
-      assert.ok(choices.length>=1&&choices.length<=3,mode);
+    for(const [category,choices] of Object.entries(options)){
+      assert.ok(choices.length>=1&&(category==='pentatonics'||choices.length<=3),mode);
       assert.equal(new Set(choices.map(c=>[...c.pcs].sort((a,b)=>a-b).join(','))).size,choices.length);
     }
     for(const pent of options.pentatonics){
       checkOption(pent,info,5);
-      if(pent.type==='selection'){
-        assert.equal(definition.family,'Harmonic minor');
-        assert.match(pent.name,/five-note mode selection/);
-        assert.match(pent.explanation,/rather than a standard major or minor/);
-      }else{
-        assert.ok(PENTATONIC_FORMS[pent.type]);
-        assert.deepEqual(pent.intervals,PENTATONIC_FORMS[pent.type].intervals);
-        assert.deepEqual(pent.pcs,pent.intervals.map(interval=>(pent.rootPc+interval)%12));
+      assert.ok(['parent-minor','modal'].includes(pent.category));
+      if(pent.category==='parent-minor')assert.equal(pent.type,'minor');
+      else {
+        assert.equal(pent.type,'modal');
+        assert.ok(pent.pcs.includes(info.scalePcs[0]));
+        for(const note of characteristicNotes(info))assert.ok(pent.pcs.includes(note.pc));
       }
+      assert.deepEqual(pent.pcs,pent.intervals.map(interval=>(pent.rootPc+interval)%12));
     }
     for(const pair of options.triadPairs){
       checkOption(pair,info,6);
@@ -55,38 +54,36 @@ test('pentatonics and disjoint true triad pairs fit all 21 modes in all twelve k
       }
     }
     const colour=characteristicNotes(info).map(note=>note.pc);
-    assert.ok(options.pentatonics[0].pcs.some(pc=>colour.includes(pc)),`${mode} primary pentatonic should reveal its character`);
+    assert.ok(options.pentatonics.at(-1).pcs.some(pc=>colour.includes(pc)),`${mode} modal pentatonic should reveal its character`);
     assert.ok(options.triadPairs[0].pcs.some(pc=>colour.includes(pc)),`${mode} primary triad pair should reveal its character`);
   }
 });
 
-test('Dorian and Lydian recommend familiar upper structures with correct modal degrees',()=>{
+test('Dorian and Lydian expose every parent-scale minor pentatonic plus a modal pentatonic',()=>{
   const dorian=theoryOptions(harmonyAt({key:9,mode:'dorian',chord:'min13'}));
-  assert.equal(dorian.pentatonics[0].name,'B minor pentatonic');
-  assert.deepEqual(dorian.pentatonics[0].names,['B','D','E','F♯','A']);
-  assert.deepEqual(dorian.pentatonics[0].degrees,['2','4','5','6','1']);
-  assert.match(dorian.pentatonics[0].explanation,/F♯ \(6\)/);
+  assert.deepEqual(dorian.pentatonics.map(option=>option.name),['A minor pentatonic','B minor pentatonic','E minor pentatonic','A Dorian modal pentatonic']);
+  assert.deepEqual(dorian.pentatonics[1].names,['B','D','E','F♯','A']);
+  assert.deepEqual(dorian.pentatonics[1].degrees,['2','4','5','6','1']);
+  assert.match(dorian.pentatonics.at(-1).explanation,/F♯ \(6\)/);
   assert.equal(dorian.triadPairs[0].name,'C major + D major');
   assert.deepEqual(dorian.triadPairs[0].groups.map(group=>group.names),[['C','E','G'],['D','F♯','A']]);
   const lydian=theoryOptions(harmonyAt({key:0,mode:'lydian',chord:'maj7sharp11'}));
-  assert.equal(lydian.pentatonics[0].name,'D major pentatonic');
-  assert.deepEqual(lydian.pentatonics[0].degrees,['2','3','♯4','6','7']);
+  assert.deepEqual(lydian.pentatonics.map(option=>option.name),['E minor pentatonic','A minor pentatonic','B minor pentatonic','C Lydian modal pentatonic']);
+  assert.deepEqual(lydian.pentatonics.at(-1).degrees,['1','3','♯4','5','7']);
   assert.equal(lydian.triadPairs[0].name,'C major + D major');
 });
 
-test('harmonic-minor modes offer Hirajoshi and an honestly named characteristic-note selection',()=>{
+test('harmonic-minor modes report no unavailable minor pentatonics and include a modal pentatonic',()=>{
   for(const [mode,definition]of Object.entries(MODES)){
     if(definition.family!=='Harmonic minor')continue;
     const info=harmonyAt({key:0,mode,chord:definition.chord}),choices=theoryOptions(info).pentatonics;
-    assert.equal(choices[0].type,'hirajoshi');
-    const selected=choices.find(choice=>choice.type==='selection');
-    assert.ok(selected);
+    assert.equal(choices.filter(choice=>choice.type==='minor').length,0);
+    const selected=choices.find(choice=>choice.type==='modal');assert.ok(selected);
     for(const note of characteristicNotes(info))assert.ok(selected.pcs.includes(note.pc),`${mode} selection retains ${note.degree}`);
     assert.ok(selected.pcs.includes(info.scalePcs[0]));
   }
   const harmonic=theoryOptions(harmonyAt({key:0,mode:'harmonic_minor',chord:'minMaj7'}));
-  assert.equal(harmonic.pentatonics[0].name,'C Hirajoshi pentatonic');
-  assert.deepEqual(harmonic.pentatonics[0].names,['C','D','E♭','G','A♭']);
+  assert.equal(harmonic.pentatonics[0].name,'C Harmonic minor modal pentatonic');
 });
 
 test('modal superimpositions stay tonic-relative across every modal progression',()=>{
