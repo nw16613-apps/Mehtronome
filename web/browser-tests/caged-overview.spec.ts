@@ -35,3 +35,23 @@ test('manual navigation and progression route drive the detailed diagram',async(
   await expect(page.locator('#position-previous')).toBeDisabled();
   await expect(page.locator('#position-next')).toBeDisabled();
 });
+
+test('focus bar changes the root, chord and progression',async({page})=>{
+  await openReference(page);
+  await page.locator('#focus-view').click();
+  await expect(page.locator('#mini-transport')).toBeVisible();
+
+  await page.locator('#mini-key').selectOption('0');
+  await expect(page.locator('#key')).toHaveValue('0');
+  await expect(page.locator('#guitar-context')).toContainText('C');
+
+  await page.locator('#mini-chord-select').selectOption('maj7');
+  await expect(page.locator('#chord')).toHaveValue('maj7');
+  await expect(page.locator('#guitar-context')).toHaveText('Cmaj7');
+
+  await page.locator('#mini-progression').selectOption('major251');
+  await expect(page.locator('#template')).toHaveValue('major251');
+  await expect(page.locator('#progression')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#mini-progression').selectOption('off');
+  await expect(page.locator('#pedal')).toHaveAttribute('aria-pressed','true');
+});

@@ -46,7 +46,7 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .guitar.has-featured .featured-position svg { display:block; max-width:800px; margin-inline:auto; }
 .mini-transport {
   position:fixed; z-index:50; bottom:max(18px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
-  width:calc(100% - 36px); max-width:820px; box-sizing:border-box; display:flex; align-items:center; gap:20px;
+  width:calc(100% - 36px); max-width:1120px; box-sizing:border-box; display:flex; align-items:center; gap:14px;
   border:1px solid var(--line,#8c9d8b); border-radius:14px; background:var(--panel,var(--practice-panel));
   color:var(--ink,var(--practice-ink,#243535)); padding:12px 16px; box-shadow:0 8px 36px #0003;
 }
@@ -57,6 +57,9 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mini-harmony { display:grid; min-width:0; flex:1; gap:2px; }
 .mini-harmony strong { font-size:18px; }
 .mini-harmony span { font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mini-harmony-controls { display:grid; grid-template-columns:72px 145px minmax(170px,1fr); gap:8px; flex:1.8; min-width:0; }
+.mini-harmony-controls label { display:grid; gap:3px; min-width:0; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted,var(--practice-muted,#64735f)); }
+.mini-harmony-controls select { width:100%; min-width:0; padding:7px 6px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; text-transform:none; letter-spacing:0; }
 #mini-beat { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted,var(--practice-muted,#64735f)); }
 .focus-view .intro,.focus-view .presets,.focus-view .transport,.focus-view .notes,.focus-view .mix,.focus-view footer { display:none!important; }
 .focus-view main { padding-top:24px; }
@@ -85,6 +88,9 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .mini-harmony span { font-size:10px; }
   #mini-beat { display:none; }
   #exit-focus { font-size:11px; padding-inline:8px; }
+  .mini-transport { flex-wrap:wrap; }
+  .mini-harmony { flex:1; }
+  .mini-harmony-controls { flex-basis:100%; order:5; grid-template-columns:65px minmax(90px,1fr) minmax(130px,1.5fr); }
   .compare-slots { gap:8px; }
   .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
   .trainer-fields { gap:8px; }
@@ -161,7 +167,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .position-thumbnail>span,.position-thumbnail>small { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .position-thumbnail>span { font-size:12px; font-weight:700; }
 .position-thumbnail>small { margin-top:2px; color:var(--muted,var(--practice-muted,#64735f)); font-size:9px; }
-.position-thumbnail .fretboard { display:block; width:100%; height:auto; margin:5px 0 0; }
+.position-thumbnail .fretboard { display:block; width:100%; height:auto; margin:3px 0 0; }
 .position-thumbnail .fret-note text,.position-thumbnail .string-name,.position-thumbnail .fret-number,.position-thumbnail .theory-badge { display:none; }
 .position-navigation { display:flex; align-items:center; justify-content:center; gap:16px; margin:14px auto 4px; }
 .position-navigation>span { min-width:170px; text-align:center; font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); }

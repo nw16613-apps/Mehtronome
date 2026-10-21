@@ -106,7 +106,7 @@ app.innerHTML = `
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>
-<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><button id="mini-play" class="practice-button" aria-pressed="false">▶ Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
+<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><button id="mini-play" class="practice-button" aria-pressed="false">▶ Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><div class="mini-harmony-controls"><label>Root<select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
@@ -234,7 +234,7 @@ function renderGuitar() {
     const board=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
-      .replace('viewBox="0 0 480 218"','viewBox="24 5 432 192"');
+      .replace('viewBox="0 0 480 218"','viewBox="36 8 408 180"');
     return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}"><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
   }).join('');
   el('position-indicator').textContent=`Position ${selectedPosition.numeral} of V · ${selectedPosition.shape} shape`;
@@ -747,10 +747,27 @@ function syncMiniTransport() {
   const info = chordInfo(step);
   el('mini-chord').textContent = info.name+info.suffix;
   el('mini-mode').textContent = `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
+  select('mini-key').value=select('key').value;
+  select('mini-chord-select').innerHTML=select('chord').innerHTML;
+  select('mini-chord-select').value=select('chord').value;
+  select('mini-chord-select').disabled=select('chord').disabled;
+  select('mini-progression').value=settings.progression?select('template').value:'off';
 }
 new IntersectionObserver(entries => { transportInView = entries[0].isIntersecting; syncMiniTransport(); },{threshold:.15}).observe(el('pulse-title').closest('section')!);
 el('mini-play').addEventListener('click',()=>void toggle());
 input('mini-bpm').addEventListener('change',()=>{ tempo(Number(input('mini-bpm').value)); input('mini-bpm').value=String(settings.bpm); });
+select('mini-key').addEventListener('input',()=>{select('key').value=select('mini-key').value;update();});
+select('mini-chord-select').addEventListener('input',()=>{select('chord').value=select('mini-chord-select').value;update();});
+select('mini-progression').addEventListener('input',()=>{
+  const value=select('mini-progression').value;
+  if(value==='off'){
+    if(settings.progression)el<HTMLButtonElement>('pedal').click();
+    return;
+  }
+  select('template').value=value;
+  if(!settings.progression)el<HTMLButtonElement>('progression').click();
+  else select('template').dispatchEvent(new Event('input',{bubbles:true}));
+});
 function setFocusView(value:boolean) {
   focusView=value;document.documentElement.classList.toggle('focus-view',value);
   el('focus-view').setAttribute('aria-pressed',String(value));el('focus-view').textContent=value?'Exit focus':'Focus view';
