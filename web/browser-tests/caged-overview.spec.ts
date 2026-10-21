@@ -20,9 +20,11 @@ test('five-position overview selects one full-size CAGED diagram',async({page})=
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','III');
 });
 
-test('position selector and progression route drive the detailed diagram',async({page})=>{
+test('manual navigation and progression route drive the detailed diagram',async({page})=>{
   await openReference(page);
-  await page.locator('#featured-position').selectOption('V');
+  await expect(page.locator('#featured-position')).toHaveValue('all');
+  await expect(page.locator('#featured-position option')).toHaveText(['Manual selection','Follow nearest positions']);
+  await page.locator('[data-overview-position="V"]').click();
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','V');
   await expect(page.locator('#position-overview [aria-selected="true"]')).toHaveAttribute('data-overview-position','V');
 

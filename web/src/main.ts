@@ -89,7 +89,7 @@ app.innerHTML = `
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
-        <div class="guitar-controls"><label>Practise position<select id="featured-position"><option value="all">All positions</option><option value="path">Follow nearest positions</option>${POSITIONS.map(p=>`<option value="${p.numeral}">Position ${p.numeral} · ${p.shape} shape</option>`).join('')}</select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
+        <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="all">Manual selection</option><option value="path">Follow nearest positions</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><p>Nearest CAGED route through this progression</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn on to show the suggested chord inside each position.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
@@ -189,7 +189,11 @@ function renderGuitar() {
   if (previewGripShape) stopPreview();
   positionGrips.clear();
   const showGrip = input('show-grip').checked;
-  const requestedFeatured = select('featured-position').value;
+  let requestedFeatured = select('featured-position').value;
+  if(!['all','path'].includes(requestedFeatured)){
+    select('featured-position').value='all';
+    requestedFeatured='all';
+  }
   const pathOption=select('featured-position').querySelector<HTMLOptionElement>('option[value="path"]')!;
   pathOption.disabled=!settings.progression;
   if(!settings.progression&&requestedFeatured==='path')select('featured-position').value='all';
@@ -199,7 +203,7 @@ function renderGuitar() {
     pathRegion,
   ):[];
   const following=settings.progression&&requestedFeatured==='path';
-  const featured=following?path[step]?.numeral||'I':select('featured-position').value;
+  const featured=following?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!following;
   el('position-path').innerHTML=following?path.map((choice,index)=>{
     const harmony=chordInfo(index);
@@ -539,7 +543,7 @@ const positionNumerals=['I','II','III','IV','V'];
 function chooseOverviewPosition(numeral:string, focus=false) {
   if(!positionNumerals.includes(numeral))return;
   overviewPosition=numeral;
-  if(select('featured-position').value!=='all')select('featured-position').value=numeral;
+  select('featured-position').value='all';
   renderGuitar();
   if(focus)positionOverview.querySelector<HTMLButtonElement>(`[data-overview-position="${numeral}"]`)?.focus({preventScroll:true});
 }
