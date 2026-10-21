@@ -150,3 +150,20 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .guitar-overview .shared-theory-controls { grid-template-columns:minmax(0,1fr); }
   .guitar.has-featured .featured-position .theory-controls { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Keep the complete CAGED map in one row. Narrow screens pan this row instead
+   of turning five related positions into a long vertical list. */
+.workspace>.guitar { grid-column:1/-1; }
+.guitar:not(.has-featured) #guitar-diagrams {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(190px,1fr));
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:8px;
+  scroll-snap-type:x proximity;
+  scrollbar-gutter:stable;
+}
+.guitar:not(.has-featured) .position-card { scroll-snap-align:start; }
+.guitar:not(.has-featured) .position-heading { align-items:flex-start; gap:5px; }
+.guitar:not(.has-featured) .position-heading h4 { font-size:12px; }
+.guitar:not(.has-featured) .position-heading span { font-size:9px; white-space:nowrap; }
