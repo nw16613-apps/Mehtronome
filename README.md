@@ -82,9 +82,9 @@ from a single sample clock, with smooth volume changes. It includes:
   Patterns adapt to beats per bar, share the metronome's sample clock, respect
   count-in and follow chord changes. Bass timing remains independent of drum
   swing. Both stay silent during chord previews and use a separate dry output.
-  The app bundles 36 CC0 recordings (about 4.6 MiB of WAV assets), including a
-  coherent acoustic drum kit and fingerstyle electric bass. Samples load and
-  decode before the first playback, then remain cached; no hit fetches or
+  The app bundles 36 attributed/open recordings (about 4.0 MiB of WAV assets),
+  including a close-miked Yamaha rock kit and fingerstyle electric bass.
+  Samples load and decode before the first playback, then remain cached; no hit fetches or
   decodes a recording on the audio thread. A failed load can be retried.
   Sources, exact file mappings and processing:
   [sample credits](web/src/audio/samples/README.md).

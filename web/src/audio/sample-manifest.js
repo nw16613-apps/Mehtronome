@@ -1,4 +1,4 @@
-// Recorded acoustic drums and fingerstyle electric bass; sources and processing
+// Close-miked rock drums and fingerstyle electric bass; sources and processing
 // are documented in samples/README.md and samples/CREDITS.md.
 // Literal URLs let Vite fingerprint and bundle every recording.
 export const SAMPLE_FILES = {
