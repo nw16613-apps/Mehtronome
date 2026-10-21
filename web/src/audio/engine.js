@@ -271,7 +271,7 @@ export class Engine {
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
-      const rhythmSample=this.level*(.28*this.drumsLevel*this.rhythm.drums+.2*this.bassLevel*this.rhythm.bass);
+      const rhythmSample=this.level*(.36*this.drumsLevel*this.rhythm.drums+.2*this.bassLevel*this.rhythm.bass);
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {

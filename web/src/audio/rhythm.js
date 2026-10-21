@@ -79,6 +79,9 @@ const BASS_LINES = {
   ],
 };
 const KITS = new Map();
+// Close-miked hats carry much more sustained energy than the shell recordings.
+// Balance them here so musical pattern velocities can stay readable as written.
+const DRUM_BALANCE = {hat:.55,hatOpen:.58,hatPedal:.55};
 function drumSamples(rate) {
   if (KITS.has(rate)) return KITS.get(rate);
   const kit = {};
@@ -177,7 +180,8 @@ export class Rhythm {
     // any kick, backbeat or grid onset away from the shared sample clock.
     const tuning=[1,.997,1.003,.999][cursor%4];
     const tone=name==='kick'?.85:name==='snare'||name==='rim'?.48+.42*Math.min(1,gain/.7):.94;
-    Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain,filter:0,tone,choke:1,choking:false,kind:name});
+    const balancedGain=gain*(DRUM_BALANCE[name]??1);
+    Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain:balancedGain,filter:0,tone,choke:1,choking:false,kind:name});
     onEvent({type:name,sample,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {

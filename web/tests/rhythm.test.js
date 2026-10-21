@@ -211,6 +211,7 @@ test('recorded hits alternate takes, soft snares use real ghost takes, and close
   rhythm.hitDrum('hatOpen',.2,5,0,0,0,noop);
   const open=rhythm.drumVoices.find(voice=>voice.kind==='hatOpen');
   assert.equal(open.choking,false);
+  assert.ok(open.gain<.12&&open.gain>.11);
   for(let i=0;i<100;i++)rhythm.render(true,false);
   rhythm.hitDrum('hat',.2,105,0,0,0,noop);
   assert.equal(open.choking,true);
