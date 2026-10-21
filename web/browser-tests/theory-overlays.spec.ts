@@ -87,15 +87,17 @@ test('pentatonic notes use a distinct colour from chord tones in every theme',as
   }
 });
 
-test('triad-pair A and B notes use two colours distinct from chord tones in every theme',async({page})=>{
+test('pentatonic, triad A, triad B and chord tones all use distinct colours in every theme',async({page})=>{
   await page.goto('/');await page.locator('#theory-view').selectOption('triads');
   for(const palette of ['light','dark','midnight','paper','plum','slate']){
     await page.locator('#palette').selectOption(palette);
     const colours=await card(page,'I').evaluate(node=>{
       const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
-      return {a:style('.theory-a > circle:first-of-type'),b:style('.theory-b > circle:first-of-type'),chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
+      const probe=document.createElement('span');probe.style.color='var(--theory-pentatonic)';node.appendChild(probe);
+      const pentatonic=getComputedStyle(probe).color;probe.remove();
+      return {a:style('.theory-a > circle:first-of-type'),b:style('.theory-b > circle:first-of-type'),pentatonic,chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
     });
-    expect(new Set(Object.values(colours)).size,`${palette} triad and chord colours`).toBe(3);
+    expect(new Set(Object.values(colours)).size,`${palette} exploration and chord colours`).toBe(4);
   }
 });
 
