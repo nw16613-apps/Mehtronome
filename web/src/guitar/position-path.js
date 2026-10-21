@@ -1,4 +1,4 @@
-import { POSITIONS, fretboardFor } from './fretboard.js';
+import { POSITIONS, cagedPositionFor, fretboardFor } from './fretboard.js';
 
 export const FRET_REGIONS = {
   low: {name:'Low · frets 1–5',start:1,end:5},
@@ -11,7 +11,7 @@ export const FRET_REGIONS = {
 function candidates(harmony) {
   return POSITIONS.map(position => {
     const board=fretboardFor(harmony,position.shape);
-    return {...position,start:board.start,end:board.end,center:(board.start+board.end)/2};
+    return {...cagedPositionFor(board),geometryShape:position.shape,start:board.start,end:board.end,center:(board.start+board.end)/2};
   });
 }
 

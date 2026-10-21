@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {harmonyAt,PROGRESSIONS} from '../src/audio/music.js';
 import {FRET_REGIONS,progressionPositionPath} from '../src/guitar/position-path.js';
-import {POSITIONS,fretboardFor} from '../src/guitar/fretboard.js';
+import {POSITIONS,cagedPositionFor,fretboardFor} from '../src/guitar/fretboard.js';
 
 const harmonies=settings=>Array.from(
   {length:PROGRESSIONS[settings.template].roman.length},
@@ -17,7 +17,7 @@ test('position paths select a real displayed CAGED diagram for every progression
       assert.equal(path.length,chords.length);
       path.forEach((choice,index)=>{
         assert.ok(POSITIONS.some(position=>position.shape===choice.shape&&position.numeral===choice.numeral));
-        const board=fretboardFor(chords[index],choice.shape);
+        const board=fretboardFor(chords[index],choice.geometryShape);
         assert.deepEqual([choice.start,choice.end],[board.start,board.end]);
       });
     }
@@ -45,13 +45,22 @@ test('position numerals always retain the E D C A G shape mapping',()=>{
   for(const choice of path)assert.equal(choice.shape,shapeFor[choice.numeral]);
 });
 
-test('CAGED shape roots stay on their characteristic strings in every major-scale mode',()=>{
+test('CAGED identities follow the modal-root strings in every major-scale mode',()=>{
   const expected={E:[0,2,5],D:[2,4],C:[1,4],A:[1,3],G:[0,3,5]};
   for(const mode of ['major','dorian','phrygian','lydian','mixolydian','minor','locrian']){
     const boardHarmony=harmonyAt({key:9,mode,chord:'min7'});
-    for(const {shape} of POSITIONS){
-      const strings=[...new Set(fretboardFor(boardHarmony,shape).notes.filter(note=>note.shapeRoot).map(note=>note.string))];
-      assert.deepEqual(strings,expected[shape],`${mode} ${shape} shape roots`);
+    for(const geometry of POSITIONS){
+      const board=fretboardFor(boardHarmony,geometry.shape),position=cagedPositionFor(board);
+      const strings=[...new Set(board.notes.filter(note=>note.root).map(note=>note.string))];
+      assert.ok(expected[position.shape].every(string=>strings.includes(string)),`${mode} ${position.shape} shape roots`);
     }
   }
+});
+
+test('G Lydian rotates parent-major geometry to IV A, V G, I E, II D, III C',()=>{
+  const harmony=harmonyAt({key:7,mode:'lydian',chord:'maj7sharp11'});
+  assert.deepEqual(POSITIONS.map(geometry=>{
+    const position=cagedPositionFor(fretboardFor(harmony,geometry.shape));
+    return `${position.numeral}:${position.shape}`;
+  }),['IV:A','V:G','I:E','II:D','III:C']);
 });

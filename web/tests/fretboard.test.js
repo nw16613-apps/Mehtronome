@@ -72,7 +72,7 @@ test('SVG identifies frets, tuning and note roles and changes to degree labels',
   const svg=diagramSvg(board,false,MODES.dorian.degrees,'C Dorian reference');
   assert.ok(svg.includes('role="img"'));
   assert.ok(!svg.includes('class="fret-wire nut"'));
-  assert.ok(svg.includes('string 4, fret 10, current chord or modal root'));
+  assert.ok(svg.includes('string 4, fret 10, chord root'));
   assert.equal(board.anchorName,'B♭');
   assert.ok(diagramSvg(board,true,MODES.dorian.degrees,'Degrees').includes('>♭3</text>'));
 });
@@ -116,7 +116,7 @@ test('A-form string windows omit the far G-string endpoint, transpose across all
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'A',chordOnly);
     const expected=[];
-    const fingeringIntervals=parentMajorFor(info)?MODES.major.intervals:definition.intervals;
+    const fingeringIntervals=info.scalePcs.map(pc=>(pc-board.anchorPc+12)%12).sort((a,b)=>a-b);
     // Compare against the original rectangular pitch collection at the same root.
     for(const [string,tuning] of TUNING.entries())for(let fret=board.rootFret;fret<=board.rootFret+4;fret++){
       const midi=tuning+fret,pc=midi%12;
@@ -150,7 +150,7 @@ test('G-form relocation and shorter G-string boundary transpose across modes and
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
     const info=harmonyAt({key,mode,chord:definition.chord}),board=fretboardFor(info,'G',chordOnly);
     const expected=[];
-    const fingeringIntervals=parentMajorFor(info)?MODES.major.intervals:definition.intervals;
+    const fingeringIntervals=info.scalePcs.map(pc=>(pc-board.anchorPc+12)%12).sort((a,b)=>a-b);
     for(const [string,tuning] of TUNING.entries())for(let fret=board.rootFret-3;fret<=board.rootFret+1;fret++){
       const midi=tuning+fret,pc=midi%12;
       if(string===3 && midi>=TUNING[0]+board.rootFret+12+fingeringIntervals[2])continue;
@@ -183,9 +183,27 @@ test('all major-scale modes share the exact parent-major shapes in all keys with
     }
   }
   const cMixolydian=harmonyAt({key:0,mode:'mixolydian',chord:'dom13'});
-  assert.deepEqual(parentMajorFor(cMixolydian),{pc:5,name:'F'});
+  assert.deepEqual(parentMajorFor(cMixolydian),{pc:5,name:'F',family:'Major scale'});
   assert.equal(fretboardFor(cMixolydian,'A').rootFret,8);
-  assert.equal(parentMajorFor(harmonyAt({key:0,mode:'melodic_minor'})),null);
+  assert.deepEqual(parentMajorFor(harmonyAt({key:0,mode:'melodic_minor'})),{pc:0,name:'C',family:'Melodic minor'});
+});
+
+test('melodic-minor and harmonic-minor modes retain their parent-scale fingering geometry',()=>{
+  const families=[
+    {parent:'melodic_minor',modes:['melodic_minor','dorian_b2','lydian_augmented','lydian_dominant','mixolydian_b6','locrian_natural2','altered']},
+    {parent:'harmonic_minor',modes:['harmonic_minor','locrian_natural6','ionian_sharp5','dorian_sharp4','phrygian_dominant','lydian_sharp2','ultralocrian']},
+  ];
+  for(const family of families)for(const parent of [0,5,9]){
+    const parentHarmony=harmonyAt({key:parent,mode:family.parent,chord:MODES[family.parent].chord});
+    for(const [rotation,mode] of family.modes.entries()){
+      const key=parentHarmony.scalePcs[rotation],info=harmonyAt({key,mode,chord:MODES[mode].chord});
+      assert.equal(parentMajorFor(info).pc,parent);
+      for(const shape of Object.keys(SHAPES)){
+        const coordinates=board=>board.notes.map(note=>[note.string,note.fret,note.pc]);
+        assert.deepEqual(coordinates(fretboardFor(info,shape)),coordinates(fretboardFor(parentHarmony,shape)),`${parent} ${mode} ${shape}`);
+      }
+    }
+  }
 });
 
 test('diatonic harmony keeps its parent shapes while chord roots change, and jazz follows each scale',()=>{
@@ -199,6 +217,6 @@ test('diatonic harmony keeps its parent shapes while chord roots change, and jaz
     }
   }
   assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},0)).name,'C');
-  assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},1)),null);
+  assert.deepEqual(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},1)),{pc:8,name:'A♭',family:'Melodic minor'});
   assert.equal(parentMajorFor(harmonyAt({key:0,progression:true,template:'major251'},2)).name,'G');
 });

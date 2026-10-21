@@ -1,4 +1,4 @@
-import { characteristicNotes } from '../audio/music.js';
+import { characteristicNotes, MODES } from '../audio/music.js';
 // Standard guitar tuning, low E to high E, in MIDI pitches.
 export const TUNING = [40,45,50,55,59,64];
 export const SHAPES = {
@@ -14,13 +14,25 @@ export const POSITIONS = [
   { numeral: 'III', shape: 'C' }, { numeral: 'IV', shape: 'A' },
   { numeral: 'V', shape: 'G' },
 ];
+const ROOT_STRING_SHAPES = {E:[0,2,5],D:[2,4],C:[1,4],A:[1,3],G:[0,3,5]};
+export function cagedPositionFor(board) {
+  const strings=[...new Set(board.notes.filter(note=>note.root).map(note=>note.string))];
+  const matches=Object.entries(ROOT_STRING_SHAPES).filter(([,roots])=>roots.every(string=>strings.includes(string)));
+  const shape=(matches.sort((a,b)=>(strings.length-a[1].length)-(strings.length-b[1].length))[0]?.[0]) || board.shape;
+  return POSITIONS.find(position=>position.shape===shape);
+}
 const CHROMATIC_DEGREES = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'];
-const MAJOR_MODE_ROTATIONS = {major:0,dorian:1,phrygian:2,lydian:3,mixolydian:4,minor:5,locrian:6};
+const MODE_ROTATIONS = {
+  major:0,dorian:1,phrygian:2,lydian:3,mixolydian:4,minor:5,locrian:6,
+  melodic_minor:0,dorian_b2:1,lydian_augmented:2,lydian_dominant:3,mixolydian_b6:4,locrian_natural2:5,altered:6,
+  harmonic_minor:0,locrian_natural6:1,ionian_sharp5:2,dorian_sharp4:3,phrygian_dominant:4,lydian_sharp2:5,ultralocrian:6,
+};
 export function parentMajorFor(harmony) {
-  const rotation = MAJOR_MODE_ROTATIONS[harmony.mode];
+  const rotation = MODE_ROTATIONS[harmony.mode];
   if (rotation === undefined) return null;
   const index = (7 - rotation) % 7;
-  return {pc:harmony.scalePcs[index],name:harmony.scaleNames[index]};
+  const family=MODES[harmony.mode]?.family || 'Major scale';
+  return {pc:harmony.scalePcs[index],name:harmony.scaleNames[index],family};
 }
 export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11]) {
   const definition = SHAPES[shape];
@@ -60,7 +72,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
       const scaleIndex = harmony.scalePcs.indexOf(pc);
       const chordIndex = harmony.chordPcs.indexOf(pc);
       if (chordOnly ? chordIndex < 0 : scaleIndex < 0 && chordIndex < 0) continue;
-      notes.push({ string, fret, midi, pc, root: pc === rootPc, shapeRoot: pc === anchorPc, chord: chordIndex >= 0, scale: scaleIndex >= 0,
+      notes.push({ string, fret, midi, pc, root: pc === rootPc, chord: chordIndex >= 0, scale: scaleIndex >= 0,
         name: chordIndex >= 0 ? harmony.tones[chordIndex] : harmony.scaleNames[scaleIndex],
         characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
@@ -109,8 +121,8 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
     const theoryData = selected ? ` data-theory-group="${group || 'pentatonic'}"` : '';
     const ring = selected ? `<circle class="theory-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="16" fill="none"${group === 'b' ? ' stroke-dasharray="3 2"' : ''}/>` : '';
     const badge = group ? `<g class="theory-badge" aria-hidden="true"><circle cx="${x(note.fret)+17}" cy="${y(note.string)-13}" r="7"/><text x="${x(note.fret)+17}" y="${y(note.string)-10}" text-anchor="middle">${group.toUpperCase()}</text></g>` : '';
-    const kind = note.shapeRoot ? 'root' : note.root ? 'modal-root' : note.chord ? 'chord' : 'scale';
-    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.shapeRoot ? ', CAGED shape root' : note.root ? ', current chord or modal root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}${theoryTitle}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}${badge}</g>`;
+    const kind = note.root ? 'root' : note.chord ? 'chord' : 'scale';
+    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}${theoryTitle}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}${badge}</g>`;
   }
   if (shownGrip) for (const string of shownGrip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
   return svg + '</svg>';

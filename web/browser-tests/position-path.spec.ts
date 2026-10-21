@@ -53,3 +53,14 @@ test('nearest-position mode is only available for chord progressions',async({pag
   await expect(page.locator('#featured-position')).toHaveValue('all');
   await expect(page.locator('#position-path-guide')).toBeHidden();
 });
+
+test('G Lydian names positions from G while retaining the D-major parent geometry',async({page})=>{
+  await page.goto('/');
+  await page.locator('#key').selectOption('7');
+  await page.locator('#quality').selectOption('lydian');
+  await expect(page.locator('#guitar-parent')).toHaveText('Parent fingering: D major · current root: G.');
+  await expect(page.locator('#guitar-diagrams .position-heading h4')).toHaveText([
+    'Position IV · A shape','Position V · G shape','Position I · E shape','Position II · D shape','Position III · C shape',
+  ]);
+  await expect(page.locator('#guitar-diagrams .position-card').first()).toHaveAttribute('data-geometry','E');
+});

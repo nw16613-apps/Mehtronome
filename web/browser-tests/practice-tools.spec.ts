@@ -130,23 +130,22 @@ test('all-sound gaps silence the actual master including long reverb tails, then
 test('related modes use identical parent-major fingerings with modal root colours and labels',async({page})=>{
   await openReference(page);
   const readBoards=()=>page.locator('#guitar-diagrams .position-card').evaluateAll(cards=>cards.map(card=>({
-    position:(card as HTMLElement).dataset.position,
+    geometry:(card as HTMLElement).dataset.geometry,
     notes:Array.from(card.querySelectorAll('.fret-note')).map(note=>[note.getAttribute('data-string'),note.getAttribute('data-fret'),note.getAttribute('data-pc')]),
   })));
   const baseline=await readBoards();
   for(const [mode,key] of [['major','0'],['dorian','2'],['phrygian','4'],['lydian','5'],['mixolydian','7'],['minor','9'],['locrian','11']]){
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
     expect(await readBoards()).toEqual(baseline);
-    await expect(page.locator('#guitar-parent')).toContainText('CAGED shapes: C major');
-    const rootSelector=mode==='major'?'.fret-note.root':'.fret-note.modal-root';
-    expect(await page.locator(`#guitar-diagrams ${rootSelector}`).evaluateAll((notes,key)=>notes.length>0&&notes.every(n=>n.getAttribute('data-pc')===key),key)).toBe(true);
+    await expect(page.locator('#guitar-parent')).toContainText('Parent fingering: C major');
+    expect(await page.locator('#guitar-diagrams .fret-note.root').evaluateAll((notes,key)=>notes.length>0&&notes.every(n=>n.getAttribute('data-pc')===key),key)).toBe(true);
   }
   await page.locator('#quality').selectOption('major');await page.locator('#key').selectOption('5');
   const fMajor=await readBoards();
   await page.locator('#quality').selectOption('mixolydian');await page.locator('#key').selectOption('0');
   expect(await readBoards()).toEqual(fMajor);
-  await expect(page.locator('#guitar-parent')).toHaveText('CAGED shapes: F major · chord/modal root: C.');
-  await expect(page.locator('[data-position="IV"] .position-anchor')).toContainText('Shape anchor: F · A string, fret 8');
+  await expect(page.locator('#guitar-parent')).toHaveText('Parent fingering: F major · current root: C.');
+  await expect(page.locator('[data-position="IV"] .position-anchor')).toContainText('Parent-shape anchor: F · D string, fret 3');
   await expect(page.locator('#characteristic-notes')).toContainText('B♭ (♭7)');
   await page.locator('#fret-labels').selectOption('degrees');
   await expect(page.locator('.fret-note.characteristic text').first()).toHaveText('♭7');

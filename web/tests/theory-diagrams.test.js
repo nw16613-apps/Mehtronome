@@ -27,9 +27,8 @@ test('pentatonic overlays highlight existing positions without moving or replaci
     for(const note of notes){
       assert.equal(note.classes.includes('theory-note'),theory.pcs.includes(note.pc));
       assert.equal(note.group,theory.pcs.includes(note.pc)?'pentatonic':undefined);
-      assert.equal(note.classes.includes('root'),note.pc===board.anchorPc);
-      assert.equal(note.classes.includes('modal-root'),note.pc===board.rootPc&&note.pc!==board.anchorPc);
-      assert.equal(note.classes.includes('chord'),!note.classes.includes('root')&&!note.classes.includes('modal-root')&&harmony.chordPcs.includes(note.pc));
+      assert.equal(note.classes.includes('root'),note.pc===board.rootPc);
+      assert.equal(note.classes.includes('chord'),!note.classes.includes('root')&&harmony.chordPcs.includes(note.pc));
     }
     assert.match(svg,/class="fretboard theory-active theory-pentatonic"/);
     assert.match(svg,/pentatonic overlay: Five-note practice selection/);

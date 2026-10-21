@@ -12,7 +12,8 @@ async function expectOverlay(page:Page,position:string,kind:'pentatonic'|'triads
   const suggestions=kind==='pentatonic'?options.pentatonics:options.triadPairs;
   const suggestion=suggestions.find((option:any)=>option.id===selected)!;
   expect(suggestion).toBeTruthy();
-  const board=fretboardFor(harmony,POSITIONS.find(p=>p.numeral===position)!.shape);
+  const geometry=await card(page,position).getAttribute('data-geometry');
+  const board=fretboardFor(harmony,geometry!);
   const expected=board.notes.filter(n=>suggestion.pcs.includes(n.pc)).map(n=>`${n.string}:${n.fret}:${n.pc}`).sort();
   const actual=await card(page,position).locator('.theory-note').evaluateAll(notes=>notes.map(n=>`${n.getAttribute('data-string')}:${n.getAttribute('data-fret')}:${n.getAttribute('data-pc')}`).sort());
   expect(actual).toEqual(expected);
