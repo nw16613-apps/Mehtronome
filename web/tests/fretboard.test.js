@@ -72,7 +72,7 @@ test('SVG identifies frets, tuning and note roles and changes to degree labels',
   const svg=diagramSvg(board,false,MODES.dorian.degrees,'C Dorian reference');
   assert.ok(svg.includes('role="img"'));
   assert.ok(!svg.includes('class="fret-wire nut"'));
-  assert.ok(svg.includes('string 4, fret 10, chord root'));
+  assert.ok(svg.includes('string 4, fret 10, current chord or modal root'));
   assert.equal(board.anchorName,'B♭');
   assert.ok(diagramSvg(board,true,MODES.dorian.degrees,'Degrees').includes('>♭3</text>'));
 });

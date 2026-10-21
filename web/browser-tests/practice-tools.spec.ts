@@ -138,7 +138,8 @@ test('related modes use identical parent-major fingerings with modal root colour
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
     expect(await readBoards()).toEqual(baseline);
     await expect(page.locator('#guitar-parent')).toContainText('CAGED shapes: C major');
-    expect(await page.locator('#guitar-diagrams .fret-note.root').evaluateAll((notes,key)=>notes.length>0&&notes.every(n=>n.getAttribute('data-pc')===key),key)).toBe(true);
+    const rootSelector=mode==='major'?'.fret-note.root':'.fret-note.modal-root';
+    expect(await page.locator(`#guitar-diagrams ${rootSelector}`).evaluateAll((notes,key)=>notes.length>0&&notes.every(n=>n.getAttribute('data-pc')===key),key)).toBe(true);
   }
   await page.locator('#quality').selectOption('major');await page.locator('#key').selectOption('5');
   const fMajor=await readBoards();

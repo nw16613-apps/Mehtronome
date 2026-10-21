@@ -9,7 +9,7 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await expect(page.locator('#chord-name')).toHaveText('Am13');
   await expect(page.locator('#count-in')).not.toBeChecked();
   await expect(page.locator('#fret-labels')).toHaveValue('degrees');
-  await expect(page.locator('.fret-note.root text').first()).toHaveText('1');
+  await expect(page.locator('.fret-note.modal-root text').first()).toHaveText('1');
   for(const [id,mode] of Object.entries(MODES)){
     await page.locator('#quality').selectOption(id);
     await expect(page.locator('#chord')).toHaveValue(mode.chord);

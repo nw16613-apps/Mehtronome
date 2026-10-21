@@ -44,3 +44,14 @@ test('position numerals always retain the E D C A G shape mapping',()=>{
   const shapeFor=Object.fromEntries(POSITIONS.map(position=>[position.numeral,position.shape]));
   for(const choice of path)assert.equal(choice.shape,shapeFor[choice.numeral]);
 });
+
+test('CAGED shape roots stay on their characteristic strings in every major-scale mode',()=>{
+  const expected={E:[0,2,5],D:[2,4],C:[1,4],A:[1,3],G:[0,3,5]};
+  for(const mode of ['major','dorian','phrygian','lydian','mixolydian','minor','locrian']){
+    const boardHarmony=harmonyAt({key:9,mode,chord:'min7'});
+    for(const {shape} of POSITIONS){
+      const strings=[...new Set(fretboardFor(boardHarmony,shape).notes.filter(note=>note.shapeRoot).map(note=>note.string))];
+      assert.deepEqual(strings,expected[shape],`${mode} ${shape} shape roots`);
+    }
+  }
+});
