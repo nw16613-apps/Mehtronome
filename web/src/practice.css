@@ -156,8 +156,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .workspace>.guitar { grid-column:1/-1; }
 .guitar:not(.has-featured) #guitar-diagrams {
   display:grid;
-  grid-template-columns:repeat(5,minmax(190px,1fr));
-  gap:10px;
+  grid-template-columns:repeat(5,minmax(300px,1fr));
+  gap:14px;
   overflow-x:auto;
   padding-bottom:8px;
   scroll-snap-type:x proximity;
@@ -165,5 +165,5 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 }
 .guitar:not(.has-featured) .position-card { scroll-snap-align:start; }
 .guitar:not(.has-featured) .position-heading { align-items:flex-start; gap:5px; }
-.guitar:not(.has-featured) .position-heading h4 { font-size:12px; }
-.guitar:not(.has-featured) .position-heading span { font-size:9px; white-space:nowrap; }
+.guitar:not(.has-featured) .position-heading h4 { font-size:14px; }
+.guitar:not(.has-featured) .position-heading span { font-size:10px; white-space:nowrap; }

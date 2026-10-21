@@ -158,13 +158,14 @@ test('melodic-minor A and G parent shapes place the flat third on the intended s
   await expect(position('V').locator('.fret-note[data-string="3"][data-pc="3"]')).not.toHaveCount(0);
 });
 
-test('all five CAGED positions form one horizontal overview without widening the page',async({page})=>{
+test('all five CAGED positions form one readable horizontal strip without widening the page',async({page})=>{
   await page.goto('/');await page.setViewportSize({width:1440,height:900});
   const diagrams=page.locator('#guitar-diagrams'),cards=diagrams.locator('.position-card');
   await expect(cards).toHaveCount(5);
   const desktopTops=await cards.evaluateAll(nodes=>nodes.map(node=>Math.round(node.getBoundingClientRect().top)));
   expect(new Set(desktopTops).size).toBe(1);
-  expect(await diagrams.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+  expect(await cards.first().evaluate(node=>node.getBoundingClientRect().width)).toBeGreaterThanOrEqual(300);
+  expect(await diagrams.evaluate(node=>node.scrollWidth>node.clientWidth)).toBe(true);
 
   await page.setViewportSize({width:390,height:844});
   const mobileTops=await cards.evaluateAll(nodes=>nodes.map(node=>Math.round(node.getBoundingClientRect().top)));
