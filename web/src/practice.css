@@ -133,27 +133,3 @@ html[data-theme=dark] { --theory-b:#ffd28f; --theory-b-ink:#243535; }
   .theory-controls select { min-height:44px; }
   .guitar.has-featured .featured-position .theory-controls { grid-template-columns:minmax(0,1fr); }
 }
-
-.voicing-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.voicing-controls [hidden],.voicing-study [hidden] { display:none; }
-.voicing-study { margin-top:20px; border-top:1px solid var(--line,var(--practice-line)); padding-top:14px; }
-.voicing-study>summary { font-size:12px; cursor:pointer; color:var(--ink,var(--practice-ink)); }
-.voicing-study-fields { margin-top:14px; grid-template-columns:repeat(2,minmax(0,1fr)); }
-.voicing-fret-inputs { display:flex; align-items:center; gap:8px; margin-top:6px; }
-.voicing-fret-inputs input { width:65px; min-width:0; box-sizing:border-box; padding:9px; background:var(--field,var(--practice-field)); color:var(--ink,var(--practice-ink)); border:1px solid var(--line,var(--practice-line)); border-radius:5px; font-size:14px; }
-.voicing-pin-filter { margin-top:16px; }
-.voicing-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.voicing-actions .practice-button { font-size:10px; padding:8px 10px; }
-.voicing-actions [aria-pressed=true] { background:var(--accent,var(--practice-accent)); color:var(--on-accent,var(--practice-on-accent)); }
-.voicing-formula,.voicing-changes,.voicing-motion,.mapped-chord-caption { margin:9px 4px; font-size:11px; line-height:1.7; color:var(--muted,var(--practice-muted)); }
-.voicing-formula,.mapped-chord-caption { color:var(--ink,var(--practice-ink)); }
-.voicing-motion { border-left:2px solid var(--accent,var(--practice-accent)); padding-left:10px; }
-.mapped-chord-active .fret-note:not(.mapped-chord-note) { opacity:.22; }
-.mapped-chord-active .mapped-chord-note { opacity:1; }
-.fretboard .mapped-chord-ring { fill:none!important; stroke:var(--accent,var(--practice-accent))!important; stroke-width:3!important; }
-.fretboard .voice-motion { font-size:9px!important; font-weight:700; fill:var(--ink,var(--practice-ink))!important; paint-order:stroke; stroke:var(--panel,var(--practice-panel)); stroke-width:3; }
-@media(max-width:760px) {
-  .voicing-controls,.voicing-study-fields { grid-template-columns:minmax(0,1fr); }
-  .voicing-fret-inputs input { min-height:44px; }
-  .voicing-actions .practice-button { min-height:44px; }
-}
