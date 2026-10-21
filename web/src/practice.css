@@ -103,3 +103,33 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .tempo-controls>div { width:156px; }
   .check { min-height:44px; }
 }
+
+:root { --theory-b:#a65a18; --theory-b-ink:#fff; }
+html[data-theme=dark] { --theory-b:#ffd28f; --theory-b-ink:#243535; }
+
+/* Explore melodic materials without replacing established CAGED fingerings. */
+.theory-controls { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; margin:14px 0 10px; }
+.theory-controls label { display:block; min-width:0; font-size:10px; color:var(--muted,var(--practice-muted,#64735f)); }
+.theory-controls select { display:block; width:100%; min-width:0; box-sizing:border-box; margin-top:5px; padding:8px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; }
+.theory-controls [hidden] { display:none; }
+.theory-description { margin:10px 4px 14px; color:var(--muted,var(--practice-muted,#64735f)); font-size:11px; line-height:1.65; }
+.theory-description h5 { margin:0 0 6px; color:var(--ink,var(--practice-ink,#243535)); font-size:12px; }
+.theory-description p { margin:6px 0; }
+.theory-tones { font-variant-numeric:tabular-nums; }
+.theory-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin:8px 0; font-size:10px; }
+.theory-legend>span { display:flex; gap:6px; align-items:center; }
+.theory-legend i { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:2px solid var(--accent,var(--practice-accent)); font-style:normal; font-weight:700; color:var(--ink,var(--practice-ink,#243535)); }
+.theory-legend .theory-group-b i { border-style:dashed; border-color:var(--theory-b); }
+.theory-active .fret-note:not(.theory-note) { opacity:.22; }
+.theory-active .theory-note { opacity:1; }
+.fretboard .theory-ring { fill:none!important; stroke:var(--accent,var(--practice-accent))!important; stroke-width:2.5!important; }
+.fretboard .theory-b .theory-ring { stroke:var(--theory-b)!important; }
+.fretboard .theory-badge circle { fill:var(--accent,var(--practice-accent))!important; stroke:var(--panel,var(--practice-panel))!important; stroke-width:1!important; }
+.fretboard .theory-b .theory-badge circle { fill:var(--theory-b)!important; }
+.fretboard .theory-badge text { fill:var(--on-accent,var(--practice-on-accent))!important; font-size:9px!important; font-weight:700; }
+.fretboard .theory-b .theory-badge text { fill:var(--theory-b-ink)!important; }
+.guitar.has-featured .featured-position .theory-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(max-width:760px) {
+  .theory-controls select { min-height:44px; }
+  .guitar.has-featured .featured-position .theory-controls { grid-template-columns:minmax(0,1fr); }
+}

@@ -70,14 +70,22 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
 function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
-/** @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip] */
-export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null) {
+/**
+ * @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip]
+ * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],groups?:Array<{name:string,pcs:number[]}>} | null} [theory]
+ */
+export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
   const columns = board.end - board.start + 1;
   const spacing = 400 / columns;
   const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;
   const y = string => 30 + (5 - string) * 28;
   const nut = board.start === 0 ? 120 : 40;
-  let svg = `<svg class="fretboard${grip ? ' grip-active' : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(title)}"><title>${escape(title)}</title>`;
+  // Theory is a pitch-class overlay on the established fingering, never a new
+  // position. Give it its own layer so finger badges and modal rings do not
+  // obscure the pentatonic or triad-pair markers.
+  const shownGrip = theory ? null : grip;
+  const shownTitle = theory ? `${title}, ${theory.kind === 'pentatonic' ? 'pentatonic' : 'triad-pair'} overlay: ${theory.name}` : title;
+  let svg = `<svg class="fretboard${shownGrip ? ' grip-active' : ''}${theory ? ` theory-active theory-${theory.kind}` : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
   for (let fret = board.start; fret <= board.end; fret++) {
     svg += `<text class="fret-number" x="${x(fret)}" y="205" text-anchor="middle">${fret === 0 ? 'open' : fret}</text>`;
   }
@@ -90,11 +98,20 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   });
   for (const note of board.notes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
-    const colour = highlight && note.characteristic;
-    const finger = grip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
+    const colour = !theory && highlight && note.characteristic;
+    const finger = shownGrip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
+    const selected = theory?.pcs.includes(note.pc);
+    const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
+    const group = groupIndex === 0 ? 'a' : groupIndex === 1 ? 'b' : null;
+    const groupName = group ? theory.groups[groupIndex].name : null;
+    const theoryTitle = !theory ? '' : selected ? group ? `, triad ${group.toUpperCase()}: ${groupName}` : `, ${theory.name}` : ', outside the selected overlay';
+    const theoryClass = selected ? ` theory-note${group ? ` theory-${group}` : ''}` : '';
+    const theoryData = selected ? ` data-theory-group="${group || 'pentatonic'}"` : '';
+    const ring = selected ? `<circle class="theory-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="16" fill="none"${group === 'b' ? ' stroke-dasharray="3 2"' : ''}/>` : '';
+    const badge = group ? `<g class="theory-badge" aria-hidden="true"><circle cx="${x(note.fret)+17}" cy="${y(note.string)-13}" r="7"/><text x="${x(note.fret)+17}" y="${y(note.string)-10}" text-anchor="middle">${group.toUpperCase()}</text></g>` : '';
     const kind = note.root ? 'root' : note.chord ? 'chord' : 'scale';
-    svg += `<g class="fret-note ${kind}${highlight && note.characteristic ? ' characteristic' : ''}${finger ? ' grip-note' : ''}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}</g>`;
+    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}${theoryTitle}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}${badge}</g>`;
   }
-  if (grip) for (const string of grip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
+  if (shownGrip) for (const string of shownGrip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
   return svg + '</svg>';
 }
