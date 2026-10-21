@@ -73,8 +73,22 @@ function escape(text) {
 /**
  * @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip]
  * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],groups?:Array<{name:string,pcs:number[]}>} | null} [theory]
+ * @param {{name:string,notes:Array<{string:number,fret:number,midi:number,pc:number,name:string,root:boolean,chord:boolean,scaleIndex:number,chromaticDegree:string}>,movements?:Array<{string:number,delta:number|null,common:boolean}>} | null} [mappedChord]
  */
-export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
+export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null, mappedChord = null) {
+  const mappedNotes = new Map((mappedChord?.notes || [])
+    .filter(note => Number.isInteger(note.string) && note.string >= 0 && note.string < TUNING.length && Number.isInteger(note.fret) && note.fret >= 1 && note.fret <= 24)
+    .map(note => [`${note.string}:${note.fret}`,note]));
+  const mapped = mappedNotes.size > 0;
+  if (mapped) {
+    // A chosen chord is a physical string/fret overlay, rather than a pitch-class
+    // selection. Expand only this rendered copy, retaining the CAGED fingering.
+    const notes = new Map(board.notes.map(note => [`${note.string}:${note.fret}`,note]));
+    for (const [key,note] of mappedNotes) notes.set(key,{...notes.get(key),...note});
+    board = {...board, notes:[...notes.values()],
+      start:Math.min(board.start,...[...mappedNotes.values()].map(note => note.fret)),
+      end:Math.max(board.end,...[...mappedNotes.values()].map(note => note.fret))};
+  }
   const columns = board.end - board.start + 1;
   const spacing = 400 / columns;
   const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;
@@ -83,9 +97,10 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   // Theory is a pitch-class overlay on the established fingering, never a new
   // position. Give it its own layer so finger badges and modal rings do not
   // obscure the pentatonic or triad-pair markers.
-  const shownGrip = theory ? null : grip;
-  const shownTitle = theory ? `${title}, ${theory.kind === 'pentatonic' ? 'pentatonic' : 'triad-pair'} overlay: ${theory.name}` : title;
-  let svg = `<svg class="fretboard${shownGrip ? ' grip-active' : ''}${theory ? ` theory-active theory-${theory.kind}` : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
+  const shownTheory = mapped ? null : theory;
+  const shownGrip = mapped || shownTheory ? null : grip;
+  const shownTitle = mapped ? `${title}, selected chord: ${mappedChord.name}` : shownTheory ? `${title}, ${shownTheory.kind === 'pentatonic' ? 'pentatonic' : 'triad-pair'} overlay: ${shownTheory.name}` : title;
+  let svg = `<svg class="fretboard${shownGrip ? ' grip-active' : ''}${shownTheory ? ` theory-active theory-${shownTheory.kind}` : ''}${mapped ? ' mapped-chord-active' : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
   for (let fret = board.start; fret <= board.end; fret++) {
     svg += `<text class="fret-number" x="${x(fret)}" y="205" text-anchor="middle">${fret === 0 ? 'open' : fret}</text>`;
   }
@@ -98,19 +113,28 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   });
   for (const note of board.notes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
-    const colour = !theory && highlight && note.characteristic;
+    const colour = !mapped && !shownTheory && highlight && note.characteristic;
     const finger = shownGrip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
-    const selected = theory?.pcs.includes(note.pc);
-    const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
+    const selected = shownTheory?.pcs.includes(note.pc);
+    const groupIndex = selected && shownTheory?.kind === 'triads' ? shownTheory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
     const group = groupIndex === 0 ? 'a' : groupIndex === 1 ? 'b' : null;
-    const groupName = group ? theory.groups[groupIndex].name : null;
-    const theoryTitle = !theory ? '' : selected ? group ? `, triad ${group.toUpperCase()}: ${groupName}` : `, ${theory.name}` : ', outside the selected overlay';
+    const groupName = group ? shownTheory.groups[groupIndex].name : null;
+    const theoryTitle = !shownTheory ? '' : selected ? group ? `, triad ${group.toUpperCase()}: ${groupName}` : `, ${shownTheory.name}` : ', outside the selected overlay';
     const theoryClass = selected ? ` theory-note${group ? ` theory-${group}` : ''}` : '';
     const theoryData = selected ? ` data-theory-group="${group || 'pentatonic'}"` : '';
     const ring = selected ? `<circle class="theory-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="16" fill="none"${group === 'b' ? ' stroke-dasharray="3 2"' : ''}/>` : '';
     const badge = group ? `<g class="theory-badge" aria-hidden="true"><circle cx="${x(note.fret)+17}" cy="${y(note.string)-13}" r="7"/><text x="${x(note.fret)+17}" y="${y(note.string)-10}" text-anchor="middle">${group.toUpperCase()}</text></g>` : '';
+    const mappedNote = mappedNotes.has(`${note.string}:${note.fret}`);
+    const movement = mappedNote ? mappedChord.movements?.find(move => move.string === note.string) : null;
+    const held = movement && movement.common === true;
+    const moving = movement && !held && Number.isFinite(movement.delta) && movement.delta !== 0;
+    const motion = held ? 'held' : moving ? `${movement.delta > 0 ? '+' : ''}${movement.delta}` : '';
+    const motionTitle = held ? ', held note, 0 semitones' : moving ? `, voice moves ${movement.delta > 0 ? 'up' : 'down'} ${Math.abs(movement.delta)} semitone${Math.abs(movement.delta) === 1 ? '' : 's'}` : '';
+    const mappedClass = mappedNote ? ` mapped-chord-note${held ? ' voice-held' : moving ? ' voice-moving' : ''}` : '';
+    const mappedRing = mappedNote ? `<circle class="mapped-chord-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="16" fill="none"/>` : '';
+    const motionBadge = motion ? `<text class="voice-motion" x="${x(note.fret)+16}" y="${y(note.string)-12}" text-anchor="start" aria-hidden="true">${motion}</text>` : '';
     const kind = note.root ? 'root' : note.chord ? 'chord' : 'scale';
-    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}${theoryTitle}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}${badge}</g>`;
+    svg += `<g class="fret-note ${kind}${colour ? ' characteristic' : ''}${finger ? ' grip-note' : ''}${theoryClass}${mappedClass}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"${theoryData}><title>${escape(`${note.name}, string ${6-note.string}, ${note.fret === 0 ? 'open' : `fret ${note.fret}`}${note.root ? ', chord root' : note.chord ? ', chord tone' : ', scale tone'}${colour ? ', characteristic mode note' : ''}${finger ? `, recommended chord, finger ${finger}` : ''}${theoryTitle}${mappedNote ? `, selected chord: ${mappedChord.name}${motionTitle}` : ''}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="13"/>${colour ? `<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="${finger ? 19 : 17}"/>` : ''}${finger ? `<circle class="grip-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="15"/>` : ''}${ring}${mappedRing}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text>${finger ? `<g class="grip-finger"><circle cx="${x(note.fret)+18}" cy="${y(note.string)-12}" r="7"/><text x="${x(note.fret)+18}" y="${y(note.string)-9}" text-anchor="middle">${finger}</text></g>` : ''}${badge}${motionBadge}</g>`;
   }
   if (shownGrip) for (const string of shownGrip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
   return svg + '</svg>';

@@ -5,6 +5,7 @@ export const PRESET_CONTROLS = [
   'sequence-swing','sequence-volume','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume',
   'fret-labels','voicing-type','voicing-strings','voicing-labels','audition','highlight-mode','show-grip',
   'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end',
+  'voicing-approach','voicing-region','voicing-position','voicing-fret-start','voicing-fret-end','voicing-top','voicing-leading','voicing-pinned-only',
   'trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position',
   ...['I','II','III','IV','V'].flatMap(position=>[`theory-view-${position}`,`theory-choice-${position}`]),
 ];

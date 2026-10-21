@@ -35,6 +35,19 @@ from a single sample clock, with smooth volume changes. It includes:
   choice in practice presets. Harmonic-minor modes offer Hirajoshi pentatonics and
   an explicitly named five-note mode selection. Suggestions follow the tonic
   scale through modal vamps and update with other chord/scale changes.
+- **Chord vocabulary** adds shells with optional extensions, rootless guide-tone
+  shapes, triads with extra guide tones, and modal stacks of fourths alongside
+  the existing drop voicings. Each shape lists its exact notes, added colours
+  and omitted chord tones, with a guitar strum of those pitches. Filter by
+  string group and melody/top note. **Position & voice-leading study** links
+  shapes to a CAGED position or keeps a fixed fret area through changes; nearby
+  shapes that extend up to two frets are marked. **Use as reference** ranks
+  subsequent choices by physical voice movement, with common tones and
+  semitone movements. **Show in CAGED** maps one exact chord onto its position
+  without altering the established scale fingering; clear it to restore other
+  overlays. **Pin chord** saves up to 100 favourites by chord, mode, approach and
+  position in this browser. Pins are separate from practice preset exports;
+  the study filters are included in presets. Reference chords are session-only.
 - Fresh sessions start in A Dorian over Am13, with the count-in off and numeric
   degree labels in both guitar sections. Drop voicings default to their highest
   available string set. Mode suggestions use seventh chords,
