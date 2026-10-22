@@ -192,11 +192,12 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .notation-scroll { display:grid; gap:12px; overflow:visible; border:1px solid #d4cdbc; border-radius:10px; background:#fdfbf5; padding:10px; box-shadow:inset 0 1px #fff,0 8px 24px rgb(34 30 24 / .08); }
 .exercise-notation { display:block; width:100%; height:auto; min-width:0; color:#17201d; }
 .exercise-notation .notation-paper,.exercise-notation .tab-fret-bg { fill:#fffefa; }
-.exercise-notation :is(.notation-line,.ledger-line,.bar-line,.note-stem,.beat-guide,.note-beam,.treble-clef,.time-signature,.tab-clef,.exercise-source,.exercise-degree,.tab-fret,.tab-fret-bg,.accidental) { pointer-events:none; }
+.exercise-notation :is(.notation-line,.ledger-line,.bar-line,.note-stem,.beat-guide,.note-beam,.pattern-bracket,.treble-clef,.time-signature,.tab-clef,.exercise-source,.exercise-degree,.tab-fret,.tab-fret-bg,.accidental) { pointer-events:none; }
 .exercise-note { touch-action:manipulation; }
 .exercise-notation .notation-line,.exercise-notation .ledger-line,.exercise-notation .bar-line,.exercise-notation .note-stem { stroke:#202622; stroke-width:1.05; shape-rendering:geometricPrecision; }
 .exercise-notation .bar-line { stroke-width:2; }
 .exercise-notation .beat-guide { stroke:#9ba29d; stroke-width:.6; opacity:.35; }
+.exercise-notation .pattern-bracket { fill:none; stroke:#8d617f; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; opacity:.72; }
 .exercise-notation .note-head { fill:#17201d; }
 .exercise-notation .note-beam { stroke:#17201d; stroke-width:5.5; stroke-linecap:square; }
 .exercise-notation .treble-clef { fill:#17201d; font:54px Georgia,serif; }

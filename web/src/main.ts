@@ -151,7 +151,6 @@ let exerciseRepetitions=0;
 let exerciseSelectionStart:number|null=null,exerciseSelectionEnd:number|null=null;
 let exerciseDragPointer:number|null=null,exerciseDragMoved=false,suppressExerciseNoteClick=false;
 const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
-let exerciseHistory:any[]=[];let exerciseHistoryIndex=-1;
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
 let transportInView = true;
@@ -241,8 +240,12 @@ function renderCagedExercise(position:any,board:any,info:any) {
   input('exercise-auto-tempo').checked=exerciseView.autoTempo;select('exercise-auto-every').value=String(exerciseView.autoEvery);input('exercise-auto-increment').value=String(exerciseView.autoIncrement);
   const focusButton=el<HTMLButtonElement>('exercise-focus'),notationFocused=el('caged-exercise').classList.contains('notation-focused');
   focusButton.textContent=notationFocused?'Exit notation focus':'Focus notation';focusButton.setAttribute('aria-pressed',String(notationFocused));
+  const exerciseOptions=Array.from(select('exercise-study').options),exerciseIndex=exerciseOptions.findIndex(option=>option.value===exerciseView.study);
+  const previousExercise=el<HTMLButtonElement>('exercise-history-back'),nextExercise=el<HTMLButtonElement>('exercise-history-forward');
+  previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
+  previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
+  nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
   reflectExerciseSelection();
-  if(!exerciseHistory.length)rememberExercise();
 }
 
 function scheduleExercise(scheduledStart?:number) {
@@ -735,7 +738,6 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-loop'&&target instanceof HTMLInputElement)exerciseView.loop=target.checked;
   if(target.id==='exercise-backing'&&target instanceof HTMLInputElement)exerciseView.backing=target.checked;
   renderGuitar();
-  rememberExercise();
   document.getElementById(target.id)?.focus({preventScroll:true});
 }
 el('caged-exercise').addEventListener('input',handleExerciseControl);
@@ -751,8 +753,13 @@ async function auditionExerciseNote(index:number){
 }
 function chooseOrAuditionExerciseNote(index:number){void auditionExerciseNote(index);}
 function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked};}
-function rememberExercise(){const snapshot=exerciseSnapshot(),encoded=JSON.stringify(snapshot);if(JSON.stringify(exerciseHistory[exerciseHistoryIndex])===encoded)return;exerciseHistory=exerciseHistory.slice(0,exerciseHistoryIndex+1);exerciseHistory.push(snapshot);exerciseHistoryIndex=exerciseHistory.length-1;}
 function restoreExercise(snapshot:any){if(!snapshot)return;Object.assign(exerciseView,snapshot);stopExercisePreview();renderGuitar();}
+function moveExercise(direction:number){
+  const options=Array.from(select('exercise-study').options),index=options.findIndex(option=>option.value===exerciseView.study),next=options[index+direction];if(!next)return;
+  stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseView.study=next.value;
+  if(['alternating','chordtonesalternating'].includes(next.value)&&['up-down','down-up'].includes(exerciseView.motion))exerciseView.motion='ascending';
+  renderGuitar();select('exercise-study').focus({preventScroll:true});
+}
 function exerciseFavourites(){try{return JSON.parse(localStorage.getItem(EXERCISE_FAVOURITES_KEY)||'[]');}catch{return [];}}
 function favouriteExercise(){const favourites=exerciseFavourites(),snapshot=exerciseSnapshot(),key=JSON.stringify(snapshot);if(!favourites.some((item:any)=>JSON.stringify(item)===key))favourites.push(snapshot);localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(favourites.slice(-30)));const button=document.querySelector<HTMLButtonElement>('#exercise-favourite');if(button)button.textContent='★ Saved';}
 function exportExerciseSvg(){
@@ -802,8 +809,8 @@ el('caged-exercise').addEventListener('click',event=>{
   if(event.target.closest('#exercise-focus'))setNotationFocus(!el('caged-exercise').classList.contains('notation-focused'));
   const note=event.target.closest<SVGElement>('.exercise-note');if(note){if(suppressExerciseNoteClick)suppressExerciseNoteClick=false;else chooseOrAuditionExerciseNote(Number(note.dataset.noteIndex));}
   const ratio=event.target.closest<HTMLElement>('[data-tempo-ratio]');if(ratio){exerciseView.tempoLinked=ratio.dataset.tempoRatio==='1';exerciseView.tempo=Math.round(settings.bpm*Number(ratio.dataset.tempoRatio));renderGuitar();}
-  if(event.target.closest('#exercise-history-back')&&exerciseHistoryIndex>0)restoreExercise(exerciseHistory[--exerciseHistoryIndex]);
-  if(event.target.closest('#exercise-history-forward')&&exerciseHistoryIndex<exerciseHistory.length-1)restoreExercise(exerciseHistory[++exerciseHistoryIndex]);
+  if(event.target.closest('#exercise-history-back'))moveExercise(-1);
+  if(event.target.closest('#exercise-history-forward'))moveExercise(1);
   if(event.target.closest('#exercise-favourite'))favouriteExercise();
   if(event.target.closest('#exercise-export'))exportExerciseSvg();
   if(event.target.closest('#exercise-print'))window.print();

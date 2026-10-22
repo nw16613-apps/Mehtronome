@@ -149,6 +149,7 @@ test('notation aligns its single exercise title, written guitar notes and tablat
   assert.match(svg,/>A Dorian triads</);
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="tab-fret"/g)||[]).length,flattenExercise(groups).length);
+  assert.equal((svg.match(/class="pattern-bracket"/g)||[]).length,groups.length);
 });
 
 test('long notation wraps into multiple complete systems',()=>{
@@ -159,6 +160,7 @@ test('long notation wraps into multiple complete systems',()=>{
   assert.equal((svg.match(/class="treble-clef"/g)||[]).length,(svg.match(/class="exercise-notation"/g)||[]).length);
   assert.equal((svg.match(/class="phrase-cell/g)||[]).length,0);
   assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
+  assert.equal((svg.match(/class="pattern-bracket"/g)||[]).length,groups.length);
   const indexes=[...svg.matchAll(/class="exercise-note[^>]*data-note-index="(\d+)"/g)].map(match=>Number(match[1]));
   assert.deepEqual(indexes,Array.from({length:flattenExercise(groups).length},(_,index)=>index));
 });

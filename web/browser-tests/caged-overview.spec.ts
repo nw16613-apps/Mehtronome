@@ -137,7 +137,7 @@ test('jazz language and superimposition studies render synchronized notation and
   }
 });
 
-test('notation workspace supports display modes, tempo tools, history, favourites and export',async({page})=>{
+test('notation workspace supports display modes, ordered exercise navigation, favourites and export',async({page})=>{
   await openReference(page);
   const exercise=page.locator('#caged-exercise');
   await exercise.locator('#exercise-display').selectOption('names');
@@ -147,9 +147,12 @@ test('notation workspace supports display modes, tempo tools, history, favourite
   await expect(exercise.locator('.notation-scroll')).toHaveClass(/zoom-large/);
   await exercise.locator('[data-tempo-ratio=".5"]').click();
   await expect(exercise.locator('#exercise-tempo')).toHaveValue('45');
-  await exercise.locator('#exercise-study').selectOption('thirds');
+  await expect(exercise.locator('#exercise-study')).toHaveValue('harmonized');
   await exercise.locator('#exercise-history-back').click();
-  await expect(exercise.locator('#exercise-study')).not.toHaveValue('thirds');
+  await expect(exercise.locator('#exercise-study')).toHaveValue('cells');
+  await exercise.locator('#exercise-history-forward').click();
+  await expect(exercise.locator('#exercise-study')).toHaveValue('harmonized');
+  await expect(exercise.locator('.pattern-bracket').first()).toBeVisible();
   await exercise.locator('#exercise-favourite').click();
   await expect(exercise.locator('#exercise-favourite')).toHaveText('★ Saved');
   await exercise.locator('#exercise-display').selectOption('both');
