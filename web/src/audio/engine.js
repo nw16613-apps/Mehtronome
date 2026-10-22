@@ -11,7 +11,7 @@ export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
-  sequence:false, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
+  sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
@@ -23,6 +23,16 @@ export function gapAt(settings, bar) {
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
 export const minor = [0, 2, 3, 5, 7, 8, 10];
+
+export function melodicNotePool(source, harmony, chordMidi) {
+  if(source==='guide') return chordMidi.length>3 ? [chordMidi[1],chordMidi[3]] : chordMidi.slice(1,3);
+  if(source==='mode'||source==='pentatonic'){
+    const root=chordMidi[0]+((harmony.scalePcs[0]-chordMidi[0])%12+12)%12;
+    const scale=harmony.scalePcs.map(pc=>root+((pc-harmony.scalePcs[0]+12)%12));
+    return source==='pentatonic' ? [scale[0],scale[1],scale[2],scale[4],scale[5]] : scale;
+  }
+  return chordMidi;
+}
 
 export function chordNotes(key, isMinor, degree = 0) {
   const scale = isMinor ? minor : major;
@@ -168,15 +178,19 @@ export class Engine {
   setChord(step) {
     this.step = step;
     const s = this.settings;
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${step}`;
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${step}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
-    this.chordMidi = this.settings.progression ? harmonyAt(this.settings, step).midi : pedalNotes(this.settings);
+    const harmony=harmonyAt(this.settings,step);
+    this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
     this.assignPadVoices();
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
-    this.nextChordMidi = s.progression ? harmonyAt(s,progressionStep(s,bar+1)).midi : this.chordMidi;
+    const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
+    this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
+    this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
+    this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
   }
 
   assignPadVoices() {
@@ -236,7 +250,9 @@ export class Engine {
         }
         const step = s.progression ? progressionStep(s, bar) : 0;
         this.setChord(step);
-        this.nextChordMidi = s.progression ? harmonyAt(s,progressionStep(s,bar+1)).midi : this.chordMidi;
+        const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmonyAt(s,this.step);
+        this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
+        this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
         this.clickAge = 0;
         this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
         this.clickStrength = 1;
@@ -261,7 +277,7 @@ export class Engine {
       const click = t < .06 ? Math.sin(2 * Math.PI * this.clickFrequency * t) * Math.exp(-100 * t) : 0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
       if(s.sequence && backingActive && !this.auditioning){
-        this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onSequence);
+        this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes);
       }
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render();
       else { this.sequence.left = 0; this.sequence.right = 0; }

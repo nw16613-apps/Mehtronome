@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SEQUENCE_PATTERNS,sequenceStep} from '../src/audio/sequence.js';
-import {Engine} from '../src/audio/engine.js';
+import {Engine,melodicNotePool} from '../src/audio/engine.js';
 import {harmonyAt} from '../src/audio/music.js';
 
 function setup(settings={}){
@@ -23,7 +23,7 @@ test('sequence subdivisions and swing use exact sample-clock boundaries',()=>{
   }
 });
 
-test('all sequence patterns follow the current chord, respect count-in and are silent during chord previews',()=>{
+test('all sequence patterns follow the harmony, respect count-in and are silent during chord previews',()=>{
   for(const pattern of Object.keys(SEQUENCE_PATTERNS)){
     const engine=setup({countIn:true,progression:true,template:'major251',sequencePattern:pattern});
     const notes=[];const output=new Float32Array(8000*12);
@@ -31,12 +31,38 @@ test('all sequence patterns follow the current chord, respect count-in and are s
     assert.ok(output.subarray(0,16000).every(x=>x===0));
     assert.ok(notes.length>4);
     assert.ok(notes[0].sample>=16000 && notes[0].sample<20000);
-    for(const note of notes)assert.ok(harmonyAt(engine.settings,note.step).midi.includes(note.midi-12));
+    if(!['chromaticApproach','enclosure','voiceLead'].includes(pattern))for(const note of notes)assert.ok(harmonyAt(engine.settings,note.step).midi.includes(note.midi-12));
     assert.ok(notes.some(n=>n.step===1));
     engine.audition(1);const previews=[];
     engine.render(new Float32Array(8000),()=>{},null,null,note=>previews.push(note));
     assert.equal(previews.length,0);
   }
+});
+
+test('melodic note sources expose chord, mode, modal pentatonic and guide-tone pools',()=>{
+  const settings={...new Engine(8000).settings,countIn:false,key:9,mode:'dorian',chord:'min13'};
+  const harmony=harmonyAt(settings,0),chord=harmony.midi;
+  assert.deepEqual(melodicNotePool('chord',harmony,chord),chord);
+  assert.equal(melodicNotePool('mode',harmony,chord).length,7);
+  assert.deepEqual(melodicNotePool('pentatonic',harmony,chord).map(n=>n%12),[9,11,0,4,6]);
+  assert.deepEqual(melodicNotePool('guide',harmony,chord),[chord[1],chord[3]]);
+});
+
+test('formula patterns retain their cells and jazz approaches resolve',()=>{
+  const indices=pattern=>Array.from({length:8},(_,grid)=>sequenceStep(pattern,grid,7,2)?.index??null);
+  assert.deepEqual(indices('formula1235'),[0,1,2,4,1,2,3,5]);
+  assert.deepEqual(indices('formula1324'),[0,2,1,3,1,3,2,4]);
+  assert.deepEqual(indices('thirds'),[0,2,1,3,2,4,3,5]);
+  assert.deepEqual(Array.from({length:6},(_,grid)=>sequenceStep('chromaticApproach',grid,4,2).semitones),[-1,0,-1,0,-1,0]);
+  assert.deepEqual(Array.from({length:6},(_,grid)=>sequenceStep('enclosure',grid,4,2).semitones),[1,-1,0,1,-1,0]);
+});
+
+test('progression-leading phrase targets a note in the coming chord',()=>{
+  const engine=setup({progression:true,template:'major251',sequencePattern:'voiceLead',sequenceRate:2,beats:4});
+  const notes=[];engine.render(new Float32Array(32000),()=>{},null,null,n=>notes.push(n));
+  const final=notes.find(n=>n.grid===7);
+  const next=harmonyAt(engine.settings,1).midi.map(n=>n+12);
+  assert.ok(final);assert.ok(next.some(n=>n%12===final.midi%12));
 });
 
 test('sequence audio has its own volume, density and enable switch',()=>{
