@@ -74,6 +74,17 @@ test('up/down chord-tone tetrads turn around at each seventh',()=>{
   assert.ok(groups.every(group=>group.notes[0].midi===group.notes.at(-1).midi));
 });
 
+test('down/up chord-tone tetrads travel from the top to the bottom of the position',()=>{
+  const ascending=cagedStudy(board,harmony,'chordtones7','seventh','ascending');
+  const groups=cagedStudy(board,harmony,'chordtones7turnsdown','seventh','ascending');
+  const highest=Math.max(...ascending.flatMap(group=>group.notes.map(note=>note.midi)));
+  assert.equal(groups[0].notes[0].midi,highest);
+  assert.deepEqual(groups.at(-1).notes.map(note=>note.midi),[55,52,48,45,48,52,55]);
+  assert.equal(Math.min(...groups.flatMap(group=>group.notes.map(note=>note.midi))),45);
+  assert.ok(groups.every(group=>group.notes.length===7));
+  assert.ok(groups.every(group=>group.notes[0].midi===group.notes.at(-1).midi));
+});
+
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
   const groups=cagedStudy(board,harmony,'harmonized','triad','ascending').slice(0,2);
   const svg=exerciseNotationSvg(groups,'eighths','A Dorian triads');

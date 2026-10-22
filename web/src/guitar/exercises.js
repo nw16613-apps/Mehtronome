@@ -162,6 +162,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='alternating7')return alternatingSevenths(board,harmony);
   if(study==='chordtones7')return chordToneTetrads(board,harmony,motion);
   if(study==='chordtones7turns')return chordToneTetrads(board,harmony,'up-down');
+  if(study==='chordtones7turnsdown')return chordToneTetrads(board,harmony,'down-up');
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
   return cagedProgressionExercise(board,harmony,material,motion);
 }

@@ -53,6 +53,9 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await expect(exercise.locator('h3')).toContainText('Up/down tetrads from each chord tone');
   await expect(exercise.locator('#exercise-motion')).toBeDisabled();
   await expect(exercise.locator('#exercise-preview')).toContainText('Hear jazz guitar');
+  await exercise.locator('#exercise-study').selectOption('chordtones7turnsdown');
+  await expect(exercise.locator('h3')).toContainText('Down/up tetrads from each chord tone');
+  await expect(exercise.locator('#exercise-motion')).toBeDisabled();
 });
 
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
