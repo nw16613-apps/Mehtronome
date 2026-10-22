@@ -3,6 +3,7 @@ import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
+import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
@@ -29,7 +30,11 @@ export function melodicNotePool(source, harmony, chordMidi) {
   if(source==='mode'||source==='pentatonic'){
     const root=chordMidi[0]+((harmony.scalePcs[0]-chordMidi[0])%12+12)%12;
     const scale=harmony.scalePcs.map(pc=>root+((pc-harmony.scalePcs[0]+12)%12));
-    return source==='pentatonic' ? [scale[0],scale[1],scale[2],scale[4],scale[5]] : scale;
+    if(source==='pentatonic'){
+      const selected=modalPentatonicPcs(harmony);
+      return selected.map(pc=>root+((pc-harmony.scalePcs[0]+12)%12));
+    }
+    return scale;
   }
   return chordMidi;
 }

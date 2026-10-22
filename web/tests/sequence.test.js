@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {SEQUENCE_PATTERNS,sequenceStep} from '../src/audio/sequence.js';
 import {Engine,melodicNotePool} from '../src/audio/engine.js';
 import {harmonyAt} from '../src/audio/music.js';
+import {modalPentatonicPcs} from '../src/guitar/superimposition.js';
 
 function setup(settings={}){
   const engine=new Engine(8000);
@@ -44,8 +45,17 @@ test('melodic note sources expose chord, mode, modal pentatonic and guide-tone p
   const harmony=harmonyAt(settings,0),chord=harmony.midi;
   assert.deepEqual(melodicNotePool('chord',harmony,chord),chord);
   assert.equal(melodicNotePool('mode',harmony,chord).length,7);
-  assert.deepEqual(melodicNotePool('pentatonic',harmony,chord).map(n=>n%12),[9,11,0,4,6]);
+  assert.deepEqual(melodicNotePool('pentatonic',harmony,chord).map(n=>n%12),[9,0,4,6,7]);
   assert.deepEqual(melodicNotePool('guide',harmony,chord),[chord[1],chord[3]]);
+});
+
+test('sequencer modal pentatonics match the curated Guitar reference choice in every mode and key',()=>{
+  for(const mode of ['major','dorian','phrygian','lydian','mixolydian','minor','locrian','melodic_minor','dorian_b2','lydian_augmented','lydian_dominant','mixolydian_b6','locrian_natural2','altered','harmonic_minor','locrian_natural6','ionian_sharp5','dorian_sharp4','phrygian_dominant','lydian_sharp2','ultralocrian'])for(let key=0;key<12;key++){
+    const harmony=harmonyAt({key,mode,chord:'min7'},0);
+    assert.deepEqual(melodicNotePool('pentatonic',harmony,harmony.midi).map(note=>note%12),modalPentatonicPcs(harmony),`${key}/${mode}`);
+  }
+  const lydian=harmonyAt({key:0,mode:'lydian',chord:'maj7sharp11'},0);
+  assert.deepEqual(melodicNotePool('pentatonic',lydian,lydian.midi).map(note=>note%12),[0,4,6,7,11]);
 });
 
 test('formula patterns retain their cells and jazz approaches resolve',()=>{

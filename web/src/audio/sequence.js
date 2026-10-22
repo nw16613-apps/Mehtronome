@@ -3,7 +3,7 @@ import { SEQUENCE_WAVE, SINE, readWave } from './waves.js';
 export const SEQUENCE_SOURCES = {
   chord:{name:'Chord tones',help:'Uses the notes in the sounding chord, including its extensions.'},
   mode:{name:'Current mode',help:'Uses all seven notes of the current mode.'},
-  pentatonic:{name:'Modal pentatonic',help:'Uses a spacious five-note subset chosen from the current mode.'},
+  pentatonic:{name:'Modal pentatonic',help:'Uses the mode-specific pentatonic shown in Guitar reference, retaining its tonic and defining colour notes.'},
   guide:{name:'Guide tones',help:'Concentrates on the third and seventh of the harmony.'},
 };
 

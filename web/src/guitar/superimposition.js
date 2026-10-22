@@ -60,6 +60,22 @@ function fiveNoteCombinations(items) {
   for(let a=0;a<3;a++)for(let b=a+1;b<4;b++)for(let c=b+1;c<5;c++)for(let d=c+1;d<6;d++)for(let e=d+1;e<7;e++)result.push([items[a],items[b],items[c],items[d],items[e]]);
   return result;
 }
+/** The tonic-centred five-note set used by both the diagrams and backing melody. */
+export function modalPentatonicPcs(harmony) {
+  const tonic=harmony.scalePcs[0],minor=PENTATONIC_FORMS.minor;
+  const parentMinorKeys=new Set();
+  for(const root of harmony.scalePcs){
+    const pcs=minor.intervals.map(interval=>(root+interval)%12);
+    if(fits(pcs,harmony.scalePcs))parentMinorKeys.add(pitchKey(pcs));
+  }
+  const colours=characteristicNotes(harmony).map(note=>note.pc);
+  const degreePreference=[0,2,4,6,1,3,5];
+  const indices=fiveNoteCombinations([0,1,2,3,4,5,6]).filter(candidate=>!parentMinorKeys.has(pitchKey(candidate.map(index=>harmony.scalePcs[index])))).sort((a,b)=>{
+    const score=candidate=>candidate.reduce((total,index)=>total+(index===0?30:0)+(colours.includes(harmony.scalePcs[index])?50:0)+(7-degreePreference.indexOf(index)),0);
+    return score(b)-score(a)||a.join('').localeCompare(b.join(''));
+  })[0];
+  return indices.map(index=>harmony.scalePcs[index]);
+}
 function pentatonicsFor(harmony) {
   const mode=MODES[harmony.mode],tonic=harmony.scalePcs[0],tonicName=harmony.scaleNames[0];
   const minor=PENTATONIC_FORMS.minor;
@@ -73,14 +89,7 @@ function pentatonicsFor(harmony) {
       explanation:`One of the complete minor pentatonics contained in the parent ${mode.family || 'Major scale'}. Over ${tonicName} ${mode.name}, its notes become ${details(pcs,harmony).degrees.join('–')}.${colourDescription(pcs,harmony)}`,
     });
   }
-  const minorKeys=new Set(parentMinors.map(option=>pitchKey(option.pcs)));
-  const colours=characteristicNotes(harmony).map(note=>note.pc);
-  const degreePreference=[0,2,4,6,1,3,5];
-  const modalIndices=fiveNoteCombinations([0,1,2,3,4,5,6]).filter(indices=>!minorKeys.has(pitchKey(indices.map(index=>harmony.scalePcs[index])))).sort((a,b)=>{
-    const score=indices=>indices.reduce((total,index)=>total+(index===0?30:0)+(colours.includes(harmony.scalePcs[index])?50:0)+(7-degreePreference.indexOf(index)),0);
-    return score(b)-score(a)||a.join('').localeCompare(b.join(''));
-  })[0];
-  const pcs=modalIndices.map(index=>harmony.scalePcs[index]);
+  const pcs=modalPentatonicPcs(harmony);
   const modal={id:'pent-modal',type:'modal',category:'modal',rootPc:tonic,intervals:pcs.map(pc=>(pc-tonic+12)%12),
     name:`${tonicName} ${mode.name} modal pentatonic`,...details(pcs,harmony),
     explanation:`A five-note selection specific to ${tonicName} ${mode.name}, retaining the tonic and its defining colour notes. Use degrees ${details(pcs,harmony).degrees.join('–')} over the current harmony.${colourDescription(pcs,harmony)}`,
