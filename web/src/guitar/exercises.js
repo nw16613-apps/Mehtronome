@@ -1,4 +1,7 @@
+import {theoryOptions} from './superimposition.js';
+
 const LETTERS=['C','D','E','F','G','A','B'];
+const TUNING=[40,45,50,55,59,64];
 const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
 
 function chordSuffix(rootPc,pcs) {
@@ -36,6 +39,108 @@ function contour(path,motion) {
   if(motion==='up-down')return [...path,...path.slice(0,-1).reverse()];
   if(motion==='down-up')return [...path,...path.slice(0,-1).reverse()];
   return path;
+}
+
+function noteNameForPc(harmony,pc) {
+  const scaleIndex=harmony.scalePcs.indexOf((pc+12)%12);
+  return scaleIndex>=0?harmony.scaleNames[scaleIndex]:['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'][(pc+12)%12];
+}
+
+function noteAtMidi(board,midi,harmony) {
+  const existing=board.notes.find(note=>note.midi===midi);
+  if(existing)return {...existing,name:noteNameForPc(harmony,midi%12)};
+  const candidates=TUNING.map((open,string)=>({string,fret:midi-open,midi,pc:(midi%12+12)%12,name:noteNameForPc(harmony,midi%12)}))
+    .filter(note=>note.fret>=board.start&&note.fret<=board.end);
+  return candidates.toSorted((a,b)=>Math.abs(a.string-2.5)-Math.abs(b.string-2.5))[0]||null;
+}
+
+function chromaticEnclosures(board,harmony,motion) {
+  const descending=motion==='descending'||motion==='down-up';
+  const targets=[...board.notes].filter(note=>harmony.chordPcs.includes(note.pc)).sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const groups=[];
+  for(const target of targets){
+    const offsets=descending?[-2,1,0]:[2,-1,0];
+    const notes=offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony));
+    if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:`upper · lower · target`,targetIndex:2});
+  }
+  return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending')]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending')]:groups;
+}
+
+function approachArpeggios(board,harmony,material,motion) {
+  const base=cagedProgressionExercise(board,harmony,material,motion==='down-up'?'descending':motion==='up-down'?'ascending':motion);
+  return base.map((group,index)=>{
+    const next=base[index+1];if(!next)return group;
+    const target=next.notes[0].midi,from=group.notes.at(-1).midi;
+    const approach=noteAtMidi(board,target+(from<target?-1:1),harmony);
+    return approach?{...group,notes:[...group.notes,approach],pcs:[...group.pcs,approach.pc],names:[...group.names,approach.name],annotation:'arpeggio · chromatic approach'}:group;
+  });
+}
+
+function upperStructureExercise(board,harmony,motion) {
+  return scalePatternExercise(board,harmony,motion,[2,4,6,8],'3–5–7–9').map(group=>({...group,annotation:'3 · 5 · 7 · 9'}));
+}
+
+function guideToneLines(board,harmony,motion,progression=[]) {
+  const harmonies=progression.length?progression:[harmony];
+  const descending=motion==='descending'||motion==='down-up';
+  let previous=descending?Infinity:-Infinity;
+  const groups=[];
+  for(let cycle=0;cycle<(harmonies.length===1?4:2);cycle++)for(const current of harmonies){
+    const guidePcs=[current.chordPcs[1],current.chordPcs[3]??current.chordPcs.at(-1)].filter((pc,index,array)=>pc!==undefined&&array.indexOf(pc)===index);
+    const candidates=[];
+    const desiredPcs=harmonies.length===1?[guidePcs[cycle%guidePcs.length]]:guidePcs;
+    for(const pc of desiredPcs)for(let midi=40;midi<85;midi++)if(midi%12===pc){const note=noteAtMidi(board,midi,current);if(note)candidates.push(note);}
+    const note=candidates.toSorted((a,b)=>{
+      if(!Number.isFinite(previous))return descending?b.midi-a.midi:a.midi-b.midi;
+      return Math.abs(a.midi-previous)-Math.abs(b.midi-previous)||Math.abs(a.midi-60)-Math.abs(b.midi-60);
+    })[0];
+    if(!note)continue;previous=note.midi;
+    groups.push({chord:`${current.name}${current.suffix}`,rootName:note.name,pcs:[note.pc],names:[note.name],notes:[note],annotation:current.intervals?.[current.chordPcs.indexOf(note.pc)]||'guide tone'});
+  }
+  if(descending)groups.reverse();
+  return contourGroups(groups,motion);
+}
+
+function contourGroups(groups,motion){
+  if(motion==='up-down')return [...groups,...[...groups].reverse()];
+  if(motion==='down-up')return [...[...groups].reverse(),...groups];
+  return groups;
+}
+
+function connectedArpeggios(board,harmony,material,motion) {
+  const size=MATERIAL_SIZES[material]||4,descending=motion==='descending'||motion==='down-up',groups=[];
+  let previous=descending?Math.max(...board.notes.map(note=>note.midi)):Math.min(...board.notes.map(note=>note.midi));
+  for(let degree=0;degree<7;degree++){
+    const rootIndex=descending?(7-degree)%7:degree;
+    const indexes=Array.from({length:size},(_,offset)=>(rootIndex+offset*2)%7);
+    const pcs=indexes.map(index=>harmony.scalePcs[index]),names=indexes.map(index=>harmony.scaleNames[index]);
+    const candidates=[true,false].map(ascending=>pathForPcs(board,pcs,names,ascending,previous)).filter(path=>path?.length===size);
+    const path=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0];if(!path)continue;
+    previous=path.at(-1).midi;groups.push({chord:`${names[0]}${chordSuffix(pcs[0],pcs)}`,rootName:names[0],pcs,names,notes:path,annotation:'nearest voice-led connection'});
+  }
+  return contourGroups(groups,motion);
+}
+
+function overlayExercise(board,harmony,kind,motion,choiceId) {
+  const options=theoryOptions(harmony);
+  const choices=kind==='pentatonic'?options.pentatonics:options.triadPairs;
+  const choice=choices.find(option=>option.id===choiceId)||choices[0];
+  if(!choice)return [];
+  const descending=motion==='descending'||motion==='down-up';
+  if(kind==='pentatonic'){
+    const available=board.notes.filter(note=>choice.pcs.includes(note.pc)).sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+    const groups=[];
+    for(let index=0;index+3<available.length;index++){
+      const notes=available.slice(index,index+4).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
+      groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:notes.map(note=>choice.degrees[choice.pcs.indexOf(note.pc)]).join(' · '),source:choice.name});
+    }
+    return contourGroups(groups,motion);
+  }
+  const groups=choice.groups.map((triad,index)=>{
+    const path=pathForPcs(board,triad.pcs,triad.names,index%2===0?!descending:descending,60);
+    return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
+  }).filter(group=>group.notes?.length===3);
+  return contourGroups(Array.from({length:4},()=>groups).flat(),motion);
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {
@@ -175,7 +280,7 @@ function inversionExercise(board,harmony,material,motion) {
   });
 }
 
-export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending') {
+export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
   const size=MATERIAL_SIZES[material] || 4;
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
   if(study==='thirds')return scalePatternExercise(board,harmony,motion,[0,2],'3rds');
@@ -202,6 +307,13 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='chordtones3turnsdown')return alternatingChordToneStacks(board,harmony,3,true);
   if(study==='chordtones3combined')return combinedAlternatingChordTones(board,harmony,3);
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
+  if(study==='enclosures')return chromaticEnclosures(board,harmony,motion);
+  if(study==='approach')return approachArpeggios(board,harmony,material,motion);
+  if(study==='upperstructure')return upperStructureExercise(board,harmony,motion);
+  if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
+  if(study==='connections')return connectedArpeggios(board,harmony,material,motion);
+  if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source);
+  if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
 
@@ -228,6 +340,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise') {
   groups.forEach((group,groupIndex)=>{
     const start=noteIndex;
     svg+=`<text class="chord-symbol" x="${xFor(start)-10}" y="20">${esc(group.chord)}</text>`;
+    if(group.source)svg+=`<text class="exercise-source" x="${xFor(start)-10}" y="137">${esc(group.source)}</text>`;
     const ys=[];
     group.notes.forEach(note=>{
       const x=xFor(noteIndex),y=staffY(note),tabY=150+(5-note.string)*18;
@@ -249,6 +362,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise') {
       const beamY=stemsUp?Math.min(...ys)-24:Math.max(...ys)+24;
       svg+=`<line class="note-beam" x1="${xFor(start)+(stemsUp?6:-6)}" x2="${xFor(noteIndex-1)+(stemsUp?6:-6)}" y1="${beamY}" y2="${beamY}"/>`;
     }
+    if(group.annotation)svg+=`<text class="exercise-degree" x="${xFor(start)}" y="268">${esc(group.annotation)}</text>`;
     if((groupIndex+1)%2===0||groupIndex===groups.length-1){
       const x=xFor(noteIndex-1)+step/2;
       svg+=`<line class="bar-line" x1="${x}" x2="${x}" y1="36" y2="76"/><line class="bar-line" x1="${x}" x2="${x}" y1="150" y2="240"/>`;

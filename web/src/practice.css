@@ -201,6 +201,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-notation .time-signature { fill:#17201d; font:700 17px Georgia,serif; }
 .exercise-notation .tab-clef { fill:#17201d; font:700 13px ui-monospace,SFMono-Regular,Menlo,monospace; }
 .exercise-notation .chord-symbol { fill:#17201d; font:600 13px Georgia,serif; }
+.exercise-notation .exercise-source { fill:#76548d; font:700 9px ui-sans-serif,system-ui,sans-serif; letter-spacing:.04em; }
+.exercise-notation .exercise-degree { fill:#59655f; font:600 9px ui-sans-serif,system-ui,sans-serif; }
 .exercise-notation .tab-fret { fill:#17201d; font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace; text-anchor:middle; }
 .exercise-notation .accidental { fill:#17201d; font:15px Georgia,serif; text-anchor:middle; }
 .exercise-footer { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:14px; }

@@ -63,7 +63,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-study').selectOption('alternating');
   await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
-  await expect(exercise.locator('#exercise-study option')).toHaveCount(12);
+  await expect(exercise.locator('#exercise-study option')).toHaveCount(19);
   await expect(exercise.locator('#exercise-backing')).toBeChecked();
   await expect(exercise.locator('.exercise-notation').first()).toBeVisible();
   const notationFits=await exercise.locator('.notation-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1);
@@ -73,6 +73,21 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await expect(exercise.locator('#exercise-focus')).toHaveText('Exit notation focus');
   await page.keyboard.press('Escape');
   await expect(exercise).not.toHaveClass(/notation-focused/);
+});
+
+test('jazz language and superimposition studies render synchronized notation and TAB',async({page})=>{
+  await openReference(page);
+  for(const study of ['enclosures','approach','upperstructure','guidetones','connections','triadpairs','pentatonic']){
+    await page.locator('#exercise-study').selectOption(study);
+    await expect(page.locator('#caged-exercise-title')).not.toBeEmpty();
+    await expect(page.locator('#caged-exercise .note-head').first()).toBeVisible();
+    await expect(page.locator('#caged-exercise .tab-fret').first()).toBeVisible();
+  }
+  await page.locator('#exercise-study').selectOption('triadpairs');
+  await expect(page.locator('#exercise-source')).toBeVisible();
+  await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/A|B/);
+  await page.locator('#exercise-study').selectOption('pentatonic');
+  await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/pentatonic/i);
 });
 
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
