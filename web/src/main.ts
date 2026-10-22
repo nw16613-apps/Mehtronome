@@ -13,6 +13,7 @@ import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
+import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -158,7 +159,7 @@ function stopExercisePreview() {
   for(const source of exerciseSources){try{source.stop();}catch{}}
   exerciseSources=[];exercisePlaying=false;
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
-  if(button){button.textContent='▶ Hear exercise';button.setAttribute('aria-pressed','false');}
+  if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');}
 }
 
 function renderCagedExercise(position:any,board:any,info:any) {
@@ -166,15 +167,15 @@ function renderCagedExercise(position:any,board:any,info:any) {
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
   const materialName=exerciseView.material==='triad'?'triads':exerciseView.material==='extensions'?'ninth chords':'tetrads';
-  const studyName={harmonized:`Harmonized ${materialName}`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',fourths:'Scale in fourths',sixths:'Scale in sixths',digital1324:'Diatonic 1–3–2–4 pattern',groups3:'Ascending groups of three',groups4:'Ascending groups of four',alternating7:'Alternating diatonic tetrads',chordtones7:'Tetrads from each chord tone',inversions:`${info.name}${info.suffix} inversion cycle`}[exerciseView.study] || `Harmonized ${materialName}`;
+  const studyName={harmonized:`Harmonized ${materialName}`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',fourths:'Scale in fourths',sixths:'Scale in sixths',digital1324:'Diatonic 1–3–2–4 pattern',groups3:'Ascending groups of three',groups4:'Ascending groups of four',alternating7:'Alternating diatonic tetrads',chordtones7:'Tetrads from each chord tone',chordtones7turns:'Up/down tetrads from each chord tone',inversions:`${info.name}${info.suffix} inversion cycle`}[exerciseView.study] || `Harmonized ${materialName}`;
   const title=`${MODES[info.mode as keyof typeof MODES].name} · ${studyName}, ${exerciseView.motion.replace('-',' and ')}, Position ${position.numeral}`;
   const notation=exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,title);
-  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Arpeggio studies"><option value="harmonized">Harmonized scale</option><option value="alternating7">Up/down diatonic tetrads</option><option value="chordtones7">Tetrads from each chord tone</option><option value="inversions">Selected-chord inversions</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label><label>Direction<select id="exercise-motion"><option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option></select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="notation-scroll">${notation}</div><div class="exercise-footer"><p>This study starts at the ${exerciseView.motion==='descending'||exerciseView.motion==='down-up'?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position. Scroll sideways to follow the complete exercise.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear exercise</button></div>`;
+  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Arpeggio studies"><option value="harmonized">Harmonized scale</option><option value="alternating7">Up/down diatonic tetrads</option><option value="chordtones7">Tetrads from each chord tone</option><option value="chordtones7turns">Up/down tetrads from each chord tone</option><option value="inversions">Selected-chord inversions</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label><label>Direction<select id="exercise-motion"><option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option></select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="notation-scroll">${notation}</div><div class="exercise-footer"><p>This study starts at the ${exerciseView.motion==='descending'||exerciseView.motion==='down-up'?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position. Scroll sideways to follow the complete exercise.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear jazz guitar</button></div>`;
   select('exercise-study').value=exerciseView.study;
   select('exercise-material').value=exerciseView.material;
-  select('exercise-material').disabled=['cells','thirds','fourths','sixths','digital1324','groups3','groups4','alternating7','chordtones7'].includes(exerciseView.study);
+  select('exercise-material').disabled=['cells','thirds','fourths','sixths','digital1324','groups3','groups4','alternating7','chordtones7','chordtones7turns'].includes(exerciseView.study);
   select('exercise-motion').value=exerciseView.motion;
-  select('exercise-motion').disabled=exerciseView.study==='alternating7';
+  select('exercise-motion').disabled=['alternating7','chordtones7turns'].includes(exerciseView.study);
   select('exercise-rhythm').value=exerciseView.rhythm;
   input('exercise-loop').checked=exerciseView.loop;
 }
@@ -187,14 +188,15 @@ function scheduleExercise() {
   exerciseSources=[];
   currentExercise.forEach((note,index)=>{
     const at=start+index*noteLength;
-    const gain=context!.createGain(),filter=context!.createBiquadFilter();
-    filter.type='lowpass';filter.frequency.setValueAtTime(2500,at);filter.frequency.exponentialRampToValueAtTime(850,at+Math.min(.35,noteLength*.9));
-    gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.075,at+.008);gain.gain.exponentialRampToValueAtTime(.0001,at+Math.max(.09,noteLength*.82));
-    for(const [type,level] of [['triangle',1],['sine',.28]] as const){
-      const oscillator=context!.createOscillator();oscillator.type=type;oscillator.frequency.value=440*2**((note.midi-69)/12);
-      const layer=context!.createGain();layer.gain.value=level;oscillator.connect(layer).connect(filter);oscillator.start(at);oscillator.stop(at+Math.max(.1,noteLength*.9));exerciseSources.push(oscillator);
-    }
-    filter.connect(gain).connect(master!);
+    const duration=Math.max(.32,noteLength*1.35);
+    const samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration);
+    const buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);
+    const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
+    filter.type='lowpass';filter.frequency.value=3100;filter.Q.value=.45;
+    gain.gain.setValueAtTime(.34,at);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    source.connect(filter).connect(gain).connect(master!);
+    if(reverb)gain.connect(reverb);
+    source.start(at);source.stop(at+duration);exerciseSources.push(source);
   });
   const duration=currentExercise.length*noteLength;
   exerciseTimer=setTimeout(()=>{

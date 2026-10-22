@@ -66,6 +66,14 @@ test('chord-tone tetrads stack diatonic thirds from every available chord tone',
   assert.ok(descending.every(group=>group.notes.every((note,index)=>index===0||note.midi<group.notes[index-1].midi)));
 });
 
+test('up/down chord-tone tetrads turn around at each seventh',()=>{
+  const groups=cagedStudy(board,harmony,'chordtones7turns','seventh','descending');
+  assert.ok(groups.length>=4);
+  assert.deepEqual(groups[0].notes.map(note=>note.midi),[45,48,52,55,52,48,45]);
+  assert.ok(groups.every(group=>group.notes.length===7));
+  assert.ok(groups.every(group=>group.notes[0].midi===group.notes.at(-1).midi));
+});
+
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
   const groups=cagedStudy(board,harmony,'harmonized','triad','ascending').slice(0,2);
   const svg=exerciseNotationSvg(groups,'eighths','A Dorian triads');

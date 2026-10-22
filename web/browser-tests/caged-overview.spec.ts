@@ -49,6 +49,10 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await expect(exercise.locator('.chord-symbol').first()).toContainText('From ');
   const chordToneLabels=await exercise.locator('.chord-symbol').allTextContents();
   for(const degree of ['1','♭3','5','♭7'])expect(chordToneLabels.some(label=>label.includes(`From ${degree}`))).toBe(true);
+  await exercise.locator('#exercise-study').selectOption('chordtones7turns');
+  await expect(exercise.locator('h3')).toContainText('Up/down tetrads from each chord tone');
+  await expect(exercise.locator('#exercise-motion')).toBeDisabled();
+  await expect(exercise.locator('#exercise-preview')).toContainText('Hear jazz guitar');
 });
 
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
