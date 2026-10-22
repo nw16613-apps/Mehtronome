@@ -140,12 +140,13 @@ test('chord-tone triads mirror every tetrad sequence and combined studies join b
   }
 });
 
-test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
+test('notation aligns its single exercise title, written guitar notes and tablature',()=>{
   const groups=cagedStudy(board,harmony,'harmonized','triad','ascending').slice(0,2);
   const svg=exerciseNotationSvg(groups,'eighths','A Dorian triads');
   assert.match(svg,/class="treble-clef"/);
   assert.match(svg,/class="tab-clef"/);
-  assert.match(svg,/>Am</);
+  assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
+  assert.match(svg,/>A Dorian triads</);
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="tab-fret"/g)||[]).length,flattenExercise(groups).length);
 });
@@ -156,7 +157,8 @@ test('long notation wraps into multiple complete systems',()=>{
   assert.ok((svg.match(/class="exercise-notation"/g)||[]).length>1);
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="treble-clef"/g)||[]).length,(svg.match(/class="exercise-notation"/g)||[]).length);
-  assert.equal((svg.match(/class="phrase-cell/g)||[]).length,groups.length);
+  assert.equal((svg.match(/class="phrase-cell/g)||[]).length,0);
+  assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
   const indexes=[...svg.matchAll(/class="exercise-note[^>]*data-note-index="(\d+)"/g)].map(match=>Number(match[1]));
   assert.deepEqual(indexes,Array.from({length:flattenExercise(groups).length},(_,index)=>index));
 });
@@ -195,17 +197,19 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
   assert.ok(descending[0].notes[1].midi<descending[0].notes[0].midi);
 });
 
-test('notation prints repeated harmony and source labels only once',()=>{
+test('notation prints one exercise heading and no pattern-cell labels',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
   const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'thirds'});
   const svg=exerciseNotationSvg(groups,'eighths','Pentatonic thirds');
   assert.ok(groups.length>3);
-  assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,1);
+  assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
+  assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,0);
+  assert.equal((svg.match(/class="phrase-cell"/g)||[]).length,0);
   assert.equal((svg.match(/class="exercise-source"/g)||[]).length,0);
 });
 
-test('notation still prints every genuine harmony change',()=>{
+test('guitar pitch is written one octave above its sounding pitch',()=>{
   const note={name:'A',midi:57,string:1,fret:12,pc:9};
   const groups=[
     {chord:'Am7',source:'A minor',notes:[note]},
@@ -214,6 +218,6 @@ test('notation still prints every genuine harmony change',()=>{
     {chord:'Am7',source:'A minor',notes:[note]},
   ];
   const svg=exerciseNotationSvg(groups,'eighths','Harmony changes');
-  assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,3);
-  assert.equal((svg.match(/class="exercise-source"/g)||[]).length,3);
+  assert.match(svg,/class="note-head" cx="105" cy="86"/);
+  assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
 });

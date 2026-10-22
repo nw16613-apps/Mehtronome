@@ -17,7 +17,7 @@ test('notation workspace controls remain usable on a phone viewport',async({brow
   await exercise.locator('#exercise-tempo').fill('135');
   await exercise.locator('#exercise-tempo').dispatchEvent('change');
   await expect(exercise.locator('#exercise-tempo')).toHaveValue('135');
-  await exercise.locator('[data-loop-group="0"]').tap();
+  await exercise.locator('#exercise-loop').check();
   await expect(exercise.locator('#exercise-loop')).toBeChecked();
   await exercise.locator('#exercise-focus').tap();
   await expect(exercise).toHaveClass(/notation-focused/);
@@ -65,8 +65,10 @@ test('focused CAGED position generates a configurable notation and TAB library',
   expect(await exercise.locator('.exercise-notation').count()).toBeGreaterThan(1);
   await expect(exercise.locator('.treble-clef')).toHaveCount(await exercise.locator('.exercise-notation').count());
   await expect(exercise.locator('.tab-clef')).toHaveCount(await exercise.locator('.exercise-notation').count());
-  await expect(exercise.locator('.chord-symbol').first()).toHaveText('Am7');
-  expect(await exercise.locator('.chord-symbol').count()).toBeGreaterThanOrEqual(8);
+  await expect(exercise.locator('.exercise-title')).toHaveCount(1);
+  await expect(exercise.locator('.exercise-title')).toHaveText('Harmonized tetrads · A');
+  await expect(exercise.locator('.phrase-cell')).toHaveCount(0);
+  await expect(exercise.locator('.exercise-cell-strip')).toHaveCount(0);
   const ascending=await exercise.locator('.tab-fret').allTextContents();
   await exercise.locator('#exercise-motion').selectOption('descending');
   const descending=await exercise.locator('.tab-fret').allTextContents();
@@ -85,9 +87,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-study').selectOption('chordtones');
   await expect(exercise.locator('h3')).toContainText('Tetrads from each chord tone');
   await expect(exercise.locator('#exercise-material')).toBeEnabled();
-  await expect(exercise.locator('.chord-symbol').first()).toContainText('From ');
-  const chordToneLabels=await exercise.locator('.chord-symbol').allTextContents();
-  for(const degree of ['1','♭3','5','♭7'])expect(chordToneLabels.some(label=>label.includes(`From ${degree}`))).toBe(true);
+  await expect(exercise.locator('.exercise-title')).toHaveText('Tetrads from each chord tone · A');
   await exercise.locator('#exercise-study').selectOption('chordtonesalternating');
   await exercise.locator('#exercise-motion').selectOption('ascending');
   await expect(exercise.locator('#exercise-motion option')).toHaveText(['Up/down · low to high','Down/up · high to low']);
@@ -126,8 +126,8 @@ test('jazz language and superimposition studies render synchronized notation and
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/A|B/);
   await page.locator('#exercise-study').selectOption('pentatonic');
   await expect(page.locator('#caged-exercise .exercise-source')).toHaveCount(0);
-  await expect(page.locator('#caged-exercise .chord-symbol')).toHaveCount(1);
-  await expect(page.locator('#caged-exercise .chord-symbol')).toContainText(/pentatonic/i);
+  await expect(page.locator('#caged-exercise .exercise-title')).toHaveCount(1);
+  await expect(page.locator('#caged-exercise .exercise-title')).toHaveText(/pentatonic sequences · [A-G](?:♯|♭)?/i);
   await expect(page.locator('#exercise-pattern')).toBeVisible();
   await expect(page.locator('#exercise-pattern option')).toHaveCount(9);
   for(const pattern of ['groups3','groups4','groups5','thirds','digital1324','rolling','alternating3','alternating4','alternating5']){
@@ -137,7 +137,7 @@ test('jazz language and superimposition studies render synchronized notation and
   }
 });
 
-test('notation workspace supports display modes, cell loops, tempo tools, history, favourites and export',async({page})=>{
+test('notation workspace supports display modes, tempo tools, history, favourites and export',async({page})=>{
   await openReference(page);
   const exercise=page.locator('#caged-exercise');
   await exercise.locator('#exercise-display').selectOption('names');
@@ -145,8 +145,6 @@ test('notation workspace supports display modes, cell loops, tempo tools, histor
   await expect(exercise.locator('.note-name-label').first()).toBeVisible();
   await exercise.locator('#exercise-zoom').selectOption('large');
   await expect(exercise.locator('.notation-scroll')).toHaveClass(/zoom-large/);
-  await exercise.locator('[data-loop-group="0"]').click();
-  await expect(exercise.locator('#exercise-loop')).toBeChecked();
   await exercise.locator('[data-tempo-ratio=".5"]').click();
   await expect(exercise.locator('#exercise-tempo')).toHaveValue('45');
   await exercise.locator('#exercise-study').selectOption('thirds');
@@ -160,27 +158,6 @@ test('notation workspace supports display modes, cell loops, tempo tools, histor
   expect((await download).suggestedFilename()).toMatch(/\.svg$/);
   await page.evaluate(()=>{(window as any).__printed=false;window.print=()=>{(window as any).__printed=true;};});
   await exercise.locator('#exercise-print').click();expect(await page.evaluate(()=>(window as any).__printed)).toBe(true);
-});
-
-test('cell playback restores the previous exercise loop setting when stopped',async({page})=>{
-  await openReference(page);
-  const exercise=page.locator('#caged-exercise');
-  await expect(exercise.locator('#exercise-loop')).not.toBeChecked();
-  await exercise.locator('[data-loop-group="0"]').click();
-  await expect(exercise.locator('#exercise-loop')).toBeChecked();
-  await exercise.locator('#exercise-preview').click();
-  await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
-  await exercise.locator('#exercise-preview').click();
-  await expect(exercise.locator('#exercise-loop')).not.toBeChecked();
-  await expect(exercise.locator('[data-loop-all]')).toHaveClass(/selected/);
-
-  await exercise.locator('#exercise-loop').check();
-  await exercise.locator('[data-loop-all]').click();
-  await exercise.locator('[data-loop-group="1"]').click();
-  await exercise.locator('#exercise-preview').click();
-  await exercise.locator('#exercise-preview').click();
-  await expect(exercise.locator('#exercise-loop')).toBeChecked();
-  await expect(exercise.locator('[data-loop-all]')).toHaveClass(/selected/);
 });
 
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
