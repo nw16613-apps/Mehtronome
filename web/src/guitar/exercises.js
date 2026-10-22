@@ -353,8 +353,8 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
     const start=noteIndex;
     const globalStart=group._globalStart??start;
     svg+=`<rect class="phrase-cell ${groupIndex%2?'even':'odd'}" data-group-index="${group._groupIndex??groupIndex}" x="${xFor(start)-step/2}" y="8" width="${group.notes.length*step}" height="258" rx="5"/>`;
-    svg+=`<text class="chord-symbol" data-group-index="${group._groupIndex??groupIndex}" x="${xFor(start)-10}" y="20">${esc(group.chord)}</text>`;
-    if(group.source)svg+=`<text class="exercise-source" x="${xFor(start)-10}" y="137">${esc(group.source)}</text>`;
+    if(group._showChord!==false)svg+=`<text class="chord-symbol" data-group-index="${group._groupIndex??groupIndex}" x="${xFor(start)-10}" y="20">${esc(group.chord)}</text>`;
+    if(group.source&&group._showSource!==false)svg+=`<text class="exercise-source" x="${xFor(start)-10}" y="137">${esc(group.source)}</text>`;
     const ys=[];
     group.notes.forEach((note,localIndex)=>{
       const x=xFor(noteIndex),y=staffY(note),tabY=150+(5-note.string)*18;
@@ -388,10 +388,12 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
 
 export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
   const systems=[],maxNotes=24;
-  let current=[],count=0,globalStart=0;
+  let current=[],count=0,globalStart=0,previousChord=null,previousSource=null;
   for(const [groupIndex,group] of groups.entries()){
     if(current.length&&count+group.notes.length>maxNotes){systems.push(current);current=[];count=0;}
-    current.push({...group,_globalStart:globalStart,_groupIndex:groupIndex});count+=group.notes.length;globalStart+=group.notes.length;
+    const showChord=group.chord!==previousChord,showSource=Boolean(group.source)&&group.source!==previousSource;
+    current.push({...group,_globalStart:globalStart,_groupIndex:groupIndex,_showChord:showChord,_showSource:showSource});count+=group.notes.length;globalStart+=group.notes.length;
+    previousChord=group.chord;previousSource=group.source||null;
   }
   if(current.length)systems.push(current);
   return systems.map((system,index)=>notationSystemSvg(system,rhythm,systems.length>1?`${title}, system ${index+1} of ${systems.length}`:title,index)).join('');

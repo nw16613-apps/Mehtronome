@@ -194,3 +194,26 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
   const descending=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'groups3'});
   assert.ok(descending[0].notes[1].midi<descending[0].notes[0].midi);
 });
+
+test('notation prints repeated harmony and source labels only once',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'thirds'});
+  const svg=exerciseNotationSvg(groups,'eighths','Pentatonic thirds');
+  assert.ok(groups.length>3);
+  assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,1);
+  assert.equal((svg.match(/class="exercise-source"/g)||[]).length,1);
+});
+
+test('notation still prints every genuine harmony change',()=>{
+  const note={name:'A',midi:57,string:1,fret:12,pc:9};
+  const groups=[
+    {chord:'Am7',source:'A minor',notes:[note]},
+    {chord:'Am7',source:'A minor',notes:[note]},
+    {chord:'D7',source:'D Mixolydian',notes:[note]},
+    {chord:'Am7',source:'A minor',notes:[note]},
+  ];
+  const svg=exerciseNotationSvg(groups,'eighths','Harmony changes');
+  assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,3);
+  assert.equal((svg.match(/class="exercise-source"/g)||[]).length,3);
+});
