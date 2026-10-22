@@ -196,6 +196,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-notation .bar-line { stroke-width:1.8; }
 .exercise-notation .beat-guide { stroke:#91a099; stroke-width:.7; opacity:.55; }
 .exercise-notation .note-head { fill:#17201d; }
+.exercise-notation .structural-note { fill:#76548d; stroke:#442858; stroke-width:1.2; }
+.exercise-notation .elaborated-note { fill:#a4663f; }
 .exercise-notation .note-beam { stroke:#17201d; stroke-width:5; }
 .exercise-notation .treble-clef { fill:#17201d; font:54px Georgia,serif; }
 .exercise-notation .time-signature { fill:#17201d; font:700 17px Georgia,serif; }

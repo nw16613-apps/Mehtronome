@@ -3,6 +3,19 @@ import {theoryOptions} from './superimposition.js';
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
 const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
+export const INTERVALLIC_STUDIES=['intervalcells','permutations','cycles','interpolation','ultrapolation','infrapolation','mirror','chordcycles','patterncombo','progressionpattern'];
+export const EXERCISE_VARIANTS={
+  intervalcells:[['up3down2','Up a 3rd · down a 2nd'],['up4down3','Up a 4th · down a 3rd'],['up5down4','Up a 5th · down a 4th'],['wide','Alternating wide and narrow']],
+  permutations:[['1324','1–3–2–4'],['1423','1–4–2–3'],['2143','2–1–4–3'],['2413','2–4–1–3']],
+  cycles:[['m3','Minor-third cycle'],['M3','Major-third cycle'],['tritone','Tritone cycle'],['whole','Whole-tone cycle']],
+  interpolation:[['chromatic','Chromatic interpolation'],['diatonic','Diatonic interpolation'],['chord','Chord-tone interpolation']],
+  ultrapolation:[['semitone','Semitone overshoot'],['tone','Whole-tone overshoot'],['alternating','Alternating overshoots']],
+  infrapolation:[['chromatic','Chromatic lower neighbour'],['diatonic','Diatonic lower neighbour'],['alternating','Alternating lower approaches']],
+  mirror:[['chromatic','Chromatic expansion'],['diatonic','Diatonic expansion'],['thirds','Expansion in thirds']],
+  chordcycles:[['root','From the root'],['third','From the 3rd'],['fifth','From the 5th'],['seventh','From the 7th']],
+  patterncombo:[['statementretro','Statement + retrograde'],['statementinverse','Statement + inversion'],['interpolatecycle','Interpolation + interval cycle']],
+  progressionpattern:[['restart','Restart on each chord'],['continuous','Continue across changes'],['targets','Connect nearest chord tones']],
+};
 
 function chordSuffix(rootPc,pcs) {
   const signature=pcs.slice(1).map(pc=>(pc-rootPc+12)%12).join(',');
@@ -52,6 +65,112 @@ function noteAtMidi(board,midi,harmony) {
   const candidates=TUNING.map((open,string)=>({string,fret:midi-open,midi,pc:(midi%12+12)%12,name:noteNameForPc(harmony,midi%12)}))
     .filter(note=>note.fret>=board.start&&note.fret<=board.end);
   return candidates.toSorted((a,b)=>Math.abs(a.string-2.5)-Math.abs(b.string-2.5))[0]||null;
+}
+
+function groupFromMidis(board,harmony,midis,chord,annotation,roles=[]) {
+  const notes=midis.map(midi=>noteAtMidi(board,midi,harmony));
+  if(notes.some(note=>!note))return null;
+  return {chord,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation,roles};
+}
+
+function treatment(group,kind,board,harmony) {
+  if(!group||!kind||kind==='original')return group;
+  const retro=kind==='retrograde'||kind==='inverted-retrograde';
+  const invert=kind==='inversion'||kind==='inverted-retrograde';
+  let midis=group.notes.map(note=>note.midi);
+  if(invert){const axis=midis[0];midis=midis.map(midi=>axis-(midi-axis));}
+  if(retro)midis.reverse();
+  const changed=groupFromMidis(board,harmony,midis,group.chord,`${group.annotation} · ${kind.replace('-',' ')}`,retro?[...group.roles].reverse():group.roles);
+  return changed||group;
+}
+
+function fitGroups(groups,motion,treatmentName,board,harmony) {
+  let result=groups.map(group=>treatment(group,treatmentName,board,harmony)).filter(Boolean);
+  if(motion==='descending'||motion==='down-up')result=result.map(group=>({...group,notes:[...group.notes].reverse(),pcs:[...group.pcs].reverse(),names:[...group.names].reverse(),roles:[...(group.roles||[])].reverse()})).reverse();
+  return contourGroups(result,motion);
+}
+
+function diatonicCellStudy(board,harmony,study,variant,motion,treatmentName) {
+  const definitions={
+    intervalcells:{up3down2:[0,2,1,3],up4down3:[0,3,1,4],up5down4:[0,4,1,5],wide:[0,4,2,6]},
+    permutations:{'1324':[0,2,1,3],'1423':[0,3,1,2],'2143':[1,0,3,2],'2413':[1,3,0,2]},
+  };
+  const offsets=definitions[study]?.[variant]||[0,2,1,3];
+  const groups=scalePatternExercise(board,harmony,'ascending',offsets,offsets.map(offset=>offset+1).join('–'))
+    .map(group=>({...group,annotation:offsets.map(offset=>offset+1).join(' · '),roles:offsets.map((_,index)=>index===0?'structural':'cell')}));
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function cycleInterval(variant){return {m3:3,M3:4,tritone:6,whole:2}[variant]||3;}
+function intervalCycleStudy(board,harmony,variant,motion,treatmentName) {
+  const interval=cycleInterval(variant),low=Math.min(...board.notes.map(note=>note.midi)),high=Math.max(...board.notes.map(note=>note.midi)),groups=[];
+  let notes=[];for(let midi=low;midi<=high;midi+=interval){if(noteAtMidi(board,midi,harmony))notes.push(midi);}
+  for(let index=0;index<notes.length;index+=4){const midis=notes.slice(index,index+4);if(midis.length>1){const group=groupFromMidis(board,harmony,midis,`${variant} cycle`,`equal division · +${interval} semitones`,midis.map(()=>'structural'));if(group)groups.push(group);}}
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function elaboratedCycleStudy(board,harmony,study,variant,motion,treatmentName) {
+  const interval=3,low=Math.min(...board.notes.map(note=>note.midi)),high=Math.max(...board.notes.map(note=>note.midi)),groups=[];
+  for(let structural=low;structural+interval<=high;structural+=interval){
+    const target=structural+interval;let midis,roles;
+    if(study==='interpolation'){
+      const inserted=variant==='chord'?board.notes.filter(note=>harmony.chordPcs.includes(note.pc)&&note.midi>structural&&note.midi<target)[0]?.midi:variant==='diatonic'?board.notes.filter(note=>note.midi>structural&&note.midi<target)[0]?.midi:structural+1;
+      midis=[structural,inserted??structural+1,target];roles=['structural','inserted','structural'];
+    }else if(study==='ultrapolation'){
+      const amount=variant==='tone'?2:variant==='alternating'&&groups.length%2?2:1;midis=[structural,target+amount,target];roles=['structural','overshoot','structural'];
+    }else{
+      const amount=variant==='diatonic'?2:variant==='alternating'&&groups.length%2?2:1;midis=[structural,target-amount,target];roles=['structural','lower approach','structural'];
+    }
+    const group=groupFromMidis(board,harmony,midis,study,`${roles.join(' · ')}`,roles);if(group)groups.push(group);
+  }
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function mirrorStudy(board,harmony,variant,motion,treatmentName) {
+  const available=[...new Map([...board.notes].sort((a,b)=>a.midi-b.midi).map(note=>[note.midi,note])).values()];
+  const step=variant==='thirds'?2:1,groups=[];
+  for(let center=1;center<available.length-1;center+=4){
+    const centerMidi=available[center].midi,midis=[centerMidi];
+    for(let distance=step;midis.length<5;distance+=step){
+      const lower=variant==='chromatic'?centerMidi-distance:available[center-distance]?.midi;
+      const upper=variant==='chromatic'?centerMidi+distance:available[center+distance]?.midi;
+      if(lower!==undefined&&noteAtMidi(board,lower,harmony))midis.push(lower);
+      if(upper!==undefined&&noteAtMidi(board,upper,harmony))midis.push(upper);
+      if(lower===undefined&&upper===undefined)break;
+    }
+    const sorted=[...midis].sort((a,b)=>a-b);const group=groupFromMidis(board,harmony,sorted,'Mirror expansion',`${variant} · around ${noteNameForPc(harmony,centerMidi%12)}`,sorted.map(midi=>midi===centerMidi?'axis':'mirror'));if(group)groups.push(group);
+  }
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function chordCycleStudy(board,harmony,variant,motion,treatmentName) {
+  const startIndex={root:0,third:1,fifth:2,seventh:3}[variant]||0,pc=harmony.chordPcs[startIndex%harmony.chordPcs.length];
+  const anchors=board.notes.filter(note=>note.pc===pc).sort((a,b)=>a.midi-b.midi),groups=[];
+  for(const anchor of anchors){const midis=[0,3,6,9].map(offset=>anchor.midi+offset);const group=groupFromMidis(board,harmony,midis,`Cycle from ${harmony.intervals?.[startIndex]||variant}`,'chord tone · minor-third cycle',midis.map((_,index)=>index===0?'chord target':'cycle'));if(group)groups.push(group);}
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function combinationStudy(board,harmony,variant,motion,treatmentName) {
+  const base=diatonicCellStudy(board,harmony,'permutations','1324','ascending','original').slice(0,4);
+  const groups=[];for(const group of base){
+    groups.push(group);
+    const kind=variant==='statementinverse'?'inversion':'retrograde';groups.push(treatment(group,kind,board,harmony));
+    if(variant==='interpolatecycle'){const extra=groupFromMidis(board,harmony,[group.notes.at(-1).midi,group.notes.at(-1).midi+1,group.notes.at(-1).midi+3],'Interpolated cycle','inserted · structural',['inserted','structural','structural']);if(extra)groups.push(extra);}
+  }
+  return fitGroups(groups,motion,treatmentName,board,harmony);
+}
+
+function progressionPatternStudy(board,harmony,progression,variant,motion,treatmentName) {
+  const harmonies=progression?.length?progression:[harmony],groups=[];let previous=null;
+  for(const current of harmonies){
+    const candidates=[...new Set(current.chordPcs.flatMap(pc=>Array.from({length:45},(_,index)=>40+index).filter(midi=>midi%12===pc&&noteAtMidi(board,midi,current))))].sort((a,b)=>a-b);
+    if(!candidates.length)continue;
+    const startIndex=variant==='restart'||previous===null?0:candidates.map((midi,index)=>({index,distance:Math.abs(midi-previous)})).toSorted((a,b)=>a.distance-b.distance)[0].index;
+    const ordered=[...candidates.slice(startIndex),...candidates.slice(0,startIndex)];
+    const indexes=variant==='restart'?[0,2,1,3]:[0,1,2,3],midis=indexes.map(offset=>ordered[offset]).filter(Number.isFinite);
+    const group=groupFromMidis(board,current,midis,`${current.name}${current.suffix}`,variant==='targets'?'nearest chord-tone targets':'cell across harmony',midis.map((_,index)=>index===0?'chord target':'cell'));if(group){groups.push(group);previous=group.notes.at(-1).midi;}
+  }
+  return fitGroups(groups,motion,treatmentName,board,harmony);
 }
 
 function chromaticEnclosures(board,harmony,motion) {
@@ -314,6 +433,13 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion);
   if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source);
   if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source);
+  if(study==='intervalcells'||study==='permutations')return diatonicCellStudy(board,harmony,study,context.source,motion,context.treatment);
+  if(study==='cycles')return intervalCycleStudy(board,harmony,context.source,motion,context.treatment);
+  if(['interpolation','ultrapolation','infrapolation'].includes(study))return elaboratedCycleStudy(board,harmony,study,context.source,motion,context.treatment);
+  if(study==='mirror')return mirrorStudy(board,harmony,context.source,motion,context.treatment);
+  if(study==='chordcycles')return chordCycleStudy(board,harmony,context.source,motion,context.treatment);
+  if(study==='patterncombo')return combinationStudy(board,harmony,context.source,motion,context.treatment);
+  if(study==='progressionpattern')return progressionPatternStudy(board,harmony,context.progression,context.source,motion,context.treatment);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
 
@@ -349,7 +475,8 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise') {
       for(let ledger=26;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
       const acc=accidental(note.name);
       if(acc)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(acc)}</text>`;
-      svg+=`<ellipse class="note-head" cx="${x}" cy="${y}" rx="6.5" ry="4.5" transform="rotate(-18 ${x} ${y})"/><rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text>`;
+      const role=group.roles?.[noteIndex-start]||'';
+      svg+=`<ellipse class="note-head${role==='structural'||role==='chord target'?' structural-note':role?' elaborated-note':''}"${role?` data-pattern-role="${esc(role)}"`:''} cx="${x}" cy="${y}" rx="6.5" ry="4.5" transform="rotate(-18 ${x} ${y})"/><rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text>`;
       if(noteIndex%perBeat===0)svg+=`<line class="beat-guide" x1="${x-step/2}" x2="${x-step/2}" y1="140" y2="245"/>`;
       noteIndex++;
     });

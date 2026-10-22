@@ -174,3 +174,18 @@ test('jazz language library generates playable notation for every new study fami
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'triadpairs')[0].source);
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'pentatonic')[0].source);
 });
+
+test('intervallic library renders every family, variant and transformation inside its fret range',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  const variants={intervalcells:['up3down2','up4down3','up5down4','wide'],permutations:['1324','1423','2143','2413'],cycles:['m3','M3','tritone','whole'],interpolation:['chromatic','diatonic','chord'],ultrapolation:['semitone','tone','alternating'],infrapolation:['chromatic','diatonic','alternating'],mirror:['chromatic','diatonic','thirds'],chordcycles:['root','third','fifth','seventh'],patterncombo:['statementretro','statementinverse','interpolatecycle'],progressionpattern:['restart','continuous','targets']};
+  for(const [study,choices] of Object.entries(variants))for(const source of choices)for(const treatment of ['original','inversion','retrograde','inverted-retrograde']){
+    const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending',{source,treatment,progression:[modalHarmony]});
+    assert.ok(groups.length>0,`${study}/${source}/${treatment}`);
+    assert.ok(flattenExercise(groups).every(note=>note.fret>=boundedBoard.start&&note.fret<=boundedBoard.end));
+  }
+  const interpolation=cagedStudy(boundedBoard,modalHarmony,'interpolation','seventh','ascending',{source:'chromatic',treatment:'original'});
+  assert.match(exerciseNotationSvg(interpolation),/data-pattern-role="inserted"/);
+  const structural=cagedStudy(boundedBoard,modalHarmony,'cycles','seventh','ascending',{source:'m3',treatment:'original'});
+  assert.match(exerciseNotationSvg(structural),/class="note-head structural-note"/);
+});
