@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {cagedStudy,exerciseNotationSvg,flattenExercise} from '../src/guitar/exercises.js';
 
 const scalePcs=[9,11,0,2,4,6,7],scaleNames=['A','B','C','D','E','F♯','G'];
+const SHARP_TEST_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const harmony={name:'A',suffix:'m7',tones:['A','C','E','G'],intervals:['1','♭3','5','♭7'],chordPcs:[9,0,4,7],scalePcs,scaleNames};
 const board={notes:Array.from({length:30},(_,index)=>{
   const midi=45+index;
@@ -267,6 +268,20 @@ test('five-note enclosures reproduce the requested A Dorian cells and spellings'
     assert.deepEqual(group.notes.map(note=>note.midi-target),pattern.offsets,`${study} pitches`);
     assert.deepEqual(group.notes.map(note=>note.name),pattern.names,`${study} spellings`);
   }
+});
+
+test('voice-led arpeggio connections follow progression chords using nearby inversions',()=>{
+  const chromaticBoard={start:1,end:12,notes:Array.from({length:30},(_,index)=>{const midi=45+index;return {string:index%6,fret:1+index%12,midi,pc:midi%12,name:SHARP_TEST_NAMES[midi%12]};})};
+  const progression=[
+    {name:'D',suffix:'m7',chordPcs:[2,5,9,0],tones:['D','F','A','C']},
+    {name:'G',suffix:'7',chordPcs:[7,11,2,5],tones:['G','B','D','F']},
+    {name:'C',suffix:'maj7',chordPcs:[0,4,7,11],tones:['C','E','G','B']},
+  ];
+  const groups=cagedStudy(chromaticBoard,harmony,'connections','seventh','ascending',{progression});
+  assert.deepEqual(groups.map(group=>group.chord),['Dm7','G7','Cmaj7']);
+  assert.ok(groups.every(group=>group.notes.length===4));
+  assert.ok(groups.every(group=>group.annotation==='nearest inversion into the next chord'));
+  assert.ok(groups.slice(1).every((group,index)=>Math.abs(group.notes[0].midi-groups[index].notes.at(-1).midi)<=7));
 });
 
 test('guitar pitch is written one octave above its sounding pitch',()=>{

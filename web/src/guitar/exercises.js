@@ -171,7 +171,24 @@ function contourGroups(groups,motion){
   return groups;
 }
 
-function connectedArpeggios(board,harmony,material,motion) {
+function connectedArpeggios(board,harmony,material,motion,progression=[]) {
+  if(progression.length){
+    const size=MATERIAL_SIZES[material]||4,descending=motion==='descending'||motion==='down-up',groups=[];
+    let previous=descending?Math.max(...board.notes.map(note=>note.midi)):Math.min(...board.notes.map(note=>note.midi));
+    const harmonies=motion==='up-down'?[...progression,...progression.toReversed()]:motion==='down-up'?[...progression.toReversed(),...progression]:progression;
+    for(const current of harmonies){
+      const pcs=current.chordPcs.slice(0,Math.min(size,current.chordPcs.length)),names=current.tones.slice(0,pcs.length),candidates=[];
+      for(let inversion=0;inversion<pcs.length;inversion++){
+        const rotatedPcs=[...pcs.slice(inversion),...pcs.slice(0,inversion)],rotatedNames=[...names.slice(inversion),...names.slice(0,inversion)];
+        const path=pathForPcs(board,rotatedPcs,rotatedNames,!descending,previous);
+        if(path?.length===pcs.length)candidates.push(path);
+      }
+      const path=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous)||Math.abs(a.at(-1).midi-a[0].midi)-Math.abs(b.at(-1).midi-b[0].midi))[0];
+      if(!path)continue;previous=path.at(-1).midi;
+      groups.push({chord:`${current.name}${current.suffix}`,rootName:current.name,pcs:path.map(note=>note.pc),names:path.map(note=>note.name),notes:path,annotation:'nearest inversion into the next chord'});
+    }
+    return groups;
+  }
   const size=MATERIAL_SIZES[material]||4,descending=motion==='descending'||motion==='down-up',groups=[];
   let previous=descending?Math.max(...board.notes.map(note=>note.midi)):Math.min(...board.notes.map(note=>note.midi));
   for(let degree=0;degree<7;degree++){
@@ -393,7 +410,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='approacheverytone')return approachEveryArpeggioTone(board,harmony,material,motion);
   if(study==='upperstructure')return upperStructureExercise(board,harmony,motion);
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
-  if(study==='connections')return connectedArpeggios(board,harmony,material,motion);
+  if(study==='connections')return connectedArpeggios(board,harmony,material,motion,context.progression);
   if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source);
   if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source,context.pattern);
   return cagedProgressionExercise(board,harmony,material,motion);
