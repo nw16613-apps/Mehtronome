@@ -215,7 +215,7 @@ function staffY(note) {
 }
 function esc(text) { return String(text).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
 
-export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
+function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise') {
   const notes=flattenExercise(groups);
   const perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
   const step=30,left=90,right=24,width=Math.max(760,left+notes.length*step+right),height=280;
@@ -255,4 +255,15 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
     }
   });
   return svg+'</svg>';
+}
+
+export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
+  const systems=[],maxNotes=24;
+  let current=[],count=0;
+  for(const group of groups){
+    if(current.length&&count+group.notes.length>maxNotes){systems.push(current);current=[];count=0;}
+    current.push(group);count+=group.notes.length;
+  }
+  if(current.length)systems.push(current);
+  return systems.map((system,index)=>notationSystemSvg(system,rhythm,systems.length>1?`${title}, system ${index+1} of ${systems.length}`:title)).join('');
 }

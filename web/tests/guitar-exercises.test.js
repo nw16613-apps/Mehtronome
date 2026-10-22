@@ -149,3 +149,11 @@ test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="tab-fret"/g)||[]).length,flattenExercise(groups).length);
 });
+
+test('long notation wraps into multiple complete systems',()=>{
+  const groups=cagedStudy(board,harmony,'alternating','seventh','up-down');
+  const svg=exerciseNotationSvg(groups,'eighths','Combined tetrads');
+  assert.ok((svg.match(/class="exercise-notation"/g)||[]).length>1);
+  assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
+  assert.equal((svg.match(/class="treble-clef"/g)||[]).length,(svg.match(/class="exercise-notation"/g)||[]).length);
+});

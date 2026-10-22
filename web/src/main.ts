@@ -137,7 +137,7 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
-const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false};
+const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true};
 let currentExerciseGroups:any[]=[];
 let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
@@ -155,9 +155,11 @@ let mixerDrums = false, mixerBass = false, mixerSequence = false;
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
 
 function stopExercisePreview() {
+  const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
   exerciseSources=[];exercisePlaying=false;
+  if(stopBacking)node?.port.postMessage({type:'stop'});
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');}
 }
@@ -172,10 +174,10 @@ function renderCagedExercise(position:any,board:any,info:any) {
   const studyName={harmonized:`Harmonized ${materialName}`,alternating:`${alternatingLabel} diatonic ${materialName}`,chordtones:`${materialTitle} from each chord tone`,chordtonesalternating:`${alternatingLabel} ${materialName} from each chord tone`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',fourths:'Scale in fourths',sixths:'Scale in sixths',digital1324:'Diatonic 1–3–2–4 pattern',groups3:'Ascending groups of three',groups4:'Ascending groups of four',inversions:`${info.name}${info.suffix} inversion cycle`}[exerciseView.study] || `Harmonized ${materialName}`;
   const startsHigh=exerciseView.motion==='descending'||exerciseView.motion==='down-up';
   const alternatingStudy=['alternating','chordtonesalternating'].includes(exerciseView.study);
-  const directionOptions=alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option><option value="up-down">Up/down then down/up</option><option value="down-up">Down/up then up/down</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
+  const directionOptions=alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
   const title=`${MODES[info.mode as keyof typeof MODES].name} · ${studyName}, ${exerciseView.motion.replace('-',' and ')}, Position ${position.numeral}`;
   const notation=exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,title);
-  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Arpeggio studies"><option value="harmonized">Harmonized scale</option><option value="alternating">Alternating diatonic arpeggios</option><option value="chordtones">Arpeggios from each chord tone</option><option value="chordtonesalternating">Alternating arpeggios from each chord tone</option><option value="inversions">Selected-chord inversions</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label><label>Direction<select id="exercise-motion">${directionOptions}</select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="notation-scroll">${notation}</div><div class="exercise-footer"><p>This study starts at the ${startsHigh?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position. Scroll sideways to follow the complete exercise.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear jazz guitar</button></div>`;
+  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Arpeggio studies"><option value="harmonized">Harmonized scale</option><option value="alternating">Alternating diatonic arpeggios</option><option value="chordtones">Arpeggios from each chord tone</option><option value="chordtonesalternating">Alternating arpeggios from each chord tone</option><option value="inversions">Selected-chord inversions</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label><label>Direction<select id="exercise-motion">${directionOptions}</select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label><label class="check exercise-backing"><input id="exercise-backing" type="checkbox">Metronome + harmony</label></div><div class="notation-scroll">${notation}</div><div class="exercise-footer"><p>This study starts at the ${startsHigh?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position. The notation wraps into readable systems below.</p><div class="exercise-actions"><button id="exercise-focus" type="button" class="practice-button" aria-pressed="false">Focus notation</button><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear jazz guitar</button></div></div>`;
   select('exercise-study').value=exerciseView.study;
   select('exercise-material').value=exerciseView.material;
   select('exercise-material').disabled=['cells','thirds','fourths','sixths','digital1324','groups3','groups4'].includes(exerciseView.study);
@@ -183,6 +185,9 @@ function renderCagedExercise(position:any,board:any,info:any) {
   select('exercise-motion').disabled=false;
   select('exercise-rhythm').value=exerciseView.rhythm;
   input('exercise-loop').checked=exerciseView.loop;
+  input('exercise-backing').checked=exerciseView.backing;
+  const focusButton=el<HTMLButtonElement>('exercise-focus'),notationFocused=el('caged-exercise').classList.contains('notation-focused');
+  focusButton.textContent=notationFocused?'Exit notation focus':'Focus notation';focusButton.setAttribute('aria-pressed',String(notationFocused));
 }
 
 function scheduleExercise() {
@@ -215,6 +220,7 @@ async function toggleExercisePreview() {
   stopPreview();
   try{
     await prepareAudio();exercisePlaying=true;
+    if(exerciseView.backing)node!.port.postMessage({type:'start',settings:{...settings,countIn:false,drums:false,bass:false,sequence:false}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     scheduleExercise();
   }catch(error){stopExercisePreview();el('error').textContent=error instanceof Error?error.message:'Could not preview this exercise.';el('error').hidden=false;}
@@ -647,16 +653,26 @@ el('caged-exercise').addEventListener('input',event=>{
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
   stopExercisePreview();
   if(target.id==='exercise-material')exerciseView.material=target.value;
-  if(target.id==='exercise-study')exerciseView.study=target.value;
+  if(target.id==='exercise-study'){exerciseView.study=target.value;if(['alternating','chordtonesalternating'].includes(target.value)&&['up-down','down-up'].includes(exerciseView.motion))exerciseView.motion='ascending';}
   if(target.id==='exercise-motion')exerciseView.motion=target.value;
   if(target.id==='exercise-rhythm')exerciseView.rhythm=target.value;
   if(target.id==='exercise-loop'&&target instanceof HTMLInputElement)exerciseView.loop=target.checked;
+  if(target.id==='exercise-backing'&&target instanceof HTMLInputElement)exerciseView.backing=target.checked;
   renderGuitar();
   document.getElementById(target.id)?.focus({preventScroll:true});
 });
+function setNotationFocus(value:boolean) {
+  el('caged-exercise').classList.toggle('notation-focused',value);
+  document.body.classList.toggle('notation-focus-open',value);
+  const button=document.querySelector<HTMLButtonElement>('#exercise-focus');
+  if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));}
+}
 el('caged-exercise').addEventListener('click',event=>{
-  if(event.target instanceof HTMLElement&&event.target.closest('#exercise-preview'))void toggleExercisePreview();
+  if(!(event.target instanceof HTMLElement))return;
+  if(event.target.closest('#exercise-preview'))void toggleExercisePreview();
+  if(event.target.closest('#exercise-focus'))setNotationFocus(!el('caged-exercise').classList.contains('notation-focused'));
 });
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&el('caged-exercise').classList.contains('notation-focused'))setNotationFocus(false);});
 for(const id of ['theory-view','theory-choice'])select(id).addEventListener('input',()=>{
   if(id==='theory-view'){
     const value=select(id).value;

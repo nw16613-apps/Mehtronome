@@ -23,9 +23,10 @@ test('five-position overview selects one full-size CAGED diagram',async({page})=
 test('focused CAGED position generates a configurable notation and TAB library',async({page})=>{
   await page.goto('/');
   const exercise=page.locator('#caged-exercise');
-  await expect(exercise.locator('.exercise-notation')).toBeVisible();
-  await expect(exercise.locator('.treble-clef')).toHaveCount(1);
-  await expect(exercise.locator('.tab-clef')).toHaveCount(1);
+  await expect(exercise.locator('.exercise-notation').first()).toBeVisible();
+  expect(await exercise.locator('.exercise-notation').count()).toBeGreaterThan(1);
+  await expect(exercise.locator('.treble-clef')).toHaveCount(await exercise.locator('.exercise-notation').count());
+  await expect(exercise.locator('.tab-clef')).toHaveCount(await exercise.locator('.exercise-notation').count());
   await expect(exercise.locator('.chord-symbol').first()).toHaveText('Am7');
   expect(await exercise.locator('.chord-symbol').count()).toBeGreaterThanOrEqual(8);
   const ascending=await exercise.locator('.tab-fret').allTextContents();
@@ -51,19 +52,27 @@ test('focused CAGED position generates a configurable notation and TAB library',
   for(const degree of ['1','♭3','5','♭7'])expect(chordToneLabels.some(label=>label.includes(`From ${degree}`))).toBe(true);
   await exercise.locator('#exercise-study').selectOption('chordtonesalternating');
   await exercise.locator('#exercise-motion').selectOption('ascending');
+  await expect(exercise.locator('#exercise-motion option')).toHaveText(['Up/down · low to high','Down/up · high to low']);
   await expect(exercise.locator('h3')).toContainText('Up/down tetrads from each chord tone');
   await expect(exercise.locator('#exercise-motion')).toBeEnabled();
   await expect(exercise.locator('#exercise-preview')).toContainText('Hear jazz guitar');
   await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up tetrads from each chord tone');
-  await exercise.locator('#exercise-motion').selectOption('up-down');
-  await expect(exercise.locator('h3')).toContainText('Up/down then down/up tetrads');
   await exercise.locator('#exercise-material').selectOption('triad');
-  await expect(exercise.locator('h3')).toContainText('Up/down then down/up triads');
+  await expect(exercise.locator('h3')).toContainText('Down/up triads');
   await exercise.locator('#exercise-study').selectOption('alternating');
   await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
   await expect(exercise.locator('#exercise-study option')).toHaveCount(12);
+  await expect(exercise.locator('#exercise-backing')).toBeChecked();
+  await expect(exercise.locator('.exercise-notation').first()).toBeVisible();
+  const notationFits=await exercise.locator('.notation-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1);
+  expect(notationFits).toBe(true);
+  await exercise.locator('#exercise-focus').click();
+  await expect(exercise).toHaveClass(/notation-focused/);
+  await expect(exercise.locator('#exercise-focus')).toHaveText('Exit notation focus');
+  await page.keyboard.press('Escape');
+  await expect(exercise).not.toHaveClass(/notation-focused/);
 });
 
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
