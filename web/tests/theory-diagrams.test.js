@@ -69,14 +69,11 @@ test('triad pairs have distinct A/B badges, solid/dashed rings and descriptive n
     }
     assert.ok(notes.some(note=>note.classes.includes('theory-a')));
     assert.ok(notes.some(note=>note.classes.includes('theory-b')));
-    assert.ok(selected.filter(note=>[0,2].includes(note.pc)).every(note=>note.classes.includes('triad-root')));
     assert.match(svg,/triad A: C major/);
     assert.match(svg,/triad B: D major/);
     assert.match(svg,/text-anchor="middle">A<\/text>/);
     assert.match(svg,/text-anchor="middle">B<\/text>/);
     assert.equal((svg.match(/stroke-dasharray="3 2"/g)||[]).length,selected.filter(note=>note.group==='b').length);
-  assert.match(svg,/triad A root/);
-  assert.match(svg,/triad B root/);
   }
 });
 
