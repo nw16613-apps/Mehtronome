@@ -136,7 +136,7 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
     let notes=offsets.map(offset=>available[index+offset]).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
     if(alternating&&index%2===1)notes.reverse();
     groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,
-      annotation:notes.map(note=>choice.degrees[choice.pcs.indexOf(note.pc)]).join(' · '),source:`${choice.name} · ${PENTATONIC_PATTERNS[pattern]}`});
+      source:`${choice.name} · ${PENTATONIC_PATTERNS[pattern]}`});
   }
   return groups;
 }
