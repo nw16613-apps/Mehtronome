@@ -8,6 +8,7 @@ import './style.css';
 import './themes.css';
 import './practice.css';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, parentMajorFor } from './guitar/fretboard.js';
+import { cagedExercise, tabRows } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
@@ -98,6 +99,7 @@ app.innerHTML = `
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
+      <section id="caged-exercise" class="caged-exercise" aria-labelledby="caged-exercise-title"></section>
       <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With the chord overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. The shared Explore selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Chord shapes and modal rings return when exploration is off.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </details>
@@ -134,6 +136,11 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
+const exerciseView={material:'triad',motion:'ascending',rhythm:'eighths',loop:false};
+let currentExercise:any[]=[];
+let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
+let exerciseSources:AudioScheduledSourceNode[]=[];
+let exercisePlaying=false;
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
 let transportInView = true;
@@ -144,6 +151,62 @@ let activeComparison:'a'|'b'|null = null;
 let mixerDrums = false, mixerBass = false, mixerSequence = false;
 
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
+
+function stopExercisePreview() {
+  clearTimeout(exerciseTimer);exerciseTimer=undefined;
+  for(const source of exerciseSources){try{source.stop();}catch{}}
+  exerciseSources=[];exercisePlaying=false;
+  const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
+  if(button){button.textContent='▶ Hear exercise';button.setAttribute('aria-pressed','false');}
+}
+
+function renderCagedExercise(position:any,board:any,info:any) {
+  currentExercise=cagedExercise(board,info,exerciseView.material,exerciseView.motion);
+  const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
+  const rows=tabRows(currentExercise);
+  const degreeCells=currentExercise.map(note=>`<span>${escapeHtml(note.degree)}</span>`).join('');
+  const beatEvery=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
+  const tab=rows.map((row:any)=>`<div class="tab-row"><strong>${row.label}</strong>${row.frets.map((fret:string,index:number)=>`<span class="${index%beatEvery===0?'beat-start':''}">${fret}</span>`).join('')}</div>`).join('');
+  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">Arpeggio workout · Position ${position.numeral}</h3></div><span>${escapeHtml(info.name+info.suffix)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Material<select id="exercise-material"><option value="triad">Triad</option><option value="seventh">Four-note arpeggio</option><option value="extensions">Chord + extensions</option></select></label><label>Pattern<select id="exercise-motion"><option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Up and down</option><option value="thirds">Skip-and-return</option></select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="tab-wrap" style="--tab-notes:${Math.max(1,currentExercise.length)}" role="img" aria-label="Guitar tablature for ${escapeHtml(info.name+info.suffix)} in position ${position.numeral}"><div class="tab-degrees" aria-label="Scale degrees"><strong>Degree</strong>${degreeCells}</div>${tab}</div><div class="exercise-footer"><p>Stay inside the displayed ${position.shape}-shape fingering. Each vertical mark groups one beat.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear exercise</button></div>`;
+  select('exercise-material').value=exerciseView.material;
+  select('exercise-motion').value=exerciseView.motion;
+  select('exercise-rhythm').value=exerciseView.rhythm;
+  input('exercise-loop').checked=exerciseView.loop;
+}
+
+function scheduleExercise() {
+  if(!context||!master||!currentExercise.length||!exercisePlaying)return;
+  const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
+  const noteLength=60/settings.bpm/divisions;
+  const start=context.currentTime+.045;
+  exerciseSources=[];
+  currentExercise.forEach((note,index)=>{
+    const at=start+index*noteLength;
+    const gain=context!.createGain(),filter=context!.createBiquadFilter();
+    filter.type='lowpass';filter.frequency.setValueAtTime(2500,at);filter.frequency.exponentialRampToValueAtTime(850,at+Math.min(.35,noteLength*.9));
+    gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.075,at+.008);gain.gain.exponentialRampToValueAtTime(.0001,at+Math.max(.09,noteLength*.82));
+    for(const [type,level] of [['triangle',1],['sine',.28]] as const){
+      const oscillator=context!.createOscillator();oscillator.type=type;oscillator.frequency.value=440*2**((note.midi-69)/12);
+      const layer=context!.createGain();layer.gain.value=level;oscillator.connect(layer).connect(filter);oscillator.start(at);oscillator.stop(at+Math.max(.1,noteLength*.9));exerciseSources.push(oscillator);
+    }
+    filter.connect(gain).connect(master!);
+  });
+  const duration=currentExercise.length*noteLength;
+  exerciseTimer=setTimeout(()=>{
+    if(exerciseView.loop&&exercisePlaying)scheduleExercise();else stopExercisePreview();
+  },Math.max(100,duration*1000));
+}
+
+async function toggleExercisePreview() {
+  if(exercisePlaying){stopExercisePreview();return;}
+  if(playing||busy||stopping||!currentExercise.length)return;
+  stopPreview();
+  try{
+    await prepareAudio();exercisePlaying=true;
+    const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
+    scheduleExercise();
+  }catch(error){stopExercisePreview();el('error').textContent=error instanceof Error?error.message:'Could not preview this exercise.';el('error').hidden=false;}
+}
 
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
@@ -186,6 +249,7 @@ function renderMusic() {
   syncMiniTransport();
 }
 function renderGuitar() {
+  if(exercisePlaying)stopExercisePreview();
   if (previewGripShape) stopPreview();
   positionGrips.clear();
   const showGrip = input('show-grip').checked;
@@ -248,6 +312,7 @@ function renderGuitar() {
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
+  renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info);
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
@@ -393,6 +458,7 @@ function reflectChordPreviews() {
   });
 }
 function stopPreview() {
+  stopExercisePreview();
   clearTimeout(gripRingTimer);
   gripRingTimer = undefined;
   previewGeneration++;
@@ -455,7 +521,7 @@ async function prepareAudio() {
       void context?.close();
     };
     context.onstatechange = () => {
-      if ((playing || previewing) && context?.state !== 'running') {
+      if ((playing || previewing || exercisePlaying) && context?.state !== 'running') {
         stopPreview();
         playing = false;
         reflectPlayback();
@@ -564,6 +630,20 @@ positionOverview.addEventListener('keydown',event=>{
 });
 el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
+el('caged-exercise').addEventListener('input',event=>{
+  const target=event.target;
+  if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
+  stopExercisePreview();
+  if(target.id==='exercise-material')exerciseView.material=target.value;
+  if(target.id==='exercise-motion')exerciseView.motion=target.value;
+  if(target.id==='exercise-rhythm')exerciseView.rhythm=target.value;
+  if(target.id==='exercise-loop'&&target instanceof HTMLInputElement)exerciseView.loop=target.checked;
+  renderGuitar();
+  document.getElementById(target.id)?.focus({preventScroll:true});
+});
+el('caged-exercise').addEventListener('click',event=>{
+  if(event.target instanceof HTMLElement&&event.target.closest('#exercise-preview'))void toggleExercisePreview();
+});
 for(const id of ['theory-view','theory-choice'])select(id).addEventListener('input',()=>{
   if(id==='theory-view'){
     const value=select(id).value;

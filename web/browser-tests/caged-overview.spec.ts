@@ -20,6 +20,27 @@ test('five-position overview selects one full-size CAGED diagram',async({page})=
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','III');
 });
 
+test('focused CAGED position generates configurable TAB exercises',async({page})=>{
+  await page.goto('/');
+  const exercise=page.locator('#caged-exercise');
+  await expect(exercise.locator('.tab-row')).toHaveCount(6);
+  await expect(exercise.locator('.tab-degrees')).toContainText('1');
+  await expect(exercise.locator('.tab-degrees')).toContainText('♭3');
+  await exercise.locator('#exercise-material').selectOption('seventh');
+  await expect(exercise.locator('.tab-degrees')).toContainText('♭7');
+  const ascending=await exercise.locator('.tab-degrees span').allTextContents();
+  await exercise.locator('#exercise-motion').selectOption('descending');
+  const descending=await exercise.locator('.tab-degrees span').allTextContents();
+  expect(descending).toEqual([...ascending].reverse());
+  await page.locator('[data-overview-position="III"]').click();
+  await expect(exercise.locator('h3')).toContainText('Position III');
+  await expect(exercise.locator('#exercise-material')).toHaveValue('seventh');
+  await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
+  await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','false');
+});
+
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
   await openReference(page);
   await expect(page.locator('#featured-position')).toHaveValue('all');
