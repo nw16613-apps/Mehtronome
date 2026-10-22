@@ -189,12 +189,12 @@ function scheduleExercise() {
   exerciseSources=[];
   currentExercise.forEach((note,index)=>{
     const at=start+index*noteLength;
-    const duration=Math.max(.75,noteLength*2.4);
+    const duration=Math.max(.045,noteLength*.96),release=Math.min(.045,duration*.3);
     const samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration);
     const buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);
     const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
     filter.type='lowpass';filter.frequency.value=3100;filter.Q.value=.45;
-    gain.gain.setValueAtTime(.3,at);gain.gain.setValueAtTime(.3,at+duration-.09);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    gain.gain.setValueAtTime(.3,at);gain.gain.setValueAtTime(.3,at+duration-release);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
     source.connect(filter).connect(gain).connect(master!);
     if(reverb)gain.connect(reverb);
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
@@ -202,7 +202,7 @@ function scheduleExercise() {
   const duration=currentExercise.length*noteLength;
   exerciseTimer=setTimeout(()=>{
     if(exerciseView.loop&&exercisePlaying)scheduleExercise();else stopExercisePreview();
-  },Math.max(100,(duration+(exerciseView.loop?0:Math.max(.5,noteLength*1.4)))*1000));
+  },Math.max(100,(duration+(exerciseView.loop?0:.06))*1000));
 }
 
 async function toggleExercisePreview() {
