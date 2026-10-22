@@ -60,6 +60,8 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mini-harmony-controls { display:grid; grid-template-columns:68px 130px 140px minmax(165px,1fr); gap:8px; flex:2.2; min-width:0; }
 .mini-harmony-controls label { display:grid; gap:3px; min-width:0; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted,var(--practice-muted,#64735f)); }
 .mini-harmony-controls select { width:100%; min-width:0; padding:7px 6px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; text-transform:none; letter-spacing:0; }
+.mini-pulse-options { display:grid; gap:4px; min-width:max-content; font-size:10px; }
+.mini-pulse-options .check { min-height:0; }
 #mini-beat { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted,var(--practice-muted,#64735f)); }
 .focus-view .intro,.focus-view .presets,.focus-view .transport,.focus-view .notes,.focus-view .mix,.focus-view footer { display:none!important; }
 .focus-view main { padding-top:24px; }
@@ -92,6 +94,7 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .mini-harmony { flex:1; }
   .mini-harmony-controls { flex-basis:100%; order:5; grid-template-columns:65px minmax(100px,1fr) minmax(100px,1fr); }
   .mini-harmony-controls label:last-child { grid-column:1/-1; }
+  .mini-pulse-options { order:4; }
   .compare-slots { gap:8px; }
   .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
   .trainer-fields { gap:8px; }

@@ -139,6 +139,13 @@ test('focus bar changes the root, chord and progression',async({page})=>{
   await expect(page.locator('#progression')).toHaveAttribute('aria-pressed','true');
   await page.locator('#mini-progression').selectOption('off');
   await expect(page.locator('#pedal')).toHaveAttribute('aria-pressed','true');
+
+  await page.locator('#mini-count-in').check();
+  await expect(page.locator('#count-in')).toBeChecked();
+  await page.locator('#accent').evaluate((element:HTMLInputElement)=>{element.checked=false;element.dispatchEvent(new Event('input',{bubbles:true}));});
+  await expect(page.locator('#mini-accent')).not.toBeChecked();
+  await page.locator('#mini-accent').check();
+  await expect(page.locator('#accent')).toBeChecked();
 });
 
 test('pentatonic overlay preserves modal-root colour and marks its own root',async({page})=>{
