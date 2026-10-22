@@ -143,6 +143,7 @@ let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
 let exerciseSources:AudioScheduledSourceNode[]=[];
 let exercisePlaying=false;
+let exerciseNextStart:number|undefined;
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
 let transportInView = true;
@@ -158,7 +159,7 @@ function stopExercisePreview() {
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
-  exerciseSources=[];exercisePlaying=false;
+  exerciseSources=[];exercisePlaying=false;exerciseNextStart=undefined;
   if(stopBacking)node?.port.postMessage({type:'stop'});
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');}
@@ -190,12 +191,11 @@ function renderCagedExercise(position:any,board:any,info:any) {
   focusButton.textContent=notationFocused?'Exit notation focus':'Focus notation';focusButton.setAttribute('aria-pressed',String(notationFocused));
 }
 
-function scheduleExercise() {
+function scheduleExercise(scheduledStart?:number) {
   if(!context||!master||!currentExercise.length||!exercisePlaying)return;
   const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
   const noteLength=60/settings.bpm/divisions;
-  const start=context.currentTime+.045;
-  exerciseSources=[];
+  const start=scheduledStart??context.currentTime+.03;
   currentExercise.forEach((note,index)=>{
     const at=start+index*noteLength;
     const duration=Math.max(.045,noteLength*.96),release=Math.min(.045,duration*.3);
@@ -207,11 +207,14 @@ function scheduleExercise() {
     source.connect(filter).connect(gain).connect(master!);
     if(reverb)gain.connect(reverb);
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
+    source.onended=()=>{const sourceIndex=exerciseSources.indexOf(source);if(sourceIndex>=0)exerciseSources.splice(sourceIndex,1);};
   });
   const duration=currentExercise.length*noteLength;
+  exerciseNextStart=start+duration;
+  const lookahead=Math.min(1,Math.max(.2,duration*.25));
   exerciseTimer=setTimeout(()=>{
-    if(exerciseView.loop&&exercisePlaying)scheduleExercise();else stopExercisePreview();
-  },Math.max(100,(duration+(exerciseView.loop?0:.06))*1000));
+    if(exerciseView.loop&&exercisePlaying)scheduleExercise(exerciseNextStart);else stopExercisePreview();
+  },Math.max(0,(exerciseNextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
 
 async function toggleExercisePreview() {

@@ -75,6 +75,32 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await expect(exercise).not.toHaveClass(/notation-focused/);
 });
 
+test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
+  await page.addInitScript(()=>{
+    const starts:number[]=[];
+    Object.defineProperty(window,'__exerciseStarts',{value:starts});
+    const original=AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start=function(when?:number,offset?:number,duration?:number){
+      starts.push(when??0);return original.call(this,when,offset,duration);
+    };
+  });
+  await page.goto('/');
+  await page.locator('#bpm').fill('240');
+  await page.locator('#bpm').dispatchEvent('input');
+  const exercise=page.locator('#caged-exercise');
+  await exercise.locator('#exercise-study').selectOption('inversions');
+  await exercise.locator('#exercise-material').selectOption('triad');
+  await exercise.locator('#exercise-rhythm').selectOption('sixteenths');
+  await exercise.locator('#exercise-backing').uncheck();
+  await exercise.locator('#exercise-loop').check();
+  await exercise.locator('#exercise-preview').click();
+  await expect.poll(async()=>page.evaluate(()=>(window as any).__exerciseStarts.length),{timeout:5000}).toBeGreaterThanOrEqual(18);
+  const starts=await page.evaluate(()=>(window as any).__exerciseStarts as number[]);
+  expect(starts[9]-starts[0]).toBeCloseTo(.5625,6);
+  expect(starts[10]-starts[9]).toBeCloseTo(.0625,6);
+  await exercise.locator('#exercise-preview').click();
+});
+
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
   await openReference(page);
   await expect(page.locator('#featured-position')).toHaveValue('all');
