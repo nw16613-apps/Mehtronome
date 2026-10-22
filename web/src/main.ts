@@ -8,7 +8,7 @@ import './style.css';
 import './themes.css';
 import './practice.css';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, parentMajorFor } from './guitar/fretboard.js';
-import { cagedExercise, tabRows } from './guitar/exercises.js';
+import { cagedStudy, exerciseNotationSvg, flattenExercise } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
@@ -136,7 +136,8 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
-const exerciseView={material:'triad',motion:'ascending',rhythm:'eighths',loop:false};
+const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false};
+let currentExerciseGroups:any[]=[];
 let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
 let exerciseSources:AudioScheduledSourceNode[]=[];
@@ -161,14 +162,17 @@ function stopExercisePreview() {
 }
 
 function renderCagedExercise(position:any,board:any,info:any) {
-  currentExercise=cagedExercise(board,info,exerciseView.material,exerciseView.motion);
+  currentExerciseGroups=cagedStudy(board,info,exerciseView.study,exerciseView.material,exerciseView.motion);
+  currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
-  const rows=tabRows(currentExercise);
-  const degreeCells=currentExercise.map(note=>`<span>${escapeHtml(note.degree)}</span>`).join('');
-  const beatEvery=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
-  const tab=rows.map((row:any)=>`<div class="tab-row"><strong>${row.label}</strong>${row.frets.map((fret:string,index:number)=>`<span class="${index%beatEvery===0?'beat-start':''}">${fret}</span>`).join('')}</div>`).join('');
-  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">Arpeggio workout · Position ${position.numeral}</h3></div><span>${escapeHtml(info.name+info.suffix)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Material<select id="exercise-material"><option value="triad">Triad</option><option value="seventh">Four-note arpeggio</option><option value="extensions">Chord + extensions</option></select></label><label>Pattern<select id="exercise-motion"><option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Up and down</option><option value="thirds">Skip-and-return</option></select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="tab-wrap" style="--tab-notes:${Math.max(1,currentExercise.length)}" role="img" aria-label="Guitar tablature for ${escapeHtml(info.name+info.suffix)} in position ${position.numeral}"><div class="tab-degrees" aria-label="Scale degrees"><strong>Degree</strong>${degreeCells}</div>${tab}</div><div class="exercise-footer"><p>Stay inside the displayed ${position.shape}-shape fingering. Each vertical mark groups one beat.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear exercise</button></div>`;
+  const materialName=exerciseView.material==='triad'?'triads':exerciseView.material==='extensions'?'ninth chords':'tetrads';
+  const studyName={harmonized:`Harmonized ${materialName}`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',inversions:`${info.name}${info.suffix} inversion cycle`}[exerciseView.study] || `Harmonized ${materialName}`;
+  const title=`${MODES[info.mode as keyof typeof MODES].name} · ${studyName}, ${exerciseView.motion.replace('-',' and ')}, Position ${position.numeral}`;
+  const notation=exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,title);
+  el('caged-exercise').innerHTML=`<div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><option value="harmonized">Harmonized scale</option><option value="cells">Diatonic 1–2–3–5 cells</option><option value="thirds">Scale in thirds</option><option value="inversions">Selected-chord inversions</option></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label><label>Direction<select id="exercise-motion"><option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option><option value="alternating">Alternating directions</option></select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label></div><div class="notation-scroll">${notation}</div><div class="exercise-footer"><p>This study stays inside the displayed ${position.shape}-position. Scroll the notation sideways to follow the complete exercise.</p><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear exercise</button></div>`;
+  select('exercise-study').value=exerciseView.study;
   select('exercise-material').value=exerciseView.material;
+  select('exercise-material').disabled=['cells','thirds'].includes(exerciseView.study);
   select('exercise-motion').value=exerciseView.motion;
   select('exercise-rhythm').value=exerciseView.rhythm;
   input('exercise-loop').checked=exerciseView.loop;
@@ -635,6 +639,7 @@ el('caged-exercise').addEventListener('input',event=>{
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
   stopExercisePreview();
   if(target.id==='exercise-material')exerciseView.material=target.value;
+  if(target.id==='exercise-study')exerciseView.study=target.value;
   if(target.id==='exercise-motion')exerciseView.motion=target.value;
   if(target.id==='exercise-rhythm')exerciseView.rhythm=target.value;
   if(target.id==='exercise-loop'&&target instanceof HTMLInputElement)exerciseView.loop=target.checked;

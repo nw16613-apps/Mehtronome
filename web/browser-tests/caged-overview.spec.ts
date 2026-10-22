@@ -20,21 +20,24 @@ test('five-position overview selects one full-size CAGED diagram',async({page})=
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','III');
 });
 
-test('focused CAGED position generates configurable TAB exercises',async({page})=>{
+test('focused CAGED position generates a configurable notation and TAB library',async({page})=>{
   await page.goto('/');
   const exercise=page.locator('#caged-exercise');
-  await expect(exercise.locator('.tab-row')).toHaveCount(6);
-  await expect(exercise.locator('.tab-degrees')).toContainText('1');
-  await expect(exercise.locator('.tab-degrees')).toContainText('♭3');
-  await exercise.locator('#exercise-material').selectOption('seventh');
-  await expect(exercise.locator('.tab-degrees')).toContainText('♭7');
-  const ascending=await exercise.locator('.tab-degrees span').allTextContents();
+  await expect(exercise.locator('.exercise-notation')).toBeVisible();
+  await expect(exercise.locator('.treble-clef')).toHaveCount(1);
+  await expect(exercise.locator('.tab-clef')).toHaveCount(1);
+  await expect(exercise.locator('.chord-symbol').first()).toHaveText('Am7');
+  await expect(exercise.locator('.chord-symbol')).toHaveCount(8);
+  const ascending=await exercise.locator('.tab-fret').allTextContents();
   await exercise.locator('#exercise-motion').selectOption('descending');
-  const descending=await exercise.locator('.tab-degrees span').allTextContents();
-  expect(descending).toEqual([...ascending].reverse());
+  const descending=await exercise.locator('.tab-fret').allTextContents();
+  expect(descending).not.toEqual(ascending);
+  await exercise.locator('#exercise-study').selectOption('cells');
+  await expect(exercise.locator('h3')).toContainText('1–2–3–5 cells');
+  await expect(exercise.locator('#exercise-material')).toBeDisabled();
   await page.locator('[data-overview-position="III"]').click();
   await expect(exercise.locator('h3')).toContainText('Position III');
-  await expect(exercise.locator('#exercise-material')).toHaveValue('seventh');
+  await expect(exercise.locator('#exercise-study')).toHaveValue('cells');
   await exercise.locator('#exercise-preview').click();
   await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
   await exercise.locator('#exercise-preview').click();

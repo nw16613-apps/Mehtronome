@@ -1,26 +1,39 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cagedExercise,tabRows} from '../src/guitar/exercises.js';
+import {cagedStudy,exerciseNotationSvg,flattenExercise} from '../src/guitar/exercises.js';
 
-const harmony={chordPcs:[9,0,4,7,11],intervals:['1','♭3','5','♭7','9']};
-const board={notes:[
-  {string:0,fret:5,midi:45,pc:9},{string:0,fret:8,midi:48,pc:0},
-  {string:1,fret:7,midi:52,pc:4},{string:2,fret:5,midi:55,pc:7},
-  {string:2,fret:9,midi:59,pc:11},{string:3,fret:5,midi:60,pc:0},
-]};
+const scalePcs=[9,11,0,2,4,6,7],scaleNames=['A','B','C','D','E','F♯','G'];
+const harmony={name:'A',suffix:'m7',tones:['A','C','E','G'],chordPcs:[9,0,4,7],scalePcs,scaleNames};
+const board={notes:Array.from({length:30},(_,index)=>{
+  const midi=45+index;
+  const pc=midi%12,scaleIndex=scalePcs.indexOf(pc);
+  return {string:index%6,fret:5+Math.floor(index/6),midi,pc,name:scaleNames[scaleIndex]};
+}).filter(note=>scalePcs.includes(note.pc))};
 
-test('CAGED exercises stay inside the board and selected chord material',()=>{
-  const triad=cagedExercise(board,harmony,'triad','ascending');
-  assert.deepEqual(triad.map(note=>note.pc),[9,0,4,0]);
-  assert.deepEqual(triad.map(note=>note.degree),['1','♭3','5','♭3']);
-  assert.ok(triad.every(note=>board.notes.includes(board.notes.find(candidate=>candidate.midi===note.midi))));
+test('harmonized CAGED study generates every modal tetrad inside the position',()=>{
+  const groups=cagedStudy(board,harmony,'harmonized','seventh','ascending');
+  assert.equal(groups.length,8);
+  assert.deepEqual(groups.slice(0,4).map(group=>group.chord),['Am7','Bm7','Cmaj7','D7']);
+  assert.ok(flattenExercise(groups).every(note=>board.notes.some(candidate=>candidate.string===note.string&&candidate.fret===note.fret)));
+  assert.ok(groups.every(group=>group.notes.every((note,index)=>index===0||note.midi>group.notes[index-1].midi)));
 });
 
-test('exercise motions and TAB retain the physical string and fret',()=>{
-  const descending=cagedExercise(board,harmony,'seventh','descending');
-  assert.deepEqual(descending.map(note=>note.midi),[60,55,52,48,45]);
-  const rows=tabRows(descending);
-  assert.equal(rows[0].label,'E');
-  assert.equal(rows.at(-1).label,'E');
-  assert.equal(rows.find(row=>row.string===3).frets[0],'5');
+test('exercise library provides cells, thirds and selected-chord inversions',()=>{
+  const cells=cagedStudy(board,harmony,'cells','seventh','ascending');
+  assert.deepEqual(cells[0].pcs,[9,11,0,4]);
+  const thirds=cagedStudy(board,harmony,'thirds','seventh','ascending');
+  assert.deepEqual(thirds[0].pcs,[9,0,11,2]);
+  const inversions=cagedStudy(board,harmony,'inversions','seventh','ascending');
+  assert.equal(inversions.length,4);
+  assert.deepEqual(inversions.map(group=>group.rootName),['A','C','E','G']);
+});
+
+test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
+  const groups=cagedStudy(board,harmony,'harmonized','triad','ascending').slice(0,2);
+  const svg=exerciseNotationSvg(groups,'eighths','A Dorian triads');
+  assert.match(svg,/class="treble-clef"/);
+  assert.match(svg,/class="tab-clef"/);
+  assert.match(svg,/>Am</);
+  assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
+  assert.equal((svg.match(/class="tab-fret"/g)||[]).length,flattenExercise(groups).length);
 });
