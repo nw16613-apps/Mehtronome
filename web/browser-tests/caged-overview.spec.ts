@@ -160,6 +160,25 @@ test('notation workspace supports display modes, tempo tools, history, favourite
   await exercise.locator('#exercise-print').click();expect(await page.evaluate(()=>(window as any).__printed)).toBe(true);
 });
 
+test('a user can select and play an arbitrary notation range',async({page})=>{
+  await openReference(page);
+  const exercise=page.locator('#caged-exercise');
+  await exercise.locator('#exercise-select-range').click();
+  await expect(exercise.locator('#exercise-select-range')).toHaveAttribute('aria-pressed','true');
+  await exercise.locator('[data-note-index="2"] .note-head').click();
+  await expect(exercise.locator('#exercise-select-range')).toHaveText('Choose last note');
+  await exercise.locator('[data-note-index="6"] .note-head').click();
+  await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(5);
+  await expect(exercise.locator('#exercise-play-range')).toBeEnabled();
+  await exercise.locator('#exercise-play-range').click();
+  await expect(exercise.locator('#exercise-play-range')).toHaveText('■ Stop selection');
+  await exercise.locator('#exercise-play-range').click();
+  await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(5);
+  await exercise.locator('#exercise-clear-range').click();
+  await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(0);
+  await expect(exercise.locator('#exercise-play-range')).toBeDisabled();
+});
+
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
   await page.addInitScript(()=>{
     const starts:number[]=[];
