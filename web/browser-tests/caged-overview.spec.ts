@@ -163,14 +163,16 @@ test('notation workspace supports display modes, tempo tools, history, favourite
 test('a user can select and play an arbitrary notation range',async({page})=>{
   await openReference(page);
   const exercise=page.locator('#caged-exercise');
-  await exercise.locator('#exercise-select-range').click();
-  await expect(exercise.locator('#exercise-select-range')).toHaveAttribute('aria-pressed','true');
-  await exercise.locator('[data-note-index="2"] .note-head').click();
-  await expect(exercise.locator('#exercise-select-range')).toHaveText('Choose last note');
-  await exercise.locator('[data-note-index="6"] .note-head').click();
+  await exercise.locator('[data-note-index="2"] .note-head').scrollIntoViewIfNeeded();
+  const first=await exercise.locator('[data-note-index="2"] .note-head').boundingBox();
+  const last=await exercise.locator('[data-note-index="6"] .note-head').boundingBox();
+  expect(first).not.toBeNull();expect(last).not.toBeNull();
+  await page.mouse.move(first!.x+first!.width/2,first!.y+first!.height/2);
+  await page.mouse.down();
+  await page.mouse.move(last!.x+last!.width/2,last!.y+last!.height/2,{steps:12});
+  await page.mouse.up();
   await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(5);
   await expect(exercise.locator('#exercise-play-range')).toBeEnabled();
-  await exercise.locator('#exercise-play-range').click();
   await expect(exercise.locator('#exercise-play-range')).toHaveText('■ Stop selection');
   await exercise.locator('#exercise-play-range').click();
   await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(5);

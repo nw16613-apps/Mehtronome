@@ -207,7 +207,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-notation .exercise-degree { fill:#59655f; font:600 9px ui-sans-serif,system-ui,sans-serif; }
 .exercise-notation .tab-fret { fill:#17201d; font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace; text-anchor:middle; }
 .exercise-notation .accidental { fill:#17201d; font:15px Georgia,serif; text-anchor:middle; }
-.exercise-note { cursor:pointer; outline:none; transition:opacity .12s; }
+.exercise-note { cursor:pointer; outline:none; transition:opacity .12s; user-select:none; -webkit-user-select:none; }
 .exercise-note .note-name-label { display:none; fill:#6f4f7c; stroke:#fffefa; stroke-width:3px; paint-order:stroke fill; font:700 8px ui-sans-serif,system-ui,sans-serif; text-anchor:middle; }
 .exercise-note .degree-note-label { display:none; fill:#6f4f7c; stroke:#fffefa; stroke-width:3px; paint-order:stroke fill; font:700 8px ui-sans-serif,system-ui,sans-serif; text-anchor:middle; }
 .exercise-note:hover .note-head,.exercise-note:focus .note-head { fill:#8d617f; }
@@ -273,7 +273,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .exercise-progress { margin-top:7px; }
   .exercise-range-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
   .exercise-range-controls .practice-button { min-height:44px; }
-  .exercise-range-controls #exercise-select-range,.exercise-range-controls span { grid-column:1/-1; }
+  .exercise-range-controls span { grid-column:1/-1; }
   .notation-legend { margin-top:8px; flex-wrap:wrap; }
   .exercise-footer { margin-bottom:8px; }
 }
