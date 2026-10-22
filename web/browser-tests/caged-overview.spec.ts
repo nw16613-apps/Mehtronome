@@ -101,7 +101,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-study').selectOption('alternating');
   await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
-  await expect(exercise.locator('#exercise-study option')).toHaveCount(23);
+  await expect(exercise.locator('#exercise-study option')).toHaveCount(26);
   await expect(exercise.locator('#exercise-backing')).toBeChecked();
   await expect(exercise.locator('.exercise-notation').first()).toBeVisible();
   const notationFits=await exercise.locator('.notation-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1);
@@ -115,7 +115,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
 
 test('jazz language and superimposition studies render synchronized notation and TAB',async({page})=>{
   await openReference(page);
-  for(const study of ['enclosures','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic']){
+  for(const study of ['enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic']){
     await page.locator('#exercise-study').selectOption(study);
     await expect(page.locator('#caged-exercise-title')).not.toBeEmpty();
     await expect(page.locator('#caged-exercise .note-head').first()).toBeVisible();
