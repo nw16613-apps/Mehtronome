@@ -209,6 +209,17 @@ test('notation prints one exercise heading and no pattern-cell labels',()=>{
   assert.equal((svg.match(/class="exercise-source"/g)||[]).length,0);
 });
 
+test('repeated voice-leading and chromatic concept captions print once',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  for(const study of ['connections','enclosures','approach']){
+    const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending');
+    const svg=exerciseNotationSvg(groups,'eighths',study);
+    const repeated=[...new Set(groups.map(group=>group.annotation).filter(Boolean))];
+    for(const caption of repeated)assert.equal(svg.split(caption).length-1,1,`${study}: ${caption}`);
+  }
+});
+
 test('guitar pitch is written one octave above its sounding pitch',()=>{
   const note={name:'A',midi:57,string:1,fret:12,pc:9};
   const groups=[

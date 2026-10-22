@@ -376,7 +376,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
       const beamY=stemsUp?Math.min(...ys)-24:Math.max(...ys)+24;
       svg+=`<line class="note-beam" x1="${xFor(start)+(stemsUp?6:-6)}" x2="${xFor(noteIndex-1)+(stemsUp?6:-6)}" y1="${beamY}" y2="${beamY}"/>`;
     }
-    if(group.annotation)svg+=`<text class="exercise-degree" x="${xFor(start)}" y="268">${esc(group.annotation)}</text>`;
+    if(group.annotation&&group._showAnnotation!==false)svg+=`<text class="exercise-degree" x="${xFor(start)}" y="268">${esc(group.annotation)}</text>`;
     if((groupIndex+1)%2===0||groupIndex===groups.length-1){
       const x=xFor(noteIndex-1)+step/2;
       svg+=`<line class="bar-line" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
@@ -388,10 +388,13 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
 export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
   const systems=[],maxNotes=24;
   let current=[],count=0,globalStart=0,previousSource=null;
+  const shownAnnotations=new Set();
   for(const [groupIndex,group] of groups.entries()){
     if(current.length&&count+group.notes.length>maxNotes){systems.push(current);current=[];count=0;}
     const showSource=Boolean(group.source)&&group.source!==previousSource;
-    current.push({...group,_globalStart:globalStart,_groupIndex:groupIndex,_showSource:showSource});count+=group.notes.length;globalStart+=group.notes.length;
+    const showAnnotation=Boolean(group.annotation)&&!shownAnnotations.has(group.annotation);
+    current.push({...group,_globalStart:globalStart,_groupIndex:groupIndex,_showSource:showSource,_showAnnotation:showAnnotation});count+=group.notes.length;globalStart+=group.notes.length;
+    if(group.annotation)shownAnnotations.add(group.annotation);
     previousSource=group.source||null;
   }
   if(current.length)systems.push(current);
