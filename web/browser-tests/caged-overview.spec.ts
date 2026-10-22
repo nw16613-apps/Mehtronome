@@ -84,10 +84,10 @@ test('triad pairs preserve modal-root colour and mark both triad roots',async({p
   await expect(page.locator('#guitar-diagrams .theory-b.triad-root .theory-ring').first()).toBeVisible();
   await expect(modalRoot).toHaveCSS('fill',normalFill);
   const colours=await page.locator('#guitar-diagrams').evaluate(element=>({
-    a:getComputedStyle(element.querySelector('.theory-a:not(.triad-root)>circle')!).fill,
-    aRoot:getComputedStyle(element.querySelector('.theory-a.triad-root>circle')!).fill,
-    b:getComputedStyle(element.querySelector('.theory-b:not(.triad-root)>circle')!).fill,
-    bRoot:getComputedStyle(element.querySelector('.theory-b.triad-root>circle')!).fill,
+    a:getComputedStyle(element.querySelector('.theory-a:not(.triad-root) .theory-ring')!).stroke,
+    aRoot:getComputedStyle(element.querySelector('.theory-a.triad-root .theory-ring')!).stroke,
+    b:getComputedStyle(element.querySelector('.theory-b:not(.triad-root) .theory-ring')!).stroke,
+    bRoot:getComputedStyle(element.querySelector('.theory-b.triad-root .theory-ring')!).stroke,
   }));
   expect(colours.aRoot).not.toBe(colours.a);
   expect(colours.bRoot).not.toBe(colours.b);
