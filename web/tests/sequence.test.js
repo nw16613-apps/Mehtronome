@@ -32,7 +32,7 @@ test('all sequence patterns follow the harmony, respect count-in and are silent 
     assert.ok(output.subarray(0,16000).every(x=>x===0));
     assert.ok(notes.length>4);
     assert.ok(notes[0].sample>=16000 && notes[0].sample<20000);
-    if(!['chromaticApproach','enclosure','voiceLead'].includes(pattern))for(const note of notes)assert.ok(harmonyAt(engine.settings,note.step).midi.includes(note.midi-12));
+    if(pattern!=='voiceLead')for(const note of notes)assert.ok(harmonyAt(engine.settings,note.step).midi.includes(note.midi-12));
     assert.ok(notes.some(n=>n.step===1));
     engine.audition(1);const previews=[];
     engine.render(new Float32Array(8000),()=>{},null,null,note=>previews.push(note));
@@ -58,13 +58,11 @@ test('sequencer modal pentatonics match the curated Guitar reference choice in e
   assert.deepEqual(melodicNotePool('pentatonic',lydian,lydian.midi).map(note=>note%12),[0,4,6,7,11]);
 });
 
-test('formula patterns retain their cells and jazz approaches resolve',()=>{
+test('formula patterns retain their cells',()=>{
   const indices=pattern=>Array.from({length:8},(_,grid)=>sequenceStep(pattern,grid,7,2)?.index??null);
   assert.deepEqual(indices('formula1235'),[0,1,2,4,1,2,3,5]);
   assert.deepEqual(indices('formula1324'),[0,2,1,3,1,3,2,4]);
   assert.deepEqual(indices('thirds'),[0,2,1,3,2,4,3,5]);
-  assert.deepEqual(Array.from({length:6},(_,grid)=>sequenceStep('chromaticApproach',grid,4,2).semitones),[-1,0,-1,0,-1,0]);
-  assert.deepEqual(Array.from({length:6},(_,grid)=>sequenceStep('enclosure',grid,4,2).semitones),[1,-1,0,1,-1,0]);
 });
 
 test('progression-leading phrase targets a note in the coming chord',()=>{

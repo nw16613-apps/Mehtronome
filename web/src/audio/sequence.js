@@ -30,8 +30,6 @@ export const SEQUENCE_PATTERNS = {
   upper3579:{name:'3–5–7–9 colours',category:'Formula patterns',help:'Starts above the root to bring out upper chord colours.'},
   spread1537:{name:'1–5–3–7 spread',category:'Formula patterns',help:'A wide, modern arpeggio contour.'},
   chord1357:{name:'1–3–5–7 cells',category:'Formula patterns',help:'Stacks alternating notes into clear seventh-chord cells.'},
-  chromaticApproach:{name:'Chromatic approaches',category:'Jazz language',help:'Approaches each selected note from a semitone below.'},
-  enclosure:{name:'Jazz enclosure',category:'Jazz language',help:'Surrounds a target from above and below before resolving.'},
   offbeat:{name:'Offbeat answers',category:'Rhythmic patterns',help:'Leaves the start of each beat open, then answers.'},
   tresillo:{name:'3–3–2 ostinato',category:'Rhythmic patterns',help:'Three accents spaced 3–3–2 subdivision steps apart.'},
   clave:{name:'3–2 clave melody',category:'Rhythmic patterns',help:'A five-note, 16-step phrase with a 3–2 son-clave rhythm.'},
@@ -73,10 +71,6 @@ export function sequenceStep(pattern, grid, length, rate) {
   } else if(pattern==='voiceLead'){
     const cell=[0,2,1,null,2,3,1,0];index=cell[grid%8];
     if(index===null)return null;
-  } else if(pattern==='chromaticApproach'){
-    index=Math.floor(grid/2);semitones=grid%2===0?-1:0;velocity=grid%2===0?.62:1;
-  } else if(pattern==='enclosure'){
-    index=Math.floor(grid/3);semitones=[1,-1,0][grid%3];velocity=grid%3===2?1:.62;
   } else if(pattern==='displaced3'){
     if(grid%8===7)return null;index=grid%3;velocity=grid%3===0?1:.72;
   } else if(pattern==='charleston'){
