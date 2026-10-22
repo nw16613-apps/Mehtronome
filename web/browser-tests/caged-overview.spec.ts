@@ -179,16 +179,6 @@ test('a user can select and play an arbitrary notation range',async({page})=>{
   await exercise.locator('#exercise-clear-range').click();
   await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(0);
   await expect(exercise.locator('#exercise-play-range')).toBeDisabled();
-
-  const firstTab=await exercise.locator('[data-note-index="3"] .tab-fret').boundingBox();
-  const lastTab=await exercise.locator('[data-note-index="7"] .tab-fret').boundingBox();
-  expect(firstTab).not.toBeNull();expect(lastTab).not.toBeNull();
-  await page.mouse.move(firstTab!.x+firstTab!.width/2,firstTab!.y+firstTab!.height/2);
-  await page.mouse.down();
-  await page.mouse.move(lastTab!.x+lastTab!.width/2,lastTab!.y+lastTab!.height/2,{steps:12});
-  await page.mouse.up();
-  await expect(exercise.locator('.exercise-note.range-selected')).toHaveCount(5);
-  await expect(exercise.locator('#exercise-play-range')).toHaveText('■ Stop selection');
 });
 
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{

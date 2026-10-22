@@ -774,9 +774,6 @@ function updateExerciseDrag(x:number,y:number){
 el('caged-exercise').addEventListener('pointerdown',event=>{
   if(event.button!==0||!(event.target instanceof Element))return;
   const note=event.target.closest<SVGElement>('.exercise-note');if(!note)return;
-  // TAB uses SVG text, so prevent the browser's native text-drag gesture from
-  // taking over before the passage selector receives pointer movement.
-  event.preventDefault();
   if(exercisePlaying)stopExercisePreview();
   exerciseDragPointer=event.pointerId;exerciseDragMoved=false;
   exerciseSelectionStart=Number(note.dataset.noteIndex);exerciseSelectionEnd=exerciseSelectionStart;
