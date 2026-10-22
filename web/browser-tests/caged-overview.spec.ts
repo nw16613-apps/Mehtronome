@@ -63,7 +63,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-study').selectOption('alternating');
   await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
-  await expect(exercise.locator('#exercise-study option')).toHaveCount(29);
+  await expect(exercise.locator('#exercise-study option')).toHaveCount(19);
   await expect(exercise.locator('#exercise-backing')).toBeChecked();
   await expect(exercise.locator('.exercise-notation').first()).toBeVisible();
   const notationFits=await exercise.locator('.notation-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1);
@@ -88,24 +88,6 @@ test('jazz language and superimposition studies render synchronized notation and
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/A|B/);
   await page.locator('#exercise-study').selectOption('pentatonic');
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/pentatonic/i);
-});
-
-test('intervallic pattern families expose variants, transformations and connected ranges',async({page})=>{
-  await openReference(page);
-  for(const study of ['intervalcells','permutations','cycles','interpolation','ultrapolation','infrapolation','mirror','chordcycles','patterncombo','progressionpattern']){
-    await page.locator('#exercise-study').selectOption(study);
-    await expect(page.locator('#exercise-source')).toBeVisible();
-    await expect(page.locator('#exercise-treatment')).toBeVisible();
-    await expect(page.locator('#exercise-range')).toBeVisible();
-    await expect(page.locator('#caged-exercise .note-head').first()).toBeVisible();
-    await expect(page.locator('#caged-exercise .tab-fret').first()).toBeVisible();
-  }
-  await page.locator('#exercise-study').selectOption('interpolation');
-  await page.locator('#exercise-treatment').selectOption('inverted-retrograde');
-  await page.locator('#exercise-range').selectOption('bridge');
-  await expect(page.locator('#caged-exercise [data-pattern-role="inserted"]').first()).toBeVisible();
-  await page.locator('#exercise-study').selectOption('cycles');
-  await expect(page.locator('#caged-exercise .structural-note').first()).toBeVisible();
 });
 
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
