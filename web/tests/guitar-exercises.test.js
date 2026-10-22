@@ -10,22 +10,45 @@ const board={notes:Array.from({length:30},(_,index)=>{
   return {string:index%6,fret:5+Math.floor(index/6),midi,pc,name:scaleNames[scaleIndex]};
 }).filter(note=>scalePcs.includes(note.pc))};
 
-test('harmonized CAGED study generates every modal tetrad inside the position',()=>{
+test('harmonized CAGED tetrads follow the reference contour from the position edge',()=>{
   const groups=cagedStudy(board,harmony,'harmonized','seventh','ascending');
-  assert.equal(groups.length,8);
+  assert.ok(groups.length>=8);
   assert.deepEqual(groups.slice(0,4).map(group=>group.chord),['Am7','Bm7','Cmaj7','D7']);
+  assert.equal(groups[0].notes[0].midi,Math.min(...board.notes.map(note=>note.midi)));
   assert.ok(flattenExercise(groups).every(note=>board.notes.some(candidate=>candidate.string===note.string&&candidate.fret===note.fret)));
   assert.ok(groups.every(group=>group.notes.every((note,index)=>index===0||note.midi>group.notes[index-1].midi)));
+  const descending=cagedStudy(board,harmony,'harmonized','seventh','descending');
+  assert.equal(descending[0].notes[0].midi,Math.max(...board.notes.map(note=>note.midi)));
+  assert.ok(descending.every(group=>group.notes.every((note,index)=>index===0||note.midi<group.notes[index-1].midi)));
+  assert.deepEqual(cagedStudy(board,harmony,'harmonized','seventh','up-down')[0].notes.map(note=>note.midi),[45,48,52,55,52,48,45]);
+  assert.deepEqual(cagedStudy(board,harmony,'harmonized','seventh','down-up')[0].notes.map(note=>note.midi),[74,71,67,64,67,71,74]);
 });
 
-test('exercise library provides cells, thirds and selected-chord inversions',()=>{
+test('scale-sequence library starts every direction at the position boundary',()=>{
   const cells=cagedStudy(board,harmony,'cells','seventh','ascending');
   assert.deepEqual(cells[0].pcs,[9,11,0,4]);
   const thirds=cagedStudy(board,harmony,'thirds','seventh','ascending');
-  assert.deepEqual(thirds[0].pcs,[9,0,11,2]);
+  assert.deepEqual(thirds[0].pcs,[9,0]);
+  for(const study of ['thirds','fourths','sixths','groups3','groups4','digital1324','cells']){
+    assert.equal(cagedStudy(board,harmony,study,'seventh','ascending')[0].notes[0].midi,45,study);
+    assert.equal(cagedStudy(board,harmony,study,'seventh','descending')[0].notes[0].midi,74,study);
+  }
+  assert.deepEqual(cagedStudy(board,harmony,'groups3','seventh','ascending')[0].notes.map(note=>note.midi),[45,47,48]);
+  assert.deepEqual(cagedStudy(board,harmony,'groups4','seventh','ascending')[0].notes.map(note=>note.midi),[45,47,48,50]);
+  assert.deepEqual(cagedStudy(board,harmony,'digital1324','seventh','ascending')[0].notes.map(note=>note.midi),[45,48,47,50]);
+  const alternating=cagedStudy(board,harmony,'alternating7','seventh','ascending');
+  assert.equal(alternating[0].notes[0].midi,45);
+  assert.ok(alternating[0].notes.every((note,index)=>index===0||note.midi>alternating[0].notes[index-1].midi));
+  assert.ok(alternating[1].notes.every((note,index)=>index===0||note.midi<alternating[1].notes[index-1].midi));
+});
+
+test('exercise library provides selected-chord inversions',()=>{
   const inversions=cagedStudy(board,harmony,'inversions','seventh','ascending');
   assert.equal(inversions.length,4);
-  assert.deepEqual(inversions.map(group=>group.rootName),['A','C','E','G']);
+  assert.deepEqual(new Set(inversions.map(group=>group.rootName)),new Set(['A','C','E','G']));
+  assert.equal(inversions[0].notes[0].midi,Math.min(...board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>note.midi)));
+  const descending=cagedStudy(board,harmony,'inversions','seventh','descending');
+  assert.equal(descending[0].notes[0].midi,Math.max(...board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>note.midi)));
 });
 
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{

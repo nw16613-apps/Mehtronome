@@ -27,7 +27,7 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await expect(exercise.locator('.treble-clef')).toHaveCount(1);
   await expect(exercise.locator('.tab-clef')).toHaveCount(1);
   await expect(exercise.locator('.chord-symbol').first()).toHaveText('Am7');
-  await expect(exercise.locator('.chord-symbol')).toHaveCount(8);
+  expect(await exercise.locator('.chord-symbol').count()).toBeGreaterThanOrEqual(8);
   const ascending=await exercise.locator('.tab-fret').allTextContents();
   await exercise.locator('#exercise-motion').selectOption('descending');
   const descending=await exercise.locator('.tab-fret').allTextContents();

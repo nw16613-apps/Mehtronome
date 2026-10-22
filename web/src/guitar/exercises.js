@@ -6,7 +6,7 @@ function chordSuffix(rootPc,pcs) {
   return ({'4,7':'','3,7':'m','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'dim7','4,8,11':'maj7♯5','3,7,11':'m(maj7)'}[signature] || (pcs.length===5?'9':'7'));
 }
 
-function pathForPcs(board,pcs,names,ascending=true,targetMidi=60) {
+function pathForPcs(board,pcs,names,ascending=true,targetMidi=60,anchorMidi=null) {
   const ordered=ascending?pcs:[...pcs].reverse();
   const orderedNames=ascending?names:[...names].reverse();
   const candidates=ordered.map((pc,index)=>board.notes.filter(note=>note.pc===pc).map(note=>({...note,name:orderedNames[index]})));
@@ -19,6 +19,7 @@ function pathForPcs(board,pcs,names,ascending=true,targetMidi=60) {
       return;
     }
     for(const note of candidates[index]){
+      if(index===0&&anchorMidi!==null&&note.midi!==anchorMidi)continue;
       const previous=path.at(-1);
       if(previous&&(ascending?note.midi<=previous.midi:note.midi>=previous.midi))continue;
       visit(index+1,[...path,note]);
@@ -26,55 +27,86 @@ function pathForPcs(board,pcs,names,ascending=true,targetMidi=60) {
   }
   visit(0,[]);
   if(best)return best;
+  if(anchorMidi!==null)return null;
   return ordered.map((pc,index)=>candidates[index].toSorted((a,b)=>Math.abs(a.midi-targetMidi)-Math.abs(b.midi-targetMidi))[0]).filter(Boolean);
 }
 
-function patternDirections(motion,degree) {
-  if(motion==='descending')return [false];
-  if(motion==='up-down')return [true,false];
-  if(motion==='down-up')return [false,true];
-  if(motion==='alternating')return [degree%2===0,degree%2!==0];
-  return [true];
+function contour(path,motion) {
+  if(motion==='up-down')return [...path,...path.slice(0,-1).reverse()];
+  if(motion==='down-up')return [...path,...path.slice(0,-1).reverse()];
+  return path;
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {
   const size=MATERIAL_SIZES[material] || 4;
-  const degrees=motion==='descending'?[7,6,5,4,3,2,1,0]:[0,1,2,3,4,5,6,7];
-  return degrees.map((displayDegree,index)=>{
-    const degree=displayDegree%7;
+  const ascending=motion==='ascending'||motion==='up-down';
+  const edge=[...board.notes].sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
+  if(!edge)return [];
+  const edgeScaleIndex=harmony.scalePcs.indexOf(edge.pc);
+  // Ascending tetrads begin on their root. Descending tetrads begin on their
+  // seventh (or highest extension), exactly as a written arpeggio study does.
+  const rootStart=ascending?edgeScaleIndex:(edgeScaleIndex-2*(size-1)+70)%7;
+  const groups=[];
+  let previousAnchor=edge.midi;
+  for(let index=0;index<16;index++){
+    const degree=(rootStart+(ascending?index:-index)+70)%7;
     const chordIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%7);
     const pcs=chordIndexes.map(scaleIndex=>harmony.scalePcs[scaleIndex]);
     const names=chordIndexes.map(scaleIndex=>harmony.scaleNames[scaleIndex]);
     const rootName=harmony.scaleNames[degree];
-    const target=Math.min(...board.notes.map(note=>note.midi))+3+displayDegree*1.7;
-    const notes=[];
-    patternDirections(motion,index).forEach((ascending,directionIndex)=>{
-      const path=pathForPcs(board,pcs,names,ascending,target);
-      notes.push(...(directionIndex?path.slice(1):path));
-    });
-    return {degree:displayDegree+1,chord:`${rootName}${chordSuffix(pcs[0],pcs)}`,rootName,names,pcs,notes};
-  });
+    const firstPc=ascending?pcs[0]:pcs.at(-1);
+    const anchors=board.notes.filter(note=>note.pc===firstPc&&(index===0?note.midi===edge.midi:ascending?note.midi>previousAnchor:note.midi<previousAnchor)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
+    const anchor=anchors[0];
+    if(!anchor)break;
+    const path=pathForPcs(board,pcs,names,ascending,anchor.midi,anchor.midi);
+    if(!path||path.length!==size)break;
+    groups.push({degree:index+1,chord:`${rootName}${chordSuffix(pcs[0],pcs)}`,rootName,names,pcs,notes:contour(path,motion)});
+    previousAnchor=anchor.midi;
+  }
+  return groups;
 }
 
 function directionalPath(board,pcs,names,motion,target,index) {
-  const notes=[];
-  patternDirections(motion,index).forEach((ascending,directionIndex)=>{
-    const path=pathForPcs(board,pcs,names,ascending,target);
-    notes.push(...(directionIndex?path.slice(1):path));
-  });
-  return notes;
+  const ascending=motion==='ascending'||motion==='up-down'||motion==='alternating'&&index%2===0;
+  const path=pathForPcs(board,pcs,names,ascending,target);
+  return contour(path,motion);
 }
 
-function scaleCellExercise(board,harmony,motion,kind) {
-  const degrees=motion==='descending'?[7,6,5,4,3,2,1,0]:[0,1,2,3,4,5,6,7];
-  const offsets=kind==='thirds'?[0,2,1,3]:[0,1,2,4];
-  const low=Math.min(...board.notes.map(note=>note.midi));
-  return degrees.map((displayDegree,index)=>{
-    const degree=displayDegree%7;
-    const scaleIndexes=offsets.map(offset=>(degree+offset)%7);
-    const pcs=scaleIndexes.map(i=>harmony.scalePcs[i]),names=scaleIndexes.map(i=>harmony.scaleNames[i]);
-    const notes=directionalPath(board,pcs,names,motion,low+3+displayDegree*1.7,index);
-    return {degree:displayDegree+1,chord:`${harmony.scaleNames[degree]} ${kind==='thirds'?'in 3rds':'1–2–3–5'}`,rootName:harmony.scaleNames[degree],names,pcs,notes};
+function scalePatternExercise(board,harmony,motion,offsets,label) {
+  const ascending=motion==='ascending'||motion==='up-down';
+  const edge=[...board.notes].sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
+  if(!edge)return [];
+  const startDegree=harmony.scalePcs.indexOf(edge.pc),groups=[];
+  let previousAnchor=edge.midi;
+  for(let index=0;index<18;index++){
+    const degree=(startDegree+(ascending?index:-index)+70)%7;
+    const anchors=board.notes.filter(note=>note.pc===harmony.scalePcs[degree]&&(index===0?note.midi===edge.midi:ascending?note.midi>previousAnchor:note.midi<previousAnchor)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
+    const anchor=anchors[0];if(!anchor)break;
+    const signedOffsets=offsets.map(offset=>ascending?offset:-offset);
+    const notes=[];
+    for(const offset of signedOffsets){
+      const scaleIndex=((degree+offset)%7+7)%7;
+      let delta=harmony.scalePcs[scaleIndex]-harmony.scalePcs[degree];
+      if(offset>0)while(delta<=0)delta+=12;
+      if(offset<0)while(delta>=0)delta-=12;
+      const midi=anchor.midi+delta;
+      const found=board.notes.find(note=>note.midi===midi&&note.pc===harmony.scalePcs[scaleIndex]);
+      if(!found){notes.length=0;break;}
+      notes.push({...found,name:harmony.scaleNames[scaleIndex]});
+    }
+    if(!notes.length)break;
+    groups.push({degree:index+1,chord:`${harmony.scaleNames[degree]} · ${label}`,rootName:harmony.scaleNames[degree],names:notes.map(note=>note.name),pcs:notes.map(note=>note.pc),notes:contour(notes,motion)});
+    previousAnchor=anchor.midi;
+  }
+  return groups;
+}
+
+function alternatingSevenths(board,harmony) {
+  const groups=cagedProgressionExercise(board,harmony,'seventh','ascending');
+  return groups.map((group,index)=>{
+    if(index%2===0)return group;
+    const notes=pathForPcs(board,group.pcs,group.names,false,group.notes.at(-1).midi);
+    return {...group,notes};
   });
 }
 
@@ -82,18 +114,30 @@ function inversionExercise(board,harmony,material,motion) {
   const size=MATERIAL_SIZES[material] || 4;
   const pcs=harmony.chordPcs.slice(0,Math.min(size,harmony.chordPcs.length));
   const names=harmony.tones.slice(0,pcs.length);
-  const low=Math.min(...board.notes.map(note=>note.midi));
-  return pcs.map((_,inversion)=>{
+  const ascending=motion==='ascending'||motion==='up-down';
+  const edge=board.notes.filter(note=>pcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
+  if(!edge)return [];
+  const edgeIndex=pcs.indexOf(edge.pc);
+  const firstRotation=ascending?edgeIndex:(edgeIndex+1)%pcs.length;
+  return pcs.map((_,sequenceIndex)=>{
+    const inversion=(firstRotation+(ascending?sequenceIndex:-sequenceIndex)+pcs.length*2)%pcs.length;
     const rotatedPcs=[...pcs.slice(inversion),...pcs.slice(0,inversion)];
     const rotatedNames=[...names.slice(inversion),...names.slice(0,inversion)];
     const inversionName=['root','1st inv.','2nd inv.','3rd inv.','4th inv.'][inversion] || `${inversion}th inv.`;
-    return {degree:inversion+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:directionalPath(board,rotatedPcs,rotatedNames,motion,low+4+inversion*3,inversion)};
+    const path=pathForPcs(board,rotatedPcs,rotatedNames,ascending,edge.midi,sequenceIndex===0?edge.midi:null);
+    return {degree:sequenceIndex+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:contour(path,motion)};
   });
 }
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending') {
-  if(study==='cells')return scaleCellExercise(board,harmony,motion,'cells');
-  if(study==='thirds')return scaleCellExercise(board,harmony,motion,'thirds');
+  if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
+  if(study==='thirds')return scalePatternExercise(board,harmony,motion,[0,2],'3rds');
+  if(study==='fourths')return scalePatternExercise(board,harmony,motion,[0,3],'4ths');
+  if(study==='sixths')return scalePatternExercise(board,harmony,motion,[0,5],'6ths');
+  if(study==='digital1324')return scalePatternExercise(board,harmony,motion,[0,2,1,3],'1–3–2–4');
+  if(study==='groups3')return scalePatternExercise(board,harmony,motion,[0,1,2],'group of 3');
+  if(study==='groups4')return scalePatternExercise(board,harmony,motion,[0,1,2,3],'group of 4');
+  if(study==='alternating7')return alternatingSevenths(board,harmony);
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
