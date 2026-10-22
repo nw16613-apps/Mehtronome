@@ -80,6 +80,47 @@ function approachArpeggios(board,harmony,material,motion) {
   });
 }
 
+function chromaticTargetCells(board,harmony,motion,kind) {
+  const descending=motion==='descending'||motion==='down-up';
+  const targets=[...new Map(board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>[note.midi,note])).values()]
+    .sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const definitions={
+    doubleapproach:{offsets:descending?[2,1,0]:[-2,-1,0],annotation:'two chromatic approaches · target'},
+    chromaticneighbors:{offsets:descending?[0,-1,0,1,0]:[0,1,0,-1,0],annotation:'target · upper/lower neighbours · target'},
+  };
+  const definition=definitions[kind],groups=[];
+  for(const target of targets){
+    const notes=definition.offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony));
+    if(notes.every(Boolean))groups.push({chord:`Resolve to ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:definition.annotation,targetIndex:notes.length-1});
+  }
+  if(motion==='up-down')return [...groups,...chromaticTargetCells(board,harmony,'descending',kind)];
+  if(motion==='down-up')return [...groups,...chromaticTargetCells(board,harmony,'ascending',kind)];
+  return groups;
+}
+
+function chromaticPassingTones(board,harmony,motion) {
+  if(motion==='up-down')return [...chromaticPassingTones(board,harmony,'ascending'),...chromaticPassingTones(board,harmony,'descending')];
+  if(motion==='down-up')return [...chromaticPassingTones(board,harmony,'descending'),...chromaticPassingTones(board,harmony,'ascending')];
+  const descending=motion==='descending';
+  const scale=[...new Map(board.notes.filter(note=>harmony.scalePcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const line=[];
+  for(const [index,note] of scale.entries()){
+    line.push({...note,name:noteNameForPc(harmony,note.pc)});
+    const next=scale[index+1];if(next&&Math.abs(next.midi-note.midi)===2){const passing=noteAtMidi(board,note.midi+(descending?-1:1),harmony);if(passing)line.push(passing);}
+  }
+  const groups=[];
+  for(let index=0;index<line.length;index+=4){const notes=line.slice(index,index+4);if(notes.length>1)groups.push({chord:'Chromatic scale connection',rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:'diatonic line · chromatic passing tones'});}
+  return groups;
+}
+
+function approachEveryArpeggioTone(board,harmony,material,motion) {
+  return cagedProgressionExercise(board,harmony,material,motion).map(group=>{
+    const descending=group.notes.length>1&&group.notes[1].midi<group.notes[0].midi,notes=[];
+    for(const target of group.notes){const approach=noteAtMidi(board,target.midi+(descending?1:-1),harmony);if(approach)notes.push(approach);notes.push(target);}
+    return {...group,notes,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),annotation:'chromatic approach into every arpeggio tone'};
+  });
+}
+
 function upperStructureExercise(board,harmony,motion) {
   return scalePatternExercise(board,harmony,motion,[2,4,6,8],'3–5–7–9').map(group=>({...group,annotation:'3 · 5 · 7 · 9'}));
 }
@@ -320,6 +361,10 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
   if(study==='enclosures')return chromaticEnclosures(board,harmony,motion);
   if(study==='approach')return approachArpeggios(board,harmony,material,motion);
+  if(study==='doubleapproach')return chromaticTargetCells(board,harmony,motion,'doubleapproach');
+  if(study==='chromaticneighbors')return chromaticTargetCells(board,harmony,motion,'chromaticneighbors');
+  if(study==='passingtones')return chromaticPassingTones(board,harmony,motion);
+  if(study==='approacheverytone')return approachEveryArpeggioTone(board,harmony,material,motion);
   if(study==='upperstructure')return upperStructureExercise(board,harmony,motion);
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion);

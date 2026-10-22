@@ -166,7 +166,7 @@ test('long notation wraps into multiple complete systems',()=>{
 test('jazz language library generates playable notation for every new study family',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  const studies=['enclosures','approach','upperstructure','guidetones','connections','triadpairs','pentatonic'];
+  const studies=['enclosures','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic'];
   for(const study of studies){
     const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending',{progression:[modalHarmony]});
     assert.ok(groups.length>0,`${study} should produce at least one group`);
@@ -212,11 +212,24 @@ test('notation prints one exercise heading and no pattern-cell labels',()=>{
 test('repeated voice-leading and chromatic concept captions print once',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  for(const study of ['connections','enclosures','approach']){
+  for(const study of ['connections','enclosures','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone']){
     const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending');
     const svg=exerciseNotationSvg(groups,'eighths',study);
     const repeated=[...new Set(groups.map(group=>group.annotation).filter(Boolean))];
     for(const caption of repeated)assert.equal(svg.split(caption).length-1,1,`${study}: ${caption}`);
+  }
+});
+
+test('expanded chromatic language patterns resolve clearly inside the position',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  for(const study of ['doubleapproach','chromaticneighbors','passingtones','approacheverytone']){
+    for(const motion of ['ascending','descending']){
+      const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh',motion);
+      assert.ok(groups.length,`${study} ${motion}`);
+      assert.ok(flattenExercise(groups).every(note=>note&&note.fret>=boundedBoard.start&&note.fret<=boundedBoard.end),`${study} stays in position`);
+      assert.ok(groups.some(group=>group.notes.some(note=>!modalHarmony.scalePcs.includes(note.pc))),`${study} includes chromatic colour`);
+    }
   }
 });
 
