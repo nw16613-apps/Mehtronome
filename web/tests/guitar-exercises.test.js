@@ -150,6 +150,7 @@ test('notation aligns its single exercise title, written guitar notes and tablat
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="tab-fret"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="pattern-bracket"/g)||[]).length,groups.length);
+  assert.match(svg,/class="pattern-bracket" d="M [^"]+ 246 V 250 H [^"]+ V 246"/);
 });
 
 test('long notation wraps into multiple complete systems',()=>{

@@ -425,7 +425,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
     const start=noteIndex;
     const globalStart=group._globalStart??start;
     const bracketStart=xFor(start)-step*.34,bracketEnd=xFor(start+group.notes.length-1)+step*.34;
-    svg+=`<path class="pattern-bracket" d="M ${bracketStart} 48 V 42 H ${bracketEnd} V 48"/>`;
+    svg+=`<path class="pattern-bracket" d="M ${bracketStart} 246 V 250 H ${bracketEnd} V 246"/>`;
     if(group.source&&group._showSource!==false)svg+=`<text class="exercise-source" x="${xFor(start)-10}" y="137">${esc(group.source)}</text>`;
     const ys=[];
     group.notes.forEach((note,localIndex)=>{
