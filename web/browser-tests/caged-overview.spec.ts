@@ -88,6 +88,13 @@ test('jazz language and superimposition studies render synchronized notation and
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/A|B/);
   await page.locator('#exercise-study').selectOption('pentatonic');
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/pentatonic/i);
+  await expect(page.locator('#exercise-pattern')).toBeVisible();
+  await expect(page.locator('#exercise-pattern option')).toHaveCount(9);
+  for(const pattern of ['groups3','groups4','groups5','thirds','digital1324','rolling','alternating3','alternating4','alternating5']){
+    await page.locator('#exercise-pattern').selectOption(pattern);
+    await expect(page.locator('#caged-exercise .note-head').first()).toBeVisible();
+    await expect(page.locator('#caged-exercise .tab-fret').first()).toBeVisible();
+  }
 });
 
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{

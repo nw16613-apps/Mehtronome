@@ -174,3 +174,20 @@ test('jazz language library generates playable notation for every new study fami
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'triadpairs')[0].source);
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'pentatonic')[0].source);
 });
+
+test('pentatonic library provides groups, cells and alternating up/down permutations',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  const patterns={groups3:3,groups4:4,groups5:5,thirds:2,digital1324:4,rolling:4,alternating3:3,alternating4:4,alternating5:5};
+  for(const [pattern,size] of Object.entries(patterns)){
+    const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern});
+    assert.ok(groups.length>0,pattern);
+    assert.ok(groups.every(group=>group.notes.length===size),pattern);
+    assert.ok(flattenExercise(groups).every(note=>modalHarmony.scalePcs.includes(note.pc)),pattern);
+  }
+  const alternating=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'alternating4'});
+  assert.ok(alternating[0].notes[1].midi>alternating[0].notes[0].midi);
+  assert.ok(alternating[1].notes[1].midi<alternating[1].notes[0].midi);
+  const descending=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'groups3'});
+  assert.ok(descending[0].notes[1].midi<descending[0].notes[0].midi);
+});

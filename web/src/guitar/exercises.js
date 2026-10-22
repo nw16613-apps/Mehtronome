@@ -3,6 +3,10 @@ import {theoryOptions} from './superimposition.js';
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
 const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
+export const PENTATONIC_PATTERNS={
+  groups3:'Groups of 3',groups4:'Groups of 4',groups5:'Groups of 5',thirds:'Pentatonic thirds',digital1324:'Pentatonic 1–3–2–4',rolling:'Rolling 1–2–3–2',
+  alternating3:'Alternating 3-note groups',alternating4:'Alternating 4-note groups',alternating5:'Alternating 5-note groups',
+};
 
 function chordSuffix(rootPc,pcs) {
   const signature=pcs.slice(1).map(pc=>(pc-rootPc+12)%12).join(',');
@@ -121,21 +125,29 @@ function connectedArpeggios(board,harmony,material,motion) {
   return contourGroups(groups,motion);
 }
 
-function overlayExercise(board,harmony,kind,motion,choiceId) {
+function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
+  if(motion==='up-down')return [...pentatonicExercise(board,harmony,choice,'ascending',pattern),...pentatonicExercise(board,harmony,choice,'descending',pattern)];
+  if(motion==='down-up')return [...pentatonicExercise(board,harmony,choice,'descending',pattern),...pentatonicExercise(board,harmony,choice,'ascending',pattern)];
+  const descending=motion==='descending';
+  const available=[...new Map(board.notes.filter(note=>choice.pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const definitions={groups3:[0,1,2],groups4:[0,1,2,3],groups5:[0,1,2,3,4],thirds:[0,2],digital1324:[0,2,1,3],rolling:[0,1,2,1],alternating3:[0,1,2],alternating4:[0,1,2,3],alternating5:[0,1,2,3,4]};
+  const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),groups=[];
+  for(let index=0;index+Math.max(...offsets)<available.length;index++){
+    let notes=offsets.map(offset=>available[index+offset]).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
+    if(alternating&&index%2===1)notes.reverse();
+    groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,
+      annotation:notes.map(note=>choice.degrees[choice.pcs.indexOf(note.pc)]).join(' · '),source:`${choice.name} · ${PENTATONIC_PATTERNS[pattern]}`});
+  }
+  return groups;
+}
+
+function overlayExercise(board,harmony,kind,motion,choiceId,pattern) {
   const options=theoryOptions(harmony);
   const choices=kind==='pentatonic'?options.pentatonics:options.triadPairs;
   const choice=choices.find(option=>option.id===choiceId)||choices[0];
   if(!choice)return [];
   const descending=motion==='descending'||motion==='down-up';
-  if(kind==='pentatonic'){
-    const available=board.notes.filter(note=>choice.pcs.includes(note.pc)).sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
-    const groups=[];
-    for(let index=0;index+3<available.length;index++){
-      const notes=available.slice(index,index+4).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
-      groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:notes.map(note=>choice.degrees[choice.pcs.indexOf(note.pc)]).join(' · '),source:choice.name});
-    }
-    return contourGroups(groups,motion);
-  }
+  if(kind==='pentatonic')return pentatonicExercise(board,harmony,choice,motion,pattern);
   const groups=choice.groups.map((triad,index)=>{
     const path=pathForPcs(board,triad.pcs,triad.names,index%2===0?!descending:descending,60);
     return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
@@ -313,7 +325,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion);
   if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source);
-  if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source);
+  if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source,context.pattern);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
 
