@@ -166,7 +166,7 @@ test('long notation wraps into multiple complete systems',()=>{
 test('jazz language library generates playable notation for every new study family',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  const studies=['enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic'];
+  const studies=['enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic'];
   for(const study of studies){
     const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending',{progression:[modalHarmony]});
     assert.ok(groups.length>0,`${study} should produce at least one group`);
@@ -212,7 +212,7 @@ test('notation prints one exercise heading and no pattern-cell labels',()=>{
 test('repeated voice-leading and chromatic concept captions print once',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  for(const study of ['connections','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone']){
+  for(const study of ['connections','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone']){
     const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending');
     const svg=exerciseNotationSvg(groups,'eighths',study);
     const repeated=[...new Set(groups.map(group=>group.annotation).filter(Boolean))];
@@ -246,6 +246,24 @@ test('jazz enclosure variants surround and resolve to chord tones',()=>{
     signatures.add(groups[0].notes.map(note=>note.midi-groups[0].notes.at(-1).midi).join(','));
   }
   assert.equal(signatures.size,studies.length);
+});
+
+test('five-note enclosures reproduce the requested A Dorian cells and spellings',()=>{
+  const boundedBoard={...board,start:1,end:12};
+  const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  const expected={
+    enclosuresfiveone:{offsets:[-1,2,1,-1,0],names:['A♭','B','B♭','A♭','A']},
+    enclosuresfivetwo:{offsets:[1,-2,-1,1,0],names:['B♭','G','G♯','B♭','A']},
+    enclosuresfivethree:{offsets:[-2,1,-2,-1,0],names:['G','B♭','G','G♯','A']},
+    enclosuresfivefour:{offsets:[2,-1,2,1,0],names:['B','A♭','B','B♭','A']},
+  };
+  for(const [study,pattern] of Object.entries(expected)){
+    const group=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending').find(candidate=>candidate.notes.at(-1).pc===9);
+    assert.ok(group,study);
+    const target=group.notes.at(-1).midi;
+    assert.deepEqual(group.notes.map(note=>note.midi-target),pattern.offsets,`${study} pitches`);
+    assert.deepEqual(group.notes.map(note=>note.name),pattern.names,`${study} spellings`);
+  }
 });
 
 test('guitar pitch is written one octave above its sounding pitch',()=>{

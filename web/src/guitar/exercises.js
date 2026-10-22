@@ -3,6 +3,8 @@ import {theoryOptions} from './superimposition.js';
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
 const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
+const SHARP_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const FLAT_NAMES=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
 export const PENTATONIC_PATTERNS={
   groups3:'Groups of 3',groups4:'Groups of 4',groups5:'Groups of 5',thirds:'Pentatonic thirds',digital1324:'Pentatonic 1–3–2–4',rolling:'Rolling 1–2–3–2',
   alternating3:'Alternating 3-note groups',alternating4:'Alternating 4-note groups',alternating5:'Alternating 5-note groups',
@@ -50,6 +52,12 @@ function noteNameForPc(harmony,pc) {
   return scaleIndex>=0?harmony.scaleNames[scaleIndex]:['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'][(pc+12)%12];
 }
 
+function chromaticRoleName(harmony,pc,role) {
+  if(role==='sharp')return SHARP_NAMES[(pc+12)%12];
+  if(role==='flat')return FLAT_NAMES[(pc+12)%12];
+  return noteNameForPc(harmony,pc);
+}
+
 function noteAtMidi(board,midi,harmony) {
   const existing=board.notes.find(note=>note.midi===midi);
   if(existing)return {...existing,name:noteNameForPc(harmony,midi%12)};
@@ -66,12 +74,16 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
     belowabove:{ascending:[-1,2,0],descending:[1,-2,0],annotation:'chromatic below · diatonic above · target'},
     chromatic:{ascending:[1,-1,0],descending:[-1,1,0],annotation:'half-step above · half-step below · target'},
     double:{ascending:[2,1,-1,0],descending:[-2,-1,1,0],annotation:'double enclosure · target'},
+    fiveone:{ascending:[-1,2,1,-1,0],descending:[-1,2,1,-1,0],spellings:['flat','scale','flat','flat','scale'],annotation:'♭ target · 2 above · half-step above · ♭ target · target'},
+    fivetwo:{ascending:[1,-2,-1,1,0],descending:[1,-2,-1,1,0],spellings:['flat','scale','sharp','flat','scale'],annotation:'half-step above · 2 below · leading tone · half-step above · target'},
+    fivethree:{ascending:[-2,1,-2,-1,0],descending:[-2,1,-2,-1,0],spellings:['scale','flat','scale','sharp','scale'],annotation:'2 below · half-step above · 2 below · leading tone · target'},
+    fivefour:{ascending:[2,-1,2,1,0],descending:[2,-1,2,1,0],spellings:['scale','flat','scale','flat','scale'],annotation:'2 above · ♭ target · 2 above · half-step above · target'},
   };
   const pattern=patterns[variant]||patterns.abovebelow;
   const groups=[];
   for(const target of targets){
     const offsets=descending?pattern.descending:pattern.ascending;
-    const notes=offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony));
+    const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
     if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:pattern.annotation,targetIndex:notes.length-1});
   }
   return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant)]:groups;
@@ -370,6 +382,10 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='enclosuresbelowabove')return chromaticEnclosures(board,harmony,motion,'belowabove');
   if(study==='enclosureschromatic')return chromaticEnclosures(board,harmony,motion,'chromatic');
   if(study==='enclosuresdouble')return chromaticEnclosures(board,harmony,motion,'double');
+  if(study==='enclosuresfiveone')return chromaticEnclosures(board,harmony,motion,'fiveone');
+  if(study==='enclosuresfivetwo')return chromaticEnclosures(board,harmony,motion,'fivetwo');
+  if(study==='enclosuresfivethree')return chromaticEnclosures(board,harmony,motion,'fivethree');
+  if(study==='enclosuresfivefour')return chromaticEnclosures(board,harmony,motion,'fivefour');
   if(study==='approach')return approachArpeggios(board,harmony,material,motion);
   if(study==='doubleapproach')return chromaticTargetCells(board,harmony,motion,'doubleapproach');
   if(study==='chromaticneighbors')return chromaticTargetCells(board,harmony,motion,'chromaticneighbors');
