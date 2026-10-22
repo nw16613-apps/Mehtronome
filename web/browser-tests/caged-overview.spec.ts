@@ -97,6 +97,31 @@ test('jazz language and superimposition studies render synchronized notation and
   }
 });
 
+test('notation workspace supports display modes, cell loops, tempo tools, history, favourites and export',async({page})=>{
+  await openReference(page);
+  const exercise=page.locator('#caged-exercise');
+  await exercise.locator('#exercise-display').selectOption('names');
+  await expect(exercise.locator('.notation-scroll')).toHaveClass(/display-names/);
+  await expect(exercise.locator('.note-name-label').first()).toBeVisible();
+  await exercise.locator('#exercise-zoom').selectOption('large');
+  await expect(exercise.locator('.notation-scroll')).toHaveClass(/zoom-large/);
+  await exercise.locator('[data-loop-group="0"]').click();
+  await expect(exercise.locator('#exercise-loop')).toBeChecked();
+  await exercise.locator('[data-tempo-ratio=".5"]').click();
+  await expect(exercise.locator('#exercise-tempo')).toHaveValue('45');
+  await exercise.locator('#exercise-study').selectOption('thirds');
+  await exercise.locator('#exercise-history-back').click();
+  await expect(exercise.locator('#exercise-study')).not.toHaveValue('thirds');
+  await exercise.locator('#exercise-favourite').click();
+  await expect(exercise.locator('#exercise-favourite')).toHaveText('★ Saved');
+  await exercise.locator('#exercise-display').selectOption('both');
+  await expect(exercise.locator('#exercise-favourites option')).toHaveCount(2);
+  const download=page.waitForEvent('download');await exercise.locator('#exercise-export').click();
+  expect((await download).suggestedFilename()).toMatch(/\.svg$/);
+  await page.evaluate(()=>{(window as any).__printed=false;window.print=()=>{(window as any).__printed=true;};});
+  await exercise.locator('#exercise-print').click();expect(await page.evaluate(()=>(window as any).__printed)).toBe(true);
+});
+
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
   await page.addInitScript(()=>{
     const starts:number[]=[];
@@ -116,6 +141,8 @@ test('looped TAB playback stays on absolute audio-clock boundaries',async({page}
   await exercise.locator('#exercise-backing').uncheck();
   await exercise.locator('#exercise-loop').check();
   await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('.exercise-note.playing')).toHaveCount(1);
+  await expect(exercise.locator('#exercise-playback-status')).toContainText(/Note \d+ \/ 9/);
   await expect.poll(async()=>page.evaluate(()=>(window as any).__exerciseStarts.length),{timeout:5000}).toBeGreaterThanOrEqual(18);
   const starts=await page.evaluate(()=>(window as any).__exerciseStarts as number[]);
   expect(starts[9]-starts[0]).toBeCloseTo(.5625,6);

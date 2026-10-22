@@ -156,6 +156,9 @@ test('long notation wraps into multiple complete systems',()=>{
   assert.ok((svg.match(/class="exercise-notation"/g)||[]).length>1);
   assert.equal((svg.match(/class="note-head"/g)||[]).length,flattenExercise(groups).length);
   assert.equal((svg.match(/class="treble-clef"/g)||[]).length,(svg.match(/class="exercise-notation"/g)||[]).length);
+  assert.equal((svg.match(/class="phrase-cell/g)||[]).length,groups.length);
+  const indexes=[...svg.matchAll(/class="exercise-note[^>]*data-note-index="(\d+)"/g)].map(match=>Number(match[1]));
+  assert.deepEqual(indexes,Array.from({length:flattenExercise(groups).length},(_,index)=>index));
 });
 
 test('jazz language library generates playable notation for every new study family',()=>{
