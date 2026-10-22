@@ -5,7 +5,7 @@ export function renderJazzGuitarNote(rate,midi,seconds=.6) {
   const output=new Float32Array(length),frequency=440*2**((midi-69)/12);
   let seed=(midi*2654435761)>>>0,lowpass=0;
   for(let index=0;index<length;index++){
-    const time=index/rate,attack=Math.min(1,time/.006),release=Math.exp(-time*4.3);
+    const time=index/rate,attack=Math.min(1,time/.009),release=Math.exp(-time*1.65);
     const vibrato=time>.16?.0017*Math.sin(2*Math.PI*5.1*(time-.16)):0;
     const phase=2*Math.PI*frequency*time+vibrato*Math.sin(2*Math.PI*frequency*time);
     const tone=Math.sin(phase)+.31*Math.sin(phase*2+.08)+.12*Math.sin(phase*3+.16)+.045*Math.sin(phase*4);

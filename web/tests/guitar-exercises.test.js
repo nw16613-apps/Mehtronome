@@ -66,23 +66,24 @@ test('chord-tone tetrads stack diatonic thirds from every available chord tone',
   assert.ok(descending.every(group=>group.notes.every((note,index)=>index===0||note.midi<group.notes[index-1].midi)));
 });
 
-test('up/down chord-tone tetrads turn around at each seventh',()=>{
+test('up/down chord-tone tetrads alternate ascending and descending groups',()=>{
   const groups=cagedStudy(board,harmony,'chordtones7turns','seventh','descending');
   assert.ok(groups.length>=4);
-  assert.deepEqual(groups[0].notes.map(note=>note.midi),[45,48,52,55,52,48,45]);
-  assert.ok(groups.every(group=>group.notes.length===7));
-  assert.ok(groups.every(group=>group.notes[0].midi===group.notes.at(-1).midi));
+  assert.deepEqual(groups[0].notes.map(note=>note.midi),[45,48,52,55]);
+  assert.deepEqual(groups[1].notes.map(note=>note.midi),[59,55,52,48]);
+  assert.deepEqual(groups[2].notes.map(note=>note.midi),[52,55,59,62]);
+  assert.ok(groups.every(group=>group.notes.length===4));
 });
 
-test('down/up chord-tone tetrads travel from the top to the bottom of the position',()=>{
+test('down/up chord-tone tetrads alternate descending and ascending groups from the top',()=>{
   const ascending=cagedStudy(board,harmony,'chordtones7','seventh','ascending');
   const groups=cagedStudy(board,harmony,'chordtones7turnsdown','seventh','ascending');
   const highest=Math.max(...ascending.flatMap(group=>group.notes.map(note=>note.midi)));
   assert.equal(groups[0].notes[0].midi,highest);
-  assert.deepEqual(groups.at(-1).notes.map(note=>note.midi),[55,52,48,45,48,52,55]);
+  assert.ok(groups[0].notes.every((note,index)=>index===0||note.midi<groups[0].notes[index-1].midi));
+  assert.ok(groups[1].notes.every((note,index)=>index===0||note.midi>groups[1].notes[index-1].midi));
   assert.equal(Math.min(...groups.flatMap(group=>group.notes.map(note=>note.midi))),45);
-  assert.ok(groups.every(group=>group.notes.length===7));
-  assert.ok(groups.every(group=>group.notes[0].midi===group.notes.at(-1).midi));
+  assert.ok(groups.every(group=>group.notes.length===4));
 });
 
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{
