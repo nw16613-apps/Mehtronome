@@ -229,6 +229,14 @@ test('focus bar changes the root, chord and progression',async({page})=>{
   await openReference(page);
   await page.locator('#focus-view').click();
   await expect(page.locator('#mini-transport')).toBeVisible();
+  const focusLayout=await page.locator('#mini-transport').evaluate(element=>{
+    const progression=element.querySelector('#mini-progression')!.getBoundingClientRect();
+    const pulse=element.querySelector('.mini-pulse-options')!.getBoundingClientRect();
+    const bar=element.getBoundingClientRect();
+    return {progressionRight:progression.right,pulseLeft:pulse.left,pulseRight:pulse.right,barRight:bar.right};
+  });
+  expect(focusLayout.progressionRight).toBeLessThanOrEqual(focusLayout.pulseLeft);
+  expect(focusLayout.pulseRight).toBeLessThanOrEqual(focusLayout.barRight);
 
   await page.locator('#mini-key').selectOption('0');
   await expect(page.locator('#key')).toHaveValue('0');

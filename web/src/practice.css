@@ -54,13 +54,13 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mini-transport>label { display:flex; align-items:center; gap:8px; font-size:10px; letter-spacing:1px; }
 #mini-bpm { width:70px; min-width:0; padding:9px 7px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:inherit; font-variant-numeric:tabular-nums; font-size:16px; }
 #mini-play { min-width:88px; font-weight:600; }
-.mini-harmony { display:grid; min-width:0; flex:1; gap:2px; }
+.mini-harmony { display:grid; min-width:120px; flex:1 1 180px; gap:2px; }
 .mini-harmony strong { font-size:18px; }
 .mini-harmony span { font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.mini-harmony-controls { display:grid; grid-template-columns:68px 130px 140px minmax(165px,1fr); gap:8px; flex:2.2; min-width:0; }
+.mini-harmony-controls { display:grid; grid-template-columns:68px minmax(100px,120px) minmax(110px,130px) minmax(120px,1fr); gap:8px; flex:2.2 1 460px; min-width:0; }
 .mini-harmony-controls label { display:grid; gap:3px; min-width:0; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted,var(--practice-muted,#64735f)); }
 .mini-harmony-controls select { width:100%; min-width:0; padding:7px 6px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; text-transform:none; letter-spacing:0; }
-.mini-pulse-options { display:grid; gap:4px; min-width:max-content; font-size:10px; }
+.mini-pulse-options { display:grid; gap:4px; flex:0 0 auto; min-width:max-content; font-size:10px; }
 .mini-pulse-options .check { min-height:0; }
 #mini-beat { font-size:12px; font-variant-numeric:tabular-nums; color:var(--muted,var(--practice-muted,#64735f)); }
 .focus-view .intro,.focus-view .presets,.focus-view .transport,.focus-view .notes,.focus-view .mix,.focus-view footer { display:none!important; }
