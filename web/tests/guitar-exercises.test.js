@@ -59,6 +59,22 @@ test('diatonic triad and tetrad studies provide up/down, down/up and combined fo
   }
 });
 
+test('shared material and direction controls select every alternating arpeggio form',()=>{
+  for(const [material,size] of [['triad',3],['seventh',4]]){
+    const up=cagedStudy(board,harmony,'alternating',material,'ascending');
+    const down=cagedStudy(board,harmony,'alternating',material,'descending');
+    const both=cagedStudy(board,harmony,'alternating',material,'up-down');
+    const reverse=cagedStudy(board,harmony,'alternating',material,'down-up');
+    assert.ok(up.every(group=>group.notes.length===size));
+    assert.deepEqual(flattenExercise(both).map(note=>note.midi),[...flattenExercise(up),...flattenExercise(down)].map(note=>note.midi));
+    assert.deepEqual(flattenExercise(reverse).map(note=>note.midi),[...flattenExercise(down),...flattenExercise(up)].map(note=>note.midi));
+    const chordUp=cagedStudy(board,harmony,'chordtonesalternating',material,'ascending');
+    const chordDown=cagedStudy(board,harmony,'chordtonesalternating',material,'descending');
+    assert.deepEqual(flattenExercise(cagedStudy(board,harmony,'chordtonesalternating',material,'up-down')).map(note=>note.midi),[...flattenExercise(chordUp),...flattenExercise(chordDown)].map(note=>note.midi));
+    assert.deepEqual(flattenExercise(cagedStudy(board,harmony,'chordtonesalternating',material,'down-up')).map(note=>note.midi),[...flattenExercise(chordDown),...flattenExercise(chordUp)].map(note=>note.midi));
+  }
+});
+
 test('exercise library provides selected-chord inversions',()=>{
   const inversions=cagedStudy(board,harmony,'inversions','seventh','ascending');
   assert.equal(inversions.length,4);

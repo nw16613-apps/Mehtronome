@@ -112,8 +112,9 @@ function alternatingDiatonic(board,harmony,material='seventh',descending=false) 
   });
 }
 
-function combinedAlternatingDiatonic(board,harmony,material) {
-  return [...alternatingDiatonic(board,harmony,material),...alternatingDiatonic(board,harmony,material,true)];
+function combinedAlternatingDiatonic(board,harmony,material,descendingFirst=false) {
+  const up=alternatingDiatonic(board,harmony,material),down=alternatingDiatonic(board,harmony,material,true);
+  return descendingFirst?[...down,...up]:[...up,...down];
 }
 
 function chordToneStacks(board,harmony,size,motion) {
@@ -150,8 +151,9 @@ function alternatingChordToneStacks(board,harmony,size,descending=false) {
   });
 }
 
-function combinedAlternatingChordTones(board,harmony,size) {
-  return [...alternatingChordToneStacks(board,harmony,size),...alternatingChordToneStacks(board,harmony,size,true)];
+function combinedAlternatingChordTones(board,harmony,size,descendingFirst=false) {
+  const up=alternatingChordToneStacks(board,harmony,size),down=alternatingChordToneStacks(board,harmony,size,true);
+  return descendingFirst?[...down,...up]:[...up,...down];
 }
 
 function inversionExercise(board,harmony,material,motion) {
@@ -174,6 +176,7 @@ function inversionExercise(board,harmony,material,motion) {
 }
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending') {
+  const size=MATERIAL_SIZES[material] || 4;
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
   if(study==='thirds')return scalePatternExercise(board,harmony,motion,[0,2],'3rds');
   if(study==='fourths')return scalePatternExercise(board,harmony,motion,[0,3],'4ths');
@@ -181,6 +184,9 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='digital1324')return scalePatternExercise(board,harmony,motion,[0,2,1,3],'1–3–2–4');
   if(study==='groups3')return scalePatternExercise(board,harmony,motion,[0,1,2],'group of 3');
   if(study==='groups4')return scalePatternExercise(board,harmony,motion,[0,1,2,3],'group of 4');
+  if(study==='alternating')return motion==='ascending'?alternatingDiatonic(board,harmony,material):motion==='descending'?alternatingDiatonic(board,harmony,material,true):combinedAlternatingDiatonic(board,harmony,material,motion==='down-up');
+  if(study==='chordtones')return chordToneStacks(board,harmony,size,motion);
+  if(study==='chordtonesalternating')return motion==='ascending'?alternatingChordToneStacks(board,harmony,size):motion==='descending'?alternatingChordToneStacks(board,harmony,size,true):combinedAlternatingChordTones(board,harmony,size,motion==='down-up');
   if(study==='alternating7')return alternatingDiatonic(board,harmony,'seventh');
   if(study==='alternating7down')return alternatingDiatonic(board,harmony,'seventh',true);
   if(study==='alternating7combined')return combinedAlternatingDiatonic(board,harmony,'seventh');

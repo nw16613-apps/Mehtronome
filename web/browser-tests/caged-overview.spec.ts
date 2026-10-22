@@ -43,25 +43,27 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-preview').click();
   await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','false');
 
-  await exercise.locator('#exercise-study').selectOption('chordtones7');
+  await exercise.locator('#exercise-study').selectOption('chordtones');
   await expect(exercise.locator('h3')).toContainText('Tetrads from each chord tone');
-  await expect(exercise.locator('#exercise-material')).toBeDisabled();
+  await expect(exercise.locator('#exercise-material')).toBeEnabled();
   await expect(exercise.locator('.chord-symbol').first()).toContainText('From ');
   const chordToneLabels=await exercise.locator('.chord-symbol').allTextContents();
   for(const degree of ['1','♭3','5','♭7'])expect(chordToneLabels.some(label=>label.includes(`From ${degree}`))).toBe(true);
-  await exercise.locator('#exercise-study').selectOption('chordtones7turns');
+  await exercise.locator('#exercise-study').selectOption('chordtonesalternating');
+  await exercise.locator('#exercise-motion').selectOption('ascending');
   await expect(exercise.locator('h3')).toContainText('Up/down tetrads from each chord tone');
-  await expect(exercise.locator('#exercise-motion')).toBeDisabled();
+  await expect(exercise.locator('#exercise-motion')).toBeEnabled();
   await expect(exercise.locator('#exercise-preview')).toContainText('Hear jazz guitar');
-  await exercise.locator('#exercise-study').selectOption('chordtones7turnsdown');
+  await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up tetrads from each chord tone');
-  await expect(exercise.locator('#exercise-motion')).toBeDisabled();
-  await exercise.locator('#exercise-study').selectOption('alternating7combined');
-  await expect(exercise.locator('h3')).toContainText('Combined alternating diatonic tetrads');
-  await exercise.locator('#exercise-study').selectOption('alternating3down');
+  await exercise.locator('#exercise-motion').selectOption('up-down');
+  await expect(exercise.locator('h3')).toContainText('Up/down then down/up tetrads');
+  await exercise.locator('#exercise-material').selectOption('triad');
+  await expect(exercise.locator('h3')).toContainText('Up/down then down/up triads');
+  await exercise.locator('#exercise-study').selectOption('alternating');
+  await exercise.locator('#exercise-motion').selectOption('descending');
   await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
-  await exercise.locator('#exercise-study').selectOption('chordtones3combined');
-  await expect(exercise.locator('h3')).toContainText('Combined alternating chord-tone triads');
+  await expect(exercise.locator('#exercise-study option')).toHaveCount(12);
 });
 
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{
