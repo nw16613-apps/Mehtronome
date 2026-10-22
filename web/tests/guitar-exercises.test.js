@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {cagedStudy,exerciseNotationSvg,flattenExercise} from '../src/guitar/exercises.js';
 
 const scalePcs=[9,11,0,2,4,6,7],scaleNames=['A','B','C','D','E','F♯','G'];
-const harmony={name:'A',suffix:'m7',tones:['A','C','E','G'],chordPcs:[9,0,4,7],scalePcs,scaleNames};
+const harmony={name:'A',suffix:'m7',tones:['A','C','E','G'],intervals:['1','♭3','5','♭7'],chordPcs:[9,0,4,7],scalePcs,scaleNames};
 const board={notes:Array.from({length:30},(_,index)=>{
   const midi=45+index;
   const pc=midi%12,scaleIndex=scalePcs.indexOf(pc);
@@ -49,6 +49,21 @@ test('exercise library provides selected-chord inversions',()=>{
   assert.equal(inversions[0].notes[0].midi,Math.min(...board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>note.midi)));
   const descending=cagedStudy(board,harmony,'inversions','seventh','descending');
   assert.equal(descending[0].notes[0].midi,Math.max(...board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>note.midi)));
+});
+
+test('chord-tone tetrads stack diatonic thirds from every available chord tone',()=>{
+  const groups=cagedStudy(board,harmony,'chordtones7','seventh','ascending');
+  assert.ok(groups.length>=4);
+  assert.deepEqual(groups.slice(0,4).map(group=>group.chord),[
+    'From 1 · Am7','From ♭3 · Cmaj7','From 5 · Em7','From ♭7 · Gmaj7'
+  ]);
+  assert.deepEqual(groups[0].notes.map(note=>note.midi),[45,48,52,55]);
+  assert.deepEqual(groups[1].notes.map(note=>note.midi),[48,52,55,59]);
+  assert.ok(groups.every(group=>group.notes.length===4));
+  assert.ok(groups.every(group=>group.notes.every((note,index)=>index===0||note.midi>group.notes[index-1].midi)));
+  const descending=cagedStudy(board,harmony,'chordtones7','seventh','descending');
+  assert.equal(descending[0].notes[0].midi,Math.max(...groups.flatMap(group=>group.notes.map(note=>note.midi))));
+  assert.ok(descending.every(group=>group.notes.every((note,index)=>index===0||note.midi<group.notes[index-1].midi)));
 });
 
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{

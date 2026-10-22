@@ -110,6 +110,28 @@ function alternatingSevenths(board,harmony) {
   });
 }
 
+function chordToneTetrads(board,harmony,motion) {
+  const chordPcs=new Set(harmony.chordPcs);
+  const anchors=[...new Map(board.notes.filter(note=>chordPcs.has(note.pc)).sort((a,b)=>a.midi-b.midi).map(note=>[note.midi,note])).values()];
+  const groups=[];
+  for(const anchor of anchors){
+    const degree=harmony.scalePcs.indexOf(anchor.pc);
+    if(degree<0)continue;
+    const scaleIndexes=[0,2,4,6].map(offset=>(degree+offset)%7);
+    const pcs=scaleIndexes.map(index=>harmony.scalePcs[index]),names=scaleIndexes.map(index=>harmony.scaleNames[index]);
+    const path=pathForPcs(board,pcs,names,true,anchor.midi,anchor.midi);
+    if(!path||path.length!==4)continue;
+    const chordDegree=harmony.chordPcs.indexOf(anchor.pc);
+    const degreeName=harmony.intervals?.[chordDegree] || ['1','3','5','7'][chordDegree] || anchor.name;
+    groups.push({degree:groups.length+1,chord:`From ${degreeName} · ${names[0]}${chordSuffix(pcs[0],pcs)}`,rootName:names[0],names,pcs,notes:path});
+  }
+  if(motion==='descending'||motion==='down-up')groups.reverse();
+  return groups.map(group=>{
+    const path=motion==='descending'||motion==='down-up'?[...group.notes].reverse():group.notes;
+    return {...group,notes:contour(path,motion)};
+  });
+}
+
 function inversionExercise(board,harmony,material,motion) {
   const size=MATERIAL_SIZES[material] || 4;
   const pcs=harmony.chordPcs.slice(0,Math.min(size,harmony.chordPcs.length));
@@ -138,6 +160,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='groups3')return scalePatternExercise(board,harmony,motion,[0,1,2],'group of 3');
   if(study==='groups4')return scalePatternExercise(board,harmony,motion,[0,1,2,3],'group of 4');
   if(study==='alternating7')return alternatingSevenths(board,harmony);
+  if(study==='chordtones7')return chordToneTetrads(board,harmony,motion);
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
