@@ -125,7 +125,9 @@ test('jazz language and superimposition studies render synchronized notation and
   await expect(page.locator('#exercise-source')).toBeVisible();
   await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/A|B/);
   await page.locator('#exercise-study').selectOption('pentatonic');
-  await expect(page.locator('#caged-exercise .exercise-source').first()).toContainText(/pentatonic/i);
+  await expect(page.locator('#caged-exercise .exercise-source')).toHaveCount(0);
+  await expect(page.locator('#caged-exercise .chord-symbol')).toHaveCount(1);
+  await expect(page.locator('#caged-exercise .chord-symbol')).toContainText(/pentatonic/i);
   await expect(page.locator('#exercise-pattern')).toBeVisible();
   await expect(page.locator('#exercise-pattern option')).toHaveCount(9);
   for(const pattern of ['groups3','groups4','groups5','thirds','digital1324','rolling','alternating3','alternating4','alternating5']){

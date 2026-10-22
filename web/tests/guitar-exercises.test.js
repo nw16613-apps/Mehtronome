@@ -175,7 +175,7 @@ test('jazz language library generates playable notation for every new study fami
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'enclosures').some(group=>group.notes.some(note=>!modalHarmony.scalePcs.includes(note.pc))),'enclosures should include chromatic neighbours');
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'upperstructure')[0].annotation.includes('9'));
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'triadpairs')[0].source);
-  assert.ok(cagedStudy(boundedBoard,modalHarmony,'pentatonic')[0].source);
+  assert.equal(cagedStudy(boundedBoard,modalHarmony,'pentatonic')[0].source,undefined);
 });
 
 test('pentatonic library provides groups, cells and alternating up/down permutations',()=>{
@@ -202,7 +202,7 @@ test('notation prints repeated harmony and source labels only once',()=>{
   const svg=exerciseNotationSvg(groups,'eighths','Pentatonic thirds');
   assert.ok(groups.length>3);
   assert.equal((svg.match(/class="chord-symbol"/g)||[]).length,1);
-  assert.equal((svg.match(/class="exercise-source"/g)||[]).length,1);
+  assert.equal((svg.match(/class="exercise-source"/g)||[]).length,0);
 });
 
 test('notation still prints every genuine harmony change',()=>{
