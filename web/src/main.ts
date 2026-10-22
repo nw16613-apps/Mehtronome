@@ -148,6 +148,7 @@ let exerciseNextStart:number|undefined;
 let exerciseTimelineStart:number|undefined;
 let exerciseAnimationFrame=0;
 let exerciseRepetitions=0;
+let temporaryExerciseLoop:{loop:boolean;loopStart:number;loopEnd:number}|null=null;
 const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
 let exerciseHistory:any[]=[];let exerciseHistoryIndex=-1;
 let previewGeneration = 0;
@@ -162,6 +163,7 @@ let mixerDrums = false, mixerBass = false, mixerSequence = false;
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
 
 function stopExercisePreview() {
+  const wasPlaying=exercisePlaying;
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
@@ -170,6 +172,12 @@ function stopExercisePreview() {
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');}
   document.querySelectorAll('.exercise-note').forEach(note=>note.classList.remove('playing','played'));
+  if(wasPlaying&&temporaryExerciseLoop){
+    Object.assign(exerciseView,temporaryExerciseLoop);temporaryExerciseLoop=null;
+    const loopControl=document.querySelector<HTMLInputElement>('#exercise-loop');if(loopControl)loopControl.checked=exerciseView.loop;
+    document.querySelector('[data-loop-all]')?.classList.toggle('selected',exerciseView.loopEnd<0);
+    let offset=0;document.querySelectorAll<HTMLElement>('[data-loop-group]').forEach((cell,index)=>{const length=currentExerciseGroups[index]?.notes.length||0;cell.classList.toggle('selected',exerciseView.loopStart===offset&&exerciseView.loopEnd===offset+length-1);offset+=length;});
+  }
 }
 
 function exerciseRange(){const end=exerciseView.loopEnd<0?currentExercise.length-1:Math.min(exerciseView.loopEnd,currentExercise.length-1);return {start:Math.min(exerciseView.loopStart,end),end};}
@@ -731,6 +739,10 @@ function setNotationFocus(value:boolean) {
   if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));}
 }
 function groupRange(index:number){let start=0;for(let i=0;i<index;i++)start+=currentExerciseGroups[i]?.notes.length||0;return {start,end:start+(currentExerciseGroups[index]?.notes.length||1)-1};}
+function selectTemporaryExerciseCell(range:{start:number;end:number}){
+  if(!temporaryExerciseLoop)temporaryExerciseLoop={loop:exerciseView.loop,loopStart:exerciseView.loopStart,loopEnd:exerciseView.loopEnd};
+  exerciseView.loopStart=range.start;exerciseView.loopEnd=range.end;exerciseView.loop=true;renderGuitar();
+}
 async function auditionExerciseNote(index:number){
   if(playing||exercisePlaying||!currentExercise[index])return;await prepareAudio();const note=currentExercise[index],duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
 }
@@ -749,10 +761,10 @@ el('caged-exercise').addEventListener('click',event=>{
   if(event.target.closest('#exercise-preview'))void toggleExercisePreview();
   if(event.target.closest('#exercise-focus'))setNotationFocus(!el('caged-exercise').classList.contains('notation-focused'));
   const note=event.target.closest<SVGElement>('.exercise-note');if(note)void auditionExerciseNote(Number(note.dataset.noteIndex));
-  const cell=event.target.closest<HTMLElement>('[data-loop-group]');if(cell){const range=groupRange(Number(cell.dataset.loopGroup));exerciseView.loopStart=range.start;exerciseView.loopEnd=range.end;exerciseView.loop=true;renderGuitar();}
-  if(event.target.closest('[data-loop-all]')){exerciseView.loopStart=0;exerciseView.loopEnd=-1;exerciseView.loop=true;renderGuitar();}
-  const chord=event.target.closest<SVGElement>('.chord-symbol');if(chord){const range=groupRange(Number(chord.dataset.groupIndex));exerciseView.loopStart=range.start;exerciseView.loopEnd=range.end;exerciseView.loop=true;void toggleExercisePreview();}
-  const phrase=event.target.closest<SVGElement>('.phrase-cell');if(phrase){const range=groupRange(Number(phrase.dataset.groupIndex));exerciseView.loopStart=range.start;exerciseView.loopEnd=range.end;exerciseView.loop=true;renderGuitar();void toggleExercisePreview();}
+  const cell=event.target.closest<HTMLElement>('[data-loop-group]');if(cell)selectTemporaryExerciseCell(groupRange(Number(cell.dataset.loopGroup)));
+  if(event.target.closest('[data-loop-all]')){temporaryExerciseLoop=null;exerciseView.loopStart=0;exerciseView.loopEnd=-1;exerciseView.loop=true;renderGuitar();}
+  const chord=event.target.closest<SVGElement>('.chord-symbol');if(chord){selectTemporaryExerciseCell(groupRange(Number(chord.dataset.groupIndex)));void toggleExercisePreview();}
+  const phrase=event.target.closest<SVGElement>('.phrase-cell');if(phrase){selectTemporaryExerciseCell(groupRange(Number(phrase.dataset.groupIndex)));void toggleExercisePreview();}
   const ratio=event.target.closest<HTMLElement>('[data-tempo-ratio]');if(ratio){exerciseView.tempoLinked=ratio.dataset.tempoRatio==='1';exerciseView.tempo=Math.round(settings.bpm*Number(ratio.dataset.tempoRatio));renderGuitar();}
   if(event.target.closest('#exercise-history-back')&&exerciseHistoryIndex>0)restoreExercise(exerciseHistory[--exerciseHistoryIndex]);
   if(event.target.closest('#exercise-history-forward')&&exerciseHistoryIndex<exerciseHistory.length-1)restoreExercise(exerciseHistory[++exerciseHistoryIndex]);

@@ -162,6 +162,27 @@ test('notation workspace supports display modes, cell loops, tempo tools, histor
   await exercise.locator('#exercise-print').click();expect(await page.evaluate(()=>(window as any).__printed)).toBe(true);
 });
 
+test('cell playback restores the previous exercise loop setting when stopped',async({page})=>{
+  await openReference(page);
+  const exercise=page.locator('#caged-exercise');
+  await expect(exercise.locator('#exercise-loop')).not.toBeChecked();
+  await exercise.locator('[data-loop-group="0"]').click();
+  await expect(exercise.locator('#exercise-loop')).toBeChecked();
+  await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
+  await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('#exercise-loop')).not.toBeChecked();
+  await expect(exercise.locator('[data-loop-all]')).toHaveClass(/selected/);
+
+  await exercise.locator('#exercise-loop').check();
+  await exercise.locator('[data-loop-all]').click();
+  await exercise.locator('[data-loop-group="1"]').click();
+  await exercise.locator('#exercise-preview').click();
+  await exercise.locator('#exercise-preview').click();
+  await expect(exercise.locator('#exercise-loop')).toBeChecked();
+  await expect(exercise.locator('[data-loop-all]')).toHaveClass(/selected/);
+});
+
 test('looped TAB playback stays on absolute audio-clock boundaries',async({page})=>{
   await page.addInitScript(()=>{
     const starts:number[]=[];
