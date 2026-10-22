@@ -194,6 +194,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-notation .notation-paper,.exercise-notation .tab-fret-bg { fill:#fffefa; }
 .exercise-notation .phrase-cell { fill:#6e5878; opacity:.025; cursor:pointer; }
 .exercise-notation .phrase-cell.even { fill:#b88a63; opacity:.035; }
+.exercise-notation :is(.notation-line,.ledger-line,.bar-line,.note-stem,.beat-guide,.note-beam,.treble-clef,.time-signature,.tab-clef,.exercise-source,.exercise-degree,.tab-fret,.tab-fret-bg,.accidental) { pointer-events:none; }
+.exercise-note,.exercise-notation .chord-symbol,.exercise-notation .phrase-cell { touch-action:manipulation; }
 .exercise-notation .notation-line,.exercise-notation .ledger-line,.exercise-notation .bar-line,.exercise-notation .note-stem { stroke:#202622; stroke-width:1.05; shape-rendering:geometricPrecision; }
 .exercise-notation .bar-line { stroke-width:2; }
 .exercise-notation .beat-guide { stroke:#9ba29d; stroke-width:.6; opacity:.35; }
@@ -262,9 +264,16 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .exercise-loop { align-self:center; }
   .exercise-footer { align-items:stretch; flex-direction:column; }
   .exercise-practice-bar,.exercise-tempo,.exercise-display { align-items:stretch; }
-  .exercise-tempo,.exercise-display { flex-wrap:wrap; }
+  .exercise-practice-bar { display:grid; grid-template-columns:minmax(0,1fr); padding:10px; }
+  .exercise-tempo,.exercise-display { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .exercise-tempo label { grid-column:1/-1; }
+  .exercise-practice-bar select,.exercise-practice-bar input[type=number] { width:100%; min-width:0; min-height:44px; box-sizing:border-box; font-size:16px; }
+  .exercise-practice-bar .practice-button { min-width:0; padding-inline:6px; }
   .exercise-status-row { display:block; }
   .exercise-progress { margin-top:7px; }
+  .notation-legend { margin-top:8px; flex-wrap:wrap; }
+  .exercise-cell-button { min-height:44px; padding:9px 12px; }
+  .exercise-footer { margin-bottom:8px; }
 }
 
 @media print {
@@ -285,7 +294,9 @@ body.notation-focus-open { overflow:hidden; }
 .caged-exercise.notation-focused .exercise-controls { margin-bottom:18px; }
 @media(max-width:760px) {
   .exercise-backing { align-self:center; }
-  .exercise-actions { width:100%; }
-  .exercise-actions .practice-button { flex:1; }
+  .exercise-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+  .exercise-actions .practice-button { width:100%; min-width:0; white-space:normal; }
+  .exercise-actions #exercise-history-back,.exercise-actions #exercise-history-forward { grid-column:auto; }
+  .exercise-actions #exercise-preview { grid-column:1/-1; }
   .caged-exercise.notation-focused { inset:6px; padding:16px 10px; }
 }

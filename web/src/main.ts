@@ -693,9 +693,15 @@ positionOverview.addEventListener('keydown',event=>{
 });
 el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
-el('caged-exercise').addEventListener('input',event=>{
+function handleExerciseControl(event:Event){
   const target=event.target;
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
+  const deferredNumber=target instanceof HTMLInputElement&&target.type==='number'&&['exercise-tempo','exercise-auto-increment'].includes(target.id);
+  // Rebuilding the panel on each keystroke dismisses mobile number keyboards and
+  // makes multi-digit values effectively impossible to enter. Commit those fields
+  // when the edit is complete; all other controls remain immediate.
+  if(event.type==='input'&&deferredNumber)return;
+  if(event.type==='change'&&!deferredNumber)return;
   if(target.id==='exercise-favourites'&&target.value!==''){restoreExercise(exerciseFavourites()[Number(target.value)]);return;}
   stopExercisePreview();
   if(target.id==='exercise-material')exerciseView.material=target.value;
@@ -715,7 +721,9 @@ el('caged-exercise').addEventListener('input',event=>{
   renderGuitar();
   rememberExercise();
   document.getElementById(target.id)?.focus({preventScroll:true});
-});
+}
+el('caged-exercise').addEventListener('input',handleExerciseControl);
+el('caged-exercise').addEventListener('change',handleExerciseControl);
 function setNotationFocus(value:boolean) {
   el('caged-exercise').classList.toggle('notation-focused',value);
   document.body.classList.toggle('notation-focus-open',value);

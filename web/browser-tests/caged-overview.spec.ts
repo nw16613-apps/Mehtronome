@@ -1,6 +1,44 @@
 import {expect,test} from '@playwright/test';
 import {openReference} from './open-reference';
 
+test('notation workspace controls remain usable on a phone viewport',async({browser})=>{
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const page=await context.newPage();
+  await page.goto('/');
+  const exercise=page.locator('#caged-exercise');
+  await exercise.scrollIntoViewIfNeeded();
+
+  await exercise.locator('#exercise-study').selectOption('groups3');
+  await expect(exercise.locator('#caged-exercise-title')).toContainText(/groups of three/i);
+  await exercise.locator('#exercise-display').selectOption('names');
+  await expect(exercise.locator('.notation-scroll')).toHaveClass(/display-names/);
+  await exercise.locator('#exercise-zoom').selectOption('large');
+  await expect(exercise.locator('.notation-scroll')).toHaveClass(/zoom-large/);
+  await exercise.locator('#exercise-tempo').fill('135');
+  await exercise.locator('#exercise-tempo').dispatchEvent('change');
+  await expect(exercise.locator('#exercise-tempo')).toHaveValue('135');
+  await exercise.locator('[data-loop-group="0"]').tap();
+  await expect(exercise.locator('#exercise-loop')).toBeChecked();
+  await exercise.locator('#exercise-focus').tap();
+  await expect(exercise).toHaveClass(/notation-focused/);
+  await exercise.locator('#exercise-focus').tap();
+  await expect(exercise).not.toHaveClass(/notation-focused/);
+
+  const layout=await exercise.evaluate(element=>{
+    const actions=element.querySelector('.exercise-actions')!;
+    const controls=Array.from(element.querySelectorAll<HTMLElement>('.exercise-actions button,.exercise-practice-bar button,.exercise-practice-bar select,.exercise-practice-bar input:not([type="checkbox"])'));
+    return {
+      pageOverflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+1,
+      actionOverflow:actions.scrollWidth>actions.clientWidth+1,
+      shortTargets:controls.filter(control=>control.getBoundingClientRect().height<40).map(control=>control.id||control.textContent?.trim())
+    };
+  });
+  expect(layout.pageOverflow).toBe(false);
+  expect(layout.actionOverflow).toBe(false);
+  expect(layout.shortTargets).toEqual([]);
+  await context.close();
+});
+
 test('five-position overview selects one full-size CAGED diagram',async({page})=>{
   await openReference(page);
   const overview=page.locator('#position-overview');
