@@ -42,6 +42,23 @@ test('scale-sequence library starts every direction at the position boundary',()
   assert.ok(alternating[1].notes.every((note,index)=>index===0||note.midi<alternating[1].notes[index-1].midi));
 });
 
+test('diatonic triad and tetrad studies provide up/down, down/up and combined forms',()=>{
+  for(const [size,suffix] of [[3,'3'],[4,'7']]){
+    const up=cagedStudy(board,harmony,`alternating${suffix}`,'seventh','ascending');
+    const down=cagedStudy(board,harmony,`alternating${suffix}down`,'seventh','ascending');
+    const combined=cagedStudy(board,harmony,`alternating${suffix}combined`,'seventh','ascending');
+    assert.ok(up.every(group=>group.notes.length===size));
+    assert.ok(down.every(group=>group.notes.length===size));
+    assert.equal(up[0].notes[0].midi,45);
+    assert.equal(down[0].notes[0].midi,74);
+    assert.ok(up[0].notes[1].midi>up[0].notes[0].midi);
+    assert.ok(up[1].notes[1].midi<up[1].notes[0].midi);
+    assert.ok(down[0].notes[1].midi<down[0].notes[0].midi);
+    assert.ok(down[1].notes[1].midi>down[1].notes[0].midi);
+    assert.deepEqual(flattenExercise(combined).map(note=>note.midi),[...flattenExercise(up),...flattenExercise(down)].map(note=>note.midi));
+  }
+});
+
 test('exercise library provides selected-chord inversions',()=>{
   const inversions=cagedStudy(board,harmony,'inversions','seventh','ascending');
   assert.equal(inversions.length,4);
@@ -84,6 +101,27 @@ test('down/up chord-tone tetrads alternate descending and ascending groups from 
   assert.ok(groups[1].notes.every((note,index)=>index===0||note.midi>groups[1].notes[index-1].midi));
   assert.equal(Math.min(...groups.flatMap(group=>group.notes.map(note=>note.midi))),45);
   assert.ok(groups.every(group=>group.notes.length===4));
+});
+
+test('chord-tone triads mirror every tetrad sequence and combined studies join both directions',()=>{
+  const straight=cagedStudy(board,harmony,'chordtones3','seventh','ascending');
+  assert.deepEqual(straight.slice(0,4).map(group=>group.chord),[
+    'From 1 · Am','From ♭3 · C','From 5 · Em','From ♭7 · G'
+  ]);
+  assert.deepEqual(straight[0].notes.map(note=>note.midi),[45,48,52]);
+  const up=cagedStudy(board,harmony,'chordtones3turns','seventh','ascending');
+  const down=cagedStudy(board,harmony,'chordtones3turnsdown','seventh','ascending');
+  assert.deepEqual(up[0].notes.map(note=>note.midi),[45,48,52]);
+  assert.deepEqual(up[1].notes.map(note=>note.midi),[55,52,48]);
+  assert.ok(down[0].notes.every((note,index)=>index===0||note.midi<down[0].notes[index-1].midi));
+  assert.ok(down[1].notes.every((note,index)=>index===0||note.midi>down[1].notes[index-1].midi));
+  for(const [size,prefix] of [[3,'chordtones3'],[4,'chordtones7']]){
+    const ascending=cagedStudy(board,harmony,`${prefix}turns`,'seventh','ascending');
+    const descending=cagedStudy(board,harmony,`${prefix}turnsdown`,'seventh','ascending');
+    const combined=cagedStudy(board,harmony,`${prefix}combined`,'seventh','ascending');
+    assert.ok(combined.every(group=>group.notes.length===size));
+    assert.deepEqual(flattenExercise(combined).map(note=>note.midi),[...flattenExercise(ascending),...flattenExercise(descending)].map(note=>note.midi));
+  }
 });
 
 test('notation aligns chord symbols, staff notes and tablature in one SVG',()=>{

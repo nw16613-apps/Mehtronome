@@ -56,6 +56,12 @@ test('focused CAGED position generates a configurable notation and TAB library',
   await exercise.locator('#exercise-study').selectOption('chordtones7turnsdown');
   await expect(exercise.locator('h3')).toContainText('Down/up tetrads from each chord tone');
   await expect(exercise.locator('#exercise-motion')).toBeDisabled();
+  await exercise.locator('#exercise-study').selectOption('alternating7combined');
+  await expect(exercise.locator('h3')).toContainText('Combined alternating diatonic tetrads');
+  await exercise.locator('#exercise-study').selectOption('alternating3down');
+  await expect(exercise.locator('h3')).toContainText('Down/up diatonic triads');
+  await exercise.locator('#exercise-study').selectOption('chordtones3combined');
+  await expect(exercise.locator('h3')).toContainText('Combined alternating chord-tone triads');
 });
 
 test('manual navigation and progression route drive the detailed diagram',async({page})=>{

@@ -3,7 +3,8 @@ const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
 
 function chordSuffix(rootPc,pcs) {
   const signature=pcs.slice(1).map(pc=>(pc-rootPc+12)%12).join(',');
-  return ({'4,7':'','3,7':'m','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'dim7','4,8,11':'maj7♯5','3,7,11':'m(maj7)'}[signature] || (pcs.length===5?'9':'7'));
+  const suffixes={'4,7':'','3,7':'m','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'dim7','4,8,11':'maj7♯5','3,7,11':'m(maj7)'};
+  return Object.hasOwn(suffixes,signature)?suffixes[signature]:(pcs.length===5?'9':'7');
 }
 
 function pathForPcs(board,pcs,names,ascending=true,targetMidi=60,anchorMidi=null) {
@@ -101,26 +102,31 @@ function scalePatternExercise(board,harmony,motion,offsets,label) {
   return groups;
 }
 
-function alternatingSevenths(board,harmony) {
-  const groups=cagedProgressionExercise(board,harmony,'seventh','ascending');
+function alternatingDiatonic(board,harmony,material='seventh',descending=false) {
+  const motion=descending?'descending':'ascending';
+  const groups=cagedProgressionExercise(board,harmony,material,motion);
   return groups.map((group,index)=>{
     if(index%2===0)return group;
-    const notes=pathForPcs(board,group.pcs,group.names,false,group.notes.at(-1).midi);
+    const notes=pathForPcs(board,group.pcs,group.names,descending,group.notes.at(-1).midi);
     return {...group,notes};
   });
 }
 
-function chordToneTetrads(board,harmony,motion) {
+function combinedAlternatingDiatonic(board,harmony,material) {
+  return [...alternatingDiatonic(board,harmony,material),...alternatingDiatonic(board,harmony,material,true)];
+}
+
+function chordToneStacks(board,harmony,size,motion) {
   const chordPcs=new Set(harmony.chordPcs);
   const anchors=[...new Map(board.notes.filter(note=>chordPcs.has(note.pc)).sort((a,b)=>a.midi-b.midi).map(note=>[note.midi,note])).values()];
   const groups=[];
   for(const anchor of anchors){
     const degree=harmony.scalePcs.indexOf(anchor.pc);
     if(degree<0)continue;
-    const scaleIndexes=[0,2,4,6].map(offset=>(degree+offset)%7);
+    const scaleIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%7);
     const pcs=scaleIndexes.map(index=>harmony.scalePcs[index]),names=scaleIndexes.map(index=>harmony.scaleNames[index]);
     const path=pathForPcs(board,pcs,names,true,anchor.midi,anchor.midi);
-    if(!path||path.length!==4)continue;
+    if(!path||path.length!==size)continue;
     const chordDegree=harmony.chordPcs.indexOf(anchor.pc);
     const degreeName=harmony.intervals?.[chordDegree] || ['1','3','5','7'][chordDegree] || anchor.name;
     groups.push({degree:groups.length+1,chord:`From ${degreeName} · ${names[0]}${chordSuffix(pcs[0],pcs)}`,rootName:names[0],names,pcs,notes:path});
@@ -132,9 +138,9 @@ function chordToneTetrads(board,harmony,motion) {
   });
 }
 
-function alternatingChordToneTetrads(board,harmony,descending=false) {
+function alternatingChordToneStacks(board,harmony,size,descending=false) {
   const motion=descending?'descending':'ascending';
-  const groups=chordToneTetrads(board,harmony,motion);
+  const groups=chordToneStacks(board,harmony,size,motion);
   return groups.map((group,index)=>{
     if(index%2===0)return group;
     const ascending=descending;
@@ -142,6 +148,10 @@ function alternatingChordToneTetrads(board,harmony,descending=false) {
     const notes=pathForPcs(board,group.pcs,group.names,ascending,target);
     return {...group,notes};
   });
+}
+
+function combinedAlternatingChordTones(board,harmony,size) {
+  return [...alternatingChordToneStacks(board,harmony,size),...alternatingChordToneStacks(board,harmony,size,true)];
 }
 
 function inversionExercise(board,harmony,material,motion) {
@@ -171,10 +181,20 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='digital1324')return scalePatternExercise(board,harmony,motion,[0,2,1,3],'1–3–2–4');
   if(study==='groups3')return scalePatternExercise(board,harmony,motion,[0,1,2],'group of 3');
   if(study==='groups4')return scalePatternExercise(board,harmony,motion,[0,1,2,3],'group of 4');
-  if(study==='alternating7')return alternatingSevenths(board,harmony);
-  if(study==='chordtones7')return chordToneTetrads(board,harmony,motion);
-  if(study==='chordtones7turns')return alternatingChordToneTetrads(board,harmony);
-  if(study==='chordtones7turnsdown')return alternatingChordToneTetrads(board,harmony,true);
+  if(study==='alternating7')return alternatingDiatonic(board,harmony,'seventh');
+  if(study==='alternating7down')return alternatingDiatonic(board,harmony,'seventh',true);
+  if(study==='alternating7combined')return combinedAlternatingDiatonic(board,harmony,'seventh');
+  if(study==='alternating3')return alternatingDiatonic(board,harmony,'triad');
+  if(study==='alternating3down')return alternatingDiatonic(board,harmony,'triad',true);
+  if(study==='alternating3combined')return combinedAlternatingDiatonic(board,harmony,'triad');
+  if(study==='chordtones7')return chordToneStacks(board,harmony,4,motion);
+  if(study==='chordtones7turns')return alternatingChordToneStacks(board,harmony,4);
+  if(study==='chordtones7turnsdown')return alternatingChordToneStacks(board,harmony,4,true);
+  if(study==='chordtones7combined')return combinedAlternatingChordTones(board,harmony,4);
+  if(study==='chordtones3')return chordToneStacks(board,harmony,3,motion);
+  if(study==='chordtones3turns')return alternatingChordToneStacks(board,harmony,3);
+  if(study==='chordtones3turnsdown')return alternatingChordToneStacks(board,harmony,3,true);
+  if(study==='chordtones3combined')return combinedAlternatingChordTones(board,harmony,3);
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
