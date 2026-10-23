@@ -3,6 +3,8 @@ import { DRUM_SAMPLE_GROUPS } from './sample-map.js';
 
 export const DRUM_GROOVES = {
   straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
+  fusion: 'Fusion syncopation', neoSoul: 'Neo-soul pocket', motown: 'Motown drive', tumbao: 'Latin tumbao',
+  modernJazz: 'Modern jazz comping', ballad: 'Ambient ballad',
 };
 export const BASS_PATTERNS = {
   roots: 'Ambient · sustained roots', fifths: 'Pop / rock · root & fifth', walk: 'Jazz · walking chord tones',
@@ -44,6 +46,42 @@ const GROOVES = {
     [[0,'kick',.54],[6,'kick',.38],[8,'kick',.5],[14,'kick',.36],[2,'rim',.48],[8,'rim',.56],[14,'rim',.5]],
     [[0,'kick',.56],[6,'kick',.4],[8,'kick',.5],[14,'kick',.37],[0,'rim',.52],[6,'rim',.59],[12,'rim',.54],[15,'rim',.1]],
     [[0,'kick',.54],[6,'kick',.39],[8,'kick',.5],[14,'kick',.35],[2,'rim',.49],[8,'rim',.56],[14,'rim',.5]],
+  ],
+  fusion: [
+    [[0,'kick',.78],[3,'kick',.4],[7,'kick',.5],[10,'kick',.62],[14,'kick',.44],[4,'snare',.63],[12,'snare',.69],[6,'snare',.1],[15,'snare',.12]],
+    [[0,'kick',.79],[5,'kick',.43],[8,'kick',.66],[11,'kick',.47],[15,'kick',.36],[4,'snare',.64],[12,'snare',.7],[10,'snare',.11]],
+    [[0,'kick',.8],[3,'kick',.38],[6,'kick',.48],[10,'kick',.64],[13,'kick',.4],[4,'snare',.64],[12,'snare',.69],[7,'snare',.11]],
+    [[0,'kick',.79],[5,'kick',.44],[8,'kick',.65],[11,'kick',.46],[14,'kick',.42],[4,'snare',.64],[12,'snare',.71],[15,'snare',.14]],
+  ],
+  neoSoul: [
+    [[0,'kick',.76],[3,'kick',.38],[7,'kick',.5],[10,'kick',.57],[12,'snare',.68],[6,'snare',.1],[15,'snare',.12]],
+    [[0,'kick',.77],[5,'kick',.42],[8,'kick',.54],[11,'kick',.48],[12,'snare',.69],[3,'snare',.09],[14,'snare',.11]],
+    [[0,'kick',.78],[3,'kick',.35],[8,'kick',.56],[10,'kick',.5],[15,'kick',.34],[12,'snare',.68],[7,'snare',.1]],
+    [[0,'kick',.77],[6,'kick',.43],[9,'kick',.52],[11,'kick',.45],[12,'snare',.7],[3,'snare',.09],[15,'snare',.14]],
+  ],
+  motown: [
+    [[0,'kick',.75],[6,'kick',.46],[8,'kick',.63],[14,'kick',.43],[4,'snare',.67],[12,'snare',.7],[3,'snare',.11],[11,'snare',.12]],
+    [[0,'kick',.76],[2,'kick',.35],[8,'kick',.64],[10,'kick',.4],[14,'kick',.44],[4,'snare',.67],[12,'snare',.71],[7,'snare',.11]],
+    [[0,'kick',.76],[6,'kick',.45],[8,'kick',.64],[11,'kick',.38],[14,'kick',.42],[4,'snare',.67],[12,'snare',.71],[15,'snare',.12]],
+    [[0,'kick',.77],[3,'kick',.35],[6,'kick',.44],[8,'kick',.63],[14,'kick',.43],[4,'snare',.68],[12,'snare',.72],[11,'snare',.12]],
+  ],
+  tumbao: [
+    [[0,'kick',.56],[6,'kick',.43],[10,'kick',.48],[14,'kick',.4],[0,'rim',.48],[6,'rim',.59],[10,'rim',.47],[12,'rim',.55]],
+    [[0,'kick',.55],[5,'kick',.39],[8,'kick',.48],[14,'kick',.42],[2,'rim',.46],[6,'rim',.57],[10,'rim',.49],[14,'rim',.54]],
+    [[0,'kick',.57],[6,'kick',.42],[9,'kick',.46],[14,'kick',.41],[0,'rim',.49],[6,'rim',.58],[10,'rim',.48],[12,'rim',.55]],
+    [[0,'kick',.55],[5,'kick',.4],[10,'kick',.48],[14,'kick',.42],[2,'rim',.47],[6,'rim',.57],[10,'rim',.49],[14,'rim',.55]],
+  ],
+  modernJazz: [
+    [[0,'kick',.27],[7,'kick',.2],[14,'kick',.24],[5,'snare',.16],[10,'snare',.23],[15,'snare',.12]],
+    [[0,'kick',.25],[6,'kick',.19],[11,'kick',.23],[3,'snare',.13],[9,'snare',.21],[14,'snare',.17]],
+    [[0,'kick',.27],[8,'kick',.2],[13,'kick',.22],[5,'snare',.15],[10,'snare',.22],[15,'snare',.13]],
+    [[0,'kick',.25],[7,'kick',.2],[12,'kick',.23],[2,'snare',.12],[9,'snare',.2],[14,'snare',.18]],
+  ],
+  ballad: [
+    [[0,'kick',.61],[8,'kick',.42],[12,'rim',.48],[7,'rim',.08]],
+    [[0,'kick',.6],[10,'kick',.4],[12,'rim',.49],[15,'rim',.09]],
+    [[0,'kick',.62],[8,'kick',.43],[12,'rim',.48],[6,'rim',.08]],
+    [[0,'kick',.6],[10,'kick',.4],[12,'rim',.5],[14,'rim',.11]],
   ],
 };
 // [sixteenth, chord-tone index (-1 = fifth, -2 = seventh), octave,
@@ -234,6 +272,8 @@ export class Rhythm {
     const cell=(beat*4+sub)%16,phrase=bar%4;
     const lastBeat=beat===settings.beats-1;
     const turn=bar%4===3&&lastBeat;
+    const jazzRide=groove==='swing'||groove==='modernJazz';
+    const latin=groove==='bossa'||groove==='tumbao';
     const hit=(name,gain)=>this.hitDrum(name,gain,sample,step,beat,sub,onEvent);
     for(const [offset,name,gain]of GROOVES[groove][phrase]){
       if(offset===cell)hit(name,gain);
@@ -241,23 +281,28 @@ export class Rhythm {
     // In odd meters, an extra partial cell still starts from the groove's root.
     if(groove==='halftime'&&beat===Math.floor(settings.beats/2)&&sub===0)hit('snare',.72);
     if(turn&&sub%2===1){
-      if(groove==='bossa')hit('rim',sub===1?.12:.21);
-      else if(groove==='swing')hit('snare',sub===1?.14:.2);
+      if(latin)hit('rim',sub===1?.12:.21);
+      else if(jazzRide)hit('snare',sub===1?.14:.2);
+      else if(groove==='ballad')hit('rim',sub===1?.1:.16);
       else hit(sub===1?'tomHigh':'tomLow',sub===1?.29:.37);
     }
     // An eight-bar phrase has a slightly stronger final answer, then resolves
     // straight back to the downbeat. It stays quieter than the main backbeat.
-    if(bar%8===7&&lastBeat&&sub===2&&groove!=='bossa'&&groove!=='swing')hit('snare',.24);
-    if(bar>0&&bar%8===0&&beat===0&&sub===0&&['straight','shuffle','halftime'].includes(groove))hit('crash',.2);
-    if(groove==='swing'){
+    if(bar%8===7&&lastBeat&&sub===2&&!latin&&!jazzRide&&groove!=='ballad')hit('snare',.24);
+    if(bar>0&&bar%8===0&&beat===0&&sub===0&&['straight','shuffle','halftime','fusion','motown'].includes(groove))hit('crash',.2);
+    if(jazzRide){
       if(sub===0||sub===2&&beat%2===1)hit(bar%8===6&&beat===2&&sub===0?'rideBell':'ride',sub===0?(beat%2?.31:.24):.16+(phrase===2?.025:0));
       if(sub===0&&beat%2===1)hit('hatPedal',.13);
+    }else if(groove==='ballad'){
+      if(sub===0)hit('ride',beat===0?.18:.11);
+      if(sub===2&&beat===settings.beats-1&&bar%2===1)hit('hatPedal',.08);
     }else if(sub%2===0){
-      const opening=lastBeat&&sub===2&&bar%2===1&&groove!=='bossa'&&groove!=='shuffle'&&!turn;
+      const opening=lastBeat&&sub===2&&bar%2===1&&!latin&&groove!=='shuffle'&&!turn;
       hit(opening?'hatOpen':'hat',sub===0?(beat%2?.22:.28):opening?.17:.15);
-    }else if(groove==='halftime'&&(cell===5||cell===13||phrase===1&&cell===15)){
-      hit('hat',cell===5?.1:.075);
-    }
+    }else if(groove==='halftime'&&(cell===5||cell===13||phrase===1&&cell===15))hit('hat',cell===5?.1:.075);
+    else if(groove==='neoSoul'&&[3,7,11,15].includes(cell))hit('hat',cell===15?.09:.065);
+    else if(groove==='fusion'&&[3,7,11,15].includes(cell))hit('hat',cell===7||cell===15?.1:.075);
+    else if(groove==='motown'&&[7,15].includes(cell))hit('hat',.075);
   }
   playBass(settings, sub, beat, bar, notes, sample, step, onEvent,nextNotes = notes) {
     if(!notes?.length)return;

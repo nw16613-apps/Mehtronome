@@ -86,10 +86,10 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
 });
 
 test('drum and bass styles produce distinct event patterns and articulations',()=>{
-  assert.equal(Object.keys(DRUM_GROOVES).length,5);
+  assert.equal(Object.keys(DRUM_GROOVES).length,11);
   assert.equal(Object.keys(BASS_PATTERNS).length,12);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
-  assert.equal(new Set(drumSignatures).size,5);
+  assert.equal(new Set(drumSignatures).size,Object.keys(DRUM_GROOVES).length);
   const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{
     const engine=setup({bassPattern,drums:false});
     const result=render(engine,16000);

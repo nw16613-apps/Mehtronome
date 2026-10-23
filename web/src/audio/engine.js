@@ -335,7 +335,10 @@ export class Engine {
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
-      const rhythmSample=this.level*(.36*this.drumsLevel*this.rhythm.drums+.2*this.bassLevel*this.rhythm.bass);
+      // The sampled rhythm section needs enough headroom to sit in front of the
+      // wide, sustained pad. These trims keep the mixer controls perceptually
+      // useful without forcing users to turn the harmony almost all the way down.
+      const rhythmSample=this.level*(.5*this.drumsLevel*this.rhythm.drums+.3*this.bassLevel*this.rhythm.bass);
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {
@@ -435,8 +438,12 @@ export class Engine {
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
       const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
-      let left=.4*this.harmonyLevel*chord*this.breath*this.phraseArc+.15*this.sequenceLevel*this.sequence.left;
-      let right=.4*this.harmonyLevel*chordRight*this.breath*this.phraseArc+.15*this.sequenceLevel*this.sequence.right;
+      // Give transients and bass fundamentals a little room against the pad.
+      // The existing smoothed bus levels make this duck inaudible as a control
+      // change while improving the perceived balance of the full ensemble.
+      const rhythmDucking=1-.12*Math.max(this.drumsLevel,this.bassLevel);
+      let left=.4*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.left;
+      let right=.4*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.right;
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
       if(this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive
