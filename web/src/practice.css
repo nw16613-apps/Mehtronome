@@ -180,6 +180,30 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .position-navigation { display:flex; align-items:center; justify-content:center; gap:16px; margin:14px auto 4px; }
 .position-navigation>span { min-width:170px; text-align:center; font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); }
 .position-navigation .practice-button { min-width:110px; }
+.fretboard-view-switch { display:flex; width:max-content; max-width:100%; margin:0 0 16px; padding:4px; border:1px solid var(--line,#899b83); border-radius:9px; background:var(--field,#f1f3ed); }
+.fretboard-view-switch button { min-height:36px; padding:7px 15px; border:0; border-radius:6px; background:transparent; color:var(--muted,var(--practice-muted,#64735f)); font-size:11px; font-weight:650; }
+.fretboard-view-switch button.selected { background:var(--accent,var(--practice-accent)); color:var(--on-accent,var(--practice-on-accent)); box-shadow:0 3px 12px #0002; }
+.guitar-diagrams[hidden],.position-navigation[hidden] { display:none!important; }
+.full-fretboard-panel { margin:0 0 18px; border:1px solid var(--line,#899b83); border-radius:13px; background:var(--pulse,var(--practice-panel)); padding:14px; }
+.full-fretboard-panel[hidden] { display:none; }
+.full-fretboard-toolbar { display:flex; align-items:center; gap:18px; padding:2px 2px 13px; }
+.full-fretboard-toolbar>div { display:grid; gap:2px; margin-right:auto; }
+.full-fretboard-toolbar strong { font-size:13px; }
+.full-fretboard-toolbar span { color:var(--muted,var(--practice-muted,#64735f)); font-size:10px; }
+.full-fretboard-toolbar .check { font-size:10px; white-space:nowrap; }
+.full-fretboard-scroll { overflow-x:auto; padding:4px 0 2px; scrollbar-color:var(--accent,var(--practice-accent)) transparent; }
+.full-fretboard { display:block; width:100%; min-width:1040px; height:auto; }
+.full-fretboard .caged-region { cursor:pointer; }
+.full-fretboard .caged-region rect { fill:var(--accent,var(--practice-accent)); opacity:.035; stroke:var(--line,#899b83); stroke-width:1; transition:opacity .15s,stroke-width .15s; }
+.full-fretboard .caged-region text { fill:var(--muted,var(--practice-muted,#64735f)); font-size:10px; font-weight:700; letter-spacing:.06em; pointer-events:none; }
+.full-fretboard .caged-region:hover rect,.full-fretboard .caged-region:focus rect { opacity:.1; stroke:var(--accent,var(--practice-accent)); stroke-width:2; }
+.full-fretboard .caged-region.selected rect { opacity:.14; stroke:var(--accent,var(--practice-accent)); stroke-width:2.2; }
+.full-fretboard .caged-region.selected text { fill:var(--ink,var(--practice-ink,#243535)); }
+.full-fretboard .fret-note text { font-size:11px; }
+.full-fretboard .fret-note { pointer-events:none; }
+.full-fretboard-panel:fullscreen { overflow:auto; padding:28px; border:0; border-radius:0; background:var(--page,#101a1b); color:var(--ink,#e2e9dd); }
+.full-fretboard-panel:fullscreen .full-fretboard-toolbar { max-width:1500px; margin:0 auto 20px; }
+.full-fretboard-panel:fullscreen .full-fretboard-scroll { max-width:1500px; margin:auto; }
 .caged-exercise { max-width:900px; margin:24px auto 4px; padding:20px 22px; border:1px solid var(--line,#899b83); border-radius:11px; background:color-mix(in srgb,var(--panel,var(--practice-panel)) 86%,var(--field,var(--practice-field)) 14%); }
 .exercise-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:15px; }
 .exercise-heading .eyebrow { margin:0 0 4px; font-size:8px; }
@@ -258,6 +282,12 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .position-navigation { gap:8px; }
   .position-navigation>span { min-width:0; flex:1; }
   .position-navigation .practice-button { min-width:92px; padding-inline:9px; }
+  .fretboard-view-switch { width:100%; }
+  .fretboard-view-switch button { flex:1; min-height:42px; }
+  .full-fretboard-panel { padding:10px 8px; }
+  .full-fretboard-toolbar { align-items:flex-start; flex-wrap:wrap; gap:8px 12px; }
+  .full-fretboard-toolbar>div { flex-basis:100%; }
+  .full-fretboard { min-width:980px; }
   .caged-exercise { padding:16px 12px; }
   .exercise-heading { display:block; }
   .exercise-heading>span { display:block; margin-top:5px; }

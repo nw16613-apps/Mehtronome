@@ -80,6 +80,21 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   }
   return { ...position, rootPc, anchorPc, anchorName, parentMajor, notes };
 }
+
+export function fullFretboardFor(harmony, start = 1, end = 17, chordOnly = false) {
+  const rootPc=harmony.midi[0]%12;
+  const colourPcs=characteristicNotes(harmony).map(note=>note.pc);
+  const notes=[];
+  for(let string=0;string<TUNING.length;string++)for(let fret=start;fret<=end;fret++){
+    const midi=TUNING[string]+fret,pc=midi%12;
+    const scaleIndex=harmony.scalePcs.indexOf(pc),chordIndex=harmony.chordPcs.indexOf(pc);
+    if(chordOnly?chordIndex<0:scaleIndex<0&&chordIndex<0)continue;
+    notes.push({string,fret,midi,pc,root:pc===rootPc,chord:chordIndex>=0,scale:scaleIndex>=0,
+      name:chordIndex>=0?harmony.tones[chordIndex]:harmony.scaleNames[scaleIndex],characteristic:colourPcs.includes(pc),
+      scaleIndex,chromaticDegree:CHROMATIC_DEGREES[(pc-harmony.scalePcs[0]+12)%12]});
+  }
+  return {start,end,rootPc,notes};
+}
 function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
@@ -128,4 +143,38 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   }
   if (shownGrip) for (const string of shownGrip.muted) svg += `<text class="grip-mute" data-string="${string}" x="29" y="${y(string)+4}" text-anchor="middle"><title>Mute string ${6-string} when playing the chord</title>×</text>`;
   return svg + '</svg>';
+}
+
+/**
+ * A continuous neck map. Region bands describe the current CAGED geometry.
+ * @param {Array<{numeral:string,shape:string,start:number,end:number}>} regions
+ * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],rootPc?:number,groups?:Array<{name:string,rootPc?:number,pcs:number[]}>} | null} theory
+ */
+export function fullFretboardSvg(board, degrees, modeDegrees, title, regions = [], selectedPosition = 'I', highlight = false, theory = null, showRegions = true) {
+  const width=1320,left=62,right=18,top=54,bottom=48,neckWidth=width-left-right;
+  const columns=board.end-board.start+1,spacing=neckWidth/columns;
+  const x=fret=>left+spacing/2+(fret-board.start)*spacing;
+  const boundary=fret=>left+(fret-board.start)*spacing;
+  const y=string=>top+(5-string)*34;
+  const shownTitle=theory?`${title}, ${theory.kind==='pentatonic'?'pentatonic':'triad-pair'} overlay: ${theory.name}`:title;
+  let svg=`<svg class="fretboard full-fretboard${theory?` theory-active theory-${theory.kind}`:''}" viewBox="0 0 ${width} ${top+5*34+bottom}" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
+  if(showRegions)for(const region of regions){
+    const start=Math.max(board.start,region.start),end=Math.min(board.end,region.end);
+    if(start>end)continue;
+    const rx=boundary(start),rw=boundary(end+1)-rx,selected=region.numeral===selectedPosition;
+    svg+=`<g class="caged-region${selected?' selected':''}" data-full-position="${region.numeral}" role="button" tabindex="0" aria-label="Select position ${region.numeral}, ${region.shape} shape"><rect x="${rx}" y="22" width="${rw}" height="${top+5*34-8}" rx="9"/><text x="${rx+10}" y="39">${region.numeral} · ${region.shape}</text></g>`;
+  }
+  for(let fret=board.start;fret<=board.end;fret++)svg+=`<text class="fret-number" x="${x(fret)}" y="${top+5*34+30}" text-anchor="middle">${fret}</text>`;
+  for(let column=0;column<=columns;column++){const bx=left+column*spacing;svg+=`<line class="fret-wire" x1="${bx}" x2="${bx}" y1="${top}" y2="${top+5*34}"/>`;}
+  TUNING.forEach((_,string)=>{svg+=`<line class="guitar-string" style="stroke-width:${2.2-string*.25}" x1="${left}" x2="${width-right}" y1="${y(string)}" y2="${y(string)}"/><text class="string-name" x="28" y="${y(string)+5}" text-anchor="middle">${['E','A','D','G','B','E'][string]}</text>`;});
+  for(const note of board.notes){
+    const label=degrees?(note.scaleIndex>=0?modeDegrees[note.scaleIndex]:note.chromaticDegree):note.name;
+    const colour=!theory&&highlight&&note.characteristic,selected=theory?.pcs.includes(note.pc);
+    const pentatonicRoot=selected&&theory?.kind==='pentatonic'&&note.pc===theory.rootPc;
+    const groupIndex=selected&&theory?.kind==='triads'?(theory.groups?.findIndex(group=>group.pcs.includes(note.pc))??-1):-1;
+    const group=groupIndex===0?'a':groupIndex===1?'b':null;
+    const kind=note.root?'root':note.chord?'chord':'scale';
+    svg+=`<g class="fret-note ${kind}${colour?' characteristic':''}${selected?` theory-note${group?` theory-${group}`:''}${pentatonicRoot?' pentatonic-root':''}`:''}" data-string="${note.string}" data-fret="${note.fret}" data-pc="${note.pc}"><title>${escape(`${note.name}, string ${6-note.string}, fret ${note.fret}${note.root?', chord root':note.chord?', chord tone':', scale tone'}`)}</title><circle cx="${x(note.fret)}" cy="${y(note.string)}" r="10"/>${colour?`<circle class="characteristic-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="14"/>`:''}${selected?`<circle class="theory-ring" cx="${x(note.fret)}" cy="${y(note.string)}" r="12" fill="none"${group==='b'?' stroke-dasharray="3 2"':''}/>`:''}<text x="${x(note.fret)}" y="${y(note.string)+4}" text-anchor="middle">${escape(label)}</text></g>`;
+  }
+  return svg+'</svg>';
 }
