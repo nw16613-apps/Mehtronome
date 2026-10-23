@@ -606,7 +606,7 @@ test('evolving sounds produce stereo audio and the optional sequencer works inde
     };
   });
   await openReference(page);
-  await expect(page.locator('#sound')).toHaveValue('bloom');
+  await expect(page.locator('#sound')).toHaveValue('horizon');
   await expect(page.locator('#sequence')).not.toBeChecked();
   await expect(page.locator('#sequence-controls')).toBeHidden();
   await page.locator('#count-in').uncheck();

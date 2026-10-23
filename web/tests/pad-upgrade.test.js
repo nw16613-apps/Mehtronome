@@ -22,7 +22,7 @@ function brightness(samples){
   return Math.sqrt(derivative/energy);
 }
 
-test('all seven pads have evolving harmonic colour and a stable mono centre',()=>{
+test('all pads have evolving harmonic colour and a stable mono centre',()=>{
   const signatures=[];
   for(const sound of Object.keys(SOUNDS)){
     const {left,right}=render(setup({sound}),96000);
@@ -44,6 +44,22 @@ test('all seven pads have evolving harmonic colour and a stable mono centre',()=
     const distance=Math.hypot(...signatures[a].map((value,index)=>value-signatures[b][index]));
     assert.ok(distance>.015,`${Object.keys(SOUNDS)[a]} / ${Object.keys(SOUNDS)[b]} retain different tone profiles`);
   }
+});
+
+test('cinematic presets and pad shaping controls create distinct scale, motion and brightness',()=>{
+  for(const id of ['horizon','aurora','cathedral','constellation','deepSpace'])assert.ok(SOUNDS[id],id);
+  const character=settings=>{
+    const {left,right}=render(setup({sound:'horizon',...settings}),96000);
+    let mono=0,side=0,derivative=0,energy=0;
+    for(let i=16001;i<left.length;i++){
+      mono+=((left[i]+right[i])*.5)**2;side+=((left[i]-right[i])*.5)**2;
+      derivative+=(left[i]-left[i-1])**2;energy+=left[i]**2;
+    }
+    return {width:side/mono,brightness:Math.sqrt(derivative/energy)};
+  };
+  assert.ok(character({padDepth:'epic'}).width>character({padDepth:'intimate'}).width*1.3);
+  assert.ok(character({padBrightness:'luminous'}).brightness>character({padBrightness:'dark'}).brightness*1.08);
+  assert.ok(character({padMovement:'expansive'}).brightness>character({padMovement:'still'}).brightness*1.08);
 });
 
 test('paired harmonic layers are bounded, seamless and pitch-band limited',()=>{

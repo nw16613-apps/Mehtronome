@@ -10,7 +10,7 @@ test('preset transfer round trips all controls, including tempo trainer and feat
   assert.equal(file.format,PRESET_FILE_FORMAT);assert.equal(file.version,1);
   assert.deepEqual(importPresets(raw).items,original);
   assert.deepEqual(readPresets(raw),original);
-  for(const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','sequence-source'])assert.ok(PRESET_CONTROLS.includes(id));
+  for(const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','sequence-source','pad-movement','pad-depth','pad-brightness'])assert.ok(PRESET_CONTROLS.includes(id));
   const legacy=JSON.stringify({version:1,items:original});
   assert.deepEqual(importPresets('\uFEFF'+legacy).items,original);
   assert.deepEqual(original,[preset()]);

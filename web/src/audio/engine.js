@@ -13,7 +13,7 @@ export const DEFAULTS = {
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', template: 'parallel1', subdivision: 1, accent: true,
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
   if (!settings.gapEnabled) return false;
@@ -82,7 +82,7 @@ export class Engine {
     // Six sounding chord tones plus six release tails: common notes keep their
     // oscillator phase; changed notes crossfade at their true pitches.
     this.voices = Array.from({length:12}, (_, index) => ({
-      phase:0, detuned:0, haloPhase:0, frequency:0, level:0, targetLevel:0,
+      phase:0, detuned:0, haloPhase:0, subPhase:0, frequency:0, level:0, targetLevel:0,
       filter:0, sideFilter:0, coefficient:0, coefficientDelta:0, pan:0, panDelta:0,
       detune:0, detuneDelta:0, gain:1, gainDelta:0, mix:.3, mixDelta:0,
       width:0, widthDelta:0, halo:0, haloDelta:0, band:3, index,
@@ -96,6 +96,8 @@ export class Engine {
     this.chordAge = 0;
     this.breath = 1;
     this.breathDelta = 0;
+    this.phraseArc = 1;
+    this.phraseArcDelta = 0;
     this.phase = 0;
     this.currentBpm = this.settings.bpm;
     this.trainerNextBar = this.settings.trainerBars;
@@ -211,6 +213,7 @@ export class Engine {
         voice.phase=(index*.173+frequency*.001)%1;
         voice.detuned=(voice.phase+.19)%1;
         voice.haloPhase=voice.phase;
+        voice.subPhase=(voice.phase+.37)%1;
         voice.filter=0;voice.sideFilter=0;
       }
       voice.index=index;
@@ -237,7 +240,10 @@ export class Engine {
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
-    const echoTarget = sound.echo || 0;
+    const movement={still:.28,evolving:1,expansive:1.5}[s.padMovement]||1;
+    const depth={intimate:.55,wide:1,epic:1.35}[s.padDepth]||1;
+    const brightness={dark:.62,balanced:1,luminous:1.35}[s.padBrightness]||1;
+    const echoTarget = Math.min(.2,(sound.echo || 0)*depth);
     const attack = 1-Math.exp(-1/(this.rate*sound.attack));
     const release = 1-Math.exp(-1/(this.rate*sound.release));
     const inverseRate = this.inverseRate;
@@ -297,21 +303,25 @@ export class Engine {
       // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {
         const time = this.age * inverseRate;
-        const breath = 1-sound.depth*.5+sound.depth*.5*Math.sin(2*Math.PI*sound.speed*time);
+        const breathDepth=sound.depth*movement;
+        const breath = 1-breathDepth*.5+breathDepth*.5*Math.sin(2*Math.PI*sound.speed*movement*time);
         this.breathDelta=(breath-this.breath)/32;
+        const musicalBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
+        const arc=1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
+        this.phraseArcDelta=(arc-this.phraseArc)/32;
         for (const voice of this.voices) {
           if (!voice.targetLevel && voice.level<.000001) continue;
           const offset=voice.index*1.31;
           const motion=.5+.5*Math.sin(time*.19+offset);
           const slow=.5+.5*Math.sin(time*.071+offset*1.73);
-          const cutoff=Math.min(this.rate*.32,sound.filterBase+sound.filterSweep*(motion*.62+slow*.38));
+          const cutoff=Math.min(this.rate*.32,(sound.filterBase+sound.filterSweep*movement*(motion*.62+slow*.38))*brightness);
           const coefficient=1-Math.exp(-2*Math.PI*cutoff*inverseRate);
-          const pan=.18*Math.sin(time*.11+offset);
+          const pan=.18*depth*Math.sin(time*.11*movement+offset);
           const detune=sound.detune*(.8+.2*Math.sin(time*.23+offset*1.4));
-          const mix=sound.morph+sound.morphDepth*(slow-.5)*2;
+          const mix=sound.morph+sound.morphDepth*movement*(slow-.5)*2;
           const glass=s.sound==='atmosphere'||s.sound==='glass';
           const gain=(.92+.08*Math.sin(time*.31+offset*.8))*(glass?.82+.18*Math.exp(-this.chordAge*inverseRate/1.4):1);
-          const halo=sound.halo*(.45+.55*motion*motion);
+          const halo=sound.halo*brightness*(.35+.65*motion*motion)*movement;
           voice.coefficientDelta=(coefficient-voice.coefficient)/32;
           voice.panDelta=(pan-voice.pan)/32;
           voice.detuneDelta=(detune-voice.detune)/32;
@@ -322,6 +332,7 @@ export class Engine {
         }
       }
       this.breath+=this.breathDelta;
+      this.phraseArc+=this.phraseArcDelta;
       if (this.soundBlend < 1) {
         this.soundBlend += (1-this.soundBlend)*this.blendSmoothing;
         if (this.soundBlend>.9999) this.soundBlend=1;
@@ -341,9 +352,11 @@ export class Engine {
         voice.phase+=increment*(1-voice.detune*.5);
         voice.detuned+=increment*(1+voice.detune*.5);
         voice.haloPhase+=increment*2;
+        voice.subPhase+=increment*.5;
         if(voice.phase>=1)voice.phase-=Math.floor(voice.phase);
         if(voice.detuned>=1)voice.detuned-=Math.floor(voice.detuned);
         if(voice.haloPhase>=1)voice.haloPhase-=Math.floor(voice.haloPhase);
+        if(voice.subPhase>=1)voice.subPhase-=Math.floor(voice.subPhase);
         let base=readWave(this.waveCurrent[voice.band],voice.phase);
         let layer=readWave(this.layerCurrent[voice.band],voice.detuned);
         if(this.soundBlend<1){
@@ -353,7 +366,8 @@ export class Engine {
           layer=previousLayer+(layer-previousLayer)*this.soundBlend;
         }
         const halo=voice.frequency*2<this.rate*.45?readWave(SINE,voice.haloPhase)*voice.halo:0;
-        const wave=(base*(1-voice.mix)+layer*voice.mix)*(1-voice.halo)+halo;
+        const foundation=voice.index===0&&sound.foundation?readWave(SINE,voice.subPhase)*sound.foundation*depth:0;
+        const wave=(base*(1-voice.mix)+layer*voice.mix)*(1-voice.halo)+halo+foundation;
         voice.filter+=(wave-voice.filter)*voice.coefficient;
         // The difference between two pitched layers provides a restrained side
         // signal. The shared centre keeps the pad full when summed to mono.
@@ -364,8 +378,8 @@ export class Engine {
         chordRight+=(voice.filter-voice.sideFilter)*gain*(1+voice.pan);
       }
       const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
-      let left=.4*this.harmonyLevel*chord*this.breath+.15*this.sequenceLevel*this.sequence.left;
-      let right=.4*this.harmonyLevel*chordRight*this.breath+.15*this.sequenceLevel*this.sequence.right;
+      let left=.4*this.harmonyLevel*chord*this.breath*this.phraseArc+.15*this.sequenceLevel*this.sequence.left;
+      let right=.4*this.harmonyLevel*chordRight*this.breath*this.phraseArc+.15*this.sequenceLevel*this.sequence.right;
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
       if(this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive

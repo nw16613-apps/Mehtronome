@@ -8,6 +8,10 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await expect(page.locator('#chord')).toHaveValue('min13');
   await expect(page.locator('#chord-name')).toHaveText('Am13');
   await expect(page.locator('#count-in')).not.toBeChecked();
+  await expect(page.locator('#sound')).toHaveValue('horizon');
+  await expect(page.locator('#pad-movement')).toHaveValue('evolving');
+  await expect(page.locator('#pad-depth')).toHaveValue('wide');
+  await expect(page.locator('#pad-brightness')).toHaveValue('balanced');
   await expect(page.locator('#fret-labels')).toHaveValue('degrees');
   await expect(page.locator('.fret-note.root text').first()).toHaveText('1');
   for(const [id,mode] of Object.entries(MODES)){

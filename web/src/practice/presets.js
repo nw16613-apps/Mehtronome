@@ -1,6 +1,6 @@
 export const PRESET_KEY = 'mehtronome-practice-presets-v1';
 export const PRESET_CONTROLS = [
-  'bpm','beats','count-in','subdivision','accent','key','quality','sound','chord','template',
+  'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-brightness','chord','template',
   'exercise','click','harmony','space','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density',
   'sequence-swing','sequence-volume','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume',
   'fret-labels','audition','highlight-mode','show-grip',
