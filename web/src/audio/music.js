@@ -169,6 +169,10 @@ export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS)
 }));
 
 export const PROGRESSIONS = {
+  custom: { name: 'Custom progression', bars: 1, kind: 'custom', roman: ['i7','iv7'], steps: [
+    { root: 0, letter: 0, chord: 'min7', mode: 'dorian', bars: 1, bass: null },
+    { root: 5, letter: 3, chord: 'min7', mode: 'dorian', bars: 1, bass: null },
+  ] },
   parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
   parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
   oneFour1: { name: 'I–IV · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
@@ -208,8 +212,12 @@ export const PROGRESSIONS = {
   diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['I','vi','IV','V'] },
   ...MODAL_PROGRESSIONS,
 };
+export function progressionDefinition(settings) {
+  if(settings.template==='custom'&&settings.customProgression?.steps?.length)return settings.customProgression;
+  return PROGRESSIONS[settings.template || 'parallel1'];
+}
 export function progressionDurations(settings) {
-  const template = PROGRESSIONS[settings.template || 'parallel1'];
+  const template = progressionDefinition(settings);
   return template.steps ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
 }
 // Inclusive ranges may cross the end of a template (for example V back to ii).
@@ -253,12 +261,13 @@ function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
 }
 export function harmonyAt(settings, step = 0) {
   const template = settings.template || 'parallel1';
-  const definition = PROGRESSIONS[template];
+  const definition = progressionDefinition(settings);
   step = ((step % definition.roman.length) + definition.roman.length) % definition.roman.length;
   const jazz = settings.progression && definition.kind === 'jazz' ? definition.steps[step] : null;
   const modal = settings.progression && definition.kind === 'modal' ? definition.steps[step] : null;
-  const change = jazz || modal;
-  const mode = modal ? definition.mode : jazz ? jazz.mode : modeId(settings);
+  const custom = settings.progression && definition.kind === 'custom' ? definition.steps[step] : null;
+  const change = jazz || modal || custom;
+  const mode = modal ? definition.mode : change?.mode || modeId(settings);
   if (settings.progression && template === 'diatonic') {
     const scale = MODES[mode].intervals;
     const degree = [0,5,3,4][step];
@@ -284,6 +293,9 @@ export function harmonyAt(settings, step = 0) {
 
   const labels = {0:'1',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♯5',9:'6',10:'♭7',11:'7',12:'8',13:'♭9',14:'9',15:'♯9',17:'11',18:'♯11',20:'♭13',21:'13'};
   const intervals = chord.intervals.map(i => chordId === 'dim7' && i === 9 ? '♭♭7' : labels[i]);
-  return { name, suffix: chord.symbol, tones, intervals, midi, scaleNames, scalePcs, chordPcs: midi.map(i => i % 12),
+  const bassPc=custom&&Number.isInteger(custom.bass)?(settings.key+custom.bass)%12:null;
+  const bassName=bassPc===null?'':spellPitch(settings.key,custom.bassLetter??0,custom.bass,ROOT_NAMES[settings.key]);
+  const suffix=chord.symbol+(bassPc!==null&&bassPc!==key?`/${bassName}`:'');
+  return { name, suffix, tones, intervals, midi, bassMidi:bassPc===null||bassPc===key?null:36+bassPc, scaleNames, scalePcs, chordPcs: midi.map(i => i % 12),
     mode, roman: settings.progression ? definition.roman[step] : 'I' };
 }

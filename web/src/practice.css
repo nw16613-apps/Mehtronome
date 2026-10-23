@@ -108,6 +108,25 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .trainer-fields input,.trainer-fields select { padding:7px; }
 }
 .mode-template-button { width:100%; margin-top:10px; }
+.custom-progression-open { width:100%; margin-top:8px; }
+.custom-progression-builder { margin:14px 0 18px; padding:16px; border:1px solid var(--line,#899b83); border-radius:11px; background:color-mix(in srgb,var(--panel,var(--practice-panel)) 82%,var(--field,var(--practice-field)) 18%); }
+.custom-builder-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:12px; }
+.custom-builder-heading .eyebrow { margin:0 0 3px; }
+.custom-builder-heading h3 { margin:0; font-size:17px; }
+.custom-timeline { display:flex; gap:8px; overflow-x:auto; padding:3px 2px 10px; scrollbar-color:var(--accent,var(--practice-accent)) transparent; }
+.custom-timeline button { flex:0 0 142px; display:grid; grid-template-columns:auto 1fr; gap:1px 8px; min-height:68px; padding:9px; border:1px solid var(--line,#899b83); border-radius:8px; background:var(--field,var(--practice-field)); color:var(--ink,var(--practice-ink)); text-align:left; cursor:grab; }
+.custom-timeline button.current { border:2px solid var(--accent,var(--practice-accent)); padding:8px; background:color-mix(in srgb,var(--accent,var(--practice-accent)) 10%,var(--field,var(--practice-field))); }
+.custom-timeline button>span { grid-row:1/3; color:var(--muted,var(--practice-muted)); font-size:9px; }
+.custom-timeline strong { overflow:hidden; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.custom-timeline small { color:var(--muted,var(--practice-muted)); font-size:9px; }
+.custom-editor { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin-top:5px; }
+.custom-editor label { min-width:0; color:var(--muted,var(--practice-muted)); font-size:9px; }
+.custom-editor select { width:100%; margin-top:5px; padding:8px 6px; border:1px solid var(--line,#899b83); border-radius:5px; background:var(--field,var(--practice-field)); color:var(--ink,var(--practice-ink)); }
+.custom-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:11px; }
+.custom-share { margin-top:12px; }
+.custom-share summary { color:var(--muted,var(--practice-muted)); font-size:10px; cursor:pointer; }
+.custom-share textarea { box-sizing:border-box; width:100%; margin:9px 0 7px; padding:9px; border:1px solid var(--line,#899b83); border-radius:6px; resize:vertical; background:var(--field,var(--practice-field)); color:var(--ink,var(--practice-ink)); font:11px/1.5 ui-monospace,monospace; }
+@media(max-width:760px){.custom-progression-builder{padding:12px 10px}.custom-builder-heading{align-items:flex-start}.custom-editor{grid-template-columns:1fr 1fr}.custom-editor label:nth-child(3),.custom-editor label:nth-child(5){grid-column:1/-1}.custom-timeline button{flex-basis:130px}.custom-actions .practice-button{flex:1 1 42%}}
 .guitar.has-featured .guitar-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .guitar.has-featured .section-heading>.small-label { max-width:none; }
 .focus-view .guitar-overview #guitar-scale,.focus-view .guitar-overview #guitar-parent,.focus-view #grip-toggle-help { display:none; }

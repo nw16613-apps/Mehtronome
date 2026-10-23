@@ -1,3 +1,5 @@
+import {normalizeCustomProgression} from './custom-progression.js';
+
 export const PRESET_KEY = 'mehtronome-practice-presets-v1';
 export const PRESET_CONTROLS = [
   'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-brightness','chord','template',
@@ -19,7 +21,8 @@ export function readPresets(raw) {
     && typeof item.name === 'string' && item.name.trim() && item.controls && typeof item.controls === 'object')
     .map(item => ({id:item.id,name:item.name.trim().slice(0,60),progression:item.progression === true,
       controls:Object.fromEntries(PRESET_CONTROLS.filter(id => typeof item.controls[id] === 'boolean'
-        || typeof item.controls[id] === 'string' && item.controls[id].length <= 120).map(id => [id,item.controls[id]]))}));
+        || typeof item.controls[id] === 'string' && item.controls[id].length <= 120).map(id => [id,item.controls[id]])),
+      ...(item.customProgression&&typeof item.customProgression==='object'?{customProgression:normalizeCustomProgression(item.customProgression)}:{})}));
 }
 export function writePresets(storage, items) {
   if (items.length > 50) throw new Error('You can save up to 50 presets. Delete one to make room.');
@@ -48,7 +51,8 @@ function transferItems(items) {
       controls[id] = value;
     }
     if (!Object.keys(controls).length) throw invalid();
-    return {id:item.id, name:item.name.trim(), progression:item.progression === true, controls};
+    return {id:item.id, name:item.name.trim(), progression:item.progression === true, controls,
+      ...(item.customProgression&&typeof item.customProgression==='object'?{customProgression:normalizeCustomProgression(item.customProgression)}:{})};
   });
 }
 

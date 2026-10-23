@@ -14,9 +14,14 @@ import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
+import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode } from './practice/custom-progression.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+let customProgression:any;
+try{customProgression=normalizeCustomProgression(JSON.parse(localStorage.getItem(CUSTOM_PROGRESSION_KEY)||'null'));}
+catch{customProgression=normalizeCustomProgression(null);}
+(PROGRESSIONS as any).custom=customProgression;
 function modeOptions() {
   return ['Major scale', 'Melodic minor', 'Harmonic minor'].map(family =>
     `<optgroup label="${family}">${Object.entries(MODES).filter(([, mode]) => ('family' in mode ? mode.family : 'Major scale') === family).map(([id, mode]) => `<option value="${id}" ${id === 'dorian' ? 'selected' : ''}>${mode.name}</option>`).join('')}</optgroup>`
@@ -71,7 +76,22 @@ app.innerHTML = `
       <p id="mode-tip" class="mode-tip"></p>
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
-      <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button>
+      <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
+        <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div>
+        <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
+        <div class="custom-editor">
+          <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
+          <label>Chord type<select id="custom-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}">${chord.name}</option>`).join('')}</select></label>
+          <label>Scale guide<select id="custom-mode">${modeOptions()}</select></label>
+          <label>Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
+          <label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
+        </div>
+        <div class="custom-actions"><button id="custom-left" type="button" class="practice-button" aria-label="Move chord left">← Move</button><button id="custom-right" type="button" class="practice-button" aria-label="Move chord right">Move →</button><button id="custom-duplicate" type="button" class="practice-button">Duplicate</button><button id="custom-delete" type="button" class="practice-button">Delete</button></div>
+        <details class="custom-share"><summary>Share or copy progression</summary><textarea id="custom-text" rows="3" aria-label="Custom progression text" readonly></textarea><button id="custom-copy" type="button" class="practice-button">Copy progression</button></details>
+        <p id="custom-status" class="practice-help" role="status">Changes save automatically in this browser and transpose with the tonic key.</p>
+      </section>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
       <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></div>
@@ -130,7 +150,7 @@ app.innerHTML = `
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
-let settings = { ...DEFAULTS, key:9, mode: 'dorian', chord: MODES.dorian.chord, countIn:false };
+let settings = { ...DEFAULTS, key:9, mode: 'dorian', chord: MODES.dorian.chord, countIn:false, customProgression };
 let master: GainNode | undefined;
 let wet: GainNode | undefined;
 let reverbGate: GainNode | undefined;
@@ -312,7 +332,7 @@ async function toggleExercisePreview() {
 function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
 function renderMusic() {
-  const template = PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS];
+  const template = progressionDefinition(settings);
   step = settings.progression ? step % template.roman.length : 0;
   const info = chordInfo(step);
   const order = progressionOrder(settings);
@@ -324,18 +344,19 @@ function renderMusic() {
 
   const jazz = template.kind === 'jazz';
   const modal = template.kind === 'modal';
-  el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
+  const custom = template.kind === 'custom';
+  el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : custom ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = !settings.progression;
   el('preview-controls').hidden = !settings.progression;
   const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
-    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz || modal ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
+    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz || modal || custom ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
   }).join('');
   if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
   el('harmony-explanation').textContent = modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip;
-  el('backing-description').textContent = modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
+  el('backing-description').textContent = custom ? 'Your progression follows the chord, duration, bass-note and scale-guide choices in the builder.' : modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const colour = characteristicNotes(info);
   const highlight = input('highlight-mode').checked;
@@ -364,7 +385,7 @@ function renderGuitar() {
   if(!settings.progression&&requestedFeatured==='path')select('featured-position').value='all';
   const pathRegion=FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS] || FRET_REGIONS.middle;
   const path=settings.progression?progressionPositionPath(
-    Array.from({length:PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS].roman.length},(_,index)=>chordInfo(index)),
+    Array.from({length:progressionDefinition(settings).roman.length},(_,index)=>chordInfo(index)),
     pathRegion,
   ):[];
   const following=settings.progression&&requestedFeatured==='path';
@@ -428,7 +449,7 @@ function renderBeats(active = -1) {
   el('beat-dots').innerHTML = Array.from({ length: settings.beats }, (_, i) => `<span class="beat ${i === active ? 'active' : ''} ${i === 0 && settings.accent ? 'downbeat' : ''}">${i + 1}</span>`).join('');
 }
 function fillLoopOptions(reset = false) {
-  const count = PROGRESSIONS[select('template').value as keyof typeof PROGRESSIONS].roman.length;
+  const count = progressionDefinition({...settings,template:select('template').value,customProgression}).roman.length;
   const start = reset ? 0 : Number(select('loop-start').value || 0);
   const end = reset ? count-1 : Number(select('loop-end').value || 0);
   const loopSettings = {...settings, key:Number(select('key').value), mode:select('quality').value, chord:select('chord').value, template:select('template').value, progression:true};
@@ -436,6 +457,57 @@ function fillLoopOptions(reset = false) {
     select(id).innerHTML = Array.from({length:count},(_,i)=>{const c=harmonyAt(loopSettings,i);return `<option value="${i}">${i+1}. ${c.name}${c.suffix} · ${c.roman}</option>`;}).join('');
     select(id).value = String(Math.min(count-1,value));
   }
+}
+let customStepIndex=0;
+function actualCustomName(offset:number){return names[(Number(select('key').value)+offset)%12];}
+function saveCustomProgression(message='Custom progression saved in this browser.'){
+  customProgression=normalizeCustomProgression(customProgression);
+  settings.customProgression=customProgression;
+  (PROGRESSIONS as any).custom=customProgression;
+  try{localStorage.setItem(CUSTOM_PROGRESSION_KEY,JSON.stringify(customProgression));}
+  catch{message='The progression is ready for this session, but browser storage is unavailable.';}
+  el('custom-status').textContent=message;
+}
+function renderCustomBuilder(){
+  const active=settings.progression&&settings.template==='custom';
+  el('custom-progression-builder').hidden=!active;
+  el('customize-progression').hidden=!settings.progression||active;
+  if(!active)return;
+  customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
+  const current=customProgression.steps[customStepIndex];
+  el('custom-progression-title').textContent=customProgression.name;
+  for(const id of ['custom-root','custom-bass']){
+    const control=select(id);
+    Array.from(control.options).forEach(option=>{
+      if(option.value==='')return;
+      const offset=Number(option.value),roman=['I','♭II','II','♭III','III','IV','♭V','V','♭VI','VI','♭VII','VII'][offset];
+      option.textContent=id==='custom-bass'?`${actualCustomName(offset)} (${roman}) pedal / slash bass`:`${actualCustomName(offset)} · ${roman}`;
+    });
+  }
+  el('custom-timeline').innerHTML=customProgression.steps.map((item:any,index:number)=>{
+    const chord=CHORDS[item.chord as keyof typeof CHORDS];
+    const bass=item.bass===null?'':`/${actualCustomName(item.bass)}`;
+    return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.bars} bar${item.bars===1?'':'s'}</small></button>`;
+  }).join('');
+  select('custom-root').value=String(current.root);
+  select('custom-chord').value=current.chord;
+  select('custom-mode').value=current.mode;
+  select('custom-bars').value=String(current.bars);
+  select('custom-bass').value=current.bass===null?'':String(current.bass);
+  input('custom-text').value=progressionText(customProgression,(id:string)=>CHORDS[id as keyof typeof CHORDS]?.symbol||id);
+  el<HTMLButtonElement>('custom-delete').disabled=customProgression.steps.length===1;
+  el<HTMLButtonElement>('custom-left').disabled=customStepIndex===0;
+  el<HTMLButtonElement>('custom-right').disabled=customStepIndex===customProgression.steps.length-1;
+}
+function commitCustomEdit(autoMode=false){
+  const item=customProgression.steps[customStepIndex];
+  item.root=Number(select('custom-root').value);
+  item.chord=select('custom-chord').value;
+  if(autoMode)select('custom-mode').value=recommendedMode(item.chord);
+  item.mode=select('custom-mode').value;
+  item.bars=Number(select('custom-bars').value);
+  item.bass=select('custom-bass').value===''?null:Number(select('custom-bass').value);
+  saveCustomProgression();fillLoopOptions(true);step=Math.min(step,customProgression.steps.length-1);update();
 }
 function updateSpace() {
   el('space-value').textContent = `${input('space').value}%`;
@@ -480,6 +552,7 @@ function update() {
   const newTemplate = settings.template !== select('template').value;
   fillLoopOptions(newTemplate || !select('loop-start').options.length);
   settings.template = select('template').value;
+  settings.customProgression=customProgression;
   if (newTemplate) input('loop-enabled').checked = false;
   settings.loopEnabled = input('loop-enabled').checked;
   settings.loopStart = Number(select('loop-start').value);
@@ -497,15 +570,17 @@ function update() {
   el('gap-controls').hidden = !settings.gapEnabled;
   el('template-field').hidden = !settings.progression;
   const diatonic = settings.progression && settings.template === 'diatonic';
-  const selectedTemplate = PROGRESSIONS[settings.template as keyof typeof PROGRESSIONS];
+  const selectedTemplate = progressionDefinition(settings);
   const jazz = settings.progression && selectedTemplate.kind === 'jazz';
   const modal = settings.progression && selectedTemplate.kind === 'modal';
-  select('quality').parentElement!.hidden = jazz;
-  select('chord').parentElement!.hidden = jazz || diatonic || modal;
-  el('mode-tip').hidden = jazz;
-  select('chord').disabled = diatonic || modal;
-  el('root-label').textContent = jazz ? 'Tonic key' : settings.progression ? 'Starting root' : 'Root note';
+  const custom = settings.progression && selectedTemplate.kind === 'custom';
+  select('quality').parentElement!.hidden = jazz || custom;
+  select('chord').parentElement!.hidden = jazz || diatonic || modal || custom;
+  el('mode-tip').hidden = jazz || custom;
+  select('chord').disabled = diatonic || modal || custom;
+  el('root-label').textContent = jazz || custom ? 'Tonic key' : settings.progression ? 'Starting root' : 'Root note';
   el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
+  renderCustomBuilder();
   settings.subdivision = Number(select('subdivision').value);
   settings.accent = input('accent').checked;
   settings.beats = Number(select('beats').value);
@@ -992,7 +1067,7 @@ for (const mode of ['pedal', 'progression']) {
       el(id).classList.toggle('selected', mode === id);
       el(id).setAttribute('aria-pressed', String(mode === id));
     }
-    const selectedTemplate = PROGRESSIONS[select('template').value as keyof typeof PROGRESSIONS];
+    const selectedTemplate = progressionDefinition({...settings,template:select('template').value,customProgression});
     if (settings.progression && selectedTemplate.kind === 'modal' && 'mode' in selectedTemplate) select('quality').value = String(selectedTemplate.mode);
     fillChords(true);
     update();
@@ -1025,8 +1100,56 @@ select('quality').addEventListener('input', () => {
   fillChords(); update();
 });
 select('template').addEventListener('input', () => {
-  const template = PROGRESSIONS[select('template').value as keyof typeof PROGRESSIONS];
+  const template = progressionDefinition({...settings,template:select('template').value,customProgression});
   if (template.kind === 'modal' && 'mode' in template) { select('quality').value = String(template.mode); fillChords(); update(); }
+});
+el('customize-progression').addEventListener('click',()=>{
+  stopPreview();
+  customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode);
+  customProgression.name='My progression';customStepIndex=0;
+  saveCustomProgression('Template copied. Edit any chord below; changes save automatically.');
+  select('template').value='custom';settings.progression=true;input('loop-enabled').checked=false;step=0;
+  fillChords(true);fillLoopOptions(true);update();
+});
+el('custom-timeline').addEventListener('click',event=>{
+  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-custom-step]');
+  if(!button)return;customStepIndex=Number(button.dataset.customStep);step=customStepIndex;renderCustomBuilder();renderMusic();
+});
+let draggedCustomStep:number|null=null;
+el('custom-timeline').addEventListener('dragstart',event=>{
+  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-custom-step]');
+  if(!button)return;draggedCustomStep=Number(button.dataset.customStep);event.dataTransfer?.setData('text/plain',String(draggedCustomStep));
+});
+el('custom-timeline').addEventListener('dragover',event=>event.preventDefault());
+el('custom-timeline').addEventListener('drop',event=>{
+  event.preventDefault();const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-custom-step]');
+  if(!button||draggedCustomStep===null)return;const destination=Number(button.dataset.customStep);
+  const [item]=customProgression.steps.splice(draggedCustomStep,1);customProgression.steps.splice(destination,0,item);customStepIndex=destination;draggedCustomStep=null;
+  saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
+});
+for(const id of ['custom-root','custom-mode','custom-bars','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(false));
+el('custom-chord').addEventListener('input',()=>commitCustomEdit(true));
+el('custom-add').addEventListener('click',()=>{
+  const previous=customProgression.steps.at(customStepIndex)||customProgression.steps.at(-1);
+  customProgression.steps.splice(customStepIndex+1,0,{...previous,root:(previous.root+5)%12,bass:null,mode:recommendedMode(previous.chord)});
+  customStepIndex++;saveCustomProgression('Chord added.');fillLoopOptions(true);update();
+});
+el('custom-duplicate').addEventListener('click',()=>{
+  customProgression.steps.splice(customStepIndex+1,0,{...customProgression.steps[customStepIndex]});customStepIndex++;
+  saveCustomProgression('Chord duplicated.');fillLoopOptions(true);update();
+});
+el('custom-delete').addEventListener('click',()=>{
+  if(customProgression.steps.length===1)return;customProgression.steps.splice(customStepIndex,1);customStepIndex=Math.min(customStepIndex,customProgression.steps.length-1);
+  saveCustomProgression('Chord removed.');fillLoopOptions(true);update();
+});
+for(const [id,direction]of [['custom-left',-1],['custom-right',1]] as const)el(id).addEventListener('click',()=>{
+  const destination=customStepIndex+direction;if(destination<0||destination>=customProgression.steps.length)return;
+  [customProgression.steps[customStepIndex],customProgression.steps[destination]]=[customProgression.steps[destination],customProgression.steps[customStepIndex]];customStepIndex=destination;
+  saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
+});
+el('custom-copy').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(input('custom-text').value);el('custom-status').textContent='Progression copied to the clipboard.';}
+  catch{input('custom-text').focus();input('custom-text').select();el('custom-status').textContent='The progression text is selected. Copy it with your keyboard.';}
 });
 
 document.addEventListener('keydown', event => {
@@ -1205,7 +1328,7 @@ select('palette').addEventListener('input', () => applyTheme(select('palette').v
 el('theme').addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 reflectTheme();
 
-type PracticePreset = {id:string; name:string; progression:boolean; controls:Record<string,string | boolean>};
+type PracticePreset = {id:string; name:string; progression:boolean; controls:Record<string,string | boolean>; customProgression?:any};
 let presets: PracticePreset[] = [];
 try { presets = readPresets(localStorage.getItem(PRESET_KEY)); }
 catch { el('preset-status').textContent = 'Saved presets are unavailable. Browser storage may be disabled or the saved data could not be read.'; }
@@ -1230,7 +1353,7 @@ function snapshotPreset(id: string = crypto.randomUUID()) {
       ? [[key,control instanceof HTMLInputElement && control.type === 'checkbox' ? control.checked : control.value]]
       : [];
   }));
-  return {id,name,controls,progression:settings.progression};
+  return {id,name,controls,progression:settings.progression,...(settings.template==='custom'?{customProgression:normalizeCustomProgression(customProgression)}:{})};
 }
 function persistPresets(next: typeof presets, selected: string, message: string) {
   try {
@@ -1284,10 +1407,11 @@ el('preset-load').addEventListener('click',async()=>{
     }
     restoreControl('quality',preset.controls.quality);
     restoreControl('key',preset.controls.key);
+    if(preset.customProgression){customProgression=normalizeCustomProgression(preset.customProgression);saveCustomProgression(`Loaded custom progression from “${preset.name}”.`);}
     settings.progression = preset.progression;
     fillChords(); // Refresh mode-dependent template availability before restoring it.
     restoreControl('template',preset.controls.template);
-    const restoredTemplate = PROGRESSIONS[select('template').value as keyof typeof PROGRESSIONS];
+    const restoredTemplate = progressionDefinition({...settings,template:select('template').value,customProgression});
     if (settings.progression && restoredTemplate.kind === 'modal' && 'mode' in restoredTemplate) select('quality').value = String(restoredTemplate.mode);
     for (const id of ['pedal','progression']) {
       const selected = (id === 'progression') === settings.progression;

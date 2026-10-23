@@ -215,20 +215,29 @@ export class Engine {
   setChord(step) {
     this.step = step;
     const s = this.settings;
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.bass}/${step}`;
+    const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.bass}`).join(','):'';
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.bass}/${step}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
     const harmony=harmonyAt(this.settings,step);
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
+    this.rhythmChordMidi = Number.isFinite(harmony.bassMidi)?[harmony.bassMidi,...this.chordMidi]:this.chordMidi;
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
     this.padVoicing=padVoicing(this.chordMidi,s.padDepth);
+    if(Number.isFinite(harmony.bassMidi)){
+      const foundation=this.padVoicing.find(entry=>entry.role==='foundation');
+      if(foundation)foundation.midi=harmony.bassMidi;
+      else this.padVoicing.unshift({midi:harmony.bassMidi,role:'foundation',weight:1.35});
+      this.padVoicing.sort((a,b)=>a.midi-b.midi);
+    }
     this.motionNotes=padMotionNotes(this.chordMidi);
     this.motionCell=-1;
     this.assignPadVoices();
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
     this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
+    this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
     this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
     this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
   }
@@ -300,6 +309,7 @@ export class Engine {
         this.setChord(step);
         const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmonyAt(s,this.step);
         this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
+        this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
         this.clickAge = 0;
         this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
@@ -331,7 +341,7 @@ export class Engine {
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
-      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.chordMidi,this.age,this.step,onRhythm,this.nextChordMidi);
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
