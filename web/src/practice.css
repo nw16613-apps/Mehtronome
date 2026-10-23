@@ -199,7 +199,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .full-fretboard-panel.is-collapsed .full-fretboard-toolbar { padding-bottom:2px; }
 .full-fretboard-panel.is-collapsed :is(.full-fretboard-scroll,.full-fretboard-option) { display:none; }
 .full-fretboard-scroll { overflow-x:hidden; padding:4px 0 2px; scrollbar-color:var(--accent,var(--practice-accent)) transparent; }
-.full-fretboard { display:block; width:100%; min-width:0; height:auto; }
+.full-fretboard { display:block; width:100%; max-width:none; min-width:0; height:auto; }
 .full-fretboard .caged-region { cursor:pointer; }
 .full-fretboard .caged-region rect { fill:var(--accent,var(--practice-accent)); opacity:.035; stroke:var(--line,#899b83); stroke-width:1; transition:opacity .15s,stroke-width .15s; }
 .full-fretboard .caged-region text { fill:var(--muted,var(--practice-muted,#64735f)); font-size:10px; font-weight:700; letter-spacing:.06em; pointer-events:none; }
