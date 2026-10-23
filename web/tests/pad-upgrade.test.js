@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Engine,padVoicing,padMotionNotes} from '../src/audio/engine.js';
-import {SOUNDS,harmonyAt,progressionStep} from '../src/audio/music.js';
+import {Engine,PIANO_VOICINGS,padVoicing,padMotionNotes} from '../src/audio/engine.js';
+import {SOUNDS,CHORDS,harmonyAt,progressionStep} from '../src/audio/music.js';
 import {WAVE_LAYERS} from '../src/audio/waves.js';
 
 const noop=()=>{};
@@ -79,7 +79,7 @@ test('quality-aware pad voicings use pianist registers and preserve the selected
     ['maj9sharp11',[48,52,55,59,62,66],[36,55,59,62,64,66]],
     ['min9',[50,53,57,60,64],[38,57,60,64,65]],
     ['dom13',[55,59,62,65,69,76],[43,65,69,71,76]],
-    ['dom7alt',[55,59,61,65,68,70],[43,65,71,73,80,82]],
+    ['dom7alt',[55,59,61,65,68,70,75],[43,65,71,73,75,80,82]],
   ];
   for(const [id,chord,expected] of cases){
     const voicing=padVoicing(chord,'wide',id).map(note=>note.midi);
@@ -88,6 +88,10 @@ test('quality-aware pad voicings use pianist registers and preserve the selected
     assert.ok(voicing.every(note=>pitchClasses.has(note%12)),id);
     assert.ok(voicing.slice(1).every(note=>note>=53),`${id}: colour and guide tones stay out of the muddy bass register`);
   }
+});
+
+test('every selectable chord quality has an explicit pianist voicing',()=>{
+  assert.deepEqual(Object.keys(PIANO_VOICINGS).sort(),Object.keys(CHORDS).sort());
 });
 
 test('ambient drift voice cycles through upper chord colours only',()=>{

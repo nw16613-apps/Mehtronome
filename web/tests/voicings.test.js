@@ -52,7 +52,7 @@ test('extended reductions disclose omissions and preserve altered fifths; triads
     ['maj9',['1','3','7','9'],['G']],
     ['halfDim11',['1','♭3','♭5','♭7'],['F']],
     ['augMaj9',['1','3','♯5','7'],['D']],
-    ['dom7alt',['1','3','♭5','♭7'],['D♭','D♯']],
+    ['dom7alt',['1','3','♭5','♭7'],['D♭','D♯','A♭']],
   ]){
     const harmony=harmonyAt({key:0,mode:'major',chord});
     const result=guitarVoicings(harmony);

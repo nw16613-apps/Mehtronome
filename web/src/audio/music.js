@@ -1,12 +1,12 @@
 // Shared by the display and the audio worklet: the chord you see is what sounds.
 const DIATONIC = {
-  major: { name: 'Ionian (major)', intervals: [0,2,4,5,7,9,11], degrees: ['1','2','3','4','5','6','7'], chord: 'maj7', tip: 'Listen to the natural 7 resolving to the root.' },
+  major: { name: 'Ionian (major)', intervals: [0,2,4,5,7,9,11], degrees: ['1','2','3','4','5','6','7'], chord: 'maj9', tip: 'The 9th opens the major seventh sound while the natural 7 still leads home.' },
   dorian: { name: 'Dorian', intervals: [0,2,3,5,7,9,10], degrees: ['1','2','♭3','4','5','6','♭7'], chord: 'min13', tip: 'The natural 6 gives this minor mode its open, bright color.' },
-  phrygian: { name: 'Phrygian', intervals: [0,1,3,5,7,8,10], degrees: ['1','♭2','♭3','4','5','♭6','♭7'], chord: 'min7', tip: 'Explore the tension of the ♭2 against the root.' },
-  lydian: { name: 'Lydian', intervals: [0,2,4,6,7,9,11], degrees: ['1','2','3','♯4','5','6','7'], chord: 'maj7sharp11', tip: 'Let the ♯4 float above the major harmony.' },
-  mixolydian: { name: 'Mixolydian', intervals: [0,2,4,5,7,9,10], degrees: ['1','2','3','4','5','6','♭7'], chord: 'dom7', tip: 'The ♭7 softens the pull of the major third.' },
-  minor: { name: 'Aeolian (natural minor)', intervals: [0,2,3,5,7,8,10], degrees: ['1','2','♭3','4','5','♭6','♭7'], chord: 'min7', tip: 'Listen to the darker ♭6 against the minor chord.' },
-  locrian: { name: 'Locrian', intervals: [0,1,3,5,6,8,10], degrees: ['1','♭2','♭3','4','♭5','♭6','♭7'], chord: 'halfDim', tip: 'The ♭5 and ♭2 create an intentionally unsettled sound.' },
+  phrygian: { name: 'Phrygian', intervals: [0,1,3,5,7,8,10], degrees: ['1','♭2','♭3','4','5','♭6','♭7'], chord: 'min11b9', tip: 'The widely voiced ♭9 makes the Phrygian colour explicit without crowding the tonic.' },
+  lydian: { name: 'Lydian', intervals: [0,2,4,6,7,9,11], degrees: ['1','2','3','♯4','5','6','7'], chord: 'maj9sharp11', tip: 'Let the ♯11 float above an open major ninth harmony.' },
+  mixolydian: { name: 'Mixolydian', intervals: [0,2,4,5,7,9,10], degrees: ['1','2','3','4','5','6','♭7'], chord: 'dom13', tip: 'The 13th opens the dominant sound while the ♭7 keeps the modal centre relaxed.' },
+  minor: { name: 'Aeolian (natural minor)', intervals: [0,2,3,5,7,8,10], degrees: ['1','2','♭3','4','5','♭6','♭7'], chord: 'min11b13', tip: 'The upper ♭13 supplies Aeolian’s dark colour above a spacious minor eleventh.' },
+  locrian: { name: 'Locrian', intervals: [0,1,3,5,6,8,10], degrees: ['1','♭2','♭3','4','♭5','♭6','♭7'], chord: 'halfDim11', tip: 'The half-diminished core and natural 11 keep the unstable ♭5 clear without excess density.' },
 };
 function familyModes(parent, family, entries) {
   const natural = [0,2,4,5,7,9,11];
@@ -22,21 +22,21 @@ function familyModes(parent, family, entries) {
 export const MODES = {
   ...DIATONIC,
   ...familyModes([0,2,3,5,7,9,11], 'Melodic minor', [
-    ['melodic_minor', 'Melodic minor', 'minMaj7', 'Jazz melodic minor uses the same notes ascending and descending. Listen to the natural 6 and 7.'],
-    ['dorian_b2', 'Dorian ♭2', 'min7', 'Try the ♭2 and natural 6 against a minor seventh chord.'],
-    ['lydian_augmented', 'Lydian augmented', 'augMaj7', 'Explore the raised 4 and raised 5 over augmented major harmony.'],
+    ['melodic_minor', 'Melodic minor', 'minMaj9', 'The minor-major ninth leaves room for the natural 6 and raised leading tone in your lines.'],
+    ['dorian_b2', 'Dorian ♭2', 'min13b9', 'A high ♭9 and natural 13 state both notes that separate this mode from ordinary Dorian.'],
+    ['lydian_augmented', 'Lydian augmented', 'augMaj9', 'Explore the raised 4 over an open augmented major ninth harmony.'],
     ['lydian_dominant', 'Lydian dominant', 'dom9sharp11', 'Combine the floating ♯4 with a dominant ♭7.'],
-    ['mixolydian_b6', 'Mixolydian ♭6', 'dom7', 'Listen to the ♭6 against a dominant chord.'],
+    ['mixolydian_b6', 'Mixolydian ♭6', 'dom9b13', 'The ♭13 makes the lowered 6 audible above a practical dominant ninth voicing.'],
     ['locrian_natural2', 'Locrian ♮2', 'halfDim9', 'The natural 2 opens up a half-diminished chord.'],
     ['altered', 'Altered (super Locrian)', 'dom7alt', 'Explore altered dominant tensions. The written ♭4 sounds as a major 3rd.'],
   ]),
   ...familyModes([0,2,3,5,7,8,11], 'Harmonic minor', [
-    ['harmonic_minor', 'Harmonic minor', 'minMaj7', 'Explore the pull between ♭6 and natural 7.'],
-    ['locrian_natural6', 'Locrian ♮6', 'halfDim', 'Listen to natural 6 over the half-diminished chord.'],
-    ['ionian_sharp5', 'Ionian ♯5', 'augMaj7', 'Hear the raised 5 against major 7 harmony.'],
-    ['dorian_sharp4', 'Dorian ♯4', 'min13', 'The raised 4 adds an unexpected lift to Dorian.'],
-    ['phrygian_dominant', 'Phrygian dominant', 'dom7b9', 'Explore ♭2 and ♭6 around a major 3rd.'],
-    ['lydian_sharp2', 'Lydian ♯2', 'maj7sharp11', 'Hear the raised 2 and 4 over major harmony.'],
+    ['harmonic_minor', 'Harmonic minor', 'minMaj9', 'Explore the pull between ♭6 and natural 7 around a spacious minor-major ninth.'],
+    ['locrian_natural6', 'Locrian ♮6', 'halfDim13', 'The natural 13 states the unusual natural 6 above the half-diminished core.'],
+    ['ionian_sharp5', 'Ionian ♯5', 'augMaj9', 'Hear the raised 5 against open major ninth harmony.'],
+    ['dorian_sharp4', 'Dorian ♯4', 'min13sharp11', 'The ♯11 and natural 13 state both characteristic upper colours of the mode.'],
+    ['phrygian_dominant', 'Phrygian dominant', 'dom7b9b13', 'The ♭9 and ♭13 surround the major 3rd with the mode’s defining tension.'],
+    ['lydian_sharp2', 'Lydian ♯2', 'maj7sharp9sharp11', 'Raised 9 and ♯11 make both altered modal degrees audible above major harmony.'],
     ['ultralocrian', 'Ultralocrian (super Locrian ♭♭7)', 'dim7', 'The diminished 7th is spelled ♭♭7; let its tension ring.'],
   ]),
 };
@@ -54,23 +54,31 @@ export const CHORDS = {
   min11: { name: 'Minor 11', symbol: 'm11', intervals: [0,3,7,10,14,17] },
   min6: { name: 'Minor 6', symbol: 'm6', intervals: [0,3,7,9] },
   min13: { name: 'Minor 13', symbol: 'm13', intervals: [0,3,7,10,14,21] },
+  min11b9: { name: 'Minor 11 ♭9', symbol: 'm11♭9', intervals: [0,3,7,10,13,17] },
+  min13b9: { name: 'Minor 13 ♭9', symbol: 'm13♭9', intervals: [0,3,7,10,13,21] },
+  min11b13: { name: 'Minor 11 ♭13', symbol: 'm11♭13', intervals: [0,3,7,10,14,17,20] },
   dom7: { name: 'Dominant 7', symbol: '7', intervals: [0,4,7,10] },
   dom9: { name: 'Dominant 9', symbol: '9', intervals: [0,4,7,10,14] },
   dom13: { name: 'Dominant 13', symbol: '13', intervals: [0,4,7,10,14,21] },
+  dom9b13: { name: 'Dominant 9 ♭13', symbol: '9♭13', intervals: [0,4,7,10,14,20] },
+  dom7b9b13: { name: 'Dominant 7 ♭9 ♭13', symbol: '7♭9♭13', intervals: [0,4,7,10,13,20] },
   sus2: { name: 'Suspended 2', symbol: 'sus2', intervals: [0,2,7] },
   sus4: { name: 'Suspended 4', symbol: 'sus4', intervals: [0,5,7] },
   sevenSus: { name: '7 suspended 4', symbol: '7sus4', intervals: [0,5,7,10] },
   nineSus: { name: '9 suspended 4', symbol: '9sus4', intervals: [0,5,7,10,14] },
   halfDim: { name: 'Half-diminished 7', symbol: 'm7♭5', intervals: [0,3,6,10] },
   halfDim11: { name: 'Half-diminished 11 (no 9)', symbol: 'm7♭5(add11)', intervals: [0,3,6,10,17] },
+  halfDim13: { name: 'Half-diminished 13 (no 9)', symbol: 'm7♭5(add11,13)', intervals: [0,3,6,10,17,21] },
   minMaj7: { name: 'Minor major 7', symbol: 'm(maj7)', intervals: [0,3,7,11] },
   minMaj9: { name: 'Minor major 9', symbol: 'm(maj9)', intervals: [0,3,7,11,14] },
   augmented: { name: 'Augmented', symbol: 'aug', intervals: [0,4,8] },
   augMaj7: { name: 'Augmented major 7', symbol: 'maj7♯5', intervals: [0,4,8,11] },
   augMaj9: { name: 'Augmented major 9', symbol: 'maj9♯5', intervals: [0,4,8,11,14] },
+  min13sharp11: { name: 'Minor 13 ♯11', symbol: 'm13♯11', intervals: [0,3,7,10,14,18,21] },
+  maj7sharp9sharp11: { name: 'Major 7 ♯9 ♯11', symbol: 'maj7♯9♯11', intervals: [0,4,7,11,15,18] },
   dom9sharp11: { name: 'Dominant 9 ♯11', symbol: '9♯11', intervals: [0,4,7,10,14,18] },
   dom7b9: { name: 'Dominant 7 ♭9', symbol: '7♭9', intervals: [0,4,7,10,13] },
-  dom7alt: { name: 'Altered dominant (♭5 ♭9 ♯9)', symbol: '7alt', intervals: [0,4,6,10,13,15] },
+  dom7alt: { name: 'Altered dominant (♭5 ♭9 ♯9 ♭13)', symbol: '7alt', intervals: [0,4,6,10,13,15,20] },
   halfDim9: { name: 'Half-diminished 9', symbol: 'm9♭5', intervals: [0,3,6,10,14] },
   dim7: { name: 'Diminished 7', symbol: 'dim7', intervals: [0,3,6,9] },
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
@@ -128,17 +136,17 @@ const MODAL_PLANS = {
   phrygian:{degrees:[0,1],overrides:{1:'maj9'},explanation:'Alternate the minor tonic with the major chord a semitone above it to hear Phrygian’s flat 2.'},
   lydian:{degrees:[0,1],overrides:{0:'maj9sharp11',1:'dom13'},explanation:'The tonic’s sharp 11 and the II chord’s major third reveal Lydian’s raised 4 without a V–I cadence.'},
   mixolydian:{degrees:[0,6,3,0],overrides:{0:'dom13',1:'maj9',2:'maj9',3:'dom13'},explanation:'Move through flat VII and IV, then return to the dominant tonic. The flat 7 gives this loop its Mixolydian colour.'},
-  minor:{degrees:[0,5,6,0],overrides:{0:'min11',1:'maj9',2:'dom13',3:'min11'},explanation:'Flat VI brings out Aeolian’s flat 6, then flat VII leads back to the minor tonic without a raised leading note.'},
+  minor:{degrees:[0,5,6,0],overrides:{0:'min11b13',1:'maj9',2:'dom13',3:'min11b13'},explanation:'Flat VI brings out Aeolian’s flat 6, then flat VII leads back to the minor tonic without a raised leading note.'},
   locrian:{degrees:[0,1],overrides:{0:'halfDim11',1:'maj9'},explanation:'Hold the half-diminished tonic against flat II. The tonic’s flat 5 and its neighbour’s flat 2 keep Locrian unsettled.'},
   melodic_minor:{degrees:[0,3,4,0],overrides:{0:'minMaj9',1:'dom13',2:'dom9',3:'minMaj9'},explanation:'The minor-major tonic supplies the natural 7; the major IV supplies the natural 6. All chords stay inside jazz melodic minor.'},
   dorian_b2:{degrees:[0,1],overrides:{1:'augMaj9'},explanation:'The augmented flat-II chord combines the flat 2 and natural 6, then returns to the minor tonic.'},
   lydian_augmented:{degrees:[0,1],overrides:{0:'augMaj9',1:'dom13'},explanation:'The augmented tonic exposes the sharp 5, while II brings out the raised 4. Hear both against the same modal tonic.'},
   lydian_dominant:{degrees:[0,1],overrides:{1:'dom9'},explanation:'Alternate dominant chords a whole step apart. The tonic’s flat 7 and sharp 11 distinguish this sound from ordinary Lydian.'},
-  mixolydian_b6:{degrees:[0,5],overrides:{0:'dom9',1:'augMaj9'},explanation:'The dominant tonic moves to an augmented flat-VI chord. Its root makes the lowered 6 especially clear.'},
+  mixolydian_b6:{degrees:[0,5],overrides:{0:'dom9b13',1:'augMaj9'},explanation:'The dominant tonic moves to an augmented flat-VI chord. Its root makes the lowered 6 especially clear.'},
   locrian_natural2:{degrees:[0,1],explanation:'Two half-diminished chords a whole step apart bring the natural 2 into focus while preserving the tonic’s flat 5.'},
   altered:{degrees:[0,4],overrides:{1:'dom9sharp11'},explanation:'The altered tonic alternates with its tritone-related dominant. Both chords share the altered pitch collection; let the tensions remain unresolved.'},
   harmonic_minor:{degrees:[0,3,4,0],overrides:{0:'minMaj9',1:'min9',2:'dom7b9',3:'minMaj9'},explanation:'Minor iv and V7 flat 9 frame the minor-major tonic. Listen for the contrast between flat 6 and the raised leading note.'},
-  locrian_natural6:{degrees:[0,1],overrides:{0:'halfDim11',1:'augMaj9'},explanation:'The half-diminished tonic moves to augmented flat II, whose raised fifth supplies this mode’s unusual natural 6.'},
+  locrian_natural6:{degrees:[0,1],overrides:{0:'halfDim13',1:'augMaj9'},explanation:'The half-diminished tonic moves to augmented flat II, whose raised fifth supplies this mode’s unusual natural 6.'},
   ionian_sharp5:{degrees:[0,3],overrides:{0:'augMaj9'},explanation:'An augmented major-seventh tonic alternates with IV. Keep returning to the tonic’s raised 5 to distinguish this from ordinary major.'},
   dorian_sharp4:{degrees:[0,3],explanation:'The sharp-IV diminished chord brings the raised 4 into focus, while the tonic minor 13 keeps Dorian’s natural 6 audible.'},
   phrygian_dominant:{degrees:[0,1],explanation:'The dominant tonic and flat-II major seventh emphasise the flat 2 and flat 6 against the tonic’s major third.'},
@@ -153,8 +161,8 @@ function modalSeventh(mode, degree) {
 function modalRoman(mode,degree,chord) {
   const roman=['I','II','III','IV','V','VI','VII'][degree];
   const accidental=MODES[mode].degrees[degree].replace(/[1-7]/g,'');
-  const minor=['minor','min7','min9','min11','min13','min6','minMaj7','minMaj9','halfDim','halfDim9','halfDim11','dim7'].includes(chord);
-  const suffix={minor:'',min7:'7',min9:'9',min11:'11',min13:'13',minMaj7:'(maj7)',minMaj9:'(maj9)',halfDim:'ø7',halfDim9:'ø9',halfDim11:'ø11',dim7:'°7'}[chord] || CHORDS[chord].symbol;
+  const minor=['minor','min7','min9','min11','min13','min11b9','min13b9','min11b13','min13sharp11','min6','minMaj7','minMaj9','halfDim','halfDim9','halfDim11','halfDim13','dim7'].includes(chord);
+  const suffix={minor:'',min7:'7',min9:'9',min11:'11',min13:'13',min11b9:'11♭9',min13b9:'13♭9',min11b13:'11♭13',min13sharp11:'13♯11',minMaj7:'(maj7)',minMaj9:'(maj9)',halfDim:'ø7',halfDim9:'ø9',halfDim11:'ø11',halfDim13:'ø13',dim7:'°7'}[chord] || CHORDS[chord].symbol;
   return accidental+(minor?roman.toLowerCase():roman)+suffix;
 }
 export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS).map(([mode,plan])=>{

@@ -22,6 +22,14 @@ test('suggested chords and all selectable chord tones fit each mode in every key
   }
 });
 
+test('pedal defaults use the reviewed modal-colour chord for every mode',()=>{
+  assert.deepEqual(Object.fromEntries(Object.entries(MODES).map(([id,mode])=>[id,mode.chord])),{
+    major:'maj9',dorian:'min13',phrygian:'min11b9',lydian:'maj9sharp11',mixolydian:'dom13',minor:'min11b13',locrian:'halfDim11',
+    melodic_minor:'minMaj9',dorian_b2:'min13b9',lydian_augmented:'augMaj9',lydian_dominant:'dom9sharp11',mixolydian_b6:'dom9b13',locrian_natural2:'halfDim9',altered:'dom7alt',
+    harmonic_minor:'minMaj9',locrian_natural6:'halfDim13',ionian_sharp5:'augMaj9',dorian_sharp4:'min13sharp11',phrygian_dominant:'dom7b9b13',lydian_sharp2:'maj7sharp9sharp11',ultralocrian:'dim7',
+  });
+});
+
 test('characteristic modal notes are spelled by scale degree', () => {
   assert.deepEqual(modeNotes(0, 'lydian'), ['C','D','E','F♯','G','A','B']);
   assert.deepEqual(modeNotes(0, 'dorian'), ['C','D','E♭','F','G','A','B♭']);
@@ -161,7 +169,7 @@ test('cycle of fourths visits all twelve roots, retains every chord type and use
 
 test('arpeggio intervals retain extensions and altered chord spelling', () => {
   const settings = { key: 0, mode: 'major', progression: true, template: 'major251' };
-  assert.deepEqual(harmonyAt(settings, 1).intervals, ['1','3','♭5','♭7','♭9','♯9']);
+  assert.deepEqual(harmonyAt(settings, 1).intervals, ['1','3','♭5','♭7','♭9','♯9','♭13']);
   assert.equal(harmonyAt(settings, 1).mode, 'altered');
   assert.deepEqual(harmonyAt(settings, 2).intervals, ['1','3','5','7','9','♯11']);
   assert.equal(harmonyAt(settings, 2).mode, 'lydian');

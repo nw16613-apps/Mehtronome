@@ -47,15 +47,18 @@ export function chordNotes(key, isMinor, degree = 0) {
     48 + key + scale[i % 7] + 12 * Math.floor(i / 7));
 }
 
-const PIANO_VOICINGS={
+export const PIANO_VOICINGS={
   major:[0,7,16],maj7:[0,7,11,16],maj9:[0,7,11,14,16],six:[0,7,9,16],sixNine:[0,7,9,14,16],
   maj7sharp11:[0,7,11,16,18],maj9sharp11:[0,7,11,14,16,18],minor:[0,7,15],min7:[0,7,10,15],
   min9:[0,7,10,14,15],min11:[0,7,10,14,15,17],min6:[0,7,9,15],min13:[0,7,10,14,15,21],
+  min11b9:[0,10,15,17,25],min13b9:[0,10,15,21,25],min11b13:[0,10,14,15,17,20],min13sharp11:[0,10,14,15,18,21],
   dom7:[0,10,16,19],dom9:[0,10,14,16,19],dom13:[0,10,14,16,21],sus2:[0,7,14],sus4:[0,7,17],
   sevenSus:[0,7,10,17],nineSus:[0,7,10,14,17],halfDim:[0,6,10,15],halfDim11:[0,6,10,15,17],
   halfDim9:[0,6,10,14,15],minMaj7:[0,7,11,15],minMaj9:[0,7,11,14,15],augmented:[0,8,16],
+  halfDim13:[0,6,10,15,17,21],
   augMaj7:[0,8,11,16],augMaj9:[0,8,11,14,16],dom9sharp11:[0,10,14,16,18],dom7b9:[0,10,16,19,25],
-  dom7alt:[0,10,16,18,25,27],dim7:[0,6,9,15],fifth:[0,7,12],
+  dom9b13:[0,10,14,16,20],dom7b9b13:[0,10,16,20,25],maj7sharp9sharp11:[0,11,16,18,27],
+  dom7alt:[0,10,16,18,20,25,27],dim7:[0,6,9,15],fifth:[0,7,12],
 };
 
 export function padVoicing(chordMidi, depth='wide', chordId='') {

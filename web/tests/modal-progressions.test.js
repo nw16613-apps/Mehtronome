@@ -46,13 +46,13 @@ test('modal vamps expose their defining colour with conventional chord qualities
     return harmony.name+harmony.suffix;
   });
   assert.deepEqual(names('modal_dorian',9),['Am13','D13']);
-  assert.deepEqual(names('modal_phrygian',4),['Em7','Fmaj9']);
+  assert.deepEqual(names('modal_phrygian',4),['Em11♭9','Fmaj9']);
   assert.deepEqual(names('modal_lydian'),['Cmaj9♯11','D13']);
-  assert.deepEqual(names('modal_minor'),['Cm11','A♭maj9','B♭13','Cm11']);
+  assert.deepEqual(names('modal_minor'),['Cm11♭13','A♭maj9','B♭13','Cm11♭13']);
   assert.deepEqual(names('modal_altered'),['C7alt','G♭9♯11']);
   assert.deepEqual(names('modal_harmonic_minor'),['Cm(maj9)','Fm9','G7♭9','Cm(maj9)']);
-  assert.deepEqual(names('modal_dorian_sharp4'),['Cm13','F♯dim7']);
-  assert.deepEqual(names('modal_lydian_sharp2',11),['Bmaj7♯11','C♯♯dim7']);
+  assert.deepEqual(names('modal_dorian_sharp4'),['Cm13♯11','F♯dim7']);
+  assert.deepEqual(names('modal_lydian_sharp2',11),['Bmaj7♯9♯11','C♯♯dim7']);
   assert.deepEqual(names('modal_ultralocrian'),['Cdim7','D♭m(maj7)']);
   assert.deepEqual(PROGRESSIONS.modal_locrian_natural2.roman,['iø9','iiø7']);
   assert.deepEqual(harmonyAt({key:0,template:'modal_altered',progression:true},1).tones,['G♭','B♭','D♭','F♭','A♭','C']);
