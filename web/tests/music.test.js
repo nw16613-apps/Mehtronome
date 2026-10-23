@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODES, CHORDS, SOUNDS, compatibleChords, harmonyAt, modeNotes, pedalNotes, pedalLabels } from '../src/audio/music.js';
+import { MODES, CHORDS, SOUNDS, PROGRESSIONS, compatibleChords, harmonyAt, modeNotes, pedalNotes, pedalLabels } from '../src/audio/music.js';
 import { Engine } from '../src/audio/engine.js';
 
 test('suggested chords and all selectable chord tones fit each mode in every key', () => {
@@ -166,5 +166,15 @@ test('arpeggio intervals retain extensions and altered chord spelling', () => {
   assert.deepEqual(harmonyAt(settings, 2).intervals, ['1','3','5','7','9','♯11']);
   assert.equal(harmonyAt(settings, 2).mode, 'lydian');
   assert.deepEqual(harmonyAt({...settings, progression:false, chord:'dim7'}).intervals, ['1','♭3','♭5','♭♭7']);
-  assert.deepEqual(harmonyAt({...settings, template:'diatonic'}, 1).intervals, ['1','♭3','5']);
+  assert.deepEqual(harmonyAt({...settings, template:'diatonic'}, 1).intervals, ['1','♭3','5','♭7']);
+});
+
+test('general progression templates use suitable harmony for their musical purpose',()=>{
+  const custom=PROGRESSIONS.custom;
+  assert.deepEqual(custom.roman,['i13','IV13']);
+  assert.deepEqual(custom.steps.map(step=>step.chord),['min13','dom13']);
+  const majorNames=[0,1,2,3].map(step=>{const h=harmonyAt({key:0,mode:'major',progression:true,template:'diatonic'},step);return h.name+h.suffix;});
+  const minorNames=[0,1,2,3].map(step=>{const h=harmonyAt({key:0,mode:'minor',progression:true,template:'diatonic'},step);return h.name+h.suffix;});
+  assert.deepEqual(majorNames,['Cmaj7','Am7','Fmaj7','G7']);
+  assert.deepEqual(minorNames,['Cm7','A♭maj7','Fm7','Gm7']);
 });

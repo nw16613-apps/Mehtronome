@@ -123,23 +123,23 @@ export function pedalLabels(settings) {
 // Tonic chords retain the mode's suggested colour; supporting seventh chords
 // are built from that same scale instead of transposing the mode to each root.
 const MODAL_PLANS = {
-  major:{degrees:[0,3,4,0],explanation:'Return to the major tonic through IV and V. Listen for the natural 7 resolving to the root.'},
-  dorian:{degrees:[0,3],explanation:'The minor tonic and major IV share Dorian’s natural 6. Keep the minor tonic as your point of rest.'},
-  phrygian:{degrees:[0,1],explanation:'Alternate the minor tonic with the major chord a semitone above it to hear Phrygian’s flat 2.'},
-  lydian:{degrees:[0,1],explanation:'The tonic’s sharp 11 and the II chord’s major third reveal Lydian’s raised 4 without a V–I cadence.'},
-  mixolydian:{degrees:[0,6,3,0],explanation:'Move through flat VII and IV, then return to the dominant tonic. The flat 7 gives this loop its Mixolydian colour.'},
-  minor:{degrees:[0,5,6,0],explanation:'Flat VI brings out Aeolian’s flat 6, then flat VII leads back to the minor tonic without a raised leading note.'},
-  locrian:{degrees:[0,1],explanation:'Hold the half-diminished tonic against flat II. The tonic’s flat 5 and its neighbour’s flat 2 keep Locrian unsettled.'},
-  melodic_minor:{degrees:[0,3,4,0],explanation:'The minor-major tonic supplies the natural 7; the major IV supplies the natural 6. All chords stay inside jazz melodic minor.'},
-  dorian_b2:{degrees:[0,1],explanation:'The augmented flat-II chord combines the flat 2 and natural 6, then returns to the minor tonic.'},
-  lydian_augmented:{degrees:[0,1],explanation:'The augmented tonic exposes the sharp 5, while II brings out the raised 4. Hear both against the same modal tonic.'},
-  lydian_dominant:{degrees:[0,1],explanation:'Alternate dominant chords a whole step apart. The tonic’s flat 7 and sharp 11 distinguish this sound from ordinary Lydian.'},
-  mixolydian_b6:{degrees:[0,5],explanation:'The dominant tonic moves to an augmented flat-VI chord. Its root makes the lowered 6 especially clear.'},
+  major:{degrees:[0,3,4,0],overrides:{0:'maj9',1:'maj9',2:'dom13',3:'maj9'},explanation:'Return to the major tonic through IV and V. Listen for the natural 7 resolving to the root.'},
+  dorian:{degrees:[0,3],overrides:{1:'dom13'},explanation:'The minor tonic and major IV share Dorian’s natural 6. Keep the minor tonic as your point of rest.'},
+  phrygian:{degrees:[0,1],overrides:{1:'maj9'},explanation:'Alternate the minor tonic with the major chord a semitone above it to hear Phrygian’s flat 2.'},
+  lydian:{degrees:[0,1],overrides:{0:'maj9sharp11',1:'dom13'},explanation:'The tonic’s sharp 11 and the II chord’s major third reveal Lydian’s raised 4 without a V–I cadence.'},
+  mixolydian:{degrees:[0,6,3,0],overrides:{0:'dom13',1:'maj9',2:'maj9',3:'dom13'},explanation:'Move through flat VII and IV, then return to the dominant tonic. The flat 7 gives this loop its Mixolydian colour.'},
+  minor:{degrees:[0,5,6,0],overrides:{0:'min11',1:'maj9',2:'dom13',3:'min11'},explanation:'Flat VI brings out Aeolian’s flat 6, then flat VII leads back to the minor tonic without a raised leading note.'},
+  locrian:{degrees:[0,1],overrides:{0:'halfDim11',1:'maj9'},explanation:'Hold the half-diminished tonic against flat II. The tonic’s flat 5 and its neighbour’s flat 2 keep Locrian unsettled.'},
+  melodic_minor:{degrees:[0,3,4,0],overrides:{0:'minMaj9',1:'dom13',2:'dom9',3:'minMaj9'},explanation:'The minor-major tonic supplies the natural 7; the major IV supplies the natural 6. All chords stay inside jazz melodic minor.'},
+  dorian_b2:{degrees:[0,1],overrides:{1:'augMaj9'},explanation:'The augmented flat-II chord combines the flat 2 and natural 6, then returns to the minor tonic.'},
+  lydian_augmented:{degrees:[0,1],overrides:{0:'augMaj9',1:'dom13'},explanation:'The augmented tonic exposes the sharp 5, while II brings out the raised 4. Hear both against the same modal tonic.'},
+  lydian_dominant:{degrees:[0,1],overrides:{1:'dom9'},explanation:'Alternate dominant chords a whole step apart. The tonic’s flat 7 and sharp 11 distinguish this sound from ordinary Lydian.'},
+  mixolydian_b6:{degrees:[0,5],overrides:{0:'dom9',1:'augMaj9'},explanation:'The dominant tonic moves to an augmented flat-VI chord. Its root makes the lowered 6 especially clear.'},
   locrian_natural2:{degrees:[0,1],explanation:'Two half-diminished chords a whole step apart bring the natural 2 into focus while preserving the tonic’s flat 5.'},
-  altered:{degrees:[0,4],explanation:'The altered tonic alternates with its tritone-related dominant. Both chords share the altered pitch collection; let the tensions remain unresolved.'},
-  harmonic_minor:{degrees:[0,3,4,0],overrides:{2:'dom7b9'},explanation:'Minor iv and V7 flat 9 frame the minor-major tonic. Listen for the contrast between flat 6 and the raised leading note.'},
-  locrian_natural6:{degrees:[0,1],explanation:'The half-diminished tonic moves to augmented flat II, whose raised fifth supplies this mode’s unusual natural 6.'},
-  ionian_sharp5:{degrees:[0,3],explanation:'An augmented major-seventh tonic alternates with IV. Keep returning to the tonic’s raised 5 to distinguish this from ordinary major.'},
+  altered:{degrees:[0,4],overrides:{1:'dom9sharp11'},explanation:'The altered tonic alternates with its tritone-related dominant. Both chords share the altered pitch collection; let the tensions remain unresolved.'},
+  harmonic_minor:{degrees:[0,3,4,0],overrides:{0:'minMaj9',1:'min9',2:'dom7b9',3:'minMaj9'},explanation:'Minor iv and V7 flat 9 frame the minor-major tonic. Listen for the contrast between flat 6 and the raised leading note.'},
+  locrian_natural6:{degrees:[0,1],overrides:{0:'halfDim11',1:'augMaj9'},explanation:'The half-diminished tonic moves to augmented flat II, whose raised fifth supplies this mode’s unusual natural 6.'},
+  ionian_sharp5:{degrees:[0,3],overrides:{0:'augMaj9'},explanation:'An augmented major-seventh tonic alternates with IV. Keep returning to the tonic’s raised 5 to distinguish this from ordinary major.'},
   dorian_sharp4:{degrees:[0,3],explanation:'The sharp-IV diminished chord brings the raised 4 into focus, while the tonic minor 13 keeps Dorian’s natural 6 audible.'},
   phrygian_dominant:{degrees:[0,1],explanation:'The dominant tonic and flat-II major seventh emphasise the flat 2 and flat 6 against the tonic’s major third.'},
   lydian_sharp2:{degrees:[0,1],explanation:'The sharp-II diminished chord contains both the raised 2 and raised 4. Resolve your phrases back to the major tonic.'},
@@ -153,8 +153,8 @@ function modalSeventh(mode, degree) {
 function modalRoman(mode,degree,chord) {
   const roman=['I','II','III','IV','V','VI','VII'][degree];
   const accidental=MODES[mode].degrees[degree].replace(/[1-7]/g,'');
-  const minor=['min7','min13','minMaj7','halfDim','halfDim9','dim7'].includes(chord);
-  const suffix={min7:'7',min13:'13',minMaj7:'(maj7)',halfDim:'ø7',halfDim9:'ø9',dim7:'°7'}[chord] || CHORDS[chord].symbol;
+  const minor=['minor','min7','min9','min11','min13','min6','minMaj7','minMaj9','halfDim','halfDim9','halfDim11','dim7'].includes(chord);
+  const suffix={minor:'',min7:'7',min9:'9',min11:'11',min13:'13',minMaj7:'(maj7)',minMaj9:'(maj9)',halfDim:'ø7',halfDim9:'ø9',halfDim11:'ø11',dim7:'°7'}[chord] || CHORDS[chord].symbol;
   return accidental+(minor?roman.toLowerCase():roman)+suffix;
 }
 export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS).map(([mode,plan])=>{
@@ -169,9 +169,9 @@ export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS)
 }));
 
 export const PROGRESSIONS = {
-  custom: { name: 'Custom progression', bars: 1, kind: 'custom', roman: ['i7','iv7'], steps: [
-    { root: 0, letter: 0, chord: 'min7', mode: 'dorian', bars: 1, bass: null },
-    { root: 5, letter: 3, chord: 'min7', mode: 'dorian', bars: 1, bass: null },
+  custom: { name: 'Custom progression', bars: 1, kind: 'custom', roman: ['i13','IV13'], steps: [
+    { root: 0, letter: 0, chord: 'min13', mode: 'dorian', bars: 1, bass: null },
+    { root: 5, letter: 3, chord: 'dom13', mode: 'mixolydian', bars: 1, bass: null },
   ] },
   parallel1: { name: 'I–♭III–♭V–VI · 1 bar per chord', bars: 1, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
   parallel2: { name: 'I–♭III–♭V–VI · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,3,6,9], letters: [0,2,4,5], roman: ['I','♭III','♭V','VI'] },
@@ -209,7 +209,7 @@ export const PROGRESSIONS = {
     { root: 0, letter: 0, chord: 'sixNine', mode: 'major', bars: 1 },
     { root: 7, letter: 4, chord: 'dom7alt', mode: 'altered', bars: 1 },
   ] },
-  diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['I','vi','IV','V'] },
+  diatonic: { name: 'Diatonic seventh I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['Imaj7','vi7','IVmaj7','V7'] },
   ...MODAL_PROGRESSIONS,
 };
 export function progressionDefinition(settings) {
@@ -271,13 +271,14 @@ export function harmonyAt(settings, step = 0) {
   if (settings.progression && template === 'diatonic') {
     const scale = MODES[mode].intervals;
     const degree = [0,5,3,4][step];
-    const degrees = [degree, degree + 2, degree + 4];
+    const degrees = [degree, degree + 2, degree + 4, degree + 6];
     const midi = degrees.map(i => 48 + settings.key + scale[i % 7] + 12 * Math.floor(i / 7));
     const scaleNames = modeNotes(settings.key, mode);
-    const third = midi[1] - midi[0];
-    return { name: scaleNames[degree], suffix: third === 3 ? 'm' : 'maj', tones: degrees.map(i => scaleNames[i % 7]), intervals: ['1', third === 3 ? '♭3' : '3', '5'], midi,
+    const chordId=modalSeventh(mode,degree),chord=CHORDS[chordId];
+    const intervalNames={0:'1',3:'♭3',4:'3',6:'♭5',7:'5',8:'♯5',9:'6',10:'♭7',11:'7'};
+    return { name: scaleNames[degree], suffix: chord.symbol, tones: degrees.map(i => scaleNames[i % 7]), intervals: chord.intervals.map(i=>chordId==='dim7'&&i===9?'♭♭7':intervalNames[i]), midi,
       scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
-      mode, chordId:third === 3 ? 'minor' : 'major', roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
+      mode, chordId, roman: mode === 'minor' ? ['i7','VImaj7','iv7','v7'][step] : PROGRESSIONS.diatonic.roman[step] };
   }
   const offset = change ? change.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;

@@ -17,7 +17,8 @@ test('every mode has a fixed modal template whose chords and spellings share its
     assert.equal(definition.kind,'modal');
     assert.equal(definition.steps.length,definition.roman.length);
     assert.equal(definition.steps[0].root,0);
-    assert.equal(definition.steps[0].chord,MODES[definition.mode].chord);
+    const tonic=CHORDS[definition.steps[0].chord],suggested=CHORDS[MODES[definition.mode].chord];
+    assert.ok(suggested.intervals.every(interval=>tonic.intervals.some(note=>note%12===interval%12)),`${template} retains its suggested tonic colour`);
     assert.ok(definition.steps.some(step=>step.root!==0),`${template} must move away from the tonic`);
     for(let key=0;key<12;key++){
       const settings={key,progression:true,template,mode:'altered',chord:'fifth'};
@@ -44,17 +45,17 @@ test('modal vamps expose their defining colour with conventional chord qualities
     const harmony=harmonyAt({key,template,progression:true},step);
     return harmony.name+harmony.suffix;
   });
-  assert.deepEqual(names('modal_dorian',9),['Am13','D7']);
-  assert.deepEqual(names('modal_phrygian',4),['Em7','Fmaj7']);
-  assert.deepEqual(names('modal_lydian'),['Cmaj7♯11','D7']);
-  assert.deepEqual(names('modal_minor'),['Cm7','A♭maj7','B♭7','Cm7']);
-  assert.deepEqual(names('modal_altered'),['C7alt','G♭7']);
-  assert.deepEqual(names('modal_harmonic_minor'),['Cm(maj7)','Fm7','G7♭9','Cm(maj7)']);
+  assert.deepEqual(names('modal_dorian',9),['Am13','D13']);
+  assert.deepEqual(names('modal_phrygian',4),['Em7','Fmaj9']);
+  assert.deepEqual(names('modal_lydian'),['Cmaj9♯11','D13']);
+  assert.deepEqual(names('modal_minor'),['Cm11','A♭maj9','B♭13','Cm11']);
+  assert.deepEqual(names('modal_altered'),['C7alt','G♭9♯11']);
+  assert.deepEqual(names('modal_harmonic_minor'),['Cm(maj9)','Fm9','G7♭9','Cm(maj9)']);
   assert.deepEqual(names('modal_dorian_sharp4'),['Cm13','F♯dim7']);
   assert.deepEqual(names('modal_lydian_sharp2',11),['Bmaj7♯11','C♯♯dim7']);
   assert.deepEqual(names('modal_ultralocrian'),['Cdim7','D♭m(maj7)']);
   assert.deepEqual(PROGRESSIONS.modal_locrian_natural2.roman,['iø9','iiø7']);
-  assert.deepEqual(harmonyAt({key:0,template:'modal_altered',progression:true},1).tones,['G♭','B♭','D♭','F♭']);
+  assert.deepEqual(harmonyAt({key:0,template:'modal_altered',progression:true},1).tones,['G♭','B♭','D♭','F♭','A♭','C']);
 });
 
 test('modal chord changes retain their parent-major CAGED positions and move only the highlighted chord root',()=>{
