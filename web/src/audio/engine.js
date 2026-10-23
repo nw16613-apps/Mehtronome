@@ -45,6 +45,19 @@ export function chordNotes(key, isMinor, degree = 0) {
     48 + key + scale[i % 7] + 12 * Math.floor(i / 7));
 }
 
+export function padVoicing(chordMidi, depth='wide') {
+  if(!chordMidi.length)return [];
+  const root=chordMidi[0],relative=note=>((note-root)%12+12)%12;
+  if(depth==='intimate')return chordMidi.map((midi,index)=>({midi,role:index?'body':'root',weight:index?1:1.15}));
+  const fifth=chordMidi.find(note=>relative(note)===7);
+  const inner=chordMidi.filter(note=>note!==root&&note!==fifth);
+  const entries=[{midi:root-12,role:'foundation',weight:depth==='epic'?1.7:1.4}];
+  if(fifth!==undefined)entries.push({midi:depth==='epic'?fifth-12:fifth,role:'foundation',weight:depth==='epic'?.9:.7});
+  for(const note of inner)entries.push({midi:note,role:relative(note)>11?'colour':'body',weight:relative(note)>11?.72:1});
+  if(depth==='epic')entries.push({midi:root+24,role:'air',weight:.55});
+  return entries.sort((a,b)=>a.midi-b.midi);
+}
+
 export class Engine {
   constructor(rate = 48000) {
     this.rate = rate;
@@ -177,6 +190,7 @@ export class Engine {
     if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 4 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
       this.chordMidi = [...notes];
       this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
+      this.padVoicing=notes.map((midi,index)=>({midi,role:index?'body':'root',weight:1}));
       this.assignPadVoices();
       if (acoustic) this.guitar = new GuitarStrum(this.rate, notes);
     }
@@ -185,13 +199,14 @@ export class Engine {
   setChord(step) {
     this.step = step;
     const s = this.settings;
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${step}`;
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.bass}/${step}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
     const harmony=harmonyAt(this.settings,step);
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
+    this.padVoicing=padVoicing(this.chordMidi,s.padDepth);
     this.assignPadVoices();
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
@@ -202,8 +217,11 @@ export class Engine {
 
   assignPadVoices() {
     for (const voice of this.voices) voice.targetLevel = 0;
-    for (let index=0;index<this.frequencies.length;index++) {
-      const frequency=this.frequencies[index];
+    const entries=this.padVoicing||this.frequencies.map((frequency,index)=>({midi:69+12*Math.log2(frequency/440),role:index?'body':'root',weight:1}));
+    const adjusted=entries.map(entry=>({...entry,weight:entry.weight*(this.settings.bass&&entry.role==='foundation'?.28:1)}));
+    const total=adjusted.reduce((sum,entry)=>sum+entry.weight,0)||1;
+    for (let index=0;index<adjusted.length;index++) {
+      const entry=adjusted[index],frequency=440*2**((entry.midi-69)/12);
       let voice=this.voices.find(candidate=>candidate.frequency===frequency && candidate.targetLevel===0);
       if (!voice) {
         voice=this.voices.find(candidate=>candidate.level<.000001 && candidate.targetLevel===0);
@@ -217,7 +235,8 @@ export class Engine {
         voice.filter=0;voice.sideFilter=0;
       }
       voice.index=index;
-      voice.targetLevel=1/this.frequencies.length;
+      voice.role=entry.role;
+      voice.targetLevel=entry.weight/total;
       voice.band=bandFor(frequency,this.rate);
     }
   }
@@ -240,9 +259,9 @@ export class Engine {
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
-    const movement={still:.28,evolving:1,expansive:1.5}[s.padMovement]||1;
-    const depth={intimate:.55,wide:1,epic:1.35}[s.padDepth]||1;
-    const brightness={dark:.62,balanced:1,luminous:1.35}[s.padBrightness]||1;
+    const movement={still:.08,evolving:1,expansive:2}[s.padMovement]||1;
+    const depth={intimate:.4,wide:1,epic:1.8}[s.padDepth]||1;
+    const brightness={dark:.38,balanced:1,luminous:1.75}[s.padBrightness]||1;
     const echoTarget = Math.min(.2,(sound.echo || 0)*depth);
     const attack = 1-Math.exp(-1/(this.rate*sound.attack));
     const release = 1-Math.exp(-1/(this.rate*sound.release));
@@ -366,7 +385,7 @@ export class Engine {
           layer=previousLayer+(layer-previousLayer)*this.soundBlend;
         }
         const halo=voice.frequency*2<this.rate*.45?readWave(SINE,voice.haloPhase)*voice.halo:0;
-        const foundation=voice.index===0&&sound.foundation?readWave(SINE,voice.subPhase)*sound.foundation*depth:0;
+        const foundation=voice.role==='foundation'&&sound.foundation?readWave(SINE,voice.subPhase)*sound.foundation*depth*(s.bass?.25:1):0;
         const wave=(base*(1-voice.mix)+layer*voice.mix)*(1-voice.halo)+halo+foundation;
         voice.filter+=(wave-voice.filter)*voice.coefficient;
         // The difference between two pitched layers provides a restrained side

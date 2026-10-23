@@ -15,7 +15,7 @@ test('rendered presets have contrasting spectra: round pad, rich strings and gla
   const spectra={};
   for(const sound of ['bloom','strings','atmosphere']){
     const engine=new Engine(16000);
-    engine.configure({sound,key:9,chord:'major',countIn:false,click:0,harmony:1});engine.reset();
+    engine.configure({sound,key:9,chord:'major',padDepth:'intimate',countIn:false,click:0,harmony:1});engine.reset();
     const samples=new Float32Array(48000);engine.render(samples);
     const steady=samples.subarray(32000);
     const fundamental=magnitude(steady,220,16000);

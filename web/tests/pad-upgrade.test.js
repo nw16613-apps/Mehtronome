@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Engine} from '../src/audio/engine.js';
+import {Engine,padVoicing} from '../src/audio/engine.js';
 import {SOUNDS,harmonyAt,progressionStep} from '../src/audio/music.js';
 import {WAVE_LAYERS} from '../src/audio/waves.js';
 
@@ -62,6 +62,26 @@ test('cinematic presets and pad shaping controls create distinct scale, motion a
   assert.ok(character({padMovement:'expansive'}).brightness>character({padMovement:'still'}).brightness*1.08);
 });
 
+test('depth choices reshape harmony from compact to bass-weighted open voicings',()=>{
+  const chord=[48,52,55,59,62,69];
+  assert.deepEqual(padVoicing(chord,'intimate').map(note=>note.midi),chord);
+  assert.deepEqual(padVoicing(chord,'wide').map(note=>note.midi),[36,52,55,59,62,69]);
+  assert.deepEqual(padVoicing(chord,'epic').map(note=>note.midi),[36,43,52,59,62,69,72]);
+  for(const depth of ['intimate','wide','epic']){
+    const voicing=padVoicing(chord,depth);
+    assert.ok(voicing.every(note=>chord.some(source=>(source-note.midi)%12===0)));
+    assert.ok(new Set(voicing.map(note=>note.midi)).size===voicing.length);
+  }
+});
+
+test('enabling bass reduces the pad foundation without removing upper harmony',()=>{
+  const without=setup({sound:'horizon',padDepth:'epic',bass:false});
+  const withBass=setup({sound:'horizon',padDepth:'epic',bass:true});
+  const levels=engine=>({low:engine.voices.filter(voice=>voice.role==='foundation').reduce((sum,voice)=>sum+voice.targetLevel,0),upper:engine.voices.filter(voice=>!['foundation',undefined].includes(voice.role)).reduce((sum,voice)=>sum+voice.targetLevel,0)});
+  assert.ok(levels(withBass).low<levels(without).low*.6);
+  assert.ok(levels(withBass).upper>levels(without).upper);
+});
+
 test('paired harmonic layers are bounded, seamless and pitch-band limited',()=>{
   for(const bands of Object.values(WAVE_LAYERS))for(const values of bands){
     assert.ok(values.every(value=>Number.isFinite(value)&&Math.abs(value)<=1));
@@ -78,9 +98,9 @@ test('chord changes preserve common notes and crossfade other voices at exact pi
     assert.ok(engine.voices.includes(note.voice));assert.equal(note.voice.phase,note.phase);
     assert.equal(note.voice.frequency,note.frequency);assert.ok(note.voice.targetLevel>0);
   }
-  const old=engine.frequencies.slice();
+  const old=engine.padVoicing.map(note=>440*2**((note.midi-69)/12));
   engine.configure({key:6});
-  const allowed=new Set([...old,...engine.frequencies]);
+  const allowed=new Set([...old,...engine.padVoicing.map(note=>440*2**((note.midi-69)/12))]);
   const changed=render(engine,512);
   assert.ok(Math.abs(changed.left[0]-before.left.at(-1))<.08,'chord onset stays smooth');
   for(const voice of engine.voices)if(voice.level>.000001)assert.ok(allowed.has(voice.frequency),'no pitch slide between chords');
