@@ -2,13 +2,20 @@ import { BASS_WAVE, readWave } from './waves.js';
 import { BASS_SAMPLE_ZONES } from './sample-map.js';
 
 // Articulation is chosen once per note. The recordings retain their attack and
-// body; these gentle tone/gate differences make the five styles feel played.
+// body; these gentle tone/gate differences give each rhythmic style its own touch.
 const ARTICULATIONS = {
   roots:  {attack:.007, release:.14, cutoff:1700, dry:.38, decay:1.8},
   fifths: {attack:.004, release:.07, cutoff:3000, dry:.58, decay:1.15},
   walk:   {attack:.005, release:.085,cutoff:2200, dry:.46, decay:1.3},
   bossa:  {attack:.004, release:.055,cutoff:1900, dry:.42, decay:1.05},
   funk:   {attack:.002, release:.045,cutoff:4500, dry:.72, decay:.9},
+  fusion: {attack:.002, release:.05, cutoff:3900, dry:.68, decay:.92},
+  neoSoul:{attack:.006, release:.09, cutoff:2100, dry:.43, decay:1.18},
+  modal:  {attack:.004, release:.075,cutoff:2600, dry:.5,  decay:1.08},
+  motown: {attack:.003, release:.065,cutoff:2400, dry:.54, decay:1.02},
+  tumbao: {attack:.003, release:.055,cutoff:2300, dry:.5,  decay:.98},
+  jazzOstinato:{attack:.003,release:.065,cutoff:2850,dry:.56,decay:1.02},
+  ballad: {attack:.008, release:.13, cutoff:1600, dry:.34, decay:1.55},
 };
 const SILENCE = .00001;
 

@@ -85,9 +85,9 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
   a.running=false;render(a,16000);assert.ok(render(a,8000).dry.every(x=>Math.abs(x)<1e-8));
 });
 
-test('five styles produce distinct event patterns and bass articulations',()=>{
+test('drum and bass styles produce distinct event patterns and articulations',()=>{
   assert.equal(Object.keys(DRUM_GROOVES).length,5);
-  assert.equal(Object.keys(BASS_PATTERNS).length,5);
+  assert.equal(Object.keys(BASS_PATTERNS).length,12);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
   assert.equal(new Set(drumSignatures).size,5);
   const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{
@@ -95,7 +95,7 @@ test('five styles produce distinct event patterns and bass articulations',()=>{
     const result=render(engine,16000);
     return JSON.stringify(result.events)+engine.rhythm.bassVoices.map(v=>v.decay).join();
   });
-  assert.equal(new Set(bassSignatures).size,5);
+  assert.equal(new Set(bassSignatures).size,Object.keys(BASS_PATTERNS).length);
   const bossa=render(setup({drumGroove:'bossa',bassPattern:'bossa'}),16000);
   assert.deepEqual(bossa.events.filter(e=>e.type==='rim').map(e=>e.sample),[0,6000,12000]);
   assert.deepEqual(bossa.events.filter(e=>e.type==='bass').map(e=>e.sample),[0,6000,8000,14000]);
