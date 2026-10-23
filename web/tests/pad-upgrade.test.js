@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Engine,padVoicing} from '../src/audio/engine.js';
+import {Engine,padVoicing,padMotionNotes} from '../src/audio/engine.js';
 import {SOUNDS,harmonyAt,progressionStep} from '../src/audio/music.js';
 import {WAVE_LAYERS} from '../src/audio/waves.js';
 
@@ -72,6 +72,22 @@ test('depth choices reshape harmony from compact to bass-weighted open voicings'
     assert.ok(voicing.every(note=>chord.some(source=>(source-note.midi)%12===0)));
     assert.ok(new Set(voicing.map(note=>note.midi)).size===voicing.length);
   }
+});
+
+test('ambient drift voice cycles through upper chord colours only',()=>{
+  for(const chord of [[48,52,55],[48,52,55,59,62,69],[48,51,54,58,61,63]]){
+    const notes=padMotionNotes(chord);
+    assert.ok(notes.length>=2);
+    assert.ok(notes.every(note=>note>=67&&note<=86));
+    assert.ok(notes.every(note=>chord.some(source=>(source-note)%12===0)));
+    assert.equal(new Set(notes).size,notes.length);
+  }
+  const engine=setup({sound:'horizon',padMovement:'evolving',chord:'min13'}),heard=[];
+  for(let block=0;block<8;block++){
+    render(engine,8000);
+    heard.push(engine.motionFrequency);
+  }
+  assert.ok(new Set(heard).size>2,'the drift voice changes chord tone over time');
 });
 
 test('enabling bass reduces the pad foundation without removing upper harmony',()=>{

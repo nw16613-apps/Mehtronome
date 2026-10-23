@@ -58,6 +58,17 @@ export function padVoicing(chordMidi, depth='wide') {
   return entries.sort((a,b)=>a.midi-b.midi);
 }
 
+export function padMotionNotes(chordMidi) {
+  if(!chordMidi.length)return [];
+  const source=chordMidi.length>2?chordMidi.slice(1):chordMidi;
+  return source.map(note=>{
+    let midi=note;
+    while(midi<67)midi+=12;
+    while(midi>86)midi-=12;
+    return midi;
+  }).filter((note,index,notes)=>notes.indexOf(note)===index);
+}
+
 export class Engine {
   constructor(rate = 48000) {
     this.rate = rate;
@@ -111,6 +122,9 @@ export class Engine {
     this.breathDelta = 0;
     this.phraseArc = 1;
     this.phraseArcDelta = 0;
+    this.motionPhase = 0;
+    this.motionCell = -1;
+    this.motionFrequency = 0;
     this.phase = 0;
     this.currentBpm = this.settings.bpm;
     this.trainerNextBar = this.settings.trainerBars;
@@ -191,6 +205,8 @@ export class Engine {
       this.chordMidi = [...notes];
       this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
       this.padVoicing=notes.map((midi,index)=>({midi,role:index?'body':'root',weight:1}));
+      this.motionNotes=padMotionNotes(notes);
+      this.motionCell=-1;
       this.assignPadVoices();
       if (acoustic) this.guitar = new GuitarStrum(this.rate, notes);
     }
@@ -207,6 +223,8 @@ export class Engine {
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
     this.padVoicing=padVoicing(this.chordMidi,s.padDepth);
+    this.motionNotes=padMotionNotes(this.chordMidi);
+    this.motionCell=-1;
     this.assignPadVoices();
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
@@ -395,6 +413,26 @@ export class Engine {
         const gain=voice.level*voice.gain;
         chord+=(voice.filter+voice.sideFilter)*gain*(1-voice.pan);
         chordRight+=(voice.filter-voice.sideFilter)*gain*(1+voice.pan);
+      }
+      // A high inner voice moves between chord colours in slow, breath-like
+      // swells. Pitches change at the silent edge of each cell, avoiding
+      // retrigger clicks while keeping a pedal chord gently alive.
+      if(this.motionNotes?.length){
+        const cellLengthBeats=s.padMovement==='expansive'?1:2;
+        const position=this.chordAge*this.currentBpm/(60*this.rate*cellLengthBeats);
+        const cell=Math.floor(position),fraction=position-cell;
+        if(cell!==this.motionCell){
+          this.motionCell=cell;
+          const midi=this.motionNotes[(cell+this.step)%this.motionNotes.length];
+          this.motionFrequency=440*2**((midi-69)/12);
+        }
+        this.motionPhase+=this.motionFrequency*inverseRate;
+        if(this.motionPhase>=1)this.motionPhase-=Math.floor(this.motionPhase);
+        const swell=Math.sin(Math.PI*fraction)**2;
+        const motionGain={still:.018,evolving:.04,expansive:.065}[s.padMovement]||.04;
+        const motion=readWave(SINE,this.motionPhase)*swell*motionGain;
+        const motionPan=.36*Math.sin(cell*1.7);
+        chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
       const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
       let left=.4*this.harmonyLevel*chord*this.breath*this.phraseArc+.15*this.sequenceLevel*this.sequence.left;
