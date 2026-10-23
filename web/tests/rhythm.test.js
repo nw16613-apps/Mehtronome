@@ -4,7 +4,7 @@ import {Engine} from '../src/audio/engine.js';
 import {Rhythm} from '../src/audio/rhythm.js';
 import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
-import {COMPING_PATTERNS} from '../src/audio/comping.js';
+import {COMPING_PATTERNS,COMPING_MOVEMENTS,compingHook} from '../src/audio/comping.js';
 import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
@@ -43,6 +43,31 @@ test('electric piano comping follows the chord with distinct multi-bar rhythms',
     signatures.push(events.map(event=>event.sample).join(','));
   }
   assert.equal(new Set(signatures).size,Object.keys(COMPING_PATTERNS).length);
+});
+
+test('electric piano movement uses deterministic modal ostinatos',()=>{
+  for(const [mode,colourPc] of [['dorian',6],['phrygian',10],['lydian',6]]){
+    const settings={...new Engine().settings,key:9,mode,chord:mode==='lydian'?'maj9sharp11':mode==='phrygian'?'min11b9':'min13'};
+    const harmony=harmonyAt(settings,0);
+    harmony.characteristicPcs=[(settings.key+colourPc)%12];
+    const hook=compingHook(harmony,harmony,'modal',3);
+    assert.equal(hook.length,3);
+    assert.ok(hook.some(note=>note%12===(settings.key+colourPc)%12));
+    assert.deepEqual(hook,compingHook(harmony,harmony,'modal',3));
+    assert.ok(harmony.chordPcs.includes(hook.at(-1)%12));
+  }
+  assert.deepEqual(compingHook({scalePcs:[0,2,4,5,7,9,11]},null,'still',4),[]);
+  assert.equal(Object.keys(COMPING_MOVEMENTS).length,5);
+});
+
+test('comping hook amount adds repeatable cells without changing chord rhythm',()=>{
+  const quiet=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:0}),32000).events;
+  const active=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:1}),32000).events;
+  assert.equal(quiet.filter(event=>event.type==='comping-hook').length,0);
+  const hooks=active.filter(event=>event.type==='comping-hook');
+  assert.ok(hooks.length>=6);
+  assert.deepEqual(active.filter(event=>event.type==='comping').map(event=>event.sample),quiet.filter(event=>event.type==='comping').map(event=>event.sample));
+  assert.deepEqual(hooks.slice(0,3).map(event=>event.notes[0]),hooks.slice(3,6).map(event=>event.notes[0]));
 });
 
 test('bass patterns follow actual chord tones and land on the root each bar in every meter',()=>{

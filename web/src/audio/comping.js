@@ -2,6 +2,46 @@ export const COMPING_PATTERNS={
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
   bossa:'Electric piano · bossa', ballad:'Electric piano · ambient ballad',
 };
+export const COMPING_MOVEMENTS={
+  still:'Still chords', modal:'Modal hook', inner:'Inner-voice hook',
+  response:'Call and response', voiceLead:'Voice-led hook',
+};
+
+const nearestMidi=(pc,target=72)=>{
+  let midi=pc+12*Math.round((target-pc)/12);
+  while(midi<60)midi+=12;while(midi>84)midi-=12;
+  return midi;
+};
+const closestPc=(pcs,targetPc)=>pcs.reduce((best,pc)=>{
+  const distance=Math.min((pc-targetPc+12)%12,(targetPc-pc+12)%12);
+  const bestDistance=Math.min((best-targetPc+12)%12,(targetPc-best+12)%12);
+  return distance<bestDistance?pc:best;
+},pcs[0]);
+
+/** Build a repeatable upper-voice cell from modal colour and chord-guide tones. */
+export function compingHook(harmony,nextHarmony,movement='modal',length=3){
+  if(movement==='still'||!harmony?.scalePcs?.length)return [];
+  const count=Math.max(2,Math.min(4,Number(length)||3));
+  const colourPc=harmony.characteristicPcs?.[0]??harmony.scalePcs[3];
+  const colourIndex=Math.max(0,harmony.scalePcs.indexOf(colourPc));
+  const below=harmony.scalePcs[(colourIndex+6)%7],above=harmony.scalePcs[(colourIndex+1)%7];
+  const guidePcs=harmony.chordPcs.filter(pc=>pc!==harmony.scalePcs[0]);
+  const guide=closestPc(guidePcs.length?guidePcs:harmony.chordPcs,colourPc);
+  const resolution=movement==='voiceLead'
+    ?closestPc(nextHarmony?.chordPcs?.length?nextHarmony.chordPcs:harmony.chordPcs,above)
+    :closestPc(harmony.chordPcs,above);
+  const shapes={
+    modal:[guide,colourPc,resolution,guide],
+    inner:[below,colourPc,above,resolution],
+    response:[guide,colourPc,above,resolution],
+    voiceLead:[guide,colourPc,above,resolution],
+  };
+  const full=shapes[movement]||shapes.modal;
+  const pcs=count===2?[colourPc,resolution]:count===3?[guide,colourPc,resolution]:full;
+  const notes=[];
+  for(const pc of pcs)notes.push(nearestMidi(pc,notes.length?notes.at(-1):74));
+  return notes;
+}
 
 // [sixteenth position, duration in beats, velocity]. Four related bars create
 // a phrase instead of repeating a single mechanical rhythm indefinitely.
@@ -16,20 +56,34 @@ const CELLS={
 export class CompingInstrument{
   constructor(rate){this.rate=rate;this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0}));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;}
-  tick(settings,beat,phase,notes,sample,step,onEvent){
+  tick(settings,beat,phase,notes,hook,sample,step,onEvent){
     const grid=beat*4+Math.min(3,Math.floor(phase*4));
     if(grid===this.lastGrid)return;this.lastGrid=grid;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
     const pattern=CELLS[settings.compingPattern]||CELLS.sparse;
     for(const [position,duration,velocity] of pattern[bar%pattern.length])if(position===offset)this.strike(notes,duration,velocity,settings.bpm,sample,step,onEvent);
+    if(hook.length&&settings.compingMovement!=='still'){
+      const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));
+      const activeBars=Math.ceil(amount*4),phraseBar=bar%4;
+      if([0,2,1,3].slice(0,activeBars).includes(phraseBar)){
+        const span=Math.min(4,settings.beats)*4;
+        const start=Math.max(1,span-hook.length*2);
+        const index=Math.round((offset-start)/2);
+        if(index>=0&&index<hook.length&&start+index*2===offset){
+          const ending=phraseBar===3&&hook.length>2;
+          const note=ending&&index===hook.length-1?hook[0]:hook[index];
+          this.strike([note],.34,.34+.18*amount,settings.bpm,sample,step,onEvent,'comping-hook');
+        }
+      }
+    }
   }
-  strike(notes,duration,velocity,bpm,sample,step,onEvent){
+  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping'){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       Object.assign(voice,{active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length),pan:pitches.length===1?0:index/(pitches.length-1)*2-1});
     }
-    onEvent?.({type:'comping',sample,step,notes:pitches,duration,velocity});
+    onEvent?.({type,sample,step,notes:pitches,duration,velocity});
   }
   render(){
     let output=0;
