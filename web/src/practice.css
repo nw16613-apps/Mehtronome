@@ -86,11 +86,13 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .guitar.has-featured .featured-position { padding:14px; }
   .mini-transport { width:calc(100% - 20px); gap:8px; padding:8px; bottom:max(10px,env(safe-area-inset-bottom)); border-radius:12px; }
   #mini-play { min-width:70px; padding-inline:9px; }
-  .mini-transport>label { display:grid; gap:3px; text-align:center; }
-  #mini-bpm { width:61px; padding:6px; }
+  .mini-transport>label { display:block; text-align:center; }
+  .mini-transport>label>span { display:none; }
+  #mini-play,#mini-bpm,.mini-more { height:52px; min-height:52px; border-radius:7px; font-size:13px; font-weight:600; line-height:1; }
+  #mini-bpm { width:61px; padding:6px 9px; text-align:center; }
   .mini-harmony strong { font-size:15px; }
   .mini-harmony span { font-size:10px; }
-  .mini-more { display:block; min-width:74px; padding-inline:8px; font-size:10px; }
+  .mini-more { display:block; min-width:74px; padding-inline:8px; }
   #mini-beat { display:none; }
   #exit-focus { font-size:11px; padding-inline:8px; }
   .mini-transport { flex-wrap:wrap; }
