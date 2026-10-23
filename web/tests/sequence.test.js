@@ -1,13 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {SEQUENCE_PATTERNS,sequenceStep} from '../src/audio/sequence.js';
-import {Engine,melodicNotePool} from '../src/audio/engine.js';
+import {SEQUENCE_PATTERNS,SEQUENCE_ROLES,musicalSequenceStep,sequenceStep} from '../src/audio/sequence.js';
+import {Engine,melodicNotePool,melodicRoleContext} from '../src/audio/engine.js';
 import {harmonyAt} from '../src/audio/music.js';
 import {modalPentatonicPcs} from '../src/guitar/superimposition.js';
 
 function setup(settings={}){
   const engine=new Engine(8000);
-  engine.configure({countIn:false,click:0,harmony:0,sequence:true,sequenceDensity:1,sequenceVolume:1,sequencePattern:'up',bpm:120,...settings});
+  engine.configure({countIn:false,click:0,harmony:0,sequence:true,sequenceRole:'pattern',sequenceDensity:1,sequenceVolume:1,sequencePattern:'up',bpm:120,...settings});
   engine.reset();return engine;
 }
 
@@ -47,6 +47,42 @@ test('melodic note sources expose chord, mode, modal pentatonic and guide-tone p
   assert.equal(melodicNotePool('mode',harmony,chord).length,7);
   assert.deepEqual(melodicNotePool('pentatonic',harmony,chord).map(n=>n%12),[9,0,4,6,7]);
   assert.deepEqual(melodicNotePool('guide',harmony,chord),[chord[1],chord[3]]);
+});
+
+test('musical roles retain a modal hook and target changing harmony',()=>{
+  const settings={...new Engine(8000).settings,key:9,mode:'dorian',chord:'min13',progression:true,template:'modal_dorian',sequenceRole:'modalHook'};
+  const current=harmonyAt(settings,0),next=harmonyAt(settings,1);
+  const context=melodicRoleContext(settings,current,next,current.midi,next.midi);
+  assert.deepEqual(context.modalHook.map(note=>note%12),[9,4,6,4]);
+  assert.ok(context.modalHook.some(note=>note%12===6),'A Dorian hook features F♯');
+  assert.deepEqual(context.chordResponse,current.midi);
+  assert.deepEqual(context.nextChord,next.midi);
+  assert.equal(Object.keys(SEQUENCE_ROLES).length,6);
+});
+
+test('musical phrases repeat deliberate cells with space and a voice-led cadence',()=>{
+  const base={sequenceRole:'modalHook',sequenceRate:2,beats:4,sequencePhraseBars:4,sequenceDensity:.5,sequenceDevelopment:'subtle',sequenceInteraction:'independent'};
+  const phrase=Array.from({length:32},(_,grid)=>musicalSequenceStep(base,grid,4));
+  assert.ok(phrase.slice(0,8).filter(Boolean).length>=2);
+  assert.ok(phrase.slice(8,24).every(note=>note===null),'middle bars leave space at sparse activity');
+  assert.equal(phrase.filter(Boolean).at(-1)?.target,'next');
+  const stableA=phrase.slice(0,8).filter(Boolean).map(note=>note.index);
+  const stableB=phrase.slice(24).filter(Boolean).map(note=>note.index);
+  assert.deepEqual(stableB.slice(0,-1),stableA.slice(0,-1));
+  const answers=Array.from({length:8},(_,grid)=>musicalSequenceStep({...base,sequenceInteraction:'answerDrums',sequenceDensity:1},grid,4));
+  assert.notDeepEqual(answers.map(Boolean),phrase.slice(0,8).map(Boolean));
+});
+
+test('default modal-hook playback states the colour note and repeats on the sample clock',()=>{
+  const settings={sequenceRole:'modalHook',sequencePhraseBars:4,sequenceDevelopment:'subtle',sequenceInteraction:'independent',sequenceDensity:.5,key:9,mode:'dorian',chord:'min13'};
+  const engine=setup(settings),notes=[];
+  engine.render(new Float32Array(64000),()=>{},null,null,note=>notes.push(note));
+  assert.ok(notes.length>=6);assert.ok(notes.every(note=>note.role==='modalHook'));
+  assert.ok(notes.some(note=>note.midi%12===6),'the hook includes Dorian’s F♯');
+  assert.deepEqual(notes.slice(0,2).map(note=>note.midi%12),notes.slice(-3,-1).map(note=>note.midi%12));
+  const chordPcs=new Set(harmonyAt(engine.settings,0).chordPcs);
+  assert.ok(chordPcs.has(notes.at(-1).midi%12),'the phrase resolves to the nearest chord tone');
+  assert.ok(notes.filter(note=>note.grid%8===0).every(note=>chordPcs.has(note.midi%12)));
 });
 
 test('sequencer modal pentatonics match the curated Guitar reference choice in every mode and key',()=>{

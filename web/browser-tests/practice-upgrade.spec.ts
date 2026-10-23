@@ -79,6 +79,7 @@ test('mixer exposes switches and volume while advanced groups can collapse indep
   await expect(page.locator('#comping-tone')).toHaveValue('reed');
   await page.locator('#sequence').check();
   await expect(page.locator('#sequence-details')).toHaveAttribute('open','');
+  await page.locator('#sequence-role').selectOption('pattern');
   await page.locator('#sequence-pattern').selectOption('clave');
   await page.locator('#sequence-details>summary').focus();await page.keyboard.press('Space');
   await expect(page.locator('#sequence-pattern')).toBeHidden();

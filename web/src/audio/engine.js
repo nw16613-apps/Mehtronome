@@ -14,7 +14,7 @@ export const DEFAULTS = {
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   comping:false, compingPattern:'sparse', compingTone:'warmTine', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
-  sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
+  sequence:false, sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
@@ -39,6 +39,14 @@ export function melodicNotePool(source, harmony, chordMidi) {
     return scale;
   }
   return chordMidi;
+}
+
+export function melodicRoleContext(settings,harmony,nextHarmony,chordMidi,nextChordMidi){
+  const anchor=harmonyAt({...settings,progression:false},0),modal=melodicNotePool('mode',anchor,anchor.midi);
+  const root=modal[0],colourPc=characteristicNotes(anchor)[0]?.pc??anchor.scalePcs[3];
+  const colour=root+((colourPc-anchor.scalePcs[0]+12)%12),fifth=modal[Math.min(4,modal.length-1)];
+  return {modalHook:[root,fifth,colour,fifth],chordResponse:[...chordMidi],counterline:modal,
+    guideLine:melodicNotePool('guide',harmony,chordMidi),ambientPulse:[root,colour],nextChord:[...nextChordMidi]};
 }
 
 export function chordNotes(key, isMinor, degree = 0) {
@@ -311,6 +319,7 @@ export class Engine {
     this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
     this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
     this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
+    this.sequenceRoleContext=melodicRoleContext(s,harmony,nextHarmony,this.chordMidi,this.nextChordMidi);
   }
 
   padEntryWeight(entry,state=this.depthMotionState) {
@@ -423,7 +432,7 @@ export class Engine {
       const click = t < .06 ? Math.sin(2 * Math.PI * this.clickFrequency * t) * Math.exp(-100 * t) : 0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
       if(s.sequence && backingActive && !this.auditioning){
-        this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes);
+        this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext);
       }
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render();
       else { this.sequence.left = 0; this.sequence.right = 0; }

@@ -7,6 +7,17 @@ export const SEQUENCE_SOURCES = {
   guide:{name:'Guide tones',help:'Concentrates on the third and seventh of the harmony.'},
 };
 
+export const SEQUENCE_ROLES={
+  modalHook:{name:'Modal hook',help:'Repeats a compact motif built around the modal tonic and characteristic colour note.'},
+  chordResponse:{name:'Chord response',help:'Answers the harmony with chord tones and resolves toward the next change.'},
+  counterline:{name:'Counterline',help:'Moves through the mode in a narrow, singable register.'},
+  guideLine:{name:'Guide-tone line',help:'Connects thirds and sevenths through the progression.'},
+  ambientPulse:{name:'Ambient pulse',help:'Uses a restrained tonic-and-colour ostinato with plenty of space.'},
+  pattern:{name:'Pattern library',help:'Uses the selected note source and pattern exactly as shown below.'},
+};
+export const SEQUENCE_DEVELOPMENTS={stable:'Stable',subtle:'Subtle variation',evolving:'Evolving'};
+export const SEQUENCE_INTERACTIONS={independent:'Independent',answerDrums:'Answer the drums',lockBass:'Lock with the bass'};
+
 export const SEQUENCE_PATTERNS = {
   sparse:{name:'Sparse melody',category:'Musical phrases',help:'A few widely spaced notes with room to breathe.'},
   wander:{name:'Wandering line',category:'Musical phrases',help:'A repeatable, gently varied line with occasional rests and softer answers.'},
@@ -94,6 +105,36 @@ export function sequenceStep(pattern, grid, length, rate) {
   return {index:mod(index,length),velocity,semitones};
 }
 
+export function musicalSequenceStep(settings,grid,length){
+  if(!length)return null;
+  const rate=Math.max(1,Number(settings.sequenceRate)||2),beats=Math.max(1,settings.beats||4),barGrid=rate*beats;
+  const phraseBars=[2,4,8].includes(Number(settings.sequencePhraseBars))?Number(settings.sequencePhraseBars):4;
+  const phraseBar=Math.floor(grid/barGrid)%phraseBars,local=grid%barGrid;
+  const activity=Math.max(0,Math.min(1,Number(settings.sequenceDensity)||0));
+  if(activity===0)return null;
+  const midpoint=Math.floor(phraseBars/2),last=phraseBars-1;
+  const barOrder=[0,last,midpoint,...Array.from({length:phraseBars},(_,index)=>index).filter(index=>index!==0&&index!==last&&index!==midpoint)];
+  if(!barOrder.slice(0,Math.max(1,Math.ceil(activity*phraseBars))).includes(phraseBar))return null;
+  const scaled=fractions=>[...new Set(fractions.map(value=>Math.min(barGrid-1,Math.round(value*(barGrid-1)))))];
+  const interaction=settings.sequenceInteraction||'independent';
+  let positions=interaction==='answerDrums'?scaled([.16,.43,.7,.94]):interaction==='lockBass'?scaled([0,.38,.58,.9]):scaled([0,.29,.48,.76]);
+  if(settings.sequenceRole==='ambientPulse')positions=scaled([0,.58]);
+  positions=positions.slice(0,Math.min(positions.length,Math.max(2,Math.round(2+activity*2))));
+  const hit=positions.indexOf(local);if(hit<0)return null;
+  const contours={modalHook:[0,1,2,1],chordResponse:[0,2,1,3],counterline:[0,1,2,3],guideLine:[0,1,0,1],ambientPulse:[0,1]};
+  const contour=contours[settings.sequenceRole]||contours.modalHook;
+  let index=contour[hit%contour.length],semitones=0;
+  const development=settings.sequenceDevelopment||'subtle',lastBar=phraseBar===phraseBars-1,lastHit=hit===positions.length-1;
+  if(development==='subtle'&&lastBar&&lastHit)index=0;
+  if(development==='evolving'){
+    index+=phraseBar%Math.max(1,Math.min(length,3));
+    if(phraseBar===midpoint&&hit===Math.floor(positions.length/2))semitones=12;
+    if(lastBar&&lastHit){index=0;semitones=0;}
+  }
+  return {index:mod(index,length),velocity:hit===0?.9:.62+(hit%2)*.1,semitones,
+    target:hit===0?'chord':lastBar&&lastHit?'next':null,phraseBar,local};
+}
+
 function nearest(reference, notes) {
   let result=notes[0];
   for(const note of notes)for(const candidate of [note-12,note,note+12])if(Math.abs(candidate-reference)<Math.abs(result-reference))result=candidate;
@@ -116,24 +157,29 @@ export class Sequence {
     }
     return beat*rate+offset;
   }
-  tick(settings, beat, phase, notes, sample, step, onNote, nextNotes=notes) {
+  tick(settings, beat, phase, notes, sample, step, onNote, nextNotes=notes,context=null) {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
     this.lastGrid=grid;
+    const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
+    const roleNotes=musical?(context?.[settings.sequenceRole]||notes):notes;
     const density=Math.max(0,Math.min(1,settings.sequenceDensity));
-    if((grid*37+17)%100 >= density*100)return;
-    const note=sequenceStep(settings.sequencePattern,grid,notes.length,Number(settings.sequenceRate)||2);
+    if(!musical&&(grid*37+17)%100 >= density*100)return;
+    const note=musical?musicalSequenceStep(settings,grid,roleNotes.length):sequenceStep(settings.sequencePattern,grid,notes.length,Number(settings.sequenceRate)||2);
     if(!note)return;
     const register=Number(settings.sequenceRegister);
-    let midi=notes[note.index]+(Number.isFinite(register)?register:12)+note.semitones;
+    const offset=Number.isFinite(register)?register:12;
+    let midi=roleNotes[note.index]+offset+note.semitones;
     const rate=Number(settings.sequenceRate)||2;
-    const leads=settings.sequencePattern==='voiceLead' && settings.progression && beat%settings.beats===settings.beats-1 && grid%rate===rate-1;
+    const leads=!musical && settings.sequencePattern==='voiceLead' && settings.progression && beat%settings.beats===settings.beats-1 && grid%rate===rate-1;
     if(leads&&nextNotes.length)midi=nearest(this.lastMidi,nextNotes.map(value=>value+(Number.isFinite(register)?register:12)));
+    if(musical&&note.target==='chord'&&context?.chordResponse?.length)midi=nearest(midi,context.chordResponse.map(value=>value+offset));
+    if(musical&&note.target==='next'&&context?.nextChord?.length)midi=nearest(this.lastMidi,context.nextChord.map(value=>value+offset));
     this.lastMidi=midi;
     const voice=this.voices[this.cursor++%this.voices.length];
     const frequency=440*2**((midi-69)/12);
     Object.assign(voice,{phase:0,frequency,increment:frequency/this.rate,age:0,envelope:note.velocity,pan:grid%2?.35:-.35,table:frequency*3<this.rate*.45?SEQUENCE_WAVE:SINE});
-    onNote({sample,grid,midi,step});
+    onNote({sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar});
   }
   render() {
     let left=0,right=0;

@@ -14,6 +14,11 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await expect(page.locator('#pad-depth-motion')).toHaveValue('breathing');
   await expect(page.locator('#pad-depth-amount')).toHaveValue('65');
   await expect(page.locator('#pad-brightness')).toHaveValue('balanced');
+  await expect(page.locator('#sequence-role')).toHaveValue('modalHook');
+  await expect(page.locator('#sequence-phrase')).toHaveValue('4');
+  await expect(page.locator('#sequence-development')).toHaveValue('subtle');
+  await expect(page.locator('#sequence-interaction')).toHaveValue('independent');
+  await expect(page.locator('#sequence-density')).toHaveValue('50');
   await expect(page.locator('#fret-labels')).toHaveValue('degrees');
   await expect(page.locator('.fret-note.root text').first()).toHaveText('1');
   for(const [id,mode] of Object.entries(MODES)){
@@ -39,7 +44,7 @@ test('all backing controls share the mixer',async({page})=>{
     await page.locator('#palette').selectOption(palette);
     for(const width of [1440,900,390]){
       await page.setViewportSize({width,height:1000});
-      for(const id of ['drum-groove','bass-pattern','sequence-pattern','sequence-volume'])await expect(mixer.locator('#'+id)).toBeVisible();
+      for(const id of ['drum-groove','bass-pattern','sequence-role','sequence-volume'])await expect(mixer.locator('#'+id)).toBeVisible();
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       const boxes=await mixer.locator('.mix-group').evaluateAll(groups=>groups.map(n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};}));
       for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
@@ -51,7 +56,7 @@ test('all backing controls share the mixer',async({page})=>{
 
 test('new melodic patterns play, describe their movement and restore from presets',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/');await page.locator('#sequence').check();
+  await page.goto('/');await page.locator('#sequence').check();await page.locator('#sequence-role').selectOption('pattern');
   await page.locator('#play').click();await expect(page.locator('#play-status')).toContainText('Playing');
   for(const pattern of ['rootColours','alberti','skips','cascade','offbeat','tresillo','clave','wander']){
     await page.locator('#sequence-pattern').selectOption(pattern);
@@ -65,4 +70,23 @@ test('new melodic patterns play, describe their movement and restore from preset
   await expect(page.locator('#sequence-pattern')).toHaveValue('wander');
   await expect(page.locator('#sequence-help')).toContainText('repeatable');
   expect(errors).toEqual([]);
+});
+
+test('melodic movement roles expose phrases while the pattern library remains available',async({page})=>{
+  await page.goto('/');await page.locator('#sequence').check();
+  await expect(page.locator('#sequence-pattern-library')).toBeHidden();
+  await expect(page.locator('#sequence-help')).toContainText('modal tonic');
+  await page.locator('#sequence-role').selectOption('counterline');
+  await page.locator('#sequence-phrase').selectOption('8');
+  await page.locator('#sequence-development').selectOption('evolving');
+  await page.locator('#sequence-interaction').selectOption('answerDrums');
+  await page.locator('#preset-name').fill('Modal counterline');await page.locator('#preset-save').click();
+  await page.locator('#sequence-role').selectOption('pattern');
+  await expect(page.locator('#sequence-pattern-library')).toBeVisible();
+  await page.locator('#preset-load').click();
+  await expect(page.locator('#sequence-role')).toHaveValue('counterline');
+  await expect(page.locator('#sequence-phrase')).toHaveValue('8');
+  await expect(page.locator('#sequence-development')).toHaveValue('evolving');
+  await expect(page.locator('#sequence-interaction')).toHaveValue('answerDrums');
+  await expect(page.locator('#sequence-pattern-library')).toBeHidden();
 });

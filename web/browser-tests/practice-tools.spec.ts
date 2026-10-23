@@ -13,7 +13,7 @@ test('practice presets restore the complete setup, stop playback, persist, updat
   await page.locator('#count-in').uncheck();await page.locator('#accent').uncheck();
   await page.locator('#beats').selectOption('5');await page.locator('#subdivision').selectOption('3');
   await page.locator('#click').fill('29');await page.locator('#harmony').fill('22');await page.locator('#space').fill('31');
-  await page.locator('#sequence').check();await page.locator('#sequence-pattern').selectOption('updown');
+  await page.locator('#sequence').check();await page.locator('#sequence-role').selectOption('pattern');await page.locator('#sequence-pattern').selectOption('updown');
   await page.locator('#sequence-rate').selectOption('4');await page.locator('#sequence-swing').fill('30');
   await page.locator('#drums').check();await page.locator('#drum-groove').selectOption('bossa');
   await page.locator('#bass').check();await page.locator('#bass-pattern').selectOption('funk');
@@ -22,9 +22,10 @@ test('practice presets restore the complete setup, stop playback, persist, updat
   await page.locator('#loop-enabled').check();await page.locator('#loop-start').selectOption('3');await page.locator('#loop-end').selectOption('1');
   await page.locator('#exercise').selectOption('arpeggio');await page.locator('#fret-labels').selectOption('degrees');
   await page.locator('#highlight-mode').uncheck();await page.locator('#show-grip').uncheck();await page.locator('#audition').uncheck();
-  const values=()=>page.evaluate(ids=>Object.fromEntries(ids.map(id=>{
+  const values=()=>page.evaluate(ids=>Object.fromEntries(ids.flatMap(id=>{
     const c=document.getElementById(id) as HTMLInputElement|HTMLSelectElement;
-    return [id,c instanceof HTMLInputElement&&c.type==='checkbox'?c.checked:c.value];
+    return c instanceof HTMLInputElement||c instanceof HTMLSelectElement
+      ? [[id,c instanceof HTMLInputElement&&c.type==='checkbox'?c.checked:c.value]] : [];
   })),PRESET_CONTROLS);
   const original=await values();
   await page.locator('#preset-name').fill('Lydian <practice>');await page.locator('#preset-save').click();

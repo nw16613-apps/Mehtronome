@@ -627,7 +627,7 @@ test('evolving sounds produce stereo audio and the optional sequencer works inde
   await page.locator('#harmony').fill('0');
   await page.locator('#sequence').check();
   await expect(page.locator('#sequence-controls')).toBeVisible();
-  await page.locator('#sequence-pattern').selectOption('pulse');
+  await page.locator('#sequence-role').selectOption('pattern');await page.locator('#sequence-pattern').selectOption('pulse');
   await page.locator('#sequence-density').fill('100');
   await page.locator('#sequence-volume').fill('80');
   await expect.poll(()=>page.evaluate(()=>{

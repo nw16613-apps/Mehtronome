@@ -31,6 +31,7 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .compare-slots>div { display:grid; gap:8px; align-content:start; }
 .compare-slots p { margin:4px 0; font-size:12px; color:var(--muted,var(--practice-muted,#64735f)); }
 .mixer-details .field-row { margin-top:8px; }
+.mixer-details .field-row[hidden] { display:none; }
 .mixer-details .field-row label { display:block; }
 .mixer-details .sequence-help { margin-top:8px; }
 .mix .volume-label { margin-top:18px; }

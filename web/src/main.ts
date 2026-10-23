@@ -2,7 +2,7 @@ import { roomImpulse } from './audio/ambience.js';
 import { theoryOptions } from './guitar/superimposition.js';
 import { recommendedGrip } from './guitar/grips.js';
 import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets, exportPresets, importPresets, MAX_PRESET_FILE_BYTES } from './practice/presets.js';
-import { SEQUENCE_PATTERNS, SEQUENCE_SOURCES } from './audio/sequence.js';
+import { SEQUENCE_PATTERNS, SEQUENCE_SOURCES, SEQUENCE_ROLES, SEQUENCE_DEVELOPMENTS, SEQUENCE_INTERACTIONS } from './audio/sequence.js';
 import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
@@ -118,8 +118,9 @@ app.innerHTML = `
       <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
       <label class="volume-label" for="sequence-volume">Volume <output id="sequence-volume-value">25%</output></label><input id="sequence-volume" type="range" min="0" max="100" value="25">
       <details id="sequence-details" class="mixer-details"><summary>Pattern & movement</summary><p id="sequence-help" class="sequence-help"></p><div id="sequence-controls" hidden>
-        <div class="field-row"><label>Note source<select id="sequence-source">${Object.entries(SEQUENCE_SOURCES).map(([id,source])=>`<option value="${id}">${source.name}</option>`).join('')}</select></label><label>Pattern<select id="sequence-pattern">${sequencePatternOptions()}</select></label><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label><label>Register<select id="sequence-register"><option value="0">Low</option><option value="12" selected>Middle</option><option value="24">High</option></select></label></div>
-        <div class="sequence-sliders"><label class="volume-label" for="sequence-density">Density <output id="sequence-density-value">65%</output></label><input id="sequence-density" type="range" min="0" max="100" value="65"><label class="volume-label" for="sequence-swing">Swing <output id="sequence-swing-value">0%</output></label><input id="sequence-swing" type="range" min="0" max="60" value="0"></div>
+        <div class="field-row"><label>Musical role<select id="sequence-role">${Object.entries(SEQUENCE_ROLES).map(([id,role])=>`<option value="${id}">${role.name}</option>`).join('')}</select></label><label>Phrase<select id="sequence-phrase"><option value="2">2 bars</option><option value="4" selected>4 bars</option><option value="8">8 bars</option></select></label><label>Development<select id="sequence-development">${Object.entries(SEQUENCE_DEVELOPMENTS).map(([id,name])=>`<option value="${id}"${id==='subtle'?' selected':''}>${name}</option>`).join('')}</select></label><label>Rhythmic relationship<select id="sequence-interaction">${Object.entries(SEQUENCE_INTERACTIONS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div>
+        <div id="sequence-pattern-library" class="field-row" hidden><label>Note source<select id="sequence-source">${Object.entries(SEQUENCE_SOURCES).map(([id,source])=>`<option value="${id}">${source.name}</option>`).join('')}</select></label><label>Pattern<select id="sequence-pattern">${sequencePatternOptions()}</select></label></div><div class="field-row"><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label><label>Register<select id="sequence-register"><option value="0">Low</option><option value="12" selected>Middle</option><option value="24">High</option></select></label></div>
+        <div class="sequence-sliders"><label class="volume-label" for="sequence-density">Activity <output id="sequence-density-value">50%</output></label><input id="sequence-density" type="range" min="0" max="100" value="50"><label class="volume-label" for="sequence-swing">Swing <output id="sequence-swing-value">0%</output></label><input id="sequence-swing" type="range" min="0" max="60" value="0"></div>
       </div></details>
     </section>
       </div>
@@ -549,11 +550,17 @@ function update() {
     el(`${name}-volume-value`).textContent=`${input(`${name}-volume`).value}%`;
   }
   settings.sequence = input('sequence').checked;
+  settings.sequenceRole = select('sequence-role').value;
+  settings.sequencePhraseBars = Number(select('sequence-phrase').value);
+  settings.sequenceDevelopment = select('sequence-development').value;
+  settings.sequenceInteraction = select('sequence-interaction').value;
   settings.sequenceSource = select('sequence-source').value;
   settings.sequenceRegister = Number(select('sequence-register').value);
   settings.sequencePattern = select('sequence-pattern').value;
+  const library=settings.sequenceRole==='pattern';
+  el('sequence-pattern-library').hidden=!library;
   const sourceHelp=settings.sequenceSource==='chord' ? 'Follows the current chord, including its extensions.' : SEQUENCE_SOURCES[settings.sequenceSource as keyof typeof SEQUENCE_SOURCES].help;
-  el('sequence-help').textContent = `${SEQUENCE_PATTERNS[settings.sequencePattern as keyof typeof SEQUENCE_PATTERNS].help} ${sourceHelp} Timing sets the step length.`;
+  el('sequence-help').textContent = library?`${SEQUENCE_PATTERNS[settings.sequencePattern as keyof typeof SEQUENCE_PATTERNS].help} ${sourceHelp}`:`${SEQUENCE_ROLES[settings.sequenceRole as keyof typeof SEQUENCE_ROLES].help} The motif develops across ${settings.sequencePhraseBars} bars.`;
   settings.sequenceRate = Number(select('sequence-rate').value);
   settings.sequenceSwing = Number(input('sequence-swing').value)/100;
   settings.sequenceDensity = Number(input('sequence-density').value)/100;
@@ -1072,7 +1079,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
