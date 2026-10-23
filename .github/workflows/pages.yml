@@ -1,8 +1,9 @@
 name: Publish browser app
 
-# Explicit publication: enable Pages with GitHub Actions in repository settings,
-# then run this workflow from the Actions tab. Builds do not publish by themselves.
 on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:
