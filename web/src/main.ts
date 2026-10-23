@@ -29,6 +29,16 @@ function sequencePatternOptions() {
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
 <header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><div class="theme-controls"><button id="focus-view" class="practice-button" aria-pressed="false">Focus view</button><label class="theme-picker">Theme<select id="palette" aria-label="Page theme"><option value="light">Original light</option><option value="dark">Original dark</option><option value="midnight">Midnight Studio</option><option value="paper">Warm Paper</option><option value="plum">Plum Session</option><option value="slate">Slate Minimal</option></select></label><button id="theme" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">Dark mode</button></div></header>
+<nav class="workspace-nav" aria-label="Workspace navigation">
+  <div class="workspace-nav-inner">
+    <span class="workspace-nav-label">Workspace</span>
+    <button type="button" class="workspace-tab selected" data-workspace-target="pulse-title" aria-current="page"><span>01</span>Practice</button>
+    <button type="button" class="workspace-tab" data-workspace-target="harmony-title"><span>02</span>Harmony</button>
+    <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Guitar</button>
+    <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>04</span>Exercises</button>
+    <button type="button" id="mixer-toggle" class="workspace-mixer" aria-controls="mix-panel" aria-expanded="true">Mixer <span aria-hidden="true">⌄</span></button>
+  </div>
+</nav>
 <main>
   <div class="intro"><div><p class="eyebrow">MAKE SPACE FOR PRACTICE</p><h1>Find your rhythm.<br><em>Hear the harmony.</em></h1></div><p class="intro-copy">Give your scales somewhere to go.<br>A steady pulse and a little harmonic context.</p></div>
   <section class="presets panel" aria-labelledby="presets-title">
@@ -71,8 +81,8 @@ app.innerHTML = `
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
     <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
-    <section class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><h2 id="mix-title">Your mix</h2><span class="small-label">FIND THE BALANCE</span></div>
-      <div class="mix-sections">
+    <section id="mix-panel" class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
+      <div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><h3 id="levels-title">Levels & ambience</h3><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="rhythm mix-group" aria-labelledby="rhythm-title">
       <div class="section-heading"><h3 id="rhythm-title">Drums & bass</h3></div>
@@ -1055,6 +1065,44 @@ function setFocusView(value:boolean) {
 }
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
+
+const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
+function selectWorkspaceTab(target:string) {
+  for(const tab of workspaceTabs){
+    const selected=tab.dataset.workspaceTarget===target;
+    tab.classList.toggle('selected',selected);
+    if(selected)tab.setAttribute('aria-current','page');else tab.removeAttribute('aria-current');
+  }
+}
+for(const tab of workspaceTabs)tab.addEventListener('click',()=>{
+  const target=tab.dataset.workspaceTarget!;
+  selectWorkspaceTab(target);
+  el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+});
+const workspaceSections=['pulse-title','harmony-title','guitar-title','caged-exercise'];
+new IntersectionObserver(entries=>{
+  const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+  if(visible)selectWorkspaceTab((visible.target as HTMLElement).id);
+},{rootMargin:'-18% 0px -60%',threshold:[0,.2,.5]}).observe(el('pulse-title'));
+for(const id of workspaceSections.slice(1))new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting)selectWorkspaceTab(id);
+},{rootMargin:'-18% 0px -60%',threshold:.1}).observe(el(id));
+
+const mixPanel=el('mix-panel');
+const mixButtons=[el<HTMLButtonElement>('mixer-toggle'),el<HTMLButtonElement>('mix-collapse')];
+function setMixerCollapsed(collapsed:boolean,scroll=false){
+  mixPanel.classList.toggle('is-collapsed',collapsed);
+  for(const button of mixButtons)button.setAttribute('aria-expanded',String(!collapsed));
+  el('mix-collapse').textContent=collapsed?'Show mixer':'Hide mixer';
+  el('mixer-toggle').innerHTML=`Mixer <span aria-hidden="true">${collapsed?'⌃':'⌄'}</span>`;
+  try{localStorage.setItem('mehtronome-mixer-collapsed',String(collapsed));}catch{/* Session-only. */}
+  if(scroll&&!collapsed)mixPanel.scrollIntoView({behavior:'smooth',block:'center'});
+}
+let mixerCollapsed=false;
+try{mixerCollapsed=localStorage.getItem('mehtronome-mixer-collapsed')==='true';}catch{/* Use expanded mixer. */}
+setMixerCollapsed(mixerCollapsed);
+el('mix-collapse').addEventListener('click',()=>setMixerCollapsed(!mixPanel.classList.contains('is-collapsed')));
+el('mixer-toggle').addEventListener('click',()=>setMixerCollapsed(!mixPanel.classList.contains('is-collapsed'),true));
 select('featured-position').addEventListener('input',renderGuitar);
 select('position-region').addEventListener('input',renderGuitar);
 el('position-path').addEventListener('click',event=>{

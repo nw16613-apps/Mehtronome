@@ -11,7 +11,7 @@
         let saved;
         try { saved = localStorage.getItem('mehtronome-theme'); } catch { /* Use system preference. */ }
         const preview = new URLSearchParams(location.search).get('theme');
-        const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'midnight' : 'light';
         document.documentElement.dataset.palette = palette;
         document.documentElement.dataset.theme = ['dark', 'midnight', 'plum'].includes(palette) ? 'dark' : 'light';
       })();
