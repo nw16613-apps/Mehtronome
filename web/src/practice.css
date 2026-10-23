@@ -57,6 +57,8 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
 .mini-harmony { display:grid; min-width:120px; flex:1 1 180px; gap:2px; }
 .mini-harmony strong { font-size:18px; }
 .mini-harmony span { font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mini-detail-controls { display:contents; }
+.mini-more { display:none; }
 .mini-harmony-controls { display:grid; grid-template-columns:68px minmax(100px,120px) minmax(110px,130px) minmax(120px,1fr); gap:8px; flex:2.2 1 460px; min-width:0; }
 .mini-harmony-controls label { display:grid; gap:3px; min-width:0; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--muted,var(--practice-muted,#64735f)); }
 .mini-harmony-controls select { width:100%; min-width:0; padding:7px 6px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; text-transform:none; letter-spacing:0; }
@@ -82,19 +84,22 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .check { min-height:38px; }
   .guitar.has-featured #guitar-diagrams { grid-template-columns:minmax(0,1fr); }
   .guitar.has-featured .featured-position { padding:14px; }
-  .mini-transport { width:calc(100% - 20px); gap:10px; padding:10px; bottom:max(10px,env(safe-area-inset-bottom)); }
+  .mini-transport { width:calc(100% - 20px); gap:8px; padding:8px; bottom:max(10px,env(safe-area-inset-bottom)); border-radius:12px; }
   #mini-play { min-width:70px; padding-inline:9px; }
   .mini-transport>label { display:grid; gap:3px; text-align:center; }
   #mini-bpm { width:61px; padding:6px; }
   .mini-harmony strong { font-size:15px; }
   .mini-harmony span { font-size:10px; }
+  .mini-more { display:block; min-width:74px; padding-inline:8px; font-size:10px; }
   #mini-beat { display:none; }
   #exit-focus { font-size:11px; padding-inline:8px; }
   .mini-transport { flex-wrap:wrap; }
-  .mini-harmony { flex:1; }
-  .mini-harmony-controls { flex-basis:100%; order:5; grid-template-columns:65px minmax(100px,1fr) minmax(100px,1fr); }
+  .mini-harmony { flex:1; min-width:72px; }
+  .mini-detail-controls { display:none; flex-basis:100%; order:5; gap:10px; padding:8px 3px 2px; border-top:1px solid var(--line,#b5c0af); }
+  .mini-transport.mobile-expanded .mini-detail-controls { display:grid; }
+  .mini-harmony-controls { grid-template-columns:65px minmax(100px,1fr) minmax(100px,1fr); }
   .mini-harmony-controls label:last-child { grid-column:1/-1; }
-  .mini-pulse-options { order:4; }
+  .mini-pulse-options { grid-template-columns:1fr 1fr; order:4; }
   .compare-slots { gap:8px; }
   .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
   .trainer-fields { gap:8px; }
