@@ -180,9 +180,6 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .position-navigation { display:flex; align-items:center; justify-content:center; gap:16px; margin:14px auto 4px; }
 .position-navigation>span { min-width:170px; text-align:center; font-size:11px; color:var(--muted,var(--practice-muted,#64735f)); }
 .position-navigation .practice-button { min-width:110px; }
-.fretboard-view-switch { display:flex; width:max-content; max-width:100%; margin:0 0 16px; padding:4px; border:1px solid var(--line,#899b83); border-radius:9px; background:var(--field,#f1f3ed); }
-.fretboard-view-switch button { min-height:36px; padding:7px 15px; border:0; border-radius:6px; background:transparent; color:var(--muted,var(--practice-muted,#64735f)); font-size:11px; font-weight:650; }
-.fretboard-view-switch button.selected { background:var(--accent,var(--practice-accent)); color:var(--on-accent,var(--practice-on-accent)); box-shadow:0 3px 12px #0002; }
 .guitar-diagrams[hidden],.position-navigation[hidden] { display:none!important; }
 .full-fretboard-panel { margin:0 0 18px; border:1px solid var(--line,#899b83); border-radius:13px; background:var(--pulse,var(--practice-panel)); padding:14px; }
 .full-fretboard-panel[hidden] { display:none; }
@@ -191,6 +188,9 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .full-fretboard-toolbar strong { font-size:13px; }
 .full-fretboard-toolbar span { color:var(--muted,var(--practice-muted,#64735f)); font-size:10px; }
 .full-fretboard-toolbar .check { font-size:10px; white-space:nowrap; }
+.full-fretboard-panel.is-collapsed { padding-block:10px; }
+.full-fretboard-panel.is-collapsed .full-fretboard-toolbar { padding-bottom:2px; }
+.full-fretboard-panel.is-collapsed :is(.full-fretboard-scroll,.full-fretboard-option) { display:none; }
 .full-fretboard-scroll { overflow-x:auto; padding:4px 0 2px; scrollbar-color:var(--accent,var(--practice-accent)) transparent; }
 .full-fretboard { display:block; width:100%; min-width:1040px; height:auto; }
 .full-fretboard .caged-region { cursor:pointer; }
@@ -282,8 +282,6 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   .position-navigation { gap:8px; }
   .position-navigation>span { min-width:0; flex:1; }
   .position-navigation .practice-button { min-width:92px; padding-inline:9px; }
-  .fretboard-view-switch { width:100%; }
-  .fretboard-view-switch button { flex:1; min-height:42px; }
   .full-fretboard-panel { padding:10px 8px; }
   .full-fretboard-toolbar { align-items:flex-start; flex-wrap:wrap; gap:8px 12px; }
   .full-fretboard-toolbar>div { flex-basis:100%; }

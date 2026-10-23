@@ -112,9 +112,8 @@ app.innerHTML = `
         <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Suggested chord shape</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
-      <div class="fretboard-view-switch" role="group" aria-label="Fretboard presentation"><button id="position-view" type="button" class="selected" aria-pressed="true">Position view</button><button id="full-neck-view" type="button" aria-pressed="false">Full fretboard</button></div>
+      <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
-      <div id="full-fretboard-panel" class="full-fretboard-panel" hidden><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button">Fullscreen</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
       <section id="caged-exercise" class="caged-exercise" aria-labelledby="caged-exercise-title"></section>
@@ -154,8 +153,8 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
-let fretboardLayout: 'position'|'full' = 'position';
-try { if(localStorage.getItem('mehtronome-fretboard-layout')==='full')fretboardLayout='full'; } catch { /* Use position view. */ }
+let fullFretboardCollapsed=false;
+try { fullFretboardCollapsed=localStorage.getItem('mehtronome-full-fretboard-collapsed')==='true'; } catch { /* Keep the context map open. */ }
 const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2};
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let currentExerciseGroups:any[]=[];
@@ -416,11 +415,7 @@ function renderGuitar() {
   }).join('');
   const fullBoard=fullFretboardFor(info,1,17,selectedTheory?false:select('exercise').value==='arpeggio');
   el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked);
-  const full=fretboardLayout==='full';
-  el('full-fretboard-panel').hidden=!full;
-  el('guitar-diagrams').hidden=full;
-  el('position-previous').closest<HTMLElement>('.position-navigation')!.hidden=full;
-  for(const [id,selected] of [['position-view',!full],['full-neck-view',full]] as const){el(id).classList.toggle('selected',selected);el(id).setAttribute('aria-pressed',String(selected));}
+  reflectFullFretboard();
   renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info);
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
@@ -744,13 +739,16 @@ positionOverview.addEventListener('keydown',event=>{
   if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
   event.preventDefault();moveOverviewPosition(event.key==='ArrowLeft'?-1:1);
 });
-function setFretboardLayout(layout:'position'|'full'){
-  fretboardLayout=layout;
-  try{localStorage.setItem('mehtronome-fretboard-layout',layout);}catch{/* Session-only. */}
-  renderGuitar();
+function reflectFullFretboard(){
+  fullFretboardPanel.classList.toggle('is-collapsed',fullFretboardCollapsed);
+  el('full-fretboard-collapse').setAttribute('aria-expanded',String(!fullFretboardCollapsed));
+  el('full-fretboard-collapse').textContent=fullFretboardCollapsed?'Show map':'Hide map';
 }
-el('position-view').addEventListener('click',()=>setFretboardLayout('position'));
-el('full-neck-view').addEventListener('click',()=>setFretboardLayout('full'));
+el('full-fretboard-collapse').addEventListener('click',()=>{
+  fullFretboardCollapsed=!fullFretboardCollapsed;
+  try{localStorage.setItem('mehtronome-full-fretboard-collapsed',String(fullFretboardCollapsed));}catch{/* Session-only. */}
+  reflectFullFretboard();
+});
 input('show-regions').addEventListener('input',renderGuitar);
 function selectFullFretboardRegion(target:EventTarget|null){
   const region=target instanceof Element?target.closest<SVGGElement>('[data-full-position]'):null;
