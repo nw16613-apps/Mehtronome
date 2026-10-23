@@ -11,6 +11,8 @@ test('fresh sessions start in A Dorian with degree labels and no count-in',async
   await expect(page.locator('#sound')).toHaveValue('horizon');
   await expect(page.locator('#pad-movement')).toHaveValue('evolving');
   await expect(page.locator('#pad-depth')).toHaveValue('wide');
+  await expect(page.locator('#pad-depth-motion')).toHaveValue('breathing');
+  await expect(page.locator('#pad-depth-amount')).toHaveValue('65');
   await expect(page.locator('#pad-brightness')).toHaveValue('balanced');
   await expect(page.locator('#fret-labels')).toHaveValue('degrees');
   await expect(page.locator('.fret-note.root text').first()).toHaveText('1');

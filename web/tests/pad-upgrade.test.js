@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Engine,PIANO_VOICINGS,padVoicing,padMotionNotes} from '../src/audio/engine.js';
+import {Engine,PIANO_VOICINGS,padVoicing,padMotionNotes,padDepthMotionState,movingPadVoicing} from '../src/audio/engine.js';
 import {SOUNDS,CHORDS,harmonyAt,progressionStep} from '../src/audio/music.js';
 import {WAVE_LAYERS} from '../src/audio/waves.js';
 
@@ -57,7 +57,7 @@ test('cinematic presets and pad shaping controls create distinct scale, motion a
     }
     return {width:side/mono,brightness:Math.sqrt(derivative/energy)};
   };
-  assert.ok(character({padDepth:'epic'}).width>character({padDepth:'intimate'}).width*1.3);
+  assert.ok(character({padDepth:'epic',padDepthMotion:'fixed'}).width>character({padDepth:'intimate',padDepthMotion:'fixed'}).width*1.3);
   assert.ok(character({padBrightness:'luminous'}).brightness>character({padBrightness:'dark'}).brightness*1.08);
   assert.ok(character({padMovement:'expansive'}).brightness>character({padMovement:'still'}).brightness*1.08);
 });
@@ -72,6 +72,21 @@ test('depth choices reshape harmony from compact to bass-weighted open voicings'
     assert.ok(voicing.every(note=>chord.some(source=>(source-note.midi)%12===0)));
     assert.ok(new Set(voicing.map(note=>note.midi)).size===voicing.length);
   }
+});
+
+test('depth motion follows musical phrases and exposes every register gradually',()=>{
+  const base={padDepth:'wide',padDepthAmount:1,beats:4};
+  const expansion=[0,4,8,12,16].map(bar=>padDepthMotionState({...base,padDepthMotion:'expansion'},bar*4).position);
+  assert.ok(expansion.every((value,index)=>Math.abs(value-[0,.5,1,.5,0][index])<1e-9));
+  const breathing=[0,2,4,6,8].map(bar=>padDepthMotionState({...base,padDepthMotion:'breathing'},bar*4).position);
+  assert.ok(breathing[2]>breathing[0]+.8);assert.equal(breathing[0],breathing[4]);
+  const bloom=padDepthMotionState({...base,padDepthMotion:'bloom'},8);
+  assert.ok(bloom.foundation>2.5);assert.ok(bloom.air<1);
+  const fixed=padDepthMotionState({...base,padDepthMotion:'drift',padDepthAmount:0},24);
+  assert.equal(fixed.position,.5);assert.equal(fixed.foundation,1);
+  const palette=movingPadVoicing([48,52,55,59,62,69],'maj9');
+  assert.ok(palette.some(note=>note.role==='foundation'));assert.ok(palette.some(note=>note.role==='air'));
+  assert.ok(palette.every(note=>Object.keys(note.depthWeights).length===3));
 });
 
 test('quality-aware pad voicings use pianist registers and preserve the selected harmony',()=>{

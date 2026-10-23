@@ -15,7 +15,7 @@ export const DEFAULTS = {
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
   comping:false, compingPattern:'sparse', compingTone:'warmTine', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
   sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
+  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
   if (!settings.gapEnabled) return false;
@@ -87,6 +87,40 @@ export function padVoicing(chordMidi, depth='wide', chordId='') {
   return entries.sort((a,b)=>a.midi-b.midi);
 }
 
+const depthIndex=depth=>({intimate:0,wide:.5,epic:1}[depth]??.5);
+const depthWeight=(weights,position)=>position<=.5
+  ?weights.intimate+(weights.wide-weights.intimate)*position*2
+  :weights.wide+(weights.epic-weights.wide)*(position-.5)*2;
+
+export function padDepthMotionState(settings,musicalBeat=0){
+  const base=depthIndex(settings.padDepth),amount=Math.max(0,Math.min(1,Number(settings.padDepthAmount)||0));
+  const bars=musicalBeat/Math.max(1,settings.beats||4),mode=settings.padDepthMotion||'fixed';
+  let target=base,foundation=1,body=1,air=1;
+  if(mode==='expansion')target=.5-.5*Math.cos(2*Math.PI*bars/16);
+  if(mode==='breathing')target=.12+.88*Math.sin(Math.PI*(bars%8)/8)**2;
+  if(mode==='bloom'){
+    const bloom=Math.sin(Math.PI*(bars%4)/4)**2;
+    foundation=1+1.8*amount*bloom;body=1-.12*amount*bloom;air=1-.25*amount*bloom;
+  }
+  if(mode==='drift'){
+    const drift=Math.sin(2*Math.PI*bars/12);
+    target=.5+.42*drift;foundation=1-.55*amount*drift;air=1+1.05*amount*drift;body=1-.1*amount*Math.abs(drift);
+  }
+  return {position:Math.max(0,Math.min(1,base+(target-base)*amount)),foundation,body,air};
+}
+
+export function movingPadVoicing(chordMidi,chordId=''){
+  const sets={intimate:padVoicing(chordMidi,'intimate',chordId),wide:padVoicing(chordMidi,'wide',chordId),epic:padVoicing(chordMidi,'epic',chordId)};
+  const byMidi=new Map();
+  for(const depth of Object.keys(sets))for(const entry of sets[depth]){
+    const item=byMidi.get(entry.midi)||{midi:entry.midi,role:entry.role,weight:entry.weight,depthWeights:{intimate:0,wide:0,epic:0}};
+    item.depthWeights[depth]=entry.weight;
+    if(entry.role==='foundation'||entry.role==='air')item.role=entry.role;
+    byMidi.set(entry.midi,item);
+  }
+  return [...byMidi.values()].sort((a,b)=>a.midi-b.midi);
+}
+
 export function padMotionNotes(chordMidi) {
   if(!chordMidi.length)return [];
   const source=chordMidi.length>2?chordMidi.slice(1):chordMidi;
@@ -155,6 +189,7 @@ export class Engine {
     this.phraseArcDelta = 0;
     this.motionPhase = 0;
     this.motionCell = -1;
+    this.depthMotionState={position:depthIndex(this.settings.padDepth),foundation:1,body:1,air:1};
     this.motionFrequency = 0;
     this.phase = 0;
     this.currentBpm = this.settings.bpm;
@@ -248,7 +283,7 @@ export class Engine {
     this.step = step;
     const s = this.settings;
     const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.bass}`).join(','):'';
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${customSignature}`;
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
@@ -256,7 +291,8 @@ export class Engine {
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.rhythmChordMidi = Number.isFinite(harmony.bassMidi)?[harmony.bassMidi,...this.chordMidi]:this.chordMidi;
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
-    this.padVoicing=padVoicing(this.chordMidi,s.padDepth,harmony.chordId || s.chord);
+    const chordId=harmony.chordId || s.chord;
+    this.padVoicing=s.padDepthMotion==='fixed'?padVoicing(this.chordMidi,s.padDepth,chordId):movingPadVoicing(this.chordMidi,chordId);
     if(Number.isFinite(harmony.bassMidi)){
       const foundation=this.padVoicing.find(entry=>entry.role==='foundation');
       if(foundation)foundation.midi=harmony.bassMidi;
@@ -265,8 +301,8 @@ export class Engine {
     }
     this.motionNotes=padMotionNotes(this.chordMidi);
     this.motionCell=-1;
-    this.assignPadVoices();
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
+    this.assignPadVoices(this.depthMotionState);
     const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
@@ -277,10 +313,16 @@ export class Engine {
     this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
   }
 
-  assignPadVoices() {
+  padEntryWeight(entry,state=this.depthMotionState) {
+    const base=entry.depthWeights?depthWeight(entry.depthWeights,state.position):entry.weight;
+    const roleScale=entry.role==='foundation'?state.foundation:entry.role==='air'?state.air:state.body;
+    return base*roleScale*(this.settings.bass&&entry.role==='foundation'?.28:1);
+  }
+
+  assignPadVoices(state=this.depthMotionState) {
     for (const voice of this.voices) voice.targetLevel = 0;
     const entries=this.padVoicing||this.frequencies.map((frequency,index)=>({midi:69+12*Math.log2(frequency/440),role:index?'body':'root',weight:1}));
-    const adjusted=entries.map(entry=>({...entry,weight:entry.weight*(this.settings.bass&&entry.role==='foundation'?.28:1)}));
+    const adjusted=entries.map(entry=>({...entry,weight:Math.max(.0001,this.padEntryWeight(entry,state))}));
     const total=adjusted.reduce((sum,entry)=>sum+entry.weight,0)||1;
     for (let index=0;index<adjusted.length;index++) {
       const entry=adjusted[index],frequency=440*2**((entry.midi-69)/12);
@@ -303,6 +345,17 @@ export class Engine {
     }
   }
 
+  applyPadDepthState(state){
+    this.depthMotionState=state;
+    const weighted=this.padVoicing.map(entry=>({entry,weight:this.padEntryWeight(entry,state)}));
+    const total=weighted.reduce((sum,item)=>sum+item.weight,0)||1;
+    for(const voice of this.voices){
+      const match=weighted.find(item=>Math.abs(440*2**((item.entry.midi-69)/12)-voice.frequency)<.0001);
+      voice.targetLevel=match?match.weight/total:0;
+      if(match)voice.role=match.entry.role;
+    }
+  }
+
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
     const s = this.settings;
     if (this.guitar) {
@@ -322,9 +375,9 @@ export class Engine {
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
     const movement={still:.08,evolving:1,expansive:2}[s.padMovement]||1;
-    const depth={intimate:.4,wide:1,epic:1.8}[s.padDepth]||1;
+    let depth=.4+1.4*(this.depthMotionState?.position??depthIndex(s.padDepth));
     const brightness={dark:.38,balanced:1,luminous:1.75}[s.padBrightness]||1;
-    const echoTarget = Math.min(.2,(sound.echo || 0)*depth);
+    let echoTarget = Math.min(.2,(sound.echo || 0)*depth);
     const attack = 1-Math.exp(-1/(this.rate*sound.attack));
     const release = 1-Math.exp(-1/(this.rate*sound.release));
     const inverseRate = this.inverseRate;
@@ -399,6 +452,12 @@ export class Engine {
         const breath = 1-breathDepth*.5+breathDepth*.5*Math.sin(2*Math.PI*sound.speed*movement*time);
         this.breathDelta=(breath-this.breath)/32;
         const musicalBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
+        if((this.age&2047)===0){
+          const depthState=padDepthMotionState(s,musicalBeat);
+          this.applyPadDepthState(depthState);
+          depth=.4+1.4*depthState.position;
+          echoTarget=Math.min(.2,(sound.echo||0)*depth);
+        }
         const arc=1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
         this.phraseArcDelta=(arc-this.phraseArc)/32;
         for (const voice of this.voices) {
