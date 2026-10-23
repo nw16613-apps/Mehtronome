@@ -74,6 +74,22 @@ test('depth choices reshape harmony from compact to bass-weighted open voicings'
   }
 });
 
+test('quality-aware pad voicings use pianist registers and preserve the selected harmony',()=>{
+  const cases=[
+    ['maj9sharp11',[48,52,55,59,62,66],[36,55,59,62,64,66]],
+    ['min9',[50,53,57,60,64],[38,57,60,64,65]],
+    ['dom13',[55,59,62,65,69,76],[43,65,69,71,76]],
+    ['dom7alt',[55,59,61,65,68,70],[43,65,71,73,80,82]],
+  ];
+  for(const [id,chord,expected] of cases){
+    const voicing=padVoicing(chord,'wide',id).map(note=>note.midi);
+    assert.deepEqual(voicing,expected,id);
+    const pitchClasses=new Set(chord.map(note=>note%12));
+    assert.ok(voicing.every(note=>pitchClasses.has(note%12)),id);
+    assert.ok(voicing.slice(1).every(note=>note>=53),`${id}: colour and guide tones stay out of the muddy bass register`);
+  }
+});
+
 test('ambient drift voice cycles through upper chord colours only',()=>{
   for(const chord of [[48,52,55],[48,52,55,59,62,69],[48,51,54,58,61,63]]){
     const notes=padMotionNotes(chord);

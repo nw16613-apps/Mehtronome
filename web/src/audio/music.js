@@ -179,35 +179,35 @@ export const PROGRESSIONS = {
   oneFour2: { name: 'I–IV · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
   fourths1: { name: 'Cycle of fourths · 1 bar per chord', bars: 1, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
   fourths2: { name: 'Cycle of fourths · 2 bars per chord', bars: 2, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
-  major251: { name: 'Jazz major ii–V–I · 4 bars', bars: 1, kind: 'jazz', roman: ['ii7','V7alt','Imaj7♯11'], steps: [
-    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
+  major251: { name: 'Jazz major ii–V–I · 4 bars', bars: 1, kind: 'jazz', roman: ['ii9','V7alt','Imaj9♯11'], steps: [
+    { root: 2, letter: 1, chord: 'min9', mode: 'dorian', bars: 1 },
     { root: 7, letter: 4, chord: 'dom7alt', mode: 'altered', bars: 1 },
-    { root: 0, letter: 0, chord: 'maj7sharp11', mode: 'lydian', bars: 2 },
+    { root: 0, letter: 0, chord: 'maj9sharp11', mode: 'lydian', bars: 2 },
   ] },
-  minor251: { name: 'Jazz minor iiø–V–i · 4 bars', bars: 1, kind: 'jazz', roman: ['iiø7','V7♭9','i6'], steps: [
-    { root: 2, letter: 1, chord: 'halfDim', mode: 'locrian', bars: 1 },
+  minor251: { name: 'Jazz minor iiø–V–i · 4 bars', bars: 1, kind: 'jazz', roman: ['iiø11','V7♭9','i6'], steps: [
+    { root: 2, letter: 1, chord: 'halfDim11', mode: 'locrian', bars: 1 },
     { root: 7, letter: 4, chord: 'dom7b9', mode: 'phrygian_dominant', bars: 1 },
     { root: 0, letter: 0, chord: 'min6', mode: 'melodic_minor', bars: 2 },
   ] },
-  turnaround: { name: 'Jazz ii–V–I–VI turnaround · 4 bars', bars: 1, kind: 'jazz', roman: ['ii7','V7','Imaj7','VI7'], steps: [
-    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
-    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 0, letter: 0, chord: 'maj7', mode: 'major', bars: 1 },
-    { root: 9, letter: 5, chord: 'dom7', mode: 'phrygian_dominant', bars: 1 },
+  turnaround: { name: 'Jazz ii–V–I–VI turnaround · 4 bars', bars: 1, kind: 'jazz', roman: ['ii9','V13','Imaj9','VI7alt'], steps: [
+    { root: 2, letter: 1, chord: 'min9', mode: 'dorian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'maj9', mode: 'major', bars: 1 },
+    { root: 9, letter: 5, chord: 'dom7alt', mode: 'altered', bars: 1 },
   ] },
-  jazzBlues: { name: '12-bar jazz blues', bars: 1, kind: 'jazz', roman: ['I7','IV7','I7','I7','IV7','♯iv°7','I7','VI7','ii7','V7','I7','V7'], steps: [
-    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 5, letter: 3, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 5, letter: 3, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+  jazzBlues: { name: '12-bar jazz blues', bars: 1, kind: 'jazz', roman: ['I13','IV13','I13','I13','IV13','♯iv°7','I6/9','VI7alt','ii9','V13','I6/9','V7alt'], steps: [
+    { root: 0, letter: 0, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 5, letter: 3, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 5, letter: 3, chord: 'dom13', mode: 'mixolydian', bars: 1 },
     { root: 6, letter: 3, chord: 'dim7', mode: 'ultralocrian', bars: 1 },
-    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 9, letter: 5, chord: 'dom7', mode: 'phrygian_dominant', bars: 1 },
-    { root: 2, letter: 1, chord: 'min7', mode: 'dorian', bars: 1 },
-    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 0, letter: 0, chord: 'dom7', mode: 'mixolydian', bars: 1 },
-    { root: 7, letter: 4, chord: 'dom7', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'sixNine', mode: 'major', bars: 1 },
+    { root: 9, letter: 5, chord: 'dom7alt', mode: 'altered', bars: 1 },
+    { root: 2, letter: 1, chord: 'min9', mode: 'dorian', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom13', mode: 'mixolydian', bars: 1 },
+    { root: 0, letter: 0, chord: 'sixNine', mode: 'major', bars: 1 },
+    { root: 7, letter: 4, chord: 'dom7alt', mode: 'altered', bars: 1 },
   ] },
   diatonic: { name: 'Diatonic I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['I','vi','IV','V'] },
   ...MODAL_PROGRESSIONS,
@@ -277,7 +277,7 @@ export function harmonyAt(settings, step = 0) {
     const third = midi[1] - midi[0];
     return { name: scaleNames[degree], suffix: third === 3 ? 'm' : 'maj', tones: degrees.map(i => scaleNames[i % 7]), intervals: ['1', third === 3 ? '♭3' : '3', '5'], midi,
       scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
-      mode, roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
+      mode, chordId:third === 3 ? 'minor' : 'major', roman: mode === 'minor' ? ['i','VI','iv','v'][step] : PROGRESSIONS.diatonic.roman[step] };
   }
   const offset = change ? change.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;
@@ -297,5 +297,5 @@ export function harmonyAt(settings, step = 0) {
   const bassName=bassPc===null?'':spellPitch(settings.key,custom.bassLetter??0,custom.bass,ROOT_NAMES[settings.key]);
   const suffix=chord.symbol+(bassPc!==null&&bassPc!==key?`/${bassName}`:'');
   return { name, suffix, tones, intervals, midi, bassMidi:bassPc===null||bassPc===key?null:36+bassPc, scaleNames, scalePcs, chordPcs: midi.map(i => i % 12),
-    mode, roman: settings.progression ? definition.roman[step] : 'I' };
+    mode, chordId, roman: settings.progression ? definition.roman[step] : 'I' };
 }

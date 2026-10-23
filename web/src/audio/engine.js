@@ -45,9 +45,33 @@ export function chordNotes(key, isMinor, degree = 0) {
     48 + key + scale[i % 7] + 12 * Math.floor(i / 7));
 }
 
-export function padVoicing(chordMidi, depth='wide') {
+const PIANO_VOICINGS={
+  major:[0,7,16],maj7:[0,7,11,16],maj9:[0,7,11,14,16],six:[0,7,9,16],sixNine:[0,7,9,14,16],
+  maj7sharp11:[0,7,11,16,18],maj9sharp11:[0,7,11,14,16,18],minor:[0,7,15],min7:[0,7,10,15],
+  min9:[0,7,10,14,15],min11:[0,7,10,14,15,17],min6:[0,7,9,15],min13:[0,7,10,14,15,21],
+  dom7:[0,10,16,19],dom9:[0,10,14,16,19],dom13:[0,10,14,16,21],sus2:[0,7,14],sus4:[0,7,17],
+  sevenSus:[0,7,10,17],nineSus:[0,7,10,14,17],halfDim:[0,6,10,15],halfDim11:[0,6,10,15,17],
+  halfDim9:[0,6,10,14,15],minMaj7:[0,7,11,15],minMaj9:[0,7,11,14,15],augmented:[0,8,16],
+  augMaj7:[0,8,11,16],augMaj9:[0,8,11,14,16],dom9sharp11:[0,10,14,16,18],dom7b9:[0,10,16,19,25],
+  dom7alt:[0,10,16,18,25,27],dim7:[0,6,9,15],fifth:[0,7,12],
+};
+
+export function padVoicing(chordMidi, depth='wide', chordId='') {
   if(!chordMidi.length)return [];
   const root=chordMidi[0],relative=note=>((note-root)%12+12)%12;
+  const layout=PIANO_VOICINGS[chordId];
+  if(layout){
+    const bass=depth==='intimate'?root:root-12;
+    const notes=layout.map((interval,index)=>index?root+interval:bass);
+    if(depth==='epic'&&layout.some(interval=>interval%12===7))notes.splice(1,0,root-5);
+    if(depth==='epic'&&!notes.includes(root+24))notes.push(root+24);
+    return [...new Set(notes)].sort((a,b)=>a-b).map((midi,index)=>{
+      const pc=((midi-root)%12+12)%12;
+      const role=index===0?'foundation':midi>=root+24?'air':[3,4,10,11].includes(pc)?'body':midi>root+12?'colour':pc===7?'foundation':'body';
+      const weight=role==='foundation'?(index===0?(depth==='epic'?1.7:1.4):.72):role==='air'?.5:role==='colour'?.76:1;
+      return {midi,role,weight};
+    });
+  }
   if(depth==='intimate')return chordMidi.map((midi,index)=>({midi,role:index?'body':'root',weight:index?1:1.15}));
   const fifth=chordMidi.find(note=>relative(note)===7);
   const inner=chordMidi.filter(note=>note!==root&&note!==fifth);
@@ -224,7 +248,7 @@ export class Engine {
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.rhythmChordMidi = Number.isFinite(harmony.bassMidi)?[harmony.bassMidi,...this.chordMidi]:this.chordMidi;
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
-    this.padVoicing=padVoicing(this.chordMidi,s.padDepth);
+    this.padVoicing=padVoicing(this.chordMidi,s.padDepth,harmony.chordId || s.chord);
     if(Number.isFinite(harmony.bassMidi)){
       const foundation=this.padVoicing.find(entry=>entry.role==='foundation');
       if(foundation)foundation.midi=harmony.bassMidi;
@@ -452,8 +476,8 @@ export class Engine {
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.
       const rhythmDucking=1-.12*Math.max(this.drumsLevel,this.bassLevel);
-      let left=.4*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.left;
-      let right=.4*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.right;
+      let left=.37*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.left;
+      let right=.37*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.right;
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
       if(this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive
@@ -477,7 +501,8 @@ export class Engine {
       if (gapOutput) gapOutput[i] = backingGate;
       const backingSample=this.level*left*backingGate;
       const rightSample=this.level*right*backingGate;
-      output[i] = (harmonyOutput ? clickSample*clickGate : clickSample*clickGate + backingSample) + (rhythmOutput ? 0 : rhythmSample*backingGate);
+      const combined=(harmonyOutput ? clickSample*clickGate : clickSample*clickGate + backingSample) + (rhythmOutput ? 0 : rhythmSample*backingGate);
+      output[i]=combined*.92;
       if (rhythmOutput) rhythmOutput[i] = rhythmSample*backingGate;
       if (harmonyOutput) harmonyOutput[i] = backingSample;
       if (harmonyRight) harmonyRight[i] = rightSample;

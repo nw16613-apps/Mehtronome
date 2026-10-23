@@ -135,10 +135,10 @@ test('jazz changes use conventional chord qualities, tonal roots, and compatible
   const names=template=>PROGRESSIONS[template].roman.map((_,step)=>{
     const h=harmonyAt({...settings,template},step);return h.name+h.suffix;
   });
-  assert.deepEqual(names('major251'),['Dm7','G7alt','Cmaj7♯11']);
-  assert.deepEqual(names('minor251'),['Dm7♭5','G7♭9','Cm6']);
-  assert.deepEqual(names('turnaround'),['Dm7','G7','Cmaj7','A7']);
-  assert.deepEqual(names('jazzBlues'),['C7','F7','C7','C7','F7','F♯dim7','C7','A7','Dm7','G7','C7','G7']);
+  assert.deepEqual(names('major251'),['Dm9','G7alt','Cmaj9♯11']);
+  assert.deepEqual(names('minor251'),['Dm7♭5(add11)','G7♭9','Cm6']);
+  assert.deepEqual(names('turnaround'),['Dm9','G13','Cmaj9','A7alt']);
+  assert.deepEqual(names('jazzBlues'),['C13','F13','C13','C13','F13','F♯dim7','C6/9','A7alt','Dm9','G13','C6/9','G7alt']);
 });
 
 test('cycle of fourths visits all twelve roots, retains every chord type and uses readable enharmonic names',async()=>{
@@ -163,7 +163,7 @@ test('arpeggio intervals retain extensions and altered chord spelling', () => {
   const settings = { key: 0, mode: 'major', progression: true, template: 'major251' };
   assert.deepEqual(harmonyAt(settings, 1).intervals, ['1','3','♭5','♭7','♭9','♯9']);
   assert.equal(harmonyAt(settings, 1).mode, 'altered');
-  assert.deepEqual(harmonyAt(settings, 2).intervals, ['1','3','5','7','♯11']);
+  assert.deepEqual(harmonyAt(settings, 2).intervals, ['1','3','5','7','9','♯11']);
   assert.equal(harmonyAt(settings, 2).mode, 'lydian');
   assert.deepEqual(harmonyAt({...settings, progression:false, chord:'dim7'}).intervals, ['1','♭3','♭5','♭♭7']);
   assert.deepEqual(harmonyAt({...settings, template:'diatonic'}, 1).intervals, ['1','♭3','5']);
