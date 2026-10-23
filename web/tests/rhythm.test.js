@@ -4,6 +4,7 @@ import {Engine} from '../src/audio/engine.js';
 import {Rhythm} from '../src/audio/rhythm.js';
 import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
+import {COMPING_PATTERNS} from '../src/audio/comping.js';
 import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
@@ -27,6 +28,21 @@ test('drum grooves hit sample-clock beats and shuffled offbeats exactly',()=>{
   assert.deepEqual(swing.events.filter(e=>e.type==='ride').map(e=>e.sample),[0,4000,6667,8000,12000,14667]);
   const half=render(setup({bass:false,drumGroove:'halftime'}),16000);
   assert.deepEqual(half.events.filter(e=>e.type==='snare'&&e.gain>.5).map(e=>e.sample),[8000]);
+});
+
+test('electric piano comping follows the chord with distinct multi-bar rhythms',()=>{
+  const signatures=[];
+  for(const compingPattern of Object.keys(COMPING_PATTERNS)){
+    const engine=setup({drums:false,bass:false,comping:true,compingVolume:1,compingPattern,chord:'maj9sharp11'});
+    const result=render(engine,32000),events=result.events.filter(event=>event.type==='comping');
+    assert.ok(events.length>=2,compingPattern);
+    assert.ok(result.dry.some(sample=>Math.abs(sample)>.001),compingPattern);
+    assert.ok(result.dry.every(sample=>Number.isFinite(sample)&&Math.abs(sample)<1),compingPattern);
+    const chordPcs=new Set(engine.chordMidi.map(note=>note%12));
+    assert.ok(events.every(event=>event.notes.every(note=>chordPcs.has(note%12))),compingPattern);
+    signatures.push(events.map(event=>event.sample).join(','));
+  }
+  assert.equal(new Set(signatures).size,Object.keys(COMPING_PATTERNS).length);
 });
 
 test('bass patterns follow actual chord tones and land on the root each bar in every meter',()=>{

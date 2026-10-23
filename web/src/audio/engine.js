@@ -1,6 +1,7 @@
 import { GuitarStrum } from './guitar.js';
 import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
+import { CompingInstrument } from './comping.js';
 import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStep } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
@@ -12,6 +13,7 @@ export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
+  comping:false, compingPattern:'sparse', compingVolume:.3,
   sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
@@ -117,8 +119,10 @@ export class Engine {
     this.gapMuted = false;
     this.sequence = new Sequence(this.rate);
     this.rhythm = new Rhythm(this.rate, this.drumKit);
+    this.comping = new CompingInstrument(this.rate);
     this.drumsLevel = 0;
     this.bassLevel = 0;
+    this.compingLevel = 0;
     this.sequenceLevel = 0;
     this.echoLeft = this.echoLeft || new Float32Array(this.rate);
     this.echoRight = this.echoRight || new Float32Array(this.rate);
@@ -171,7 +175,7 @@ export class Engine {
 
   configure(settings) {
     const previousTrainer = [this.settings.bpm,this.settings.trainerEnabled,this.settings.trainerBars,this.settings.trainerIncrement,this.settings.trainerTarget,this.settings.beats].join('/');
-    const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousGroove=this.settings.drumGroove;
+    const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousComping=this.settings.comping, previousGroove=this.settings.drumGroove;
     const previousSound=this.settings.sound;
     const previousSequenceRate=this.settings.sequenceRate;
     const previousSwing=this.settings.sequenceSwing;
@@ -188,6 +192,7 @@ export class Engine {
     }
     if (!previousDrums && s.drums) this.rhythm.clearDrums();
     if (!previousBass && s.bass) this.rhythm.clearBass();
+    if (!previousComping && s.comping) this.comping.clear();
     if (previousDrums!==s.drums || previousBass!==s.bass || previousGroove!==s.drumGroove) {
       this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
@@ -365,14 +370,21 @@ export class Engine {
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
-      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
+      const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
+      if(s.comping&&rhythmActive){
+        const compNotes=this.padVoicing.filter(note=>!['foundation','air'].includes(note.role)).map(note=>note.midi);
+        this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.age,this.step,onRhythm);
+      }
       this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
+      this.compingLevel+=((s.comping && rhythmActive?s.compingVolume:0)-this.compingLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
+      const comping=this.comping.render();
       // The sampled rhythm section needs enough headroom to sit in front of the
       // wide, sustained pad. These trims keep the mixer controls perceptually
       // useful without forcing users to turn the harmony almost all the way down.
-      const rhythmSample=this.level*(.5*this.drumsLevel*this.rhythm.drums+.3*this.bassLevel*this.rhythm.bass);
+      const rhythmSample=this.level*(.5*this.drumsLevel*this.rhythm.drums+.3*this.bassLevel*this.rhythm.bass+.24*this.compingLevel*comping);
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {

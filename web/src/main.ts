@@ -11,6 +11,7 @@ import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor
 import { cagedStudy, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
+import { COMPING_PATTERNS } from './audio/comping.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
@@ -105,12 +106,13 @@ app.innerHTML = `
       <div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><h3 id="levels-title">Levels & ambience</h3><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="rhythm mix-group" aria-labelledby="rhythm-title">
-      <div class="section-heading"><h3 id="rhythm-title">Drums & bass</h3></div>
+      <div class="section-heading"><h3 id="rhythm-title">Backing ensemble</h3></div>
       <div class="field-row rhythm-instruments">
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="drums" type="checkbox">Drums</label><label class="volume-label" for="drums-volume">Volume <output id="drums-volume-value">35%</output></label><input id="drums-volume" type="range" min="0" max="100" value="35"></div>
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label><label class="volume-label" for="bass-volume">Volume <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40"></div>
+        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="comping" type="checkbox">Electric piano</label><label class="volume-label" for="comping-volume">Volume <output id="comping-volume-value">30%</output></label><input id="comping-volume" type="range" min="0" max="100" value="30"></div>
       </div>
-      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div></div><p class="practice-help">Recorded drums and bass follow your tempo and harmony, with four- and eight-bar phrases.</p></details>
+      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="comping-controls" hidden><label>Comping style<select id="comping-pattern">${Object.entries(COMPING_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div></div><p class="practice-help">Drums, bass and electric piano follow the tempo and current harmony with evolving multi-bar phrases.</p></details>
     </section>
     <section class="sequence mix-group" aria-labelledby="sequence-title">
       <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
@@ -196,7 +198,7 @@ let focusView = false;
 type ComparedChord = {settings:typeof settings; step:number; name:string};
 const comparisons:Partial<Record<'a'|'b',ComparedChord>> = {};
 let activeComparison:'a'|'b'|null = null;
-let mixerDrums = false, mixerBass = false, mixerSequence = false;
+let mixerDrums = false, mixerBass = false, mixerComping = false, mixerSequence = false;
 
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
 
@@ -322,7 +324,7 @@ async function toggleExercisePreview() {
   stopPreview();
   try{
     await prepareAudio();exercisePlaying=true;
-    if(exerciseView.backing)node!.port.postMessage({type:'start',settings:{...settings,bpm:exerciseView.tempo,countIn:settings.countIn,drums:false,bass:false,sequence:false}});
+    if(exerciseView.backing)node!.port.postMessage({type:'start',settings:{...settings,bpm:exerciseView.tempo,countIn:settings.countIn,drums:false,bass:false,comping:false,sequence:false}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
     scheduleExercise();
@@ -527,11 +529,14 @@ function update() {
   settings.padBrightness = select('pad-brightness').value;
   settings.drums=input('drums').checked;
   settings.bass=input('bass').checked;
+  settings.comping=input('comping').checked;
   settings.drumGroove=select('drum-groove').value;
   settings.bassPattern=select('bass-pattern').value;
+  settings.compingPattern=select('comping-pattern').value;
   settings.drumsVolume=Number(input('drums-volume').value)/100;
   settings.bassVolume=Number(input('bass-volume').value)/100;
-  for(const name of ['drums','bass']) {
+  settings.compingVolume=Number(input('comping-volume').value)/100;
+  for(const name of ['drums','bass','comping']) {
     el(`${name}-controls`).hidden=!input(name).checked;
     el(`${name}-volume-value`).textContent=`${input(`${name}-volume`).value}%`;
   }
@@ -1057,7 +1062,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','drum-groove','bass-pattern','drums-volume','bass-volume','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','drums-volume','bass-volume','comping-volume','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -1161,9 +1166,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (playing) void stop(); else stopPreview(); }
 });
 function syncMixerDetails() {
-  if ((settings.drums && !mixerDrums) || (settings.bass && !mixerBass)) el<HTMLDetailsElement>('rhythm-details').open = true;
+  if ((settings.drums && !mixerDrums) || (settings.bass && !mixerBass) || (settings.comping && !mixerComping)) el<HTMLDetailsElement>('rhythm-details').open = true;
   if (settings.sequence && !mixerSequence) el<HTMLDetailsElement>('sequence-details').open = true;
-  mixerDrums = settings.drums; mixerBass = settings.bass; mixerSequence = settings.sequence;
+  mixerDrums = settings.drums; mixerBass = settings.bass; mixerComping = settings.comping; mixerSequence = settings.sequence;
 }
 function syncTrainerStatus() {
   el('bpm-caption').textContent=settings.trainerEnabled?'STARTING BPM':'BEATS PER MINUTE';

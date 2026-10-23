@@ -162,7 +162,7 @@ test('sound and chord crossfades are independent of callback boundaries',()=>{
 
 test('full instrument mixes and repeated pad switches retain headroom and stop cleanly',()=>{
   const engine=setup({key:0,chord:'maj9sharp11',mode:'lydian',bpm:240,
-    click:1,harmony:1,drums:true,bass:true,drumsVolume:1,bassVolume:1,bassPattern:'funk',
+    click:1,harmony:1,drums:true,bass:true,comping:true,drumsVolume:1,bassVolume:1,compingVolume:1,bassPattern:'funk',compingPattern:'jazz',
     sequence:true,sequenceVolume:1,sequenceDensity:1,sequenceRate:4});
   for(const sound of Object.keys(SOUNDS)){
     engine.configure({sound});
