@@ -13,7 +13,7 @@ export const DEFAULTS = {
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
-  comping:false, compingPattern:'sparse', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
+  comping:false, compingPattern:'sparse', compingTone:'warmTine', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
   sequence:false, sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.65, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };

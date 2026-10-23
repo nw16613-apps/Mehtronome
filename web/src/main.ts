@@ -11,7 +11,7 @@ import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor
 import { cagedStudy, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
-import { COMPING_PATTERNS, COMPING_MOVEMENTS } from './audio/comping.js';
+import { COMPING_PATTERNS, COMPING_MOVEMENTS, COMPING_TONES } from './audio/comping.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
@@ -112,7 +112,7 @@ app.innerHTML = `
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label><label class="volume-label" for="bass-volume">Volume <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40"></div>
         <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="comping" type="checkbox">Electric piano</label><label class="volume-label" for="comping-volume">Volume <output id="comping-volume-value">30%</output></label><input id="comping-volume" type="range" min="0" max="100" value="30"></div>
       </div>
-      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="comping-controls" hidden><label>Comping style<select id="comping-pattern">${Object.entries(COMPING_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Voice movement<select id="comping-movement">${Object.entries(COMPING_MOVEMENTS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Hook length<select id="comping-hook-length"><option value="2">2 notes</option><option value="3" selected>3 notes</option><option value="4">4 notes</option></select></label><label class="volume-label" for="comping-movement-amount">Movement <output id="comping-movement-amount-value">50%</output></label><input id="comping-movement-amount" type="range" min="0" max="100" value="50"></div></div><p class="practice-help">Drums, bass and electric piano follow the tempo and current harmony. Piano hooks repeat characteristic modal notes as deliberate ostinatos.</p></details>
+      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="comping-controls" hidden><label>Instrument tone<select id="comping-tone">${Object.entries(COMPING_TONES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Comping style<select id="comping-pattern">${Object.entries(COMPING_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Voice movement<select id="comping-movement">${Object.entries(COMPING_MOVEMENTS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Hook length<select id="comping-hook-length"><option value="2">2 notes</option><option value="3" selected>3 notes</option><option value="4">4 notes</option></select></label><label class="volume-label" for="comping-movement-amount">Movement <output id="comping-movement-amount-value">50%</output></label><input id="comping-movement-amount" type="range" min="0" max="100" value="50"></div></div><p class="practice-help">Drums, bass and electric piano follow the tempo and current harmony. Piano hooks repeat characteristic modal notes as deliberate ostinatos.</p></details>
     </section>
     <section class="sequence mix-group" aria-labelledby="sequence-title">
       <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
@@ -533,6 +533,7 @@ function update() {
   settings.drumGroove=select('drum-groove').value;
   settings.bassPattern=select('bass-pattern').value;
   settings.compingPattern=select('comping-pattern').value;
+  settings.compingTone=select('comping-tone').value;
   settings.compingMovement=select('comping-movement').value;
   settings.compingHookLength=Number(select('comping-hook-length').value);
   settings.compingMovementAmount=Number(input('comping-movement-amount').value)/100;
@@ -619,6 +620,8 @@ function reflectPlayback() {
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('progression-strip').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
+  const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
+  if(exercisePreview)exercisePreview.disabled=playing||!currentExercise.length;
   el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
   el('play-icon').textContent = playing ? '■' : '▶';
   el('play').setAttribute('aria-pressed', String(playing));
@@ -1066,7 +1069,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';

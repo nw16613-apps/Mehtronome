@@ -4,7 +4,7 @@ import {Engine} from '../src/audio/engine.js';
 import {Rhythm} from '../src/audio/rhythm.js';
 import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
-import {COMPING_PATTERNS,COMPING_MOVEMENTS,compingHook} from '../src/audio/comping.js';
+import {COMPING_PATTERNS,COMPING_MOVEMENTS,COMPING_TONES,compingHook} from '../src/audio/comping.js';
 import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
@@ -43,6 +43,16 @@ test('electric piano comping follows the chord with distinct multi-bar rhythms',
     signatures.push(events.map(event=>event.sample).join(','));
   }
   assert.equal(new Set(signatures).size,Object.keys(COMPING_PATTERNS).length);
+});
+
+test('electric piano tones have distinct bounded attacks and tails',()=>{
+  const rendered=Object.keys(COMPING_TONES).map(compingTone=>render(setup({drums:false,bass:false,comping:true,compingMovement:'still',compingVolume:1,compingTone}),8000).dry);
+  assert.equal(rendered.length,4);
+  for(const signal of rendered){assert.ok(signal.some(sample=>Math.abs(sample)>.001));assert.ok(signal.every(sample=>Number.isFinite(sample)&&Math.abs(sample)<1));}
+  for(let left=0;left<rendered.length;left++)for(let right=left+1;right<rendered.length;right++){
+    let difference=0;for(let index=0;index<rendered[left].length;index++)difference+=Math.abs(rendered[left][index]-rendered[right][index]);
+    assert.ok(difference>10,`${Object.keys(COMPING_TONES)[left]} vs ${Object.keys(COMPING_TONES)[right]}`);
+  }
 });
 
 test('electric piano movement uses deterministic modal ostinatos',()=>{

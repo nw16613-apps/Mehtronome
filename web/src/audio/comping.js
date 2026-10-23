@@ -6,6 +6,9 @@ export const COMPING_MOVEMENTS={
   still:'Still chords', modal:'Modal hook', inner:'Inner-voice hook',
   response:'Call and response', voiceLead:'Voice-led hook',
 };
+export const COMPING_TONES={
+  warmTine:'Warm tine', felt:'Dark felt electric', suitcase:'Suitcase shimmer', reed:'Reed electric',
+};
 
 const nearestMidi=(pc,target=72)=>{
   let midi=pc+12*Math.round((target-pc)/12);
@@ -54,14 +57,14 @@ const CELLS={
 };
 
 export class CompingInstrument{
-  constructor(rate){this.rate=rate;this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0}));}
+  constructor(rate){this.rate=rate;this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;}
   tick(settings,beat,phase,notes,hook,sample,step,onEvent){
     const grid=beat*4+Math.min(3,Math.floor(phase*4));
     if(grid===this.lastGrid)return;this.lastGrid=grid;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
     const pattern=CELLS[settings.compingPattern]||CELLS.sparse;
-    for(const [position,duration,velocity] of pattern[bar%pattern.length])if(position===offset)this.strike(notes,duration,velocity,settings.bpm,sample,step,onEvent);
+    for(const [position,duration,velocity] of pattern[bar%pattern.length])if(position===offset)this.strike(notes,duration,velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone);
     if(hook.length&&settings.compingMovement!=='still'){
       const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));
       const activeBars=Math.ceil(amount*4),phraseBar=bar%4;
@@ -72,16 +75,16 @@ export class CompingInstrument{
         if(index>=0&&index<hook.length&&start+index*2===offset){
           const ending=phraseBar===3&&hook.length>2;
           const note=ending&&index===hook.length-1?hook[0]:hook[index];
-          this.strike([note],.34,.34+.18*amount,settings.bpm,sample,step,onEvent,'comping-hook');
+          this.strike([note],.34,.34+.18*amount,settings.bpm,sample,step,onEvent,'comping-hook',settings.compingTone);
         }
       }
     }
   }
-  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping'){
+  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='warmTine'){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
-      Object.assign(voice,{active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length),pan:pitches.length===1?0:index/(pitches.length-1)*2-1});
+      Object.assign(voice,{active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
     }
     onEvent?.({type,sample,step,notes:pitches,duration,velocity});
   }
@@ -91,11 +94,21 @@ export class CompingInstrument{
       if(!voice.active)continue;
       const frequency=440*2**((voice.midi-69)/12),increment=frequency/this.rate;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
-      const seconds=voice.age/this.rate,attack=Math.min(1,seconds/.007);
-      const release=voice.age<=voice.hold?1:Math.exp(-(voice.age-voice.hold)/(this.rate*.2));
-      const body=Math.exp(-seconds*.55),bell=Math.exp(-seconds*3.4);
-      const wave=Math.sin(2*Math.PI*voice.phase+.32*bell*Math.sin(2*Math.PI*voice.modPhase))*.82+Math.sin(4*Math.PI*voice.phase)*.12*bell+Math.sin(6*Math.PI*voice.phase)*.04*bell;
-      output+=wave*voice.gain*attack*release*body;
+      const seconds=voice.age/this.rate,tone=voice.tone||'warmTine';
+      const shape={
+        warmTine:{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018},
+        felt:{attack:.02,release:.34,decay:.34,fm:.1,second:.035,third:.012,tremolo:.012},
+        suitcase:{attack:.006,release:.24,decay:.52,fm:.4,second:.15,third:.045,tremolo:.055},
+        reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
+      }[tone]||{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018};
+      const attack=Math.min(1,seconds/shape.attack);
+      const release=voice.age<=voice.hold?1:Math.exp(-(voice.age-voice.hold)/(this.rate*shape.release));
+      const body=Math.exp(-seconds*shape.decay),bell=Math.exp(-seconds*(tone==='felt'?4.8:3.2));
+      const phase=2*Math.PI*voice.phase,mod=shape.fm*bell*Math.sin(2*Math.PI*voice.modPhase);
+      const fundamental=Math.sin(phase+mod),second=Math.sin(phase*2+.12),third=Math.sin(phase*3+.24);
+      const tremolo=1-shape.tremolo+shape.tremolo*Math.sin(2*Math.PI*seconds*4.7+voice.pan);
+      const wave=fundamental*(tone==='reed'?.74:.86)+second*shape.second*bell+third*shape.third*(tone==='reed'?.75:bell);
+      output+=wave*voice.gain*attack*release*body*tremolo*.82;
       if(release<.0005)voice.active=false;
     }
     this.output=output;return output;

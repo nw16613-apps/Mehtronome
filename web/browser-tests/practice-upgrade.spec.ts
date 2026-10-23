@@ -16,9 +16,11 @@ test('sticky transport keeps tempo, playback and current harmony available besid
   await expect(page.locator('#bpm')).toHaveValue('112');
   await expect(page.locator('#tempo')).toHaveValue('112');
   await expect(page.locator('#mini-chord')).toContainText('Am13');
+  await expect(page.locator('#exercise-preview')).toBeEnabled();
   await page.locator('#mini-play').click();
   await expect(page.locator('#play-status')).toContainText('Playing');
   await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#exercise-preview')).toBeDisabled();
   const beatBeforeEditing=(await page.locator('#mini-beat').textContent())!;
   await page.locator('#mini-bpm').fill('118');
   await expect(page.locator('#mini-beat')).not.toHaveText(beatBeforeEditing);
@@ -29,6 +31,11 @@ test('sticky transport keeps tempo, playback and current harmony available besid
   await page.locator('#mini-play').click();
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed','false');
   await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#exercise-preview')).toBeEnabled();
+  await page.locator('#exercise-loop').check();
+  await expect(page.locator('#exercise-preview')).toBeEnabled();
+  await page.locator('#exercise-loop').uncheck();
+  await expect(page.locator('#exercise-preview')).toBeEnabled();
   expect(errors).toEqual([]);
 });
 
@@ -65,6 +72,11 @@ test('mixer exposes switches and volume while advanced groups can collapse indep
   await page.locator('#drums').check();
   await expect(page.locator('#rhythm-details')).toHaveAttribute('open','');
   await expect(page.locator('#drum-groove')).toBeVisible();
+  await page.locator('#comping').check();
+  await expect(page.locator('#comping-tone')).toBeVisible();
+  await expect(page.locator('#comping-tone option')).toHaveCount(4);
+  await page.locator('#comping-tone').selectOption('reed');
+  await expect(page.locator('#comping-tone')).toHaveValue('reed');
   await page.locator('#sequence').check();
   await expect(page.locator('#sequence-details')).toHaveAttribute('open','');
   await page.locator('#sequence-pattern').selectOption('clave');
