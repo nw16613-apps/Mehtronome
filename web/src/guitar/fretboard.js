@@ -98,11 +98,50 @@ export function fullFretboardFor(harmony, start = 1, end = 17, chordOnly = false
 function escape(text) {
   return String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
+
+// A pitch-class filter can produce one or three highlighted notes on a string
+// inside a CAGED window. Build the nearest conventional pentatonic box instead:
+// two adjacent pentatonic tones per string, centred on the current position.
+export function pentatonicShapeFor(board,theory){
+  if(theory?.kind!=='pentatonic'||!Array.isArray(theory.pcs))return null;
+  const centre=(board.start+board.end)/2,candidatesByString=[];
+  for(let string=0;string<TUNING.length;string++){
+    const candidates=[];
+    for(let fret=1;fret<=24;fret++)if(theory.pcs.includes((TUNING[string]+fret)%12))candidates.push(fret);
+    candidatesByString.push(candidates);
+  }
+  let best=null;
+  for(let width=3;width<=8;width++)for(let start=1;start+width-1<=24;start++){
+    const end=start+width-1,chosen=[];
+    for(const candidates of candidatesByString){
+      const inside=candidates.filter(fret=>fret>=start&&fret<=end);
+      if(inside.length<2){chosen.length=0;break;}
+      let pair=[inside[0],inside[1]];
+      for(let index=1;index<inside.length-1;index++)if(Math.abs((inside[index]+inside[index+1])/2-centre)<Math.abs((pair[0]+pair[1])/2-centre))pair=[inside[index],inside[index+1]];
+      chosen.push(pair);
+    }
+    if(chosen.length!==6)continue;
+    const frets=chosen.flat(),outside=frets.filter(fret=>fret<board.start||fret>board.end).length;
+    const score=width*100+Math.abs((start+end)/2-centre)*10+outside*2+chosen.reduce((sum,pair)=>sum+pair[1]-pair[0],0)*.1;
+    if(!best||score<best.score)best={chosen,score};
+  }
+  const selected=(best?.chosen||[]).flatMap((pair,string)=>pair.map(fret=>({string,fret,pc:(TUNING[string]+fret)%12})));
+  const keys=new Set(selected.map(note=>`${note.string}:${note.fret}`));
+  const templates=new Map(board.notes.map(note=>[note.pc,note]));
+  const additions=selected.filter(note=>!board.notes.some(existing=>existing.string===note.string&&existing.fret===note.fret)).map(note=>{
+    const source=templates.get(note.pc);
+    return {...source,...note,midi:TUNING[note.string]+note.fret};
+  });
+  const frets=selected.map(note=>note.fret);
+  return {keys,board:{...board,start:Math.min(board.start,...frets),end:Math.max(board.end,...frets),notes:[...board.notes,...additions].sort((a,b)=>a.string-b.string||a.fret-b.fret)}};
+}
 /**
  * @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip]
  * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],rootPc?:number,groups?:Array<{name:string,rootPc?:number,pcs:number[]}>} | null} [theory]
  */
 export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
+  const pentatonicShape=pentatonicShapeFor(board,theory);
+  if(pentatonicShape)board=pentatonicShape.board;
   const columns = board.end - board.start + 1;
   const spacing = 400 / columns;
   const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;
@@ -128,7 +167,7 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
     const colour = !theory && highlight && note.characteristic;
     const finger = shownGrip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
-    const selected = theory?.pcs.includes(note.pc);
+    const selected = theory?.kind==='pentatonic' ? pentatonicShape?.keys.has(`${note.string}:${note.fret}`) : theory?.pcs.includes(note.pc);
     const pentatonicRoot = selected && theory?.kind === 'pentatonic' && note.pc === theory.rootPc;
     const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
     const group = groupIndex === 0 ? 'a' : groupIndex === 1 ? 'b' : null;

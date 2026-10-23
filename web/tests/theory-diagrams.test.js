@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {diagramSvg,fretboardFor,POSITIONS} from '../src/guitar/fretboard.js';
+import {diagramSvg,fretboardFor,pentatonicShapeFor,POSITIONS} from '../src/guitar/fretboard.js';
 import {recommendedGrip} from '../src/guitar/grips.js';
 import {harmonyAt,MODES} from '../src/audio/music.js';
 
@@ -13,7 +13,7 @@ function renderedNotes(svg) {
 }
 const geometry=notes=>notes.map(({string,fret,pc,x,y})=>({string,fret,pc,x,y}));
 
-test('pentatonic overlays highlight existing positions without moving or replacing their scale notes',()=>{
+test('pentatonic overlays use a true two-note-per-string shape around every CAGED position',()=>{
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const {shape} of POSITIONS){
     const harmony=harmonyAt({key,mode,chord:definition.chord});
     const board=fretboardFor(harmony,shape),snapshot=structuredClone(board);
@@ -21,12 +21,14 @@ test('pentatonic overlays highlight existing positions without moving or replaci
     const plain=diagramSvg(board,true,definition.degrees,'Position');
     const svg=diagramSvg(board,true,definition.degrees,'Position',false,null,theory);
     const notes=renderedNotes(svg);
-    assert.deepEqual(geometry(notes),geometry(renderedNotes(plain)),`${key} ${mode} ${shape}`);
-    assert.equal(notes.length,board.notes.length);
-    assert.ok(notes.some(note=>note.classes.includes('theory-note')));
+    const plainNotes=renderedNotes(plain);
+    assert.ok(plainNotes.every(note=>notes.some(candidate=>candidate.string===note.string&&candidate.fret===note.fret&&candidate.pc===note.pc)),`${key} ${mode} ${shape}`);
+    const selected=notes.filter(note=>note.classes.includes('theory-note'));
+    assert.equal(selected.length,12,`${key} ${mode} ${shape}`);
+    for(let string=0;string<6;string++)assert.equal(selected.filter(note=>note.string===string).length,2,`${key} ${mode} ${shape} string ${string}`);
     for(const note of notes){
-      assert.equal(note.classes.includes('theory-note'),theory.pcs.includes(note.pc));
-      assert.equal(note.group,theory.pcs.includes(note.pc)?'pentatonic':undefined);
+      if(note.classes.includes('theory-note'))assert.ok(theory.pcs.includes(note.pc));
+      assert.equal(note.group,note.classes.includes('theory-note')?'pentatonic':undefined);
       assert.equal(note.classes.includes('root'),note.pc===board.rootPc);
       assert.equal(note.classes.includes('chord'),!note.classes.includes('root')&&harmony.chordPcs.includes(note.pc));
     }
@@ -40,7 +42,7 @@ test('pentatonic roots receive their own ring without replacing the modal root',
   const harmony=harmonyAt({key:9,mode:'dorian',chord:'min13'}),board=fretboardFor(harmony,'E');
   const theory={kind:'pentatonic',name:'B minor pentatonic',rootPc:11,pcs:[11,2,4,6,9]};
   const svg=diagramSvg(board,true,MODES.dorian.degrees,'A Dorian',false,null,theory);
-  const pentatonicRoots=renderedNotes(svg).filter(note=>note.pc===theory.rootPc);
+  const pentatonicRoots=renderedNotes(svg).filter(note=>note.pc===theory.rootPc&&note.classes.includes('theory-note'));
   const modalRoots=renderedNotes(svg).filter(note=>note.pc===harmony.scalePcs[0]);
   assert.ok(pentatonicRoots.length>0);
   assert.ok(modalRoots.length>0);
@@ -48,6 +50,19 @@ test('pentatonic roots receive their own ring without replacing the modal root',
   assert.ok(modalRoots.every(note=>note.classes.includes('root')));
   assert.ok(!svg.includes('pentatonic-root-ring'));
   assert.match(svg,/pentatonic root/);
+});
+
+test('recommended pentatonics resolve to twelve-note playable boxes',()=>{
+  const harmony=harmonyAt({key:9,mode:'dorian',chord:'min13'});
+  for(const theory of [
+    {kind:'pentatonic',pcs:[9,0,2,4,7]},
+    {kind:'pentatonic',pcs:[11,2,4,6,9]},
+    {kind:'pentatonic',pcs:[9,0,4,6,7]},
+  ])for(const {shape}of POSITIONS){
+    const result=pentatonicShapeFor(fretboardFor(harmony,shape),theory);
+    assert.equal(result.keys.size,12);
+    for(let string=0;string<6;string++)assert.equal([...result.keys].filter(key=>key.startsWith(`${string}:`)).length,2);
+  }
 });
 
 test('triad pairs have distinct A/B badges, solid/dashed rings and descriptive note tooltips',()=>{
