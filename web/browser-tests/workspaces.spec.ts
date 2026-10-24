@@ -11,7 +11,7 @@ test('workspace navigation preserves state and keeps all fretboard views togethe
   await expect(page.locator('#full-fretboard')).toBeVisible();
   await expect(page.locator('#position-overview .position-thumbnail')).toHaveCount(5);
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveCount(1);
-  await expect(page.locator('.fretboard-control-rail')).toBeVisible();
+  await expect(page.locator('.guitar-overview .guitar-controls')).toBeVisible();
   await expect(page.locator('#caged-exercise')).toBeHidden();
 
   await page.locator('[data-workspace-target="caged-exercise"]').click();
@@ -25,14 +25,17 @@ test('workspace navigation preserves state and keeps all fretboard views togethe
   await expect(page.locator('#practice-roadmap-title')).toBeVisible();
 });
 
-test('fretboard workspace stacks its control rail below the focused view on mobile',async({page})=>{
-  await page.setViewportSize({width:390,height:844});
+for(const width of [1280,390])test(`fretboard controls precede full-width diagrams at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});
   await page.goto('/');
   await page.locator('[data-workspace-target="guitar-title"]').click();
-  const order=await page.locator('.fretboard-focus-row').evaluate(element=>{
-    const rail=element.querySelector('.fretboard-control-rail')!;
-    const stage=element.querySelector('.focused-position-stage')!;
-    return {rail:getComputedStyle(rail).order,stage:getComputedStyle(stage).order,overflow:document.documentElement.scrollWidth>innerWidth+1};
+  const layout=await page.locator('.workspace-guitar').evaluate(element=>{
+    const rect=(selector:string)=>element.querySelector(selector)!.getBoundingClientRect();
+    const controls=rect('.guitar-overview');
+    const map=rect('#full-fretboard-panel');
+    const overview=rect('#position-overview');
+    const diagram=rect('#guitar-diagrams');
+    return {controlsAbove:controls.bottom<=map.top,mapAbove:map.bottom<=overview.top,overviewAbove:overview.bottom<=diagram.top,fullWidth:Math.abs(map.width-diagram.width)<2,overflow:document.documentElement.scrollWidth>innerWidth+1};
   });
-  expect(order).toEqual({rail:'2',stage:'1',overflow:false});
+  expect(layout).toEqual({controlsAbove:true,mapAbove:true,overviewAbove:true,fullWidth:true,overflow:false});
 });
