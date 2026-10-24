@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {cagedStudy,exerciseNotationSvg,flattenExercise} from '../src/guitar/exercises.js';
+import {theoryOptions} from '../src/guitar/superimposition.js';
 
 const scalePcs=[9,11,0,2,4,6,7],scaleNames=['A','B','C','D','E','F♯','G'];
 const SHARP_TEST_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
@@ -205,11 +206,16 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
 test('cascading pentatonic cells reproduce the video exercise families',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  const selectedPentatonic=theoryOptions(modalHarmony).pentatonics[0];
+  const descendingAvailable=[...new Map(boundedBoard.notes.filter(note=>selectedPentatonic.pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>b.midi-a.midi);
   for(const pattern of ['lesson3','lesson4','lesson5','lesson6']){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern});
     assert.ok(groups.length>1,pattern);
     assert.equal(groups[1].notes[0].midi,groups[0].notes[2].midi,`${pattern} moves to the adjacent two-note string pair`);
   }
+  const five=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson5'});
+  assert.deepEqual(five[0].notes.map(note=>note.midi),descendingAvailable.slice(1,6).map(note=>note.midi),'descending 5s begin on the lower note of the highest string');
+  assert.deepEqual(five[1].notes.map(note=>note.midi),descendingAvailable.slice(3,8).map(note=>note.midi),'the next 5-note cell moves down one string pair');
   for(const [pattern,runs] of Object.entries({cascade64:[6,4],cascade46:[4,6],cascade43:[4,3],cascade34:[3,4],cascade45:[4,5],cascade54:[5,4],cascade65:[6,5],cascade56:[5,6],cascade456:[4,5,6]})){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern});
     assert.ok(groups.length,pattern);
@@ -217,7 +223,10 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
     for(let cell=0;cell<runs.length;cell++){
       const run=midi.slice(cursor,cursor+runs[cell]);
       assert.ok(run.slice(1).every((note,index)=>note<run[index]),`${pattern} cell ${cell+1} descends`);
-      if(cell)assert.equal(run[0],midi[0],`${pattern} restarts from the same anchor`);
+      if(cell){
+        const expectedStart=runs[cell]%2===1?1:0;
+        assert.equal(run[0],descendingAvailable[expectedStart].midi,`${pattern} restarts with the lesson's ${runs[cell]}-note pickup`);
+      }
       cursor+=runs[cell];
     }
     if(groups.length>1)assert.equal(groups[1].notes[0].midi,groups[0].notes[2].midi,`${pattern} advances by one two-note string pair`);
