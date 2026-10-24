@@ -455,3 +455,55 @@ body.notation-focus-open { overflow:hidden; }
   .scale-choice .practice-button { width:100%; }
 }
 .focus-view .workspace-nav { display:none; }
+
+/* Focused workspaces keep their controls mounted, so playback and selections
+   survive navigation between Practice, Harmony, Guitar and Exercises. */
+body[data-workspace] .workspace-page { display:none; }
+body[data-workspace=practice] .workspace-practice,
+body[data-workspace=harmony] .workspace-harmony,
+body[data-workspace=guitar] .workspace-guitar,
+body[data-workspace=exercises] .workspace-exercises { display:block; }
+body:not([data-workspace=practice]) :is(.intro,.presets,.workspace-mixer-panel) { display:none; }
+.workspace>.workspace-harmony,
+.workspace>.workspace-guitar,
+.workspace>.workspace-exercises,
+.workspace>.practice-roadmap { grid-column:1/-1; }
+.workspace>.practice-roadmap { margin:0; }
+.workspace>.workspace-exercises { max-width:none; margin:0; }
+
+/* Full-neck context, all five CAGED regions and the detailed position remain
+   visible as one synchronized fretboard workspace. */
+.guitar-context { display:block; margin-bottom:18px; }
+.guitar-context h3,.guitar-context>p { margin-right:0; }
+.fretboard-focus-row {
+  display:grid; grid-template-columns:minmax(220px,270px) minmax(0,1fr); gap:20px;
+  align-items:start; margin-top:20px;
+}
+.fretboard-control-rail {
+  position:sticky; top:76px; min-width:0; padding:16px;
+  border:1px solid var(--line,#899b83); border-radius:12px;
+  background:color-mix(in srgb,var(--panel,var(--practice-panel)) 88%,var(--field,var(--practice-field)) 12%);
+}
+.control-rail-heading { padding-bottom:12px; border-bottom:1px solid color-mix(in srgb,var(--line,#899b83) 60%,transparent); }
+.control-rail-heading .eyebrow { margin-bottom:4px; }
+.control-rail-heading h3 { margin:0; font-size:16px; }
+.fretboard-control-rail .guitar-controls { display:grid; grid-template-columns:1fr; gap:10px; margin:14px 0; }
+.fretboard-control-rail .position-path-heading { display:block; }
+.fretboard-control-rail .position-path-heading p { margin-top:8px!important; }
+.fretboard-control-rail .position-path { grid-template-columns:1fr 1fr; }
+.fretboard-control-rail .shared-theory-controls { grid-template-columns:1fr; }
+.fretboard-control-rail .guitar-legend { gap:8px 12px; margin:14px 0 0; }
+.focused-position-stage { min-width:0; }
+.guitar.has-featured .focused-position-stage #guitar-diagrams { max-width:none; margin:0; }
+.guitar.has-featured .focused-position-stage .featured-position { padding:18px; }
+.guitar.has-featured .focused-position-stage .featured-position svg { max-width:none; width:100%; }
+
+@media(max-width:900px) {
+  .fretboard-focus-row { grid-template-columns:1fr; }
+  .fretboard-control-rail { position:static; order:2; }
+  .focused-position-stage { order:1; }
+  .fretboard-control-rail .guitar-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:760px) {
+  .fretboard-control-rail .guitar-controls { grid-template-columns:1fr; }
+}

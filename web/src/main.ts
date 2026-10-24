@@ -57,7 +57,7 @@ app.innerHTML = `
   <div class="preset-transfer"><button id="preset-export" class="practice-button">Export presets</button><button id="preset-import" class="practice-button">Import presets</button><input id="preset-file" type="file" accept=".json,application/json" hidden></div>
   </section>
   <div class="workspace">
-    <section class="transport panel" aria-labelledby="pulse-title">
+    <section class="transport panel workspace-page workspace-practice" aria-labelledby="pulse-title">
       <div class="section-heading"><h2 id="pulse-title">The pulse</h2><span class="live-dot" id="live-dot"></span></div>
       <div class="tempo-controls"><button class="round" id="slower" aria-label="Decrease tempo">−</button><div><label class="sr-only" for="bpm">Tempo in beats per minute</label><input id="bpm" type="number" min="30" max="240" value="90"><span id="bpm-caption" class="bpm-label">BEATS PER MINUTE</span></div><button class="round" id="faster" aria-label="Increase tempo">+</button></div>
       <label class="sr-only" for="tempo">Tempo</label><input id="tempo" class="tempo-range" type="range" min="30" max="240" value="90"><div class="range-limits"><span>30 · LARGO</span><span>240 · PRESTISSIMO</span></div>
@@ -71,7 +71,7 @@ app.innerHTML = `
       <div class="practice-block tempo-training"><label class="check"><input id="trainer-enabled" type="checkbox">Tempo trainer</label><div id="trainer-controls" hidden><div class="trainer-fields"><label>Every <select id="trainer-bars"><option>1</option><option>2</option><option selected>4</option><option>8</option></select> bars</label><label>Increase <input id="trainer-increment" type="number" min="1" max="30" value="2"> BPM</label><label>Target <input id="trainer-target" type="number" min="30" max="240" value="120"> BPM</label></div><p id="trainer-status" class="practice-help" role="status">Starts at your selected tempo.</p></div></div>
       <div class="practice-block gap-training"><label class="check"><input id="gap-enabled" type="checkbox">Gap training</label><div id="gap-controls" hidden><div class="field-row"><label>Audible bars<select id="gap-play"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label><label>Gap bars<select id="gap-mute"><option>1</option><option>2</option><option>4</option></select></label></div><label class="template-field">Mute during gaps<select id="gap-target"><option value="all">Click + backing</option><option value="click">Click only</option><option value="backing">Backing only</option></select></label><p class="practice-help">Keep playing through the gap. The harmony and pulse continue underneath; the count-in stays audible.</p></div></div>
     </section>
-    <section class="harmony panel" aria-labelledby="harmony-title">
+    <section class="harmony panel workspace-page workspace-harmony" aria-labelledby="harmony-title">
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
       <div class="field-row"><label><span id="root-label">Root note</span><select id="key">${names.map((n, i) => `<option value="${i}" ${i === 9 ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}" ${id==='horizon'?'selected':''}>${sound.name}</option>`).join('')}</select></label><label><span id="chord-label">Pedal chord</span><select id="chord"></select></label></div>
@@ -105,8 +105,8 @@ app.innerHTML = `
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
-    <section class="notes panel" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
-    <section id="mix-panel" class="mix panel" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
+    <section class="notes panel workspace-page workspace-practice" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
+    <section id="mix-panel" class="mix panel workspace-mixer-panel" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><h3 id="levels-title">Levels & ambience</h3><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="rhythm mix-group" aria-labelledby="rhythm-title">
@@ -129,33 +129,40 @@ app.innerHTML = `
     </section>
       </div>
     </section>
-    <section class="guitar panel" aria-labelledby="guitar-title">
+    <section class="practice-roadmap panel workspace-page workspace-practice" aria-labelledby="practice-roadmap-title">
+      <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h2 id="practice-roadmap-title">Learning path</h2><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
+      <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
+      <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
+      <div id="practice-roadmap-today" class="practice-roadmap-today"></div>
+      <div id="practice-roadmap-list" class="practice-roadmap-list"></div>
+      <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Best completion for each mode at the current root, across the chord voicings you have studied.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
+    </section>
+    <section class="guitar panel workspace-page workspace-guitar" aria-labelledby="guitar-title">
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
-      <div class="guitar-guide guitar-overview">
+      <div class="guitar-guide guitar-overview guitar-context">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
+      </div>
+      <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
+      <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
+      <div class="fretboard-focus-row">
+        <aside class="fretboard-control-rail" aria-label="Fretboard display controls">
+          <div class="control-rail-heading"><p class="eyebrow">DISPLAY &amp; NAVIGATION</p><h3>Shape the view</h3></div>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="all">Manual selection</option><option value="path">Follow nearest positions</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><p>Nearest CAGED route through this progression</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Suggested chord shape</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
+        </aside>
+        <div class="focused-position-stage">
+          <div id="guitar-diagrams" class="guitar-diagrams"></div>
+          <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
+        </div>
       </div>
-      <section class="practice-roadmap" aria-labelledby="practice-roadmap-title">
-        <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h3 id="practice-roadmap-title">Learning path</h3><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
-        <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
-        <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
-        <div id="practice-roadmap-today" class="practice-roadmap-today"></div>
-        <div id="practice-roadmap-list" class="practice-roadmap-list"></div>
-        <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Best completion for each mode at the current root, across the chord voicings you have studied.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
-      </section>
-      <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
-      <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
-      <div id="guitar-diagrams" class="guitar-diagrams"></div>
-      <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
-      <section id="caged-exercise" class="caged-exercise" aria-labelledby="caged-exercise-title"></section>
       <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With the chord overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. The shared Explore selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Chord shapes and modal rings return when exploration is off.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </details>
     </section>
+    <section id="caged-exercise" class="caged-exercise panel workspace-page workspace-exercises" aria-labelledby="caged-exercise-title"></section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html">Compare themes</a> · Headphones on. Distractions off.</span></footer>
@@ -1340,6 +1347,7 @@ el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
+const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises'};
 function selectWorkspaceTab(target:string) {
   for(const tab of workspaceTabs){
     const selected=tab.dataset.workspaceTarget===target;
@@ -1349,17 +1357,17 @@ function selectWorkspaceTab(target:string) {
 }
 for(const tab of workspaceTabs)tab.addEventListener('click',()=>{
   const target=tab.dataset.workspaceTarget!;
-  selectWorkspaceTab(target);
-  el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  showWorkspace(workspaceNames[target]||'practice',target);
 });
-const workspaceSections=['pulse-title','harmony-title','guitar-title','caged-exercise'];
-new IntersectionObserver(entries=>{
-  const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
-  if(visible)selectWorkspaceTab((visible.target as HTMLElement).id);
-},{rootMargin:'-18% 0px -60%',threshold:[0,.2,.5]}).observe(el('pulse-title'));
-for(const id of workspaceSections.slice(1))new IntersectionObserver(entries=>{
-  if(entries[0].isIntersecting)selectWorkspaceTab(id);
-},{rootMargin:'-18% 0px -60%',threshold:.1}).observe(el(id));
+function showWorkspace(name:string,target?:string) {
+  document.body.dataset.workspace=name;
+  selectWorkspaceTab(Object.entries(workspaceNames).find(([,value])=>value===name)?.[0]||'pulse-title');
+  try{localStorage.setItem('mehtronome-workspace',name);}catch{/* Session-only. */}
+  if(target)requestAnimationFrame(()=>el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
+}
+let initialWorkspace='practice';
+try{const saved=localStorage.getItem('mehtronome-workspace');if(saved&&Object.values(workspaceNames).includes(saved))initialWorkspace=saved;}catch{/* Use Practice. */}
+showWorkspace(initialWorkspace);
 
 const mixPanel=el('mix-panel');
 const mixButtons=[el<HTMLButtonElement>('mixer-toggle'),el<HTMLButtonElement>('mix-collapse')];
@@ -1375,7 +1383,10 @@ let mixerCollapsed=false;
 try{mixerCollapsed=localStorage.getItem('mehtronome-mixer-collapsed')==='true';}catch{/* Use expanded mixer. */}
 setMixerCollapsed(mixerCollapsed);
 el('mix-collapse').addEventListener('click',()=>setMixerCollapsed(!mixPanel.classList.contains('is-collapsed')));
-el('mixer-toggle').addEventListener('click',()=>setMixerCollapsed(!mixPanel.classList.contains('is-collapsed'),true));
+el('mixer-toggle').addEventListener('click',()=>{
+  if(document.body.dataset.workspace!=='practice')showWorkspace('practice');
+  setMixerCollapsed(!mixPanel.classList.contains('is-collapsed'),true);
+});
 select('featured-position').addEventListener('input',renderGuitar);
 select('position-region').addEventListener('input',renderGuitar);
 el('position-path').addEventListener('click',event=>{
