@@ -239,9 +239,9 @@ test('backed TAB loops return on beat one of a complete notation bar',async({pag
   await exercise.locator('#exercise-backing').check();
   await exercise.locator('#exercise-loop').check();
   await exercise.locator('#exercise-preview').click();
-  await expect.poll(async()=>page.evaluate(()=>(window as any).__exerciseStarts.length),{timeout:5000}).toBeGreaterThanOrEqual(18);
+  await expect.poll(async()=>page.evaluate(()=>(window as any).__exerciseStarts.length),{timeout:7000}).toBeGreaterThanOrEqual(45);
   const starts=await page.evaluate(()=>(window as any).__exerciseStarts as number[]);
-  expect(starts[9]-starts[0]).toBeCloseTo(1,6);
+  for(let repetition=1;repetition<5;repetition++)expect(starts[repetition*9]-starts[0]).toBeCloseTo(repetition,6);
   await exercise.locator('#exercise-preview').click();
 });
 

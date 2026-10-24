@@ -12,6 +12,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
       } else if (data.type === 'start') {
         this.engine.configure(data.settings);
         this.engine.reset();
+        this.startFrame = Number.isFinite(data.startTime) ? Math.round(data.startTime * sampleRate) : null;
         this.active = true;
       } else if (data.type === 'audition') {
         this.engine.configure(data.settings);
@@ -29,9 +30,13 @@ class HarmonyProcessor extends AudioWorkletProcessor {
   process(_inputs, outputs) {
     const channels = outputs[0];
     if (this.active && channels.length) {
-      this.engine.render(channels[0], this.onBeat, outputs[1]?.[0], outputs[1]?.[1], undefined, outputs[2]?.[0], undefined, outputs[3]?.[0]);
-      if (outputs[2]?.length > 1) outputs[2][1].set(outputs[2][0]);
-      for (let i = 1; i < channels.length; i++) channels[i].set(channels[0]);
+      if(this.startFrame!==null&&currentFrame+channels[0].length<=this.startFrame)return true;
+      const offset=this.startFrame===null?0:Math.max(0,this.startFrame-currentFrame);
+      this.startFrame=null;
+      const view=(output,index,channel=0)=>output[index]?.[channel]?.subarray(offset);
+      this.engine.render(channels[0].subarray(offset), this.onBeat, view(outputs,1), view(outputs,1,1), undefined, view(outputs,2), undefined, view(outputs,3));
+      if (outputs[2]?.length > 1) outputs[2][1].set(outputs[2][0].subarray(offset),offset);
+      for (let i = 1; i < channels.length; i++) channels[i].set(channels[0].subarray(offset),offset);
       if (!this.engine.running && this.engine.level < 0.00001) this.active = false;
     }
     return true;

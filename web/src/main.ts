@@ -311,13 +311,13 @@ function renderCagedExercise(position:any,board:any,info:any) {
   reflectExerciseSelection();
 }
 
-function scheduleExercise(scheduledStart?:number) {
+function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   if(!context||!master||!currentExercise.length||!exercisePlaying)return;
   const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
   const noteLength=60/exerciseView.tempo/divisions,sequence=selectedExercise();
   const countIn=scheduledStart===undefined&&settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const start=scheduledStart??context.currentTime+.03+countIn;
-  if(exerciseTimelineStart===undefined){exerciseTimelineStart=start-countIn;updateExerciseCursor();}
+  if(exerciseTimelineStart===undefined){exerciseTimelineStart=timelineOrigin??start-countIn;updateExerciseCursor();}
   sequence.forEach((note,index)=>{
     const at=start+index*noteLength;
     const duration=Math.max(.045,noteLength*.96),release=Math.min(.045,duration*.3);
@@ -346,10 +346,12 @@ async function toggleExercisePreview() {
   stopPreview();
   try{
     await prepareAudio();exercisePlaying=true;
-    if(exerciseView.backing)node!.port.postMessage({type:'start',settings:{...settings,bpm:exerciseView.tempo,countIn:settings.countIn,drums:false,bass:false,comping:false,sequence:false}});
+    const backingStart=exerciseView.backing?context!.currentTime+.08:undefined;
+    if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...settings,bpm:exerciseView.tempo,countIn:settings.countIn,drums:false,bass:false,comping:false,sequence:false}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
-    scheduleExercise();
+    if(backingStart!==undefined){const countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;scheduleExercise(backingStart+countIn,backingStart);}
+    else scheduleExercise();
   }catch(error){stopExercisePreview();el('error').textContent=error instanceof Error?error.message:'Could not preview this exercise.';el('error').hidden=false;}
 }
 
