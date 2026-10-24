@@ -56,6 +56,14 @@ test('five-position overview selects one full-size CAGED diagram',async({page})=
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','IV');
   await page.locator('#position-previous').click();
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','III');
+
+  await page.locator('#show-grip').check();
+  await expect(page.locator('#full-fretboard svg')).toHaveClass(/grip-active/);
+  expect(await page.locator('#full-fretboard .grip-ring').count()).toBeGreaterThan(10);
+  await expect(page.locator('#full-fretboard .selected-grip-note').first()).toBeVisible();
+  await overview.locator('[data-overview-position="IV"]').click();
+  await expect(page.locator('#guitar-diagrams .position-card')).toHaveAttribute('data-position','IV');
+  await expect(page.locator('#full-fretboard .selected-grip-note').first()).toBeVisible();
 });
 
 test('focused CAGED position generates a configurable notation and TAB library',async({page})=>{

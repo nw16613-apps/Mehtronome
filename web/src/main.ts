@@ -16,6 +16,7 @@ import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode } from './practice/custom-progression.js';
+import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -131,10 +132,18 @@ app.innerHTML = `
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="all">Manual selection</option><option value="path">Follow nearest positions</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><p>Nearest CAGED route through this progression</p></div><div id="position-path" class="position-path"></div></div>
-        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Turn on to show the suggested chord inside each position.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
+        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Suggested chord shape</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
+      <section class="practice-roadmap" aria-labelledby="practice-roadmap-title">
+        <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h3 id="practice-roadmap-title">Learning path</h3><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
+        <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
+        <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
+        <div id="practice-roadmap-today" class="practice-roadmap-today"></div>
+        <div id="practice-roadmap-list" class="practice-roadmap-list"></div>
+        <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Best completion for each mode at the current root, across the chord voicings you have studied.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
+      </section>
       <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
@@ -178,6 +187,9 @@ const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
 let fullFretboardCollapsed=false;
 try { fullFretboardCollapsed=localStorage.getItem('mehtronome-full-fretboard-collapsed')==='true'; } catch { /* Keep the context map open. */ }
+const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
+let practiceProgress:Record<string,string[]>={};
+try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
 const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2};
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let currentExerciseGroups:any[]=[];
@@ -373,6 +385,26 @@ function renderMusic() {
   renderGuitar();
   syncMiniTransport();
 }
+function practiceContext(info:any){return {root:info.scaleNames[0],mode:info.mode,chord:`${info.name}${info.suffix}`};}
+function savePracticeProgress(){try{localStorage.setItem(PRACTICE_PROGRESS_KEY,JSON.stringify(practiceProgress));}catch{/* Keep progress for this session. */}}
+function renderPracticeRoadmap(info:any){
+  const context=practiceContext(info),key=curriculumKey(context),completed=practiceProgress[key]||[],done=new Set(completed);
+  const count=completedCount(completed),percent=Math.round(count/PRACTICE_TASKS.length*100),duration=Number(select('practice-roadmap-duration').value),today=practicePlan(completed,duration);
+  const mode=MODES[info.mode as keyof typeof MODES];
+  el('practice-roadmap-context').textContent=`${context.root} ${mode.name} · ${context.chord} · ${'family' in mode?mode.family:'Major scale'}`;
+  el('practice-roadmap-percent').textContent=`${percent}%`;
+  el('practice-roadmap-count').textContent=`${count} of ${PRACTICE_TASKS.length} complete`;
+  (el('practice-roadmap-fill') as HTMLElement).style.width=`${percent}%`;
+  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Next ${duration}-minute session · ${today.minutes} min planned</strong><span>${today.tasks.map(task=>escapeHtml(task.label)).join(' · ')}</span>`:'<strong>Path complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
+  const stages=[...new Set(PRACTICE_TASKS.map(task=>task.stage))];
+  el('practice-roadmap-list').innerHTML=stages.map(stage=>`<fieldset><legend>${stage}</legend>${PRACTICE_TASKS.filter(task=>task.stage===stage).map(task=>`<label class="practice-roadmap-task${done.has(task.id)?' complete':''}"><input type="checkbox" data-practice-task="${task.id}" ${done.has(task.id)?'checked':''}><span>${escapeHtml(task.label)}</span><small>${task.minutes} min</small></label>`).join('')}</fieldset>`).join('');
+  const root=context.root;
+  el('practice-mode-library').innerHTML=Object.entries(MODES).map(([id,item]:any)=>{
+    const value=modeProgress(practiceProgress,root,id),modePercent=Math.round(value/PRACTICE_TASKS.length*100);
+    return `<div class="practice-mode-status${id===info.mode?' current':''}"><span>${escapeHtml(item.name)}</span><i><b style="width:${modePercent}%"></b></i><strong>${modePercent}%</strong></div>`;
+  }).join('');
+}
+
 function renderGuitar() {
   if(exercisePlaying)stopExercisePreview();
   if (previewGripShape) stopPreview();
@@ -438,7 +470,11 @@ function renderGuitar() {
     return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
   const fullBoard=fullFretboardFor(info,1,17,selectedTheory?false:select('exercise').value==='arpeggio');
-  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked);
+  const fullFretboardGrips=showGrip&&!selectedTheory?displayedPositions.map(position=>{
+    const grip=recommendedGrip(info,position.board);
+    return grip?{numeral:position.numeral!,notes:grip.notes}:null;
+  }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
+  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   reflectFullFretboard();
   renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info);
   const parentMajor = parentMajorFor(info);
@@ -446,6 +482,7 @@ function renderGuitar() {
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
+  renderPracticeRoadmap(info);
   select('fret-view').value = select('exercise').value;
 }
 function renderBeats(active = -1) {
@@ -847,6 +884,18 @@ el('full-fretboard-collapse').addEventListener('click',()=>{
   reflectFullFretboard();
 });
 input('show-regions').addEventListener('input',renderGuitar);
+el('practice-roadmap-list').addEventListener('input',event=>{
+  const checkbox=event.target instanceof HTMLInputElement?event.target:null,task=checkbox?.dataset.practiceTask;
+  if(!task)return;
+  const info=chordInfo(step),key=curriculumKey(practiceContext(info)),completed=new Set(practiceProgress[key]||[]);
+  if(checkbox.checked)completed.add(task);else completed.delete(task);
+  practiceProgress[key]=[...completed];savePracticeProgress();renderPracticeRoadmap(info);
+});
+select('practice-roadmap-duration').addEventListener('input',()=>renderPracticeRoadmap(chordInfo(step)));
+el('practice-roadmap-reset').addEventListener('click',()=>{
+  const info=chordInfo(step),key=curriculumKey(practiceContext(info));
+  delete practiceProgress[key];savePracticeProgress();renderPracticeRoadmap(info);
+});
 function selectFullFretboardRegion(target:EventTarget|null){
   const region=target instanceof Element?target.closest<SVGGElement>('[data-full-position]'):null;
   if(region)chooseOverviewPosition(region.dataset.fullPosition||'I');
