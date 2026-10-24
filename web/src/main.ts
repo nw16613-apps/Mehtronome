@@ -18,6 +18,7 @@ import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { scaleChoicesForChord } from './practice/scale-explorer.js';
+import { barAlignedDuration } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -248,10 +249,15 @@ function updateExerciseCursor(){
   const elapsed=context.currentTime-exerciseTimelineStart,countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const status=document.querySelector<HTMLElement>('#exercise-playback-status'),progress=document.querySelector<HTMLElement>('#exercise-progress-fill');
   if(elapsed<countIn){const beat=Math.max(1,Math.ceil((countIn-elapsed)/(60/exerciseView.tempo)));if(status)status.textContent=`Count-in · ${settings.beats-beat+1} / ${settings.beats}`;}
-  else if(sequence.length){const cycle=Math.max(0,elapsed-countIn),index=Math.min(sequence.length-1,Math.floor((cycle%(sequence.length*noteLength))/noteLength)),globalIndex=exerciseRange().start+index;
+  else if(sequence.length){
+    const elapsedExercise=Math.max(0,elapsed-countIn),phraseDuration=sequence.length*noteLength;
+    const cycleDuration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
+    const cyclePosition=elapsedExercise%cycleDuration,repetition=Math.floor(elapsedExercise/cycleDuration)+1;
+    const resting=cyclePosition>=phraseDuration,index=resting?sequence.length-1:Math.min(sequence.length-1,Math.floor(cyclePosition/noteLength)),globalIndex=exerciseRange().start+index;
     document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const value=Number(note.dataset.noteIndex);note.classList.toggle('playing',value===globalIndex);note.classList.toggle('played',value<globalIndex&&value>=exerciseRange().start);});
+    if(resting)document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>note.classList.remove('playing'));
     document.querySelector(`[data-note-index="${globalIndex}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
-    if(status)status.textContent=`Note ${index+1} / ${sequence.length} · repetition ${Math.floor(cycle/(sequence.length*noteLength))+1} · ${exerciseView.tempo} BPM`;
+    if(status)status.textContent=resting?`Rest · next repetition on beat 1 · ${exerciseView.tempo} BPM`:`Note ${index+1} / ${sequence.length} · repetition ${repetition} · ${exerciseView.tempo} BPM`;
     const tempoControl=document.querySelector<HTMLInputElement>('#exercise-tempo');if(tempoControl&&document.activeElement!==tempoControl)tempoControl.value=String(exerciseView.tempo);
     if(progress)progress.style.width=`${((index+1)/sequence.length)*100}%`;
   }
@@ -325,12 +331,13 @@ function scheduleExercise(scheduledStart?:number) {
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
     source.onended=()=>{const sourceIndex=exerciseSources.indexOf(source);if(sourceIndex>=0)exerciseSources.splice(sourceIndex,1);};
   });
-  const duration=sequence.length*noteLength;
-  exerciseNextStart=start+duration;
+  const phraseDuration=sequence.length*noteLength;
+  const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
+  const nextStart=start+duration;exerciseNextStart=nextStart;
   const lookahead=Math.min(1,Math.max(.2,duration*.25));
   exerciseTimer=setTimeout(()=>{
-    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(240,exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=exerciseNextStart;node?.port.postMessage({type:'settings',settings:{...settings,bpm:exerciseView.tempo}});}scheduleExercise(exerciseNextStart);}else stopExercisePreview();
-  },Math.max(0,(exerciseNextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
+    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(240,exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart;node?.port.postMessage({type:'settings',settings:{...settings,bpm:exerciseView.tempo}});}scheduleExercise(nextStart);}else stopExercisePreview();
+  },Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
 
 async function toggleExercisePreview() {
