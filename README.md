@@ -37,6 +37,11 @@ from a single sample clock, with smooth volume changes. It includes:
   chord durations, scale guides, current chord tones and the next chord. Selected
   loops keep their original order and durations. Playback highlights the current
   chord without requiring a switch to Harmony.
+- **Seventh chords of this mode** under Harmony's note graphics shows all seven
+  diatonic seventh chords, their degree, quality and four correctly spelled notes.
+  It follows the active scale guide during chord progressions and stays visible
+  when switching between scale and arpeggio views. The current chord root is
+  highlighted without changing the selected backing chord.
 - **Evolving chord extensions** in Harmony slowly blends scale-constrained upper
   chord colours over a 4-, 8- or 16-bar cycle. The selected root, progression and
   practice diagrams stay in place. New sustained voicing pitches come from each
