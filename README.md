@@ -13,6 +13,19 @@ from a single sample clock, with smooth volume changes. It includes:
 - The mixer keeps instrument switches and volumes visible, with drum/bass styles
   and melodic movement settings in independently collapsible groups. Longer
   explanations sit behind **Learn more** disclosures.
+- **The pulse** fills the Practice workspace. Tap its button or press **T** to
+  set the tempo, save up to eight tempo shortcuts, and click beat circles to cycle
+  strong, soft and silent accents. Click sound & swing offers digital, woodblock,
+  rim and soft clicks, a synchronized volume control, and eighth-note swing from
+  straight to a triplet feel. The large beat display includes its own play/stop.
+- **Practice timer** measures time after the count-in and can stop at the chosen
+  duration or finish the current bar. Set minutes to zero for an unlimited session.
+  **Polyrhythm** adds a separate higher click and visual row for 3:2, 4:3, 5:4,
+  7:4 or 2:3; it follows the shared clock, tempo trainer and click gap mute.
+- **Harmony reference** in Guitar and Exercises shows the progression or pedal,
+  chord durations, scale guides, current chord tones and the next chord. Selected
+  loops keep their original order and durations. Playback highlights the current
+  chord without requiring a switch to Harmony.
 - **Tempo trainer** adds a selected BPM increment after a chosen number of complete
   musical bars, up to a target. Count-in bars are excluded; click, harmony, bass,
   drums and sequence share the changing audio clock. The starting BPM is retained
@@ -99,7 +112,9 @@ from a single sample clock, with smooth volume changes. It includes:
 - **Gap training** in The pulse: choose 1/2/4/8 audible bars, then 1/2/4 gap bars.
   Mute the click, backing or both. The clock, chords and musical patterns continue
   through gaps, with short fades at the boundaries. Backing gaps also silence the
-  external reverb tail. The count-in and held chord previews are unaffected.
+  external reverb tail. Optional progressive silence adds one silent bar after
+  each complete cycle, up to a selected maximum of 2, 4, 8 or 16 bars. The count-in
+  and held chord previews are unaffected.
 - **Loop selected chords** in The harmony: choose inclusive start/end chords.
   The loop retains each chord's original bar duration, can hold a single chord,
   and can wrap across the end of a template. Excluded chords are dimmed but can

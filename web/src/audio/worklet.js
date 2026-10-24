@@ -34,7 +34,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
       const offset=this.startFrame===null?0:Math.max(0,this.startFrame-currentFrame);
       this.startFrame=null;
       const view=(output,index,channel=0)=>output[index]?.[channel]?.subarray(offset);
-      this.engine.render(channels[0].subarray(offset), this.onBeat, view(outputs,1), view(outputs,1,1), undefined, view(outputs,2), undefined, view(outputs,3));
+      this.engine.render(channels[0].subarray(offset), this.onBeat, view(outputs,1), view(outputs,1,1), undefined, view(outputs,2), undefined, view(outputs,3), this.onBeat);
       if (outputs[2]?.length > 1) outputs[2][1].set(outputs[2][0].subarray(offset),offset);
       for (let i = 1; i < channels.length; i++) channels[i].set(channels[0].subarray(offset),offset);
       if (!this.engine.running && this.engine.level < 0.00001) this.active = false;

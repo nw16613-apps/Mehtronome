@@ -2,6 +2,7 @@ import {normalizeCustomProgression} from './custom-progression.js';
 
 export const PRESET_KEY = 'mehtronome-practice-presets-v1';
 export const PRESET_CONTROLS = [
+  'pulse-accents','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','pulse-poly-volume','gap-progressive','gap-max',
   'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness','chord','template',
   'exercise','click','harmony','space','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density',
   'sequence-swing','sequence-volume','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-movement-amount','comping-hook-length','drums-volume','bass-volume','comping-volume',

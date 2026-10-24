@@ -1,3 +1,4 @@
+import {beatStrength, subdivisionAt, progressiveGap} from '../practice/pulse.js';
 import { GuitarStrum } from './guitar.js';
 import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
@@ -8,6 +9,7 @@ import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
+  clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, polyVolume:.45, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
@@ -19,9 +21,7 @@ export const DEFAULTS = {
 };
 export function gapAt(settings, bar) {
   if (!settings.gapEnabled) return false;
-  const audible = Math.max(1,Math.min(16,Math.floor(Number(settings.gapPlayBars) || 4)));
-  const silent = Math.max(1,Math.min(16,Math.floor(Number(settings.gapMuteBars) || 1)));
-  return bar % (audible + silent) >= audible;
+  return progressiveGap(settings,bar).muted;
 }
 export const DEGREES = [0, 5, 3, 4];
 export const major = [0, 2, 4, 5, 7, 9, 11];
@@ -214,6 +214,10 @@ export class Engine {
     this.clickLevel = 0;
     this.harmonyLevel = 0;
     this.running = true;
+    this.sessionFrames = 0;
+    this.sessionFinished = false;
+    this.polyAge = this.rate;
+    this.lastPoly = -1;
     this.age = 0;
     this.step = 0;
     this.configure({});
@@ -227,6 +231,7 @@ export class Engine {
     const previousSwing=this.settings.sequenceSwing;
     const previousSequence=this.settings.sequence;
     const previousSubdivision = this.settings.subdivision;
+    const previousPoly = `${this.settings.polyBeats}/${this.settings.polyBase}`;
     Object.assign(this.settings, settings);
     const s = this.settings;
     if(previousSound!==s.sound){
@@ -243,6 +248,11 @@ export class Engine {
       this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
+    s.clickSwing=Math.max(0,Math.min(1,Number(s.clickSwing)||0));
+    s.polyBeats=[0,2,3,4,5,7].includes(Number(s.polyBeats))?Number(s.polyBeats):0;
+    s.polyBase=[2,3,4].includes(Number(s.polyBase))?Number(s.polyBase):2;
+    s.polyVolume=Math.max(0,Math.min(1,Number(s.polyVolume)||0));
+    s.sessionSeconds=Math.max(0,Math.min(10800,Number(s.sessionSeconds)||0));
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     s.trainerBars = Math.max(1,Math.min(32,Math.floor(Number(s.trainerBars)||4)));
     s.trainerIncrement = Math.max(1,Math.min(30,Math.floor(Number(s.trainerIncrement)||2)));
@@ -260,7 +270,11 @@ export class Engine {
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
-    if (previousSubdivision !== s.subdivision) this.lastSubdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
+    if (previousSubdivision !== s.subdivision) this.lastSubdivision = subdivisionAt(this.phase/(60*this.rate),s.subdivision,s.clickSwing);
+    if(previousPoly!==`${s.polyBeats}/${s.polyBase}`){
+      this.lastPoly=this.beat>=this.remainingCount?Math.floor(((this.beat-this.remainingCount)+this.phase/(60*this.rate))*s.polyBeats/s.polyBase+1e-10):-1;
+      this.polyAge=this.rate;
+    }
     if(!previousSequence && s.sequence) for(const voice of this.sequence.voices) voice.age=Infinity;
     if(previousSequenceRate!==s.sequenceRate || previousSequence!==s.sequence || previousSwing!==s.sequenceSwing){
       this.sequence.lastGrid=this.beat>=this.remainingCount ? this.sequence.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
@@ -365,7 +379,7 @@ export class Engine {
     }
   }
 
-  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null) {
+  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP) {
     const s = this.settings;
     if (this.guitar) {
       // Guitar bypasses pad layers and echoes, but feeds the shared room reverb.
@@ -391,7 +405,12 @@ export class Engine {
     const release = 1-Math.exp(-1/(this.rate*sound.release));
     const inverseRate = this.inverseRate;
     for (let i = 0; i < output.length; i++) {
-      if (this.nextBeat && !this.auditioning) {
+      const sessionActive=this.running&&!this.auditioning&&this.beat>=this.remainingCount;
+      if(sessionActive&&s.sessionSeconds>0&&this.sessionFrames>=Math.round(s.sessionSeconds*this.rate)
+        &&(!s.sessionFinishBar||(this.nextBeat&&(this.beat+1-this.remainingCount)%s.beats===0))){
+        this.running=false;this.sessionFinished=true;onPulse({type:'session-complete',elapsed:this.sessionFrames/this.rate});
+      }
+      if (this.running && this.nextBeat && !this.auditioning) {
         this.nextBeat = false;
         this.beat++;
         const counting = this.beat < this.remainingCount;
@@ -409,19 +428,20 @@ export class Engine {
         this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
         this.clickAge = 0;
-        this.clickFrequency = s.accent && this.beat % s.beats === 0 ? 1500 : 1000;
-        this.clickStrength = 1;
+        const strength=beatStrength(s,this.beat%s.beats,counting);
+        this.clickFrequency = strength===2 ? 1500 : 1000;
+        this.clickStrength = strength===0?0:strength===2?1:.72;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
         onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
-      const subdivision = Math.floor(this.phase * s.subdivision / (60 * this.rate));
+      const subdivision = subdivisionAt(this.phase/(60*this.rate),s.subdivision,s.clickSwing);
       if (!this.auditioning && subdivision !== this.lastSubdivision && subdivision > 0) {
         this.lastSubdivision = subdivision;
         this.clickAge = 0;
         this.clickFrequency = 800;
-        this.clickStrength = .6;
+        this.clickStrength = beatStrength(s,this.beat%s.beats,this.beat<this.remainingCount)===0?0:.45;
       }
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
@@ -429,7 +449,25 @@ export class Engine {
       const backing = this.auditioning || this.beat >= this.remainingCount ? s.harmony : 0;
       this.harmonyLevel += (backing - this.harmonyLevel) * smoothing;
       const t = this.clickAge++ / this.rate;
-      const click = t < .06 ? Math.sin(2 * Math.PI * this.clickFrequency * t) * Math.exp(-100 * t) : 0;
+      const frequency=this.clickFrequency;
+      let click=0;
+      if(t<.09){
+        if(s.clickSound==='wood')click=(Math.sin(2*Math.PI*frequency*.65*t)+.45*Math.sin(2*Math.PI*frequency*1.47*t))*Math.exp(-155*t);
+        else if(s.clickSound==='rim')click=(Math.sin(2*Math.PI*frequency*1.8*t)+.6*Math.sin(2*Math.PI*frequency*2.93*t))*Math.exp(-230*t);
+        else if(s.clickSound==='soft')click=.8*Math.sin(2*Math.PI*frequency*.5*t)*Math.exp(-65*t)*Math.min(1,t/.002);
+        else if(t<.06)click=Math.sin(2*Math.PI*frequency*t)*Math.exp(-100*t);
+      }
+      if(this.running&&!this.auditioning&&this.beat>=this.remainingCount){
+        const polyIndex=Math.floor(((this.beat-this.remainingCount)+this.phase/(60*this.rate))*s.polyBeats/s.polyBase+1e-10);
+        if(s.polyBeats&&polyIndex!==this.lastPoly){
+          this.lastPoly=polyIndex;this.polyAge=0;
+          onPulse({type:'polyrhythm',beat:polyIndex%s.polyBeats,total:s.polyBeats});
+        }
+        if(this.sessionFrames%Math.max(1,Math.round(this.rate/4))===0)onPulse({type:'session-time',elapsed:this.sessionFrames/this.rate,finishing:s.sessionSeconds>0&&this.sessionFrames>=s.sessionSeconds*this.rate});
+        this.sessionFrames++;
+      }
+      const polyTime=this.polyAge++/this.rate;
+      const polyClick=s.polyBeats&&polyTime<.05?Math.sin(2*Math.PI*2200*polyTime)*Math.exp(-140*polyTime)*s.polyVolume:0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
       if(s.sequence && backingActive && !this.auditioning){
         this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext);
@@ -557,7 +595,7 @@ export class Engine {
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
-      const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click) * this.clickStrength;
+      const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click * this.clickStrength + polyClick);
       // Give transients and bass fundamentals a little room against the pad.
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.
