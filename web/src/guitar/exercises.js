@@ -214,9 +214,10 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
   const available=[...new Map(board.notes.filter(note=>choice.pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
   const run=(size,start=0)=>Array.from({length:size},(_,index)=>index+start);
   const lessonRun=size=>run(size,descending&&size%2===1?1:0);
-  // In the source lesson every component restarts from the same two-note-per-
-  // string anchor; the complete cell then advances to the adjacent string.
-  const lessonCascade=(...sizes)=>sizes.flatMap(lessonRun);
+  // In the source lesson every component begins on the next two-note string
+  // pair. The complete compound cell then repeats from the adjacent pair.
+  // Odd descending runs begin on that pair's lower note.
+  const lessonCascade=(...sizes)=>sizes.flatMap((size,cell)=>lessonRun(size).map(offset=>offset+cell*2));
   // Retain the earlier generated versions as useful right-hand picking
   // variations: each component shifts one scale note and each cell advances
   // one scale note instead of following the lesson's string-pair anchors.
