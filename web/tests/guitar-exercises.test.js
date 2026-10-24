@@ -232,6 +232,9 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
   }
   const exact=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson64'});
   assert.deepEqual(exact[0].notes.map(note=>note.midi),[...descendingAvailable.slice(0,6),...descendingAvailable.slice(2,6)].map(note=>note.midi),'6s + 4s matches the source TAB: six notes, then four from the next string pair');
+  const descendingSixFive=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson65'});
+  assert.deepEqual(descendingSixFive[0].notes.map(note=>note.midi),[...descendingAvailable.slice(0,6),...descendingAvailable.slice(3,8)].map(note=>note.midi),'descending 6s + 5s matches the source TAB: six notes, then five beginning on the lower note of the next string pair');
+  assert.equal(descendingSixFive[1].notes[0].midi,descendingAvailable[2].midi,'the next descending 6s + 5s cell begins one string pair lower');
   const ascendingAvailable=[...descendingAvailable].reverse();
   const ascendingFiveFour=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'lesson54'});
   assert.deepEqual(ascendingFiveFour[0].notes.map(note=>note.midi),[...ascendingAvailable.slice(0,5),...ascendingAvailable.slice(2,6)].map(note=>note.midi),'ascending 5s + 4s matches the source TAB: five notes, then four from the next string pair');
