@@ -19,7 +19,7 @@ test('tap tempo, shortcuts and beat accents work without losing keyboard focus',
   await page.reload();await expect(page.locator('[data-tempo="137"]')).toBeVisible();
 });
 
-test('pulse sound, swing, gaps, timer and polyrhythm round-trip through presets',async({page})=>{
+for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivisions round-trip through presets`,async({page})=>{
   await page.goto('/');
   await page.getByText('Click sound & swing',{exact:true}).click();
   await page.locator('#pulse-sound').selectOption('wood');
@@ -33,15 +33,19 @@ test('pulse sound, swing, gaps, timer and polyrhythm round-trip through presets'
   await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
   await page.locator('[data-pulse-beat="1"]').click();
+  await page.locator('#subdivision').selectOption(String(subdivision));
+  await expect(page.locator('#pulse-swing')).toBeDisabled();
   await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-name').fill('Pulse tools');await page.locator('#preset-save').click();
   await page.locator('[data-workspace-target="pulse-title"]').click();
+  await page.locator('#subdivision').selectOption('1');
   await page.locator('#pulse-sound').selectOption('beep');await page.locator('#pulse-poly').selectOption('0/2');
   await page.locator('#pulse-accent-reset').click();
   await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-load').click();
   await page.locator('[data-workspace-target="pulse-title"]').click();
   await expect(page.locator('#pulse-sound')).toHaveValue('wood');
+  await expect(page.locator('#subdivision')).toHaveValue(String(subdivision));
   await expect(page.locator('#pulse-swing')).toHaveValue('100');
   await expect(page.locator('#pulse-poly')).toHaveValue('3/2');
   await expect(page.locator('#pulse-minutes')).toHaveValue('10');

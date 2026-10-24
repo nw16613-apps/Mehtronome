@@ -62,8 +62,9 @@ from a single sample clock, with smooth volume changes. It includes:
   degree labels in the guitar diagrams. Mode suggestions use seventh chords,
   retaining colour extensions for Dorian, Lydian and other distinctive modes.
 - 30–240 BPM, optional downbeat accent, 3–7 beats/bar, and a one-bar count-in.
-- Quarter notes, eighth notes, eighth-note triplets, sixteenth notes, and
-  sixteenth-note sextuplets, all locked to the same audio sample clock.
+- Quarter notes, eighth notes, eighth-note triplets, sixteenth notes, quintuplets
+  (five evenly spaced clicks per beat), sixteenth-note sextuplets, and septuplets
+  (seven per beat), all locked to the same audio sample clock.
   Subdivision clicks are softer; turning off beat-one accent makes every main
   beat identical, including during count-in.
 - All twelve keys and 21 modes, grouped by major, melodic minor, and harmonic

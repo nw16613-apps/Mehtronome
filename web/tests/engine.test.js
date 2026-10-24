@@ -70,14 +70,14 @@ test('tempo changes preserve beat position and reset restores count-in', () => {
 });
 
 test('all subdivision grids produce clicks at exact sample positions', () => {
-  for (const subdivision of [1,2,3,4,6]) {
+  for (const subdivision of [1,2,3,4,5,6,7]) {
     const engine = new Engine(12000);
     engine.configure({bpm:120, subdivision, harmony:0, accent:false});
     engine.reset();
     const output = new Float32Array(24000);
     engine.render(output);
-    const spacing = 6000 / subdivision;
-    for (let onset = 6000; onset < output.length; onset += spacing) {
+    for (let grid = subdivision; grid < subdivision*4; grid++) {
+      const onset = Math.ceil(grid*6000/subdivision);
       const window = output.subarray(onset + 1, onset + 100);
       assert.ok(window.some(sample => Math.abs(sample) > .03), `missing subdivision ${subdivision} at ${onset}`);
       assert.equal(output[onset - 100], 0);
@@ -100,10 +100,10 @@ test('unaccented downbeats have exactly the same click as other beats', () => {
   assert.notDeepEqual(output.slice(18000,18600), output.slice(24000,24600));
 });
 
-test('sextuplets stay synchronized across callback boundaries at awkward tempos', () => {
+for(const subdivision of [5,6,7])test(`${subdivision}-note subdivisions stay synchronized across callback boundaries at awkward tempos`, () => {
   const whole = new Engine();
   const chunked = new Engine();
-  for (const engine of [whole, chunked]) { engine.configure({bpm:137, subdivision:6}); engine.reset(); }
+  for (const engine of [whole, chunked]) { engine.configure({bpm:137, subdivision}); engine.reset(); }
   const expected = new Float32Array(150000);
   const actual = new Float32Array(150000);
   whole.render(expected);
