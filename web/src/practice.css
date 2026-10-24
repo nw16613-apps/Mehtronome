@@ -467,6 +467,7 @@ body[data-workspace=harmony] .workspace-harmony,
 body[data-workspace=guitar] .workspace-guitar,
 body[data-workspace=exercises] .workspace-exercises { display:block; }
 body:not([data-workspace=practice]) :is(.intro,.presets,.workspace-mixer-panel) { display:none; }
+.workspace>.transport.workspace-practice,
 .workspace>.workspace-harmony,
 .workspace>.workspace-guitar,
 .workspace>.workspace-exercises,
