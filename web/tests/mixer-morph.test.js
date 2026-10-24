@@ -67,3 +67,14 @@ test('mutes and evolving extensions remain independent of callback block sizes',
   for(let start=0;start<actual.length;start+=127)actual.set(render(chunked,Math.min(127,actual.length-start)).audio,start);
   assert.deepEqual(actual,expected);
 });
+
+test('polyrhythm has comparable onset energy to the main click at a shared level',()=>{
+  const onsetEnergy=settings=>{
+    const state=new Engine(48000);state.configure({bpm:120,countIn:false,click:1,harmony:0,...settings});state.reset();
+    const audio=new Float32Array(1920);state.render(audio);
+    return Math.sqrt(audio.reduce((sum,sample)=>sum+sample*sample,0)/audio.length);
+  };
+  const main=onsetEnergy({polyBeats:0});
+  const poly=onsetEnergy({polyBeats:3,beatAccents:'0000'});
+  assert.ok(poly/main>.7&&poly/main<1.1,`polyrhythm/main onset ratio: ${poly/main}`);
+});

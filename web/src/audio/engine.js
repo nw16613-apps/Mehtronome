@@ -616,7 +616,7 @@ export class Engine {
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
-      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*(click*this.clickStrength + .45*polyClick));
+      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*(click*this.clickStrength + 1.4*polyClick));
       // Give transients and bass fundamentals a little room against the pad.
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.

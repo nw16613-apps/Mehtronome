@@ -339,3 +339,5 @@ machine, GUI checks can use `QT_QPA_PLATFORM=offscreen`; actual audio playback a
 macOS window behavior require a local desktop check.
 
 The sixth workspace, Sound Settings, holds backing styles, instrument tones, sustained-pad shaping and melodic sequence settings. Metronome & Mixer keeps vertical channel faders, instrument enable switches and non-destructive mute/solo controls. Multiple solos can be combined; ambience stays available, and Clear solos restores the mix. Solos are temporary and clear when loading a preset.
+
+Metronome click timbres live in Sound Settings; eighth-note swing stays with the rhythm controls. Polyrhythm uses the shared Metronome level with a fixed balance alongside the main pulse.

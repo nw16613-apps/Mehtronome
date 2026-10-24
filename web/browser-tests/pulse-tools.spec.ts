@@ -21,8 +21,10 @@ test('tap tempo, shortcuts and beat accents work without losing keyboard focus',
 
 for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivisions round-trip through presets`,async({page})=>{
   await page.goto('/');
-  await page.getByText('Click sound & swing',{exact:true}).click();
-  await page.locator('#pulse-sound').selectOption('wood');
+  await page.getByText('Swing',{exact:true}).click();
+  await page.locator('[data-workspace-target="sound-settings-title"]').click();
+  await expect(page.locator('#pulse-sound')).toBeVisible();await page.locator('#pulse-sound').selectOption('wood');
+  await page.locator('[data-workspace-target="pulse-title"]').click();
   await expect(page.locator('#pulse-swing')).toBeDisabled();
   await page.locator('#subdivision').selectOption('2');
   await page.locator('#pulse-swing').fill('100');await page.locator('#pulse-swing').dispatchEvent('input');
@@ -39,7 +41,8 @@ for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivi
   await page.locator('#preset-name').fill('Pulse tools');await page.locator('#preset-save').click();
   await page.locator('[data-workspace-target="pulse-title"]').click();
   await page.locator('#subdivision').selectOption('1');
-  await page.locator('#pulse-sound').selectOption('beep');await page.locator('#pulse-poly').selectOption('0/2');
+  await page.locator('[data-workspace-target="sound-settings-title"]').click();await page.locator('#pulse-sound').selectOption('beep');
+  await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#pulse-poly').selectOption('0/2');
   await page.locator('#pulse-accent-reset').click();
   await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-load').click();
@@ -80,7 +83,7 @@ test('timer completes on the audio clock and large display follows playback',asy
 
 for(const width of [1440,390])test(`pulse tools fit at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
-  for(const summary of ['Click sound & swing','Practice timer','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
+  for(const summary of ['Swing','Practice timer','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();
   const geometry=await page.locator('.transport').evaluate(element=>({
     fullWidth:Math.abs(element.getBoundingClientRect().width-document.querySelector('.workspace')!.getBoundingClientRect().width)<2,
@@ -113,7 +116,8 @@ test('Guitar and Exercises show the selected loop, chord scales and current play
 test('older presets reset new pulse tools to their original behavior',async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('mehtronome-practice-presets-v1',JSON.stringify({version:1,items:[{id:'legacy',name:'Earlier practice',progression:false,controls:{bpm:'96',beats:'4',accent:true}}]})));
   await page.goto('/');
-  await page.getByText('Click sound & swing',{exact:true}).click();await page.locator('#pulse-sound').selectOption('rim');
+  await page.locator('[data-workspace-target="sound-settings-title"]').click();await page.locator('#pulse-sound').selectOption('rim');
+  await page.locator('[data-workspace-target="pulse-title"]').click();
   await page.getByText('Practice timer',{exact:true}).click();await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();
