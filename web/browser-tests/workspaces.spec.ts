@@ -42,9 +42,9 @@ for(const width of [1280,390])test(`fretboard controls precede full-width diagra
   expect(layout).toEqual({controlsAbove:true,mapAbove:true,overviewAbove:true,fullWidth:true,overflow:false});
 });
 
-for(const width of [1440,390])test(`five workspaces keep each panel in its assigned tab at ${width}px`,async({page})=>{
+for(const width of [1440,390])test(`six workspaces keep each panel in its assigned tab at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/');
-  await expect(page.locator('.workspace-tab')).toHaveText(['01Metronome & Mixer','02Harmony','03Guitar','04Exercises','05Progress']);
+  await expect(page.locator('.workspace-tab')).toHaveText(['01Metronome & Mixer','02Harmony','03Guitar','04Exercises','05Progress','06Sound Settings']);
   await expect(page.locator('.transport')).toBeVisible();await expect(page.locator('#mix-panel')).toBeVisible();
   await expect(page.locator('.presets')).toBeHidden();await expect(page.locator('.practice-roadmap')).toBeHidden();await expect(page.locator('.notes')).toBeHidden();
   await page.locator('#mix-collapse').click();await expect(page.locator('#mix-sections')).toBeHidden();

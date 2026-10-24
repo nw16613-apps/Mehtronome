@@ -337,3 +337,5 @@ count-in, chord frequencies, tempo changes, note spelling, and UI playback contr
 The UI tests mock the audio device. On a headless Linux
 machine, GUI checks can use `QT_QPA_PLATFORM=offscreen`; actual audio playback and
 macOS window behavior require a local desktop check.
+
+The sixth workspace, Sound Settings, holds backing styles, instrument tones, sustained-pad shaping and melodic sequence settings. Metronome & Mixer keeps vertical channel faders, instrument enable switches and non-destructive mute/solo controls. Multiple solos can be combined; ambience stays available, and Clear solos restores the mix. Solos are temporary and clear when loading a preset.

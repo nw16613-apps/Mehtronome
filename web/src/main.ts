@@ -50,6 +50,7 @@ app.innerHTML = `
     <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Guitar</button>
     <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>04</span>Exercises</button>
     <button type="button" class="workspace-tab" data-workspace-target="progress-title"><span>05</span>Progress</button>
+    <button type="button" class="workspace-tab" data-workspace-target="sound-settings-title"><span>06</span>Sound Settings</button>
   </div>
 </nav>
 <main>
@@ -88,7 +89,7 @@ app.innerHTML = `
       <div class="field-row"><label><span id="root-label">Root note</span><select id="key">${names.map((n, i) => `<option value="${i}" ${i === 9 ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}" ${id==='horizon'?'selected':''}>${sound.name}</option>`).join('')}</select></label><label><span id="chord-label">Pedal chord</span><select id="chord"></select></label></div>
       <details class="chord-scale-explorer"><summary>Choose a chord first · find scales and modes</summary><div class="field-row chord-scale-controls"><label>Chord root<select id="scale-explorer-root">${names.map((name,index)=>`<option value="${index}" ${index===9?'selected':''}>${name}</option>`).join('')}</select></label><label>Chord quality<select id="scale-explorer-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}" ${id==='dom7'?'selected':''}>${chord.name}</option>`).join('')}</select></label></div><div class="scale-explorer-key"><span><i class="strict"></i>Contains every written chord tone</span><span><i class="contextual"></i>Contextual reinterpretation</span></div><div id="scale-explorer-results" class="scale-explorer-results"></div></details>
-      <details class="backing-shape"><summary>Shape the backing</summary><div class="field-row"><label>Movement<select id="pad-movement"><option value="still">Still</option><option value="evolving" selected>Evolving</option><option value="expansive">Expansive</option></select></label><label>Depth centre<select id="pad-depth"><option value="intimate">Intimate</option><option value="wide" selected>Wide</option><option value="epic">Epic</option></select></label><label>Depth motion<select id="pad-depth-motion"><option value="fixed">Fixed</option><option value="expansion">Slow expansion</option><option value="breathing" selected>Phrase breathing</option><option value="bloom">Bass bloom</option><option value="drift">Register drift</option></select></label><label>Brightness<select id="pad-brightness"><option value="dark">Dark</option><option value="balanced" selected>Balanced</option><option value="luminous">Luminous</option></select></label></div><label class="volume-label" for="pad-depth-amount">Depth movement <output id="pad-depth-amount-value">65%</output></label><input id="pad-depth-amount" type="range" min="0" max="100" value="65"><p class="practice-help">Depth motion gradually redistributes the voicing between its bass foundation, middle register and upper air.</p></details>
+
 
       <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox">Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Slowly add and release extensions from the current scale. The root and progression stay in place; this shapes the sustained harmony.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
       <p id="mode-tip" class="mode-tip"></p>
@@ -127,28 +128,17 @@ app.innerHTML = `
     </section>
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <div id="mix-sections" class="mix-sections">
-        <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
-          <div class="mix-level-grid">${MIX_CHANNELS.map(channel=>`<div class="mix-channel" data-mix-channel="${channel.id}"><div class="mix-channel-header"><label for="${channel.control}">${channel.label}</label><output id="${channel.output}">${channel.value}%</output><input id="mute-${channel.id}" type="checkbox" hidden><button type="button" class="channel-mute" data-mute-channel="${channel.id}" aria-label="Mute ${channel.label}" aria-pressed="false">Mute</button></div><input id="${channel.control}" type="range" min="0" max="100" value="${channel.value}" aria-describedby="mix-state-${channel.id}"><span id="mix-state-${channel.id}" class="mix-channel-state">On</span></div>`).join('')}</div>
+        <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
+          <div class="mix-level-grid">${MIX_CHANNELS.map(channel=>`<div class="mix-channel" data-mix-channel="${channel.id}"><div class="mix-channel-header"><label for="${channel.control}">${channel.label}</label><output id="${channel.output}">${channel.value}%</output><input id="mute-${channel.id}" type="checkbox" hidden><button type="button" class="channel-mute" data-mute-channel="${channel.id}" aria-label="Mute ${channel.label}" aria-pressed="false">Mute</button>${channel.id!=='space'?`<button type="button" class="channel-solo" data-solo-channel="${channel.id}" aria-label="Solo ${channel.label}" aria-pressed="false">Solo</button>`:''}</div><input id="${channel.control}" type="range" min="0" max="100" value="${channel.value}" aria-describedby="mix-state-${channel.id}"><span id="mix-state-${channel.id}" class="mix-channel-state">On</span></div>`).join('')}</div>
         </section>
-    <section class="rhythm mix-group" aria-labelledby="rhythm-title">
-      <div class="section-heading"><h3 id="rhythm-title">Backing ensemble</h3></div>
-      <div class="field-row rhythm-instruments">
-        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="drums" type="checkbox">Drums</label></div>
-        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="bass" type="checkbox">Bass</label></div>
-        <div class="rhythm-instrument"><label class="check rhythm-toggle"><input id="comping" type="checkbox">Electric piano</label></div>
-      </div>
-      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="comping-controls" hidden><label>Instrument tone<select id="comping-tone">${Object.entries(COMPING_TONES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Comping style<select id="comping-pattern">${Object.entries(COMPING_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Voice movement<select id="comping-movement">${Object.entries(COMPING_MOVEMENTS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Hook length<select id="comping-hook-length"><option value="2">2 notes</option><option value="3" selected>3 notes</option><option value="4">4 notes</option></select></label><label class="volume-label" for="comping-movement-amount">Movement <output id="comping-movement-amount-value">50%</output></label><input id="comping-movement-amount" type="range" min="0" max="100" value="50"></div></div><p class="practice-help">Drums, bass and electric piano follow the tempo and current harmony. Piano hooks repeat characteristic modal notes as deliberate ostinatos.</p></details>
-    </section>
-    <section class="sequence mix-group" aria-labelledby="sequence-title">
-      <div class="section-heading"><h3 id="sequence-title">Melodic movement</h3><label class="check"><input id="sequence" type="checkbox">Enable sequence</label></div>
-      <details id="sequence-details" class="mixer-details"><summary>Pattern & movement</summary><p id="sequence-help" class="sequence-help"></p><div id="sequence-controls" hidden>
+<div class="mixer-quick-switches" aria-label="Enable instruments"><label class="check"><input id="drums" type="checkbox">Drums</label><label class="check"><input id="bass" type="checkbox">Bass</label><label class="check"><input id="comping" type="checkbox">Electric piano</label><label class="check"><input id="sequence" type="checkbox">Melodic movement</label><button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
+    <section class="sound-settings panel workspace-page workspace-settings" aria-labelledby="sound-settings-title"><div class="section-heading"><div><p class="eyebrow">SHAPE YOUR SOUND</p><h2 id="sound-settings-title">Sound Settings</h2></div></div><p class="practice-help">Choose instrument styles and movement here. Enable instruments and balance their levels in Metronome &amp; Mixer.</p><section class="pad-settings"><h3>Sustained harmony</h3>      <details class="backing-shape"><summary>Shape the backing</summary><div class="field-row"><label>Movement<select id="pad-movement"><option value="still">Still</option><option value="evolving" selected>Evolving</option><option value="expansive">Expansive</option></select></label><label>Depth centre<select id="pad-depth"><option value="intimate">Intimate</option><option value="wide" selected>Wide</option><option value="epic">Epic</option></select></label><label>Depth motion<select id="pad-depth-motion"><option value="fixed">Fixed</option><option value="expansion">Slow expansion</option><option value="breathing" selected>Phrase breathing</option><option value="bloom">Bass bloom</option><option value="drift">Register drift</option></select></label><label>Brightness<select id="pad-brightness"><option value="dark">Dark</option><option value="balanced" selected>Balanced</option><option value="luminous">Luminous</option></select></label></div><label class="volume-label" for="pad-depth-amount">Depth movement <output id="pad-depth-amount-value">65%</output></label><input id="pad-depth-amount" type="range" min="0" max="100" value="65"><p class="practice-help">Depth motion gradually redistributes the voicing between its bass foundation, middle register and upper air.</p></details></section><div class="sound-settings-grid"><section class="rhythm mix-group"><h3 id="rhythm-title">Backing ensemble</h3>      <details id="rhythm-details" class="mixer-details"><summary>Styles & patterns</summary><div class="field-row"><div id="drums-controls" hidden><label>Drum style<select id="drum-groove">${Object.entries(DRUM_GROOVES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="bass-controls" hidden><label>Bass style<select id="bass-pattern">${Object.entries(BASS_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div><div id="comping-controls" hidden><label>Instrument tone<select id="comping-tone">${Object.entries(COMPING_TONES).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Comping style<select id="comping-pattern">${Object.entries(COMPING_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Voice movement<select id="comping-movement">${Object.entries(COMPING_MOVEMENTS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label><label>Hook length<select id="comping-hook-length"><option value="2">2 notes</option><option value="3" selected>3 notes</option><option value="4">4 notes</option></select></label><label class="volume-label" for="comping-movement-amount">Movement <output id="comping-movement-amount-value">50%</output></label><input id="comping-movement-amount" type="range" min="0" max="100" value="50"></div></div><p class="practice-help">Drums, bass and electric piano follow the tempo and current harmony. Piano hooks repeat characteristic modal notes as deliberate ostinatos.</p></details>
+</section><section class="sequence mix-group"><h3 id="sequence-title">Melodic movement</h3>      <details id="sequence-details" class="mixer-details"><summary>Pattern & movement</summary><p id="sequence-help" class="sequence-help"></p><div id="sequence-controls" hidden>
         <div class="field-row"><label>Musical role<select id="sequence-role">${Object.entries(SEQUENCE_ROLES).map(([id,role])=>`<option value="${id}">${role.name}</option>`).join('')}</select></label><label>Phrase<select id="sequence-phrase"><option value="2">2 bars</option><option value="4" selected>4 bars</option><option value="8">8 bars</option></select></label><label>Development<select id="sequence-development">${Object.entries(SEQUENCE_DEVELOPMENTS).map(([id,name])=>`<option value="${id}"${id==='subtle'?' selected':''}>${name}</option>`).join('')}</select></label><label>Rhythmic relationship<select id="sequence-interaction">${Object.entries(SEQUENCE_INTERACTIONS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label></div>
         <div id="sequence-pattern-library" class="field-row" hidden><label>Note source<select id="sequence-source">${Object.entries(SEQUENCE_SOURCES).map(([id,source])=>`<option value="${id}">${source.name}</option>`).join('')}</select></label><label>Pattern<select id="sequence-pattern">${sequencePatternOptions()}</select></label></div><div class="field-row"><label>Timing<select id="sequence-rate"><option value="2">Eighth notes</option><option value="4">Sixteenth notes</option><option value="3">Eighth-note triplets</option></select></label><label>Register<select id="sequence-register"><option value="0">Low</option><option value="12" selected>Middle</option><option value="24">High</option></select></label></div>
         <div class="sequence-sliders"><label class="volume-label" for="sequence-density">Activity <output id="sequence-density-value">50%</output></label><input id="sequence-density" type="range" min="0" max="100" value="50"><label class="volume-label" for="sequence-swing">Swing <output id="sequence-swing-value">0%</output></label><input id="sequence-swing" type="range" min="0" max="60" value="0"></div>
       </div></details>
-    </section>
-      </div>
-    </section>
+</section></div></section>
     <section class="practice-roadmap panel workspace-page workspace-progress" aria-labelledby="practice-roadmap-title">
       <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h2 id="practice-roadmap-title">Learning path</h2><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
       <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
@@ -666,7 +656,7 @@ function update() {
   settings.compingVolume=Number(input('comping-volume').value)/100;
   el('comping-movement-amount-value').textContent=`${input('comping-movement-amount').value}%`;
   for(const name of ['drums','bass','comping']) {
-    el(`${name}-controls`).hidden=!input(name).checked;
+    el(`${name}-controls`).hidden=false;
     el(`${name}-volume-value`).textContent=`${input(`${name}-volume`).value}%`;
   }
   settings.sequence = input('sequence').checked;
@@ -685,7 +675,7 @@ function update() {
   settings.sequenceSwing = Number(input('sequence-swing').value)/100;
   settings.sequenceDensity = Number(input('sequence-density').value)/100;
   settings.sequenceVolume = Number(input('sequence-volume').value)/100;
-  el('sequence-controls').hidden = !settings.sequence;
+  el('sequence-controls').hidden = false;
   input('sequence-swing').disabled = settings.sequenceRate===3;
   for(const name of ['density','swing','volume']) el(`sequence-${name}-value`).textContent = `${input(`sequence-${name}`).value}%`;
   if(settings.sequenceRate===3) el('sequence-swing-value').textContent='Straight triplets';
@@ -747,7 +737,7 @@ function update() {
   el('harmony-value').textContent = `${Math.round(settings.harmony * 100)}%`;
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
-  settings.mutedChannels=MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked).map(channel=>channel.id).join(',');
+  settings.mutedChannels=mixerMuteMask();
   reflectMixerChannels();
   node?.port.postMessage({ type: 'settings', settings });
   syncMixerDetails();
@@ -1253,29 +1243,38 @@ async function toggle() {
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 
+const soloChannels=new Set<string>();
+function mixerMuteMask(){return MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked||(soloChannels.size>0&&channel.id!=='space'&&!soloChannels.has(channel.id))).map(channel=>channel.id).join(',');}
 function reflectMixerChannels(){
   let mutedCount=0;
   for(const channel of MIX_CHANNELS){
     const muted=input('mute-'+channel.id).checked;
     const enabled=channel.id==='poly'?settings.polyBeats>0:['drums','bass','comping','sequence'].includes(channel.id)?input(channel.id).checked:true;
     const card=document.querySelector<HTMLElement>(`[data-mix-channel="${channel.id}"]`)!;
+    const solo=soloChannels.has(channel.id), excluded=soloChannels.size>0&&channel.id!=='space'&&!solo;
+    card.classList.toggle('is-solo',solo);card.classList.toggle('is-excluded',excluded);
+    card.querySelector('.channel-solo')?.setAttribute('aria-pressed',String(solo));
     card.classList.toggle('is-muted',muted);card.classList.toggle('is-inactive',!enabled);
     const button=card.querySelector<HTMLButtonElement>('.channel-mute')!;
     button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',`${muted?'Unmute':'Mute'} ${channel.label}`);
     button.textContent=muted?'Muted':'Mute';
-    el('mix-state-'+channel.id).textContent=!enabled?(muted?'Off · muted':'Off'):muted?'Muted':'On';
+    el('mix-state-'+channel.id).textContent=!enabled?(muted?'Off · muted':'Off'):muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
     if(muted)mutedCount++;
   }
   el<HTMLButtonElement>('mixer-unmute-all').disabled=mutedCount===0;
+  el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
 function applyMixerMutes(){
-  settings.mutedChannels=MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked).map(channel=>channel.id).join(',');
+  settings.mutedChannels=mixerMuteMask();
   node?.port.postMessage({type:'settings',settings});updateSpace();reflectMixerChannels();
 }
 el('mix-panel').addEventListener('click',event=>{
+  const solo=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-solo-channel]');
+  if(solo){const id=solo.dataset.soloChannel!;if(soloChannels.has(id))soloChannels.delete(id);else soloChannels.add(id);applyMixerMutes();return;}
   const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-mute-channel]');if(!button)return;
   const control=input('mute-'+button.dataset.muteChannel);control.checked=!control.checked;applyMixerMutes();
 });
+el('mixer-clear-solos').addEventListener('click',()=>{soloChannels.clear();applyMixerMutes();});
 el('mixer-unmute-all').addEventListener('click',()=>{for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=false;applyMixerMutes();});
 let pulseTaps:number[]=[];
 function tapTempo(){
@@ -1504,8 +1503,9 @@ function setFocusView(value:boolean) {
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
+el('open-sound-settings').addEventListener('click',()=>showWorkspace('settings','sound-settings-title'));
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
-const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress'};
+const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress','sound-settings-title':'settings'};
 function selectWorkspaceTab(target:string) {
   for(const tab of workspaceTabs){
     const selected=tab.dataset.workspaceTarget===target;
@@ -1677,6 +1677,7 @@ el('preset-load').addEventListener('click',async()=>{
   reflectPresetButtons();
   try {
     stopPreview();
+    soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
     for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','pulse-poly-volume':'45','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all'})) {

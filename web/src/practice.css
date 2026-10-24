@@ -596,3 +596,40 @@ body[data-workspace=progress] .intro { display:flex; }
 @media(max-width:1100px) { .mode-harmony-map { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media(max-width:600px) { .mode-harmony-map { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 10px; } }
 html[data-theme=dark] .notes { --map-field:var(--field,#24372e); --map-ink:var(--ink,#e2e9dd); --map-muted:var(--muted,#b4c5a5); --map-line:var(--line,#3e5140); --map-accent:var(--accent,#e4b98a); }
+
+/* Console faders and a separate sound-design workspace. */
+body[data-workspace=settings] .workspace-settings { display:block; }
+.mix-sections { display:block; }
+.mix-level-grid { grid-template-columns:repeat(8,minmax(0,1fr)); gap:10px; }
+.mix-channel { display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 8px; }
+.mix-channel-header { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; width:100%; }
+.mix-channel-header label { flex:0 0 100%; text-align:center; min-height:32px; }
+.mix-channel-header output { flex:0 0 100%; text-align:center; margin-bottom:6px; }
+.mix-channel>input[type=range] { writing-mode:vertical-lr; direction:rtl; width:44px; height:210px; margin:0; cursor:ns-resize; accent-color:var(--accent,#c96e47); }
+.mix-channel[data-mix-channel=space] { border-left-width:3px; }
+.channel-solo { min-height:40px; padding:6px 8px; border:1px solid var(--line,#899b83); border-radius:6px; background:var(--panel,#fcfcf8); color:var(--ink,#243535); font-size:10px; }
+.channel-solo[aria-pressed=true] { background:var(--accent,#c96e47); color:var(--on-accent,#fff); }
+.mix-channel.is-excluded>input { opacity:.35; }
+.mix-channel.is-solo { border-color:var(--accent,#c96e47); }
+.mixer-quick-switches { display:flex; flex-wrap:wrap; align-items:center; gap:20px; margin-top:24px; padding-top:20px; border-top:1px solid var(--line,#899b83); }
+.sound-settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:28px; }
+.sound-settings .field-row { flex-wrap:wrap; gap:16px; }
+.sound-settings .field-row>div { flex:1 1 180px; }
+.sound-settings label:not(.check) { display:grid; gap:8px; margin-top:12px; font-size:12px; }
+.sound-settings select { width:100%; min-height:44px; padding:8px; background:var(--field,#f1f3ed); color:var(--ink,#243535); border:1px solid var(--line,#899b83); border-radius:6px; }
+.sound-settings details { margin-top:16px; }
+.sound-settings .pad-settings { margin-top:24px; }
+@media(max-width:1100px) { .mix-level-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:600px) { .mix-level-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .sound-settings-grid { grid-template-columns:1fr; } .levels-heading { flex-wrap:wrap; } }
+.sound-settings { grid-column:1/-1; }
+.sound-settings .mix-group { grid-column:auto; grid-row:auto; min-width:0; border:0; padding:0; }
+.sound-settings .field-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.sound-settings .rhythm .field-row { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:760px) { .sound-settings .rhythm .field-row,.sound-settings .field-row { grid-template-columns:1fr; } }
+html[data-theme=dark] :is(.mix,.sound-settings) { --ink:#e2e9dd; --muted:#b4c2af; --field:#253a34; --panel:#24372e; --line:#4a5e4e; --accent:#91ae72; --on-accent:#14291f; }
+.mix-channel>input[type=range] { appearance:none; background:transparent; }
+.mix-channel>input[type=range]::-webkit-slider-runnable-track { width:5px; height:100%; background:var(--line,#899b83); border-radius:3px; }
+.mix-channel>input[type=range]::-webkit-slider-thumb { appearance:none; width:32px; height:18px; margin-left:-13px; border:1px solid var(--ink,#243535); border-radius:3px; background:linear-gradient(to bottom,var(--panel,#fcfcf8) 44%,var(--accent,#c96e47) 44% 56%,var(--panel,#fcfcf8) 56%); box-shadow:0 2px 4px #0003; }
+.mix-channel>input[type=range]::-moz-range-track { width:5px; background:var(--line,#899b83); }
+.mix-channel>input[type=range]::-moz-range-thumb { width:32px; height:18px; border-radius:3px; background:var(--panel,#fcfcf8); border:1px solid var(--ink,#243535); }
+.mix-channel>input[type=range]:focus-visible { outline:2px solid var(--accent,#c96e47); outline-offset:4px; border-radius:4px; }

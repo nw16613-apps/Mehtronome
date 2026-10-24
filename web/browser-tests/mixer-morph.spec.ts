@@ -1,12 +1,12 @@
 import {expect,test} from '@playwright/test';
 
-for(const [width,columns] of [[1440,4],[900,2],[390,1]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
+for(const [width,columns] of [[1440,8],[900,4],[390,2]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
   await expect(page.locator('.mix-level-grid .mix-channel')).toHaveCount(8);
   const layout=await page.locator('.mix-level-grid').evaluate(element=>{
     const boxes=Array.from(element.children).map(child=>child.getBoundingClientRect());
-    const groups=Array.from(document.querySelectorAll('.mix-group')).map(group=>group.getBoundingClientRect());
-    return {columns:new Set(boxes.map(box=>Math.round(box.left))).size,overflow:document.documentElement.scrollWidth>innerWidth+1,settingsBelow:groups.slice(1).every(box=>box.top>=groups[0].bottom)};
+
+    return {columns:new Set(boxes.map(box=>Math.round(box.left))).size,overflow:document.documentElement.scrollWidth>innerWidth+1,settingsBelow:!document.querySelector('#mix-panel #drum-groove')};
   });
   expect(layout).toEqual({columns,overflow:false,settingsBelow:true});
   const drums=page.locator('[data-mix-channel="drums"]');
@@ -71,4 +71,15 @@ test('old presets clear mutes and extension morph instead of inheriting a prior 
   await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-list').selectOption('old');await page.locator('#preset-load').click();
   await page.locator('[data-workspace-target="harmony-title"]').click();await expect(page.locator('#extension-morph')).not.toBeChecked();
   await page.locator('[data-workspace-target="pulse-title"]').click();await expect(page.locator('[data-mute-channel="click"]')).toHaveAttribute('aria-pressed','false');
+});
+
+test('solo preserves mutes and sound settings have their own workspace',async({page})=>{
+ await page.goto('/');await page.locator('[data-mute-channel="bass"]').click();await page.locator('[data-solo-channel="click"]').click();
+ await expect(page.locator('[data-mix-channel="harmony"] .mix-channel-state')).toHaveText('Solo muted');
+ await page.locator('#open-sound-settings').click();await expect(page.locator('#sound-settings-title')).toBeVisible();await expect(page.locator('#mix-panel')).toBeHidden();
+ await page.locator('.backing-shape summary').click();await page.locator('#pad-brightness').selectOption('dark');
+ await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#mixer-clear-solos').click();
+ await expect(page.locator('[data-mute-channel="bass"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-workspace-target="sound-settings-title"]').click();await expect(page.locator('#pad-brightness')).toHaveValue('dark');
+ await page.reload();await expect(page.locator('#sound-settings-title')).toBeVisible();
 });
