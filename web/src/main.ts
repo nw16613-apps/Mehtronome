@@ -17,6 +17,7 @@ import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
+import { scaleChoicesForChord } from './practice/scale-explorer.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -73,6 +74,7 @@ app.innerHTML = `
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
       <div class="field-row"><label><span id="root-label">Root note</span><select id="key">${names.map((n, i) => `<option value="${i}" ${i === 9 ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label>Backing sound<select id="sound">${Object.entries(SOUNDS).map(([id, sound]) => `<option value="${id}" ${id==='horizon'?'selected':''}>${sound.name}</option>`).join('')}</select></label><label><span id="chord-label">Pedal chord</span><select id="chord"></select></label></div>
+      <details class="chord-scale-explorer"><summary>Choose a chord first · find scales and modes</summary><div class="field-row chord-scale-controls"><label>Chord root<select id="scale-explorer-root">${names.map((name,index)=>`<option value="${index}" ${index===9?'selected':''}>${name}</option>`).join('')}</select></label><label>Chord quality<select id="scale-explorer-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}" ${id==='dom7'?'selected':''}>${chord.name}</option>`).join('')}</select></label></div><div class="scale-explorer-key"><span><i class="strict"></i>Contains every written chord tone</span><span><i class="contextual"></i>Contextual reinterpretation</span></div><div id="scale-explorer-results" class="scale-explorer-results"></div></details>
       <details class="backing-shape"><summary>Shape the backing</summary><div class="field-row"><label>Movement<select id="pad-movement"><option value="still">Still</option><option value="evolving" selected>Evolving</option><option value="expansive">Expansive</option></select></label><label>Depth centre<select id="pad-depth"><option value="intimate">Intimate</option><option value="wide" selected>Wide</option><option value="epic">Epic</option></select></label><label>Depth motion<select id="pad-depth-motion"><option value="fixed">Fixed</option><option value="expansion">Slow expansion</option><option value="breathing" selected>Phrase breathing</option><option value="bloom">Bass bloom</option><option value="drift">Register drift</option></select></label><label>Brightness<select id="pad-brightness"><option value="dark">Dark</option><option value="balanced" selected>Balanced</option><option value="luminous">Luminous</option></select></label></div><label class="volume-label" for="pad-depth-amount">Depth movement <output id="pad-depth-amount-value">65%</output></label><input id="pad-depth-amount" type="range" min="0" max="100" value="65"><p class="practice-help">Depth motion gradually redistributes the voicing between its bass foundation, middle register and upper air.</p></details>
 
       <p id="mode-tip" class="mode-tip"></p>
@@ -403,6 +405,12 @@ function renderPracticeRoadmap(info:any){
     const value=modeProgress(practiceProgress,root,id),modePercent=Math.round(value/PRACTICE_TASKS.length*100);
     return `<div class="practice-mode-status${id===info.mode?' current':''}"><span>${escapeHtml(item.name)}</span><i><b style="width:${modePercent}%"></b></i><strong>${modePercent}%</strong></div>`;
   }).join('');
+}
+
+function renderScaleExplorer(){
+  const root=names[Number(select('scale-explorer-root').value)],chordId=select('scale-explorer-chord').value,chord=CHORDS[chordId as keyof typeof CHORDS];
+  const choices=scaleChoicesForChord(chordId);
+  el('scale-explorer-results').innerHTML=choices.length?choices.map((choice:any)=>`<article class="scale-choice ${choice.strict?'strict':'contextual'}"><div><span>${choice.category}</span><h4>${escapeHtml(root)} ${escapeHtml(choice.name)}</h4><small>${escapeHtml(choice.family)} · over ${escapeHtml(root)}${escapeHtml(chord.symbol)}</small></div><p>${escapeHtml(choice.explanation)}</p><button type="button" class="practice-button" data-scale-choice="${choice.id}" data-scale-chord="${choice.targetChord}">${choice.strict?'Use this mode':'Use as altered dominant'}</button></article>`).join(''):'<p class="practice-help">No mode in the current library contains every written chord tone.</p>';
 }
 
 function renderGuitar() {
@@ -896,6 +904,19 @@ el('practice-roadmap-reset').addEventListener('click',()=>{
   const info=chordInfo(step),key=curriculumKey(practiceContext(info));
   delete practiceProgress[key];savePracticeProgress();renderPracticeRoadmap(info);
 });
+for(const id of ['scale-explorer-root','scale-explorer-chord'])select(id).addEventListener('input',renderScaleExplorer);
+el('scale-explorer-results').addEventListener('click',event=>{
+  const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('[data-scale-choice]'):null;
+  if(!button)return;
+  stopPreview();settings.progression=false;step=0;
+  select('key').value=select('scale-explorer-root').value;
+  select('quality').value=button.dataset.scaleChoice||'major';
+  for(const id of ['pedal','progression']){const selected=id==='pedal';el(id).classList.toggle('selected',selected);el(id).setAttribute('aria-pressed',String(selected));}
+  fillChords();
+  const target=button.dataset.scaleChord||'';
+  if(Array.from(select('chord').options).some(option=>option.value===target))select('chord').value=target;
+  update();
+});
 function selectFullFretboardRegion(target:EventTarget|null){
   const region=target instanceof Element?target.closest<SVGGElement>('[data-full-position]'):null;
   if(region)chooseOverviewPosition(region.dataset.fullPosition||'I');
@@ -1387,6 +1408,7 @@ async function previewComparison(slot:'a'|'b') {
 }
 el('compare-swap').addEventListener('click',()=>void previewComparison(activeComparison==='a'?'b':'a'));
 fillChords();
+renderScaleExplorer();
 update();
 
 function reflectTheme() {
