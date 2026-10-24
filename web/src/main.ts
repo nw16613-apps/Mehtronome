@@ -118,7 +118,14 @@ app.innerHTML = `
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
-    <section class="notes panel workspace-page workspace-harmony" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p><section class="diatonic-sevenths" aria-labelledby="seventh-chords-title"><div class="seventh-chords-heading"><h3 id="seventh-chords-title">Seventh chords of this mode</h3><span id="seventh-chords-context"></span></div><p class="seventh-chords-help">Stack alternate scale notes from each degree: root, third, fifth and seventh. The current chord root is highlighted.</p><ol id="seventh-chord-list" class="seventh-chord-list"></ol></section></section>
+    <section class="notes panel workspace-page workspace-harmony" aria-labelledby="notes-title">
+      <div class="section-heading"><div><h2 id="notes-title">Under your fingers</h2><p id="seventh-chords-context" class="mode-map-context"></p></div><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div>
+      <label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p>
+      <p class="mode-map-guide">Read down: scale note &amp; degree → seventh chord → its four chord tones.</p>
+      <div id="arpeggio-notes" class="arpeggio-notes" hidden></div>
+      <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
+      <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
+    </section>
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
@@ -371,7 +378,6 @@ async function toggleExercisePreview() {
   }catch(error){stopExercisePreview();el('error').textContent=error instanceof Error?error.message:'Could not preview this exercise.';el('error').hidden=false;}
 }
 
-function notes(): string[] { return harmonyAt(settings, step).scaleNames; }
 function chordInfo(index: number) { return harmonyAt(settings, index); }
 function renderProgressionReference(activeStep=step) {
   const template=progressionDefinition(settings),durations=progressionDurations(settings);
@@ -422,15 +428,25 @@ function renderMusic() {
   el('characteristic-notes').textContent = `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} colour notes: ${colour.map((n: any)=>`${n.name} (${n.degree})`).join(' · ')}. Listen to their character against the chord.`;
   el('characteristic-legend').hidden = !highlight;
   const arpeggio = select('exercise').value === 'arpeggio';
-  const displayed = arpeggio ? info.tones : notes();
-  el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''} ${highlight && colour.some((c: any)=>c.pc === (arpeggio ? info.chordPcs[i] : info.scalePcs[i])) ? 'characteristic' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
-  el('exercise-description').textContent = arpeggio ? 'Intervals are measured from the current chord root. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}. Follow the scale guide through the harmony.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
   const modeDegrees=MODES[info.mode as keyof typeof MODES].degrees;
   el('seventh-chords-context').textContent=`${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
-  el('seventh-chord-list').innerHTML=harmonizedSevenths(info).map(chord=>{
+  el('arpeggio-notes').hidden=!arpeggio;
+  el('arpeggio-notes').innerHTML=arpeggio?`<span class="arpeggio-caption">Current arpeggio</span>${info.tones.map((note:string,index:number)=>`<span class="arpeggio-tone"><strong>${escapeHtml(note)}</strong><small>${escapeHtml(info.intervals[index])}</small></span>`).join('')}`:'';
+  el('note-list').classList.toggle('arpeggio-view',arpeggio);
+  el('note-list').innerHTML=harmonizedSevenths(info).map(chord=>{
     const current=chord.root===info.midi[0]%12;
-    return `<li class="mode-seventh${current?' current-root':''}" data-scale-degree="${chord.degree}" ${current?'aria-current="true"':''}><span class="seventh-degree">Degree ${escapeHtml(modeDegrees[chord.degree-1])}</span><h4 title="${escapeHtml(chord.quality)}" aria-label="${escapeHtml(chord.rootName+' '+chord.quality)}">${escapeHtml(chord.symbol)}</h4><p class="seventh-tones">${chord.notes.map(escapeHtml).join(' · ')}</p></li>`;
+    const chordTone=info.chordPcs.includes(chord.root);
+    const characteristic=highlight&&colour.some((note:any)=>note.pc===chord.root)&&(!arpeggio||chordTone);
+    const roles=['Root','3rd','5th','7th'];
+    return `<li class="mode-seventh degree-stack${current?' current-root':''}${arpeggio&&!chordTone?' outside-arpeggio':''}" data-scale-degree="${chord.degree}" ${current?'aria-current="true"':''}>
+      <div class="note scale-note${chordTone?' chord-tone':''}${characteristic?' characteristic':''}"><strong>${escapeHtml(chord.rootName)}</strong><small>Degree ${escapeHtml(modeDegrees[chord.degree-1])}</small></div>
+      <span class="degree-link" aria-hidden="true"></span>
+      <div class="seventh-layer"><span class="seventh-label">Seventh chord</span><h4 title="${escapeHtml(chord.quality)}" aria-label="${escapeHtml(chord.rootName+' '+chord.quality)}">${escapeHtml(chord.symbol)}</h4>
+        <div class="seventh-tones" aria-label="Chord tones: ${escapeHtml(chord.notes.join(', '))}">${chord.notes.map((note,index)=>`<span class="chord-component"><strong class="chord-tone-note">${escapeHtml(note)}</strong><small>${roles[index]}</small></span>`).join('')}</div>
+      </div>
+    </li>`;
   }).join('');
+  el('exercise-description').textContent=arpeggio?'Play the current arpeggio above. Its intervals are measured from the current chord root; other scale notes are dimmed in the map. The outlined chord marks the current root.':'Filled note boxes belong to the current chord; dashed rings mark modal colour notes. Each seventh chord stacks alternate notes of this mode; the outlined chord marks the current root.';
 
   const extensions=extensionChoices(info);
   el('extension-status').textContent=extensions.length?`Scale colours: ${extensions.map(choice=>choice.label).join(' · ')} · ${settings.extensionBars}-bar blend cycle`:'This scale has no additional extensions for the selected chord.';
