@@ -87,11 +87,18 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
 
 for(const palette of ['midnight','plum','slate'])test(`mixer follows ${palette} palette`,async({page})=>{
   await page.goto('/');await page.addStyleTag({content:'* { transition:none !important; }'});await page.locator('#palette').selectOption(palette);
-  const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),field:getComputedStyle(panel.querySelector('.mix-channel')!).backgroundColor,expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
+  const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),field:getComputedStyle(panel.querySelector('.mix-channel')!).backgroundColor,inheritedField:getComputedStyle(panel.querySelector('.mix-channel')!).getPropertyValue('--field').trim(),expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
   const rgb=(hex:string)=>{const value=hex.replace('#','');const full=value.length===3?value.split('').map(c=>c+c).join(''):value;return `rgb(${[0,2,4].map(i=>parseInt(full.slice(i,i+2),16)).join(', ')})`;};
-  expect(colors.panel).toBe(rgb(colors.expected));expect(colors.field).toBe(rgb(colors.expectedField));
+  expect(colors.panel).toBe(rgb(colors.expected));expect(colors.inheritedField).toBe(colors.expectedField);expect(colors.field).not.toBe(colors.panel);
   await page.locator('#open-sound-settings').click();
   await expect(page.locator('.sound-settings')).toHaveCSS('background-color',rgb(colors.expected));
   await expect(page.locator('#comping-tone')).toHaveCSS('background-color',rgb(colors.expectedField));
   await expect(page.locator('.sound-settings details:not([open])')).toHaveCount(0);
+});
+
+test('extensions start enabled and an explicitly disabled preset keeps its choice',async({page})=>{
+  await page.goto('/');await page.locator('[data-workspace-target="harmony-title"]').click();await expect(page.locator('#extension-morph')).toBeChecked();await expect(page.locator('#extension-controls')).toBeVisible();
+  await page.locator('#extension-morph').uncheck();await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-name').fill('Static harmony');await page.locator('#preset-save').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await page.locator('#extension-morph').check();await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-load').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await expect(page.locator('#extension-morph')).not.toBeChecked();
 });

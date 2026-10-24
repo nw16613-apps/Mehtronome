@@ -626,7 +626,7 @@ body[data-workspace=settings] .workspace-settings { display:block; }
 .sound-settings .field-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 .sound-settings .rhythm .field-row { grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media(max-width:760px) { .sound-settings .rhythm .field-row,.sound-settings .field-row { grid-template-columns:1fr; } }
-html[data-theme=dark]:not([data-palette]),html[data-theme=dark][data-palette=dark] { --ink:#e2e9dd; --muted:#b4c2af; --field:#253a34; --panel:#24372e; --line:#4a5e4e; --accent:#91ae72; --on-accent:#14291f; }
+html[data-theme=dark]:not([data-palette]),html[data-theme=dark][data-palette=dark] { --ink:#e2e9dd; --muted:#c2d0c5; --field:#354e43; --panel:#2d4138; --line:#60766a; --accent:#91ae72; --on-accent:#14291f; }
 .mix-channel>input[type=range] { appearance:none; background:transparent; }
 .mix-channel>input[type=range]::-webkit-slider-runnable-track { width:5px; height:100%; background:var(--line,#899b83); border-radius:3px; }
 .mix-channel>input[type=range]::-webkit-slider-thumb { appearance:none; width:32px; height:18px; margin-left:-13px; border:1px solid var(--ink,#243535); border-radius:3px; background:linear-gradient(to bottom,var(--panel,#fcfcf8) 44%,var(--accent,#c96e47) 44% 56%,var(--panel,#fcfcf8) 56%); box-shadow:0 2px 4px #0003; }
@@ -671,3 +671,25 @@ button.reference-chord { width:100%; height:100%; text-align:left; color:inherit
 button.reference-chord:focus-visible { outline:2px solid var(--accent,#c96e47); outline-offset:3px; }
 button.reference-chord:disabled { cursor:default; opacity:1; }
 .progression-reference .reference-preview-help { margin:6px 0 12px; font-size:10px; color:var(--muted,#78827c); }
+
+/* Tonal layers retain the selected palette while lifting strips and faders. */
+.mix-channel { --console-strip:color-mix(in srgb,var(--field,#f1f3ed) 88%,white); --fader-cap:color-mix(in srgb,var(--field,#f1f3ed) 65%,white); background:var(--console-strip); border-color:color-mix(in srgb,var(--line,#899b83) 80%,var(--muted,#78827c)); }
+.mix-channel.is-inactive :is(label,output) { opacity:.75; }
+.mix-channel>input[type=range]::-webkit-slider-runnable-track { background:color-mix(in srgb,var(--line,#899b83) 80%,var(--muted,#78827c)); }
+.mix-channel>input[type=range]::-webkit-slider-thumb { border-color:var(--muted,#78827c); background:linear-gradient(to bottom,var(--fader-cap) 44%,var(--accent,#c96e47) 44% 56%,var(--fader-cap) 56%); }
+.mix-channel>input[type=range]::-moz-range-track { background:color-mix(in srgb,var(--line,#899b83) 80%,var(--muted,#78827c)); }
+.mix-channel>input[type=range]::-moz-range-thumb { background:var(--fader-cap); border-color:var(--muted,#78827c); }
+
+/* Shared tonal hierarchy: page → panel → raised card → control. */
+:root { --surface-raised:color-mix(in srgb,var(--field,#f1f3ed) 88%,white); --surface-inset:color-mix(in srgb,var(--panel,var(--practice-panel)) 65%,var(--field,#f1f3ed)); }
+html[data-palette=dark] .panel { background:var(--panel); }
+:is(.pulse-tool,.position-card,.full-fretboard-panel,.custom-progression-builder,.seventh-layer) { background:var(--surface-raised); }
+.progression-reference { background:var(--surface-inset); }
+button.reference-chord { background:var(--surface-raised); }
+.position-thumbnail:not(.selected) { background:var(--surface-inset); }
+.sound-settings :is(.metronome-sound-settings,.pad-settings),.sound-settings-grid>.mix-group { background:var(--surface-inset); border:1px solid var(--line,#899b83); border-radius:12px; padding:18px; min-width:0; }
+.sound-settings .metronome-sound-settings { margin-top:24px; }
+.practice-roadmap-today { background:var(--surface-raised); }
+.mini-transport { background:var(--panel,var(--practice-panel)); border-color:var(--line,#8c9d8b); }
+@media print { .notation-scroll { background:#fdfbf5; } }
+html[data-palette][data-theme=dark] .workspace :is(.fret-wire,.guitar-string) { stroke:color-mix(in srgb,var(--muted,#c2d0c5) 60%,var(--line,#60766a)); }

@@ -10,7 +10,7 @@ import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  mutedChannels:'', extensionMorph:false, extensionBars:8,
+  mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3,
@@ -324,6 +324,7 @@ export class Engine {
       else this.padVoicing.unshift({midi:harmony.bassMidi,role:'foundation',weight:1.35});
       this.padVoicing.sort((a,b)=>a.midi-b.midi);
     }
+    this.compingVoicing=this.padVoicing.filter(note=>!['foundation','air'].includes(note.role)).map(note=>note.midi);
     this.extensionBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
     this.extensionCandidates=s.extensionMorph?extensionChoices(harmony):[];
     if(s.extensionMorph){
@@ -499,7 +500,7 @@ export class Engine {
       const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
       if(s.comping&&rhythmActive){
-        const compNotes=this.padVoicing.filter(note=>!['foundation','air'].includes(note.role)).map(note=>note.midi);
+        const compNotes=this.compingVoicing;
         this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.compingNotes||[],this.age,this.step,onRhythm);
       }
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;

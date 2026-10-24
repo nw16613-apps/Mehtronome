@@ -342,3 +342,7 @@ The sixth workspace, Sound Settings, holds backing styles, instrument tones, sus
 Metronome click timbres live in Sound Settings; eighth-note swing stays with the rhythm controls. Polyrhythm uses the shared Metronome level with a fixed balance alongside the main pulse.
 
 The focus bar’s Mixer button opens the shared console above the bar in any workspace, including Focus view. The same faders, mute/solo buttons and instrument switches move between the main panel and the floating console, preserving their state. Channel strips scroll horizontally on smaller screens. Close or Escape returns the console; mixer level changes preserve exercise playback and tempo.
+
+Evolving chord extensions start enabled for new sessions (an eight-bar blend). Saved presets retain their explicit on/off choice; older presets keep their original static harmony.
+
+Theme surfaces use tonal layers throughout the workspaces: darker page backgrounds, lighter panels and raised cards, brighter controls and console fader caps. Palette accents and musical highlight colours remain consistent.
