@@ -8,9 +8,11 @@ const FLAT_NAMES=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'
 export const PENTATONIC_PATTERNS={
   groups3:'Groups of 3',groups4:'Groups of 4',groups5:'Groups of 5',groups6:'Groups of 6',thirds:'Pentatonic thirds',digital1324:'Pentatonic 1–3–2–4',rolling:'Rolling 1–2–3–2',
   alternating3:'Alternating 3-note groups',alternating4:'Alternating 4-note groups',alternating5:'Alternating 5-note groups',
-  lesson3:'Lesson cascade · 3s across strings',lesson4:'Lesson cascade · 4s across strings',lesson5:'Lesson cascade · 5s across strings',lesson6:'Lesson cascade · 6s across strings',
-  cascade64:'Cascading 6s + 4s',cascade46:'Cascading 4s + 6s',cascade43:'Cascading 4s + 3s',cascade34:'Cascading 3s + 4s',
-  cascade45:'Cascading 4s + 5s',cascade54:'Cascading 5s + 4s',cascade65:'Cascading 6s + 5s',cascade56:'Cascading 5s + 6s',cascade456:'Cascading 4s + 5s + 6s',
+  lesson3:'Lesson transcription · 3s across strings',lesson4:'Lesson transcription · 4s across strings',lesson5:'Lesson transcription · 5s across strings',lesson6:'Lesson transcription · 6s across strings',
+  lesson64:'Lesson transcription · 6s + 4s',lesson46:'Lesson transcription · 4s + 6s',lesson43:'Lesson transcription · 4s + 3s',lesson34:'Lesson transcription · 3s + 4s',
+  lesson45:'Lesson transcription · 4s + 5s',lesson54:'Lesson transcription · 5s + 4s',lesson65:'Lesson transcription · 6s + 5s',lesson56:'Lesson transcription · 5s + 6s',lesson456:'Lesson transcription · 4s + 5s + 6s',
+  cascade64:'Sliding picking variation · 6s + 4s',cascade46:'Sliding picking variation · 4s + 6s',cascade43:'Sliding picking variation · 4s + 3s',cascade34:'Sliding picking variation · 3s + 4s',
+  cascade45:'Sliding picking variation · 4s + 5s',cascade54:'Sliding picking variation · 5s + 4s',cascade65:'Sliding picking variation · 6s + 5s',cascade56:'Sliding picking variation · 5s + 6s',cascade456:'Sliding picking variation · 4s + 5s + 6s',
 };
 
 function chordSuffix(rootPc,pcs) {
@@ -214,10 +216,15 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
   const lessonRun=size=>run(size,descending&&size%2===1?1:0);
   // In the source lesson every component restarts from the same two-note-per-
   // string anchor; the complete cell then advances to the adjacent string.
-  const cascade=(...sizes)=>sizes.flatMap(lessonRun);
+  const lessonCascade=(...sizes)=>sizes.flatMap(lessonRun);
+  // Retain the earlier generated versions as useful right-hand picking
+  // variations: each component shifts one scale note and each cell advances
+  // one scale note instead of following the lesson's string-pair anchors.
+  const slidingCascade=(...sizes)=>sizes.flatMap((size,cell)=>run(size,cell));
   const definitions={groups3:run(3),groups4:run(4),groups5:run(5),groups6:run(6),thirds:[0,2],digital1324:[0,2,1,3],rolling:[0,1,2,1],alternating3:run(3),alternating4:run(4),alternating5:run(5),lesson3:lessonRun(3),lesson4:lessonRun(4),lesson5:lessonRun(5),lesson6:lessonRun(6),
-    cascade64:cascade(6,4),cascade46:cascade(4,6),cascade43:cascade(4,3),cascade34:cascade(3,4),cascade45:cascade(4,5),cascade54:cascade(5,4),cascade65:cascade(6,5),cascade56:cascade(5,6),cascade456:cascade(4,5,6)};
-  const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),stringCascade=pattern.startsWith('cascade')||pattern.startsWith('lesson'),groups=[];
+    lesson64:lessonCascade(6,4),lesson46:lessonCascade(4,6),lesson43:lessonCascade(4,3),lesson34:lessonCascade(3,4),lesson45:lessonCascade(4,5),lesson54:lessonCascade(5,4),lesson65:lessonCascade(6,5),lesson56:lessonCascade(5,6),lesson456:lessonCascade(4,5,6),
+    cascade64:slidingCascade(6,4),cascade46:slidingCascade(4,6),cascade43:slidingCascade(4,3),cascade34:slidingCascade(3,4),cascade45:slidingCascade(4,5),cascade54:slidingCascade(5,4),cascade65:slidingCascade(6,5),cascade56:slidingCascade(5,6),cascade456:slidingCascade(4,5,6)};
+  const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),stringCascade=pattern.startsWith('lesson'),groups=[];
   for(let index=0;index+Math.max(...offsets)<available.length;index+=stringCascade?2:1){
     let notes=offsets.map(offset=>available[index+offset]).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
     if(alternating&&index%2===1)notes.reverse();

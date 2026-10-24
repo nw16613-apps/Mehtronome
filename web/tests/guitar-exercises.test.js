@@ -189,6 +189,7 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
   const patterns={groups3:3,groups4:4,groups5:5,groups6:6,thirds:2,digital1324:4,rolling:4,alternating3:3,alternating4:4,alternating5:5,lesson3:3,lesson4:4,lesson5:5,lesson6:6,
+    lesson64:10,lesson46:10,lesson43:7,lesson34:7,lesson45:9,lesson54:9,lesson65:11,lesson56:11,lesson456:15,
     cascade64:10,cascade46:10,cascade43:7,cascade34:7,cascade45:9,cascade54:9,cascade65:11,cascade56:11,cascade456:15};
   for(const [pattern,size] of Object.entries(patterns)){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern});
@@ -216,7 +217,7 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
   const five=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson5'});
   assert.deepEqual(five[0].notes.map(note=>note.midi),descendingAvailable.slice(1,6).map(note=>note.midi),'descending 5s begin on the lower note of the highest string');
   assert.deepEqual(five[1].notes.map(note=>note.midi),descendingAvailable.slice(3,8).map(note=>note.midi),'the next 5-note cell moves down one string pair');
-  for(const [pattern,runs] of Object.entries({cascade64:[6,4],cascade46:[4,6],cascade43:[4,3],cascade34:[3,4],cascade45:[4,5],cascade54:[5,4],cascade65:[6,5],cascade56:[5,6],cascade456:[4,5,6]})){
+  for(const [pattern,runs] of Object.entries({lesson64:[6,4],lesson46:[4,6],lesson43:[4,3],lesson34:[3,4],lesson45:[4,5],lesson54:[5,4],lesson65:[6,5],lesson56:[5,6],lesson456:[4,5,6]})){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern});
     assert.ok(groups.length,pattern);
     const midi=groups[0].notes.map(note=>note.midi);let cursor=0;
@@ -231,6 +232,10 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
     }
     if(groups.length>1)assert.equal(groups[1].notes[0].midi,groups[0].notes[2].midi,`${pattern} advances by one two-note string pair`);
   }
+  const exact=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson64'});
+  const variation=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'cascade64'});
+  assert.notDeepEqual(variation[0].notes.map(note=>note.midi),exact[0].notes.map(note=>note.midi),'the earlier sliding picking variation remains available');
+  assert.equal(variation[1].notes[0].midi,variation[0].notes[1].midi,'the sliding variation advances one pentatonic note at a time');
 });
 
 test('notation prints one exercise heading and no pattern-cell labels',()=>{
