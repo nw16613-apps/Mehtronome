@@ -341,3 +341,5 @@ macOS window behavior require a local desktop check.
 The sixth workspace, Sound Settings, holds backing styles, instrument tones, sustained-pad shaping and melodic sequence settings. Metronome & Mixer keeps vertical channel faders, instrument enable switches and non-destructive mute/solo controls. Multiple solos can be combined; ambience stays available, and Clear solos restores the mix. Solos are temporary and clear when loading a preset.
 
 Metronome click timbres live in Sound Settings; eighth-note swing stays with the rhythm controls. Polyrhythm uses the shared Metronome level with a fixed balance alongside the main pulse.
+
+The focus bar’s Mixer button opens the shared console above the bar in any workspace, including Focus view. The same faders, mute/solo buttons and instrument switches move between the main panel and the floating console, preserving their state. Channel strips scroll horizontally on smaller screens. Close or Escape returns the console; mixer level changes preserve exercise playback and tempo.

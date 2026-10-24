@@ -635,3 +635,33 @@ html[data-theme=dark]:not([data-palette]),html[data-theme=dark][data-palette=dar
 .mix-channel>input[type=range]:focus-visible { outline:2px solid var(--accent,#c96e47); outline-offset:4px; border-radius:4px; }
 
 .harmony .sound-row { grid-template-columns:minmax(0,1fr); }
+
+/* One mixer console, docked above the transport on demand. */
+#mini-mixer { flex-shrink:0; min-height:40px; }
+#mini-mixer[aria-expanded=true] { background:var(--accent,var(--practice-accent)); color:var(--on-accent,var(--practice-on-accent)); }
+.floating-mixer { position:absolute; inset:auto 0 calc(100% + 10px); padding:16px; max-height:min(65dvh,470px); overflow:auto; background:var(--panel,var(--practice-panel)); color:var(--ink,var(--practice-ink,#243535)); border:1px solid var(--line,#8c9d8b); border-radius:14px; box-shadow:0 -8px 36px #0003; }
+.floating-mixer[hidden] { display:none; }
+.floating-mixer-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.floating-mixer-heading h2 { font-size:16px; margin:0; }
+.floating-mixer .levels-heading { justify-content:flex-end; gap:8px; margin-bottom:10px; }
+.floating-mixer .levels-heading h3 { display:none; }
+.floating-mixer .mix-level-grid { display:flex; overflow-x:auto; gap:8px; padding:4px 2px 10px; scroll-snap-type:x proximity; }
+.floating-mixer .mix-channel { flex:1 0 112px; padding:10px 6px; gap:6px; scroll-snap-align:start; box-sizing:border-box; }
+.floating-mixer .mix-channel>input[type=range] { height:120px; }
+.floating-mixer .mix-channel-header label { min-height:24px; }
+.floating-mixer .mixer-quick-switches { margin-top:8px; padding-top:10px; gap:12px; font-size:12px; }
+.floating-mixer .mix-channel-header output { margin-bottom:0; }
+@media(min-width:761px) { .mini-transport { max-width:1240px; gap:10px; } .mini-harmony { min-width:90px; flex-basis:120px; } }
+@media(max-width:760px) {
+  #mini-mixer { min-height:44px; padding-inline:8px; font-size:12px; }
+  .mini-transport>.mini-harmony { min-width:55px; }
+  .mini-more { min-width:60px; font-size:12px; }
+  .floating-mixer { padding:12px; max-height:60dvh; }
+  .floating-mixer .mix-channel { flex-basis:116px; }
+}
+@media(min-width:761px) and (max-width:1100px) {
+  .mini-transport { flex-wrap:wrap; }
+  .mini-more { display:block; }
+  .mini-detail-controls { display:none; flex-basis:100%; order:5; }
+  .mini-transport.mobile-expanded .mini-detail-controls { display:flex; }
+}

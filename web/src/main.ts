@@ -127,7 +127,7 @@ app.innerHTML = `
       <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
     </section>
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
-      <div id="mix-sections" class="mix-sections">
+      <p id="mixer-docked-note" class="practice-help" hidden>Mixer is open above the focus bar. <button id="mixer-return" type="button" class="panel-action">Return mixer here</button></p><div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
           <div class="mix-level-grid">${MIX_CHANNELS.map(channel=>`<div class="mix-channel" data-mix-channel="${channel.id}"><div class="mix-channel-header"><label for="${channel.control}">${channel.label}</label><output id="${channel.output}">${channel.value}%</output><input id="mute-${channel.id}" type="checkbox" hidden><button type="button" class="channel-mute" data-mute-channel="${channel.id}" aria-label="Mute ${channel.label}" aria-pressed="false">Mute</button>${channel.id!=='space'?`<button type="button" class="channel-solo" data-solo-channel="${channel.id}" aria-label="Solo ${channel.label}" aria-pressed="false">Solo</button>`:''}</div><input id="${channel.control}" type="range" min="0" max="100" value="${channel.value}" aria-describedby="mix-state-${channel.id}"><span id="mix-state-${channel.id}" class="mix-channel-state">On</span></div>`).join('')}</div>
         </section>
@@ -171,7 +171,7 @@ app.innerHTML = `
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>
-<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><button id="mini-play" class="practice-button" aria-pressed="false">▶ Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label>Root<select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
+<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><section id="floating-mixer" class="floating-mixer panel" aria-labelledby="floating-mixer-title" hidden><div class="floating-mixer-heading"><h2 id="floating-mixer-title">Your mix</h2><button id="floating-mixer-close" type="button" class="practice-button" aria-label="Close mixer">Close</button></div><div id="floating-mixer-content"></div></section><button id="mini-play" class="practice-button" aria-pressed="false">▶ Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-mixer" type="button" class="practice-button" aria-expanded="false" aria-controls="floating-mixer">Mixer</button><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label>Root<select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
@@ -1262,11 +1262,26 @@ function reflectMixerChannels(){
   el<HTMLButtonElement>('mixer-unmute-all').disabled=mutedCount===0;
   el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
+function sendMixerSettings(){
+  node?.port.postMessage({type:'settings',settings:exercisePlaying?{...settings,bpm:exerciseView.tempo,sessionSeconds:0}:settings});
+}
+function updateMixerLevels(){
+  settings.click=Number(input('click').value)/100;
+  settings.harmony=Number(input('harmony').value)/100;
+  el('click-value').textContent=`${input('click').value}%`;
+  el('harmony-value').textContent=`${input('harmony').value}%`;
+  for(const id of ['drums','bass','comping','sequence'] as const){
+    settings[id]=input(id).checked;
+    settings[`${id}Volume`]=Number(input(`${id}-volume`).value)/100;
+    el(`${id}-volume-value`).textContent=`${input(`${id}-volume`).value}%`;
+  }
+  sendMixerSettings();updateSpace();reflectMixerChannels();syncMixerDetails();
+}
 function applyMixerMutes(){
   settings.mutedChannels=mixerMuteMask();
-  node?.port.postMessage({type:'settings',settings});updateSpace();reflectMixerChannels();
+  sendMixerSettings();updateSpace();reflectMixerChannels();
 }
-el('mix-panel').addEventListener('click',event=>{
+el('mix-sections').addEventListener('click',event=>{
   const solo=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-solo-channel]');
   if(solo){const id=solo.dataset.soloChannel!;if(soloChannels.has(id))soloChannels.delete(id);else soloChannels.add(id);applyMixerMutes();return;}
   const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-mute-channel]');if(!button)return;
@@ -1320,7 +1335,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input',()=>{if(el('mix-sections').contains(el(id)))updateMixerLevels();else update();});
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -1465,8 +1480,31 @@ function syncMiniTransport() {
   input('mini-accent').checked=input('accent').checked;
   input('mini-accent').disabled=input('accent').disabled;
 }
+function setFloatingMixer(open:boolean,restoreFocus=false){
+  const sections=el('mix-sections'),dock=el('floating-mixer');
+  if(open){
+    el('floating-mixer-content').append(sections);
+    dock.hidden=false;
+    el('mini-transport').classList.remove('mobile-expanded');
+    el('mini-more').setAttribute('aria-expanded','false');el('mini-more').textContent='Controls';
+    el('floating-mixer-close').focus();
+  }else{
+    el('mix-panel').append(sections);
+    dock.hidden=true;
+  }
+  el('mini-mixer').setAttribute('aria-expanded',String(open));
+  el('mixer-docked-note').hidden=!open;
+  el<HTMLButtonElement>('mix-collapse').disabled=open;
+  if(restoreFocus)el('mini-mixer').focus();
+}
+el('mini-mixer').addEventListener('keydown',event=>{if(event.key==='Escape')setFloatingMixer(false,true);});
+el('mini-mixer').addEventListener('click',()=>setFloatingMixer(el('floating-mixer').hidden));
+el('floating-mixer-close').addEventListener('click',()=>setFloatingMixer(false,true));
+el('mixer-return').addEventListener('click',()=>{setFloatingMixer(false);setMixerCollapsed(false);el('mix-collapse').focus();});
+el('floating-mixer').addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();setFloatingMixer(false,true);}});
 el('mini-play').addEventListener('click',()=>void toggle());
 el('mini-more').addEventListener('click',()=>{
+  if(!el('floating-mixer').hidden)setFloatingMixer(false);
   const expanded=el('mini-transport').classList.toggle('mobile-expanded');
   el('mini-more').setAttribute('aria-expanded',String(expanded));
   el('mini-more').textContent=expanded?'Done':'Controls';
@@ -1501,7 +1539,7 @@ function setFocusView(value:boolean) {
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
-el('open-sound-settings').addEventListener('click',()=>showWorkspace('settings','sound-settings-title'));
+el('open-sound-settings').addEventListener('click',()=>{setFloatingMixer(false);if(focusView)setFocusView(false);showWorkspace('settings','sound-settings-title');});
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
 const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress','sound-settings-title':'settings'};
 function selectWorkspaceTab(target:string) {
