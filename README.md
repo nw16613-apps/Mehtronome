@@ -7,13 +7,18 @@ The browser version lives in `web/`. It uses TypeScript and the Web Audio API;
 Python is not required. A dedicated audio worklet drives both click and harmony
 from a single sample clock, with smooth volume changes. It includes:
 
-- A compact transport appears while you scroll: play/stop, editable tempo and the
-  current chord remain available beside the diagrams. **Focus view** keeps the
-  harmony and guitar references visible while hiding setup and mixer panels.
+- Five workspaces organize the app: **01 Metronome & Mixer**, **02 Harmony**
+  (including Under your fingers), **03 Guitar**, **04 Exercises**, and **05 Progress**
+  (presets and Learning Path). Panels stay mounted so selections and playback
+  survive navigation.
+- The compact focus bar stays visible across workspaces, including when scrolling
+  back to the main metronome. Play/stop, editable tempo and harmony controls remain
+  available. **Focus view** hides setup panels and navigation; entering it from
+  Metronome & Mixer or Progress opens the guitar reference.
 - The mixer keeps instrument switches and volumes visible, with drum/bass styles
   and melodic movement settings in independently collapsible groups. Longer
   explanations sit behind **Learn more** disclosures.
-- **The pulse** fills the Practice workspace. Tap its button or press **T** to
+- **The pulse** fills the Metronome & Mixer workspace. Tap its button or press **T** to
   set the tempo, save up to eight tempo shortcuts, and click beat circles to cycle
   strong, soft and silent accents. Click sound & swing offers digital, woodblock,
   rim and soft clicks, a synchronized volume control, and eighth-note swing from

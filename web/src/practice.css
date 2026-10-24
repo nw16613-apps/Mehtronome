@@ -1,7 +1,7 @@
 /* Practice navigation and shared control rhythm across all existing palettes. */
 :root { --practice-accent:#365d49; --practice-on-accent:#fff; --practice-panel:#fcfcf8; }
 html[data-theme=dark] { --practice-accent:#e4b98a; --practice-on-accent:#23342a; --practice-panel:#192d28; }
-html { scroll-padding-block:24px 120px; }
+html { scroll-padding-block:88px 120px; }
 body { padding-bottom:110px; }
 header { height:auto; min-height:94px; padding-block:16px; }
 .theme-controls { flex-wrap:wrap; justify-content:flex-end; gap:10px; }
@@ -236,7 +236,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .full-fretboard-panel:fullscreen .full-fretboard-scroll { max-width:1500px; margin:auto; }
 .practice-roadmap { margin:0 0 18px; padding:18px; border:1px solid var(--line,#899b83); border-radius:13px; background:color-mix(in srgb,var(--pulse,var(--practice-panel)) 92%,var(--accent,var(--practice-accent)) 8%); }
 .practice-roadmap-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
-.practice-roadmap-heading h3 { margin:2px 0 5px; font-size:20px; }
+.practice-roadmap-heading :is(h2,h3) { margin:2px 0 5px; font-size:20px; }
 .practice-roadmap-heading p { margin:0; }
 .practice-roadmap-progress { display:grid; text-align:right; white-space:nowrap; }
 .practice-roadmap-progress strong { color:var(--accent,var(--practice-accent)); font-size:24px; }
@@ -244,7 +244,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .practice-roadmap-bar { height:6px; margin:15px 0; overflow:hidden; border-radius:99px; background:var(--line,#899b8340); }
 .practice-roadmap-bar i { display:block; width:0; height:100%; border-radius:inherit; background:var(--accent,var(--practice-accent)); transition:width .2s ease; }
 .practice-roadmap-tools { display:flex; align-items:end; gap:12px; }
-.practice-roadmap-tools label { max-width:210px; }
+.practice-roadmap-tools label { display:grid; gap:7px; flex:1; max-width:210px; font-size:11px; color:var(--muted,#78827c); }
+.practice-roadmap-tools select { width:100%; min-height:44px; padding:9px; border:1px solid var(--line,#899b83); border-radius:5px; background:var(--field,#f1f3ed); color:var(--ink,#243535); }
 .practice-roadmap-today { display:grid; gap:3px; margin:14px 0; padding:11px 13px; border-left:3px solid var(--accent,var(--practice-accent)); background:color-mix(in srgb,var(--accent,var(--practice-accent)) 8%,transparent); }
 .practice-roadmap-today strong { font-size:12px; }
 .practice-roadmap-today span { color:var(--muted,var(--practice-muted)); font-size:10px; line-height:1.5; }
@@ -416,13 +417,11 @@ body.notation-focus-open { overflow:hidden; }
 .workspace-nav { position:sticky; top:0; z-index:45; padding:10px 24px; background:color-mix(in srgb,var(--page,#f6f5ef) 88%,transparent); border-bottom:1px solid var(--line,#dedfd4); backdrop-filter:blur(18px) saturate(135%); }
 .workspace-nav-inner { max-width:1152px; margin:auto; display:flex; align-items:center; gap:6px; }
 .workspace-nav-label { margin-right:12px; color:var(--muted,#78827c); font-size:9px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
-.workspace-tab,.workspace-mixer { min-height:38px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted,#78827c); padding:8px 14px; font-size:11px; font-weight:650; }
+.workspace-tab { min-height:38px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted,#78827c); padding:8px 14px; font-size:11px; font-weight:650; }
 .workspace-tab span { margin-right:7px; opacity:.55; font-size:8px; letter-spacing:.08em; }
-.workspace-tab:hover,.workspace-mixer:hover { color:var(--ink,#243535); background:var(--field,#f1f3ed); }
+.workspace-tab:hover { color:var(--ink,#243535); background:var(--field,#f1f3ed); }
 .workspace-tab.selected { color:var(--ink,#243535); border-color:var(--line,#dedfd4); background:var(--panel,#fcfcf8); box-shadow:0 5px 18px #00000012; }
 .workspace-tab.selected span { color:var(--accent,#c96e47); opacity:1; }
-.workspace-mixer { margin-left:auto; border-color:var(--line,#dedfd4); }
-.workspace-mixer span { display:inline-block; margin-left:5px; color:var(--accent,#c96e47); }
 .panel-action { min-height:34px; border:1px solid var(--line,#dedfd4); border-radius:7px; background:var(--field,#f1f3ed); color:var(--muted,#78827c); padding:7px 11px; font-size:10px; font-weight:650; }
 .panel-action:hover { color:var(--ink,#243535); }
 .mix.is-collapsed { padding-block:18px; }
@@ -447,7 +446,7 @@ body.notation-focus-open { overflow:hidden; }
   .workspace-nav::-webkit-scrollbar { display:none; }
   .workspace-nav-inner { min-width:max-content; }
   .workspace-nav-label { display:none; }
-  .workspace-tab,.workspace-mixer { min-height:40px; padding:8px 12px; }
+  .workspace-tab { min-height:40px; padding:8px 12px; }
   .workspace-tab span { display:none; }
   .practice-roadmap { padding:14px 11px; }
   .practice-roadmap-heading { align-items:flex-start; }
@@ -460,14 +459,16 @@ body.notation-focus-open { overflow:hidden; }
 .focus-view .workspace-nav { display:none; }
 
 /* Focused workspaces keep their controls mounted, so playback and selections
-   survive navigation between Practice, Harmony, Guitar and Exercises. */
+   survive navigation between Metronome & Mixer, Harmony, Guitar, Exercises and Progress. */
 body[data-workspace] .workspace-page { display:none; }
 body[data-workspace=practice] .workspace-practice,
 body[data-workspace=harmony] .workspace-harmony,
 body[data-workspace=guitar] .workspace-guitar,
-body[data-workspace=exercises] .workspace-exercises { display:block; }
-body:not([data-workspace=practice]) :is(.intro,.presets,.workspace-mixer-panel) { display:none; }
-.workspace>.transport.workspace-practice,
+body[data-workspace=exercises] .workspace-exercises,
+body[data-workspace=progress] .workspace-progress { display:block; }
+body[data-workspace=progress] .intro { display:flex; }
+@media(max-width:760px) { body[data-workspace=progress] .intro { display:block; } }
+.workspace>.workspace-practice,
 .workspace>.workspace-harmony,
 .workspace>.workspace-guitar,
 .workspace>.workspace-exercises,

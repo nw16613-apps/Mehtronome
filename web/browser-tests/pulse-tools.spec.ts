@@ -33,10 +33,14 @@ test('pulse sound, swing, gaps, timer and polyrhythm round-trip through presets'
   await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
   await page.locator('[data-pulse-beat="1"]').click();
+  await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-name').fill('Pulse tools');await page.locator('#preset-save').click();
+  await page.locator('[data-workspace-target="pulse-title"]').click();
   await page.locator('#pulse-sound').selectOption('beep');await page.locator('#pulse-poly').selectOption('0/2');
   await page.locator('#pulse-accent-reset').click();
+  await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-load').click();
+  await page.locator('[data-workspace-target="pulse-title"]').click();
   await expect(page.locator('#pulse-sound')).toHaveValue('wood');
   await expect(page.locator('#pulse-swing')).toHaveValue('100');
   await expect(page.locator('#pulse-poly')).toHaveValue('3/2');
@@ -109,7 +113,9 @@ test('older presets reset new pulse tools to their original behavior',async({pag
   await page.getByText('Practice timer',{exact:true}).click();await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();
+  await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-list').selectOption('legacy');await page.locator('#preset-load').click();
+  await page.locator('[data-workspace-target="pulse-title"]').click();
   await expect(page.locator('#bpm')).toHaveValue('96');
   await expect(page.locator('#pulse-sound')).toHaveValue('beep');
   await expect(page.locator('#pulse-poly')).toHaveValue('0/2');

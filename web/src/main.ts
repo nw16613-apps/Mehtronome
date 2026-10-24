@@ -42,16 +42,16 @@ app.innerHTML = `
 <nav class="workspace-nav" aria-label="Workspace navigation">
   <div class="workspace-nav-inner">
     <span class="workspace-nav-label">Workspace</span>
-    <button type="button" class="workspace-tab selected" data-workspace-target="pulse-title" aria-current="page"><span>01</span>Practice</button>
+    <button type="button" class="workspace-tab selected" data-workspace-target="pulse-title" aria-current="page"><span>01</span>Metronome &amp; Mixer</button>
     <button type="button" class="workspace-tab" data-workspace-target="harmony-title"><span>02</span>Harmony</button>
     <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Guitar</button>
     <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>04</span>Exercises</button>
-    <button type="button" id="mixer-toggle" class="workspace-mixer" aria-controls="mix-panel" aria-expanded="true">Mixer <span aria-hidden="true">⌄</span></button>
+    <button type="button" class="workspace-tab" data-workspace-target="progress-title"><span>05</span>Progress</button>
   </div>
 </nav>
 <main>
-  <div class="intro"><div><p class="eyebrow">MAKE SPACE FOR PRACTICE</p><h1>Find your rhythm.<br><em>Hear the harmony.</em></h1></div><p class="intro-copy">Give your scales somewhere to go.<br>A steady pulse and a little harmonic context.</p></div>
-  <section class="presets panel" aria-labelledby="presets-title">
+  <div class="intro workspace-page workspace-progress"><div><p class="eyebrow">SAVED PRACTICE &amp; PROGRESS</p><h1 id="progress-title">Your practice.<br><em>Your progress.</em></h1></div><p class="intro-copy">Save your setups and pick up where you left off.<br>Follow your learning path, one session at a time.</p></div>
+  <section class="presets panel workspace-page workspace-progress" aria-labelledby="presets-title">
     <div class="section-heading"><h2 id="presets-title">Practice presets</h2><span class="small-label">PICK UP WHERE YOU LEFT OFF</span></div>
     <div class="preset-fields"><label>Preset name<input id="preset-name" type="text" maxlength="60" placeholder="e.g. D Dorian · slow groove"></label><button id="preset-save" class="practice-button">Save new</button><label>Saved setups<select id="preset-list"><option value="">Choose a preset</option></select></label><div class="preset-actions"><button id="preset-load" class="practice-button" disabled>Load</button><button id="preset-update" class="practice-button" disabled>Update</button><button id="preset-delete" class="practice-button" disabled>Delete</button></div></div>
     <p id="preset-status" class="practice-help" role="status">Saved on this browser. Loading a preset stops playback.</p>
@@ -114,8 +114,8 @@ app.innerHTML = `
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
-    <section class="notes panel workspace-page workspace-practice" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
-    <section id="mix-panel" class="mix panel workspace-mixer-panel" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
+    <section class="notes panel workspace-page workspace-harmony" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
+    <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><h3 id="levels-title">Levels & ambience</h3><label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50"><label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35"><label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75"></section>
     <section class="rhythm mix-group" aria-labelledby="rhythm-title">
@@ -138,7 +138,7 @@ app.innerHTML = `
     </section>
       </div>
     </section>
-    <section class="practice-roadmap panel workspace-page workspace-practice" aria-labelledby="practice-roadmap-title">
+    <section class="practice-roadmap panel workspace-page workspace-progress" aria-labelledby="practice-roadmap-title">
       <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h2 id="practice-roadmap-title">Learning path</h2><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
       <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
       <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
@@ -220,7 +220,6 @@ let exerciseDragPointer:number|null=null,exerciseDragMoved=false,suppressExercis
 const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
-let transportInView = true;
 let focusView = false;
 type ComparedChord = {settings:typeof settings; step:number; name:string};
 const comparisons:Partial<Record<'a'|'b',ComparedChord>> = {};
@@ -1394,7 +1393,7 @@ function syncTrainerStatus() {
 }
 function syncMiniTransport() {
   const mini = el('mini-transport');
-  mini.hidden = transportInView && !focusView;
+  mini.hidden = false;
   if (document.activeElement !== input('mini-bpm')) input('mini-bpm').value = String(playing ? currentBpm : settings.bpm);
   el('mini-tempo-label').textContent = playing && settings.trainerEnabled ? 'LIVE BPM' : 'BPM';
   el('mini-play').textContent = playing ? '■ Stop' : '▶ Play';
@@ -1414,7 +1413,6 @@ function syncMiniTransport() {
   input('mini-accent').checked=input('accent').checked;
   input('mini-accent').disabled=input('accent').disabled;
 }
-new IntersectionObserver(entries => { transportInView = entries[0].isIntersecting; syncMiniTransport(); },{threshold:.15}).observe(el('pulse-title').closest('section')!);
 el('mini-play').addEventListener('click',()=>void toggle());
 el('mini-more').addEventListener('click',()=>{
   const expanded=el('mini-transport').classList.toggle('mobile-expanded');
@@ -1446,13 +1444,13 @@ function setFocusView(value:boolean) {
   el('focus-view').setAttribute('aria-pressed',String(value));el('focus-view').textContent=value?'Exit focus':'Focus view';
   el('exit-focus').hidden=!value;
   syncMiniTransport();
-  if(value)el('harmony-title').scrollIntoView({block:'start'});
+  if(value&&!['harmony','guitar','exercises'].includes(document.body.dataset.workspace||''))showWorkspace('guitar','guitar-title');
 }
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
-const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises'};
+const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress'};
 function selectWorkspaceTab(target:string) {
   for(const tab of workspaceTabs){
     const selected=tab.dataset.workspaceTarget===target;
@@ -1471,27 +1469,21 @@ function showWorkspace(name:string,target?:string) {
   if(target)requestAnimationFrame(()=>el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
 }
 let initialWorkspace='practice';
-try{const saved=localStorage.getItem('mehtronome-workspace');if(saved&&Object.values(workspaceNames).includes(saved))initialWorkspace=saved;}catch{/* Use Practice. */}
+try{const saved=localStorage.getItem('mehtronome-workspace');if(saved&&Object.values(workspaceNames).includes(saved))initialWorkspace=saved;}catch{/* Use Metronome & Mixer. */}
 showWorkspace(initialWorkspace);
 
 const mixPanel=el('mix-panel');
-const mixButtons=[el<HTMLButtonElement>('mixer-toggle'),el<HTMLButtonElement>('mix-collapse')];
-function setMixerCollapsed(collapsed:boolean,scroll=false){
+function setMixerCollapsed(collapsed:boolean){
   mixPanel.classList.toggle('is-collapsed',collapsed);
-  for(const button of mixButtons)button.setAttribute('aria-expanded',String(!collapsed));
+  el('mix-collapse').setAttribute('aria-expanded',String(!collapsed));
   el('mix-collapse').textContent=collapsed?'Show mixer':'Hide mixer';
-  el('mixer-toggle').innerHTML=`Mixer <span aria-hidden="true">${collapsed?'⌃':'⌄'}</span>`;
   try{localStorage.setItem('mehtronome-mixer-collapsed',String(collapsed));}catch{/* Session-only. */}
-  if(scroll&&!collapsed)mixPanel.scrollIntoView({behavior:'smooth',block:'center'});
 }
 let mixerCollapsed=false;
 try{mixerCollapsed=localStorage.getItem('mehtronome-mixer-collapsed')==='true';}catch{/* Use expanded mixer. */}
 setMixerCollapsed(mixerCollapsed);
 el('mix-collapse').addEventListener('click',()=>setMixerCollapsed(!mixPanel.classList.contains('is-collapsed')));
-el('mixer-toggle').addEventListener('click',()=>{
-  if(document.body.dataset.workspace!=='practice')showWorkspace('practice');
-  setMixerCollapsed(!mixPanel.classList.contains('is-collapsed'),true);
-});
+
 select('featured-position').addEventListener('input',renderGuitar);
 select('position-region').addEventListener('input',renderGuitar);
 el('position-path').addEventListener('click',event=>{
