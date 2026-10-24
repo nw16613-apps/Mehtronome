@@ -454,10 +454,12 @@ function staffY(note) {
 }
 function esc(text) { return String(text).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
 
-function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0) {
+function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0) {
   const notes=flattenExercise(groups);
   const perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
-  const step=30,left=90,right=24,width=Math.max(760,left+notes.length*step+right),height=280;
+  const notesPerBar=perBeat*4;
+  const finalRests=isLastSystem?(notesPerBar-totalNoteCount%notesPerBar)%notesPerBar:0;
+  const step=30,left=90,right=24,width=Math.max(760,left+(notes.length+finalRests)*step+right),height=280;
   const xFor=index=>left+index*step+step/2;
   let svg=`<svg class="exercise-notation" data-system-index="${systemIndex}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
   svg+=`<rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">4</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
@@ -465,6 +467,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
   for(let line=0;line<5;line++)svg+=`<line class="notation-line" x1="44" x2="${width-12}" y1="${61+line*10}" y2="${61+line*10}"/>`;
   for(let string=0;string<6;string++)svg+=`<line class="notation-line tab-line" x1="44" x2="${width-12}" y1="${150+string*18}" y2="${150+string*18}"/>`;
   let noteIndex=0;
+  const renderedNotes=[];
   groups.forEach((group,groupIndex)=>{
     const start=noteIndex;
     const globalStart=group._globalStart??start;
@@ -476,6 +479,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
       const x=xFor(noteIndex),y=staffY(note),tabY=150+(5-note.string)*18;
       const globalIndex=globalStart+localIndex,target=group.targetIndex===localIndex;
       ys.push(y);
+      renderedNotes.push({x,y,globalIndex});
       for(let ledger=111;ledger<=y+1;ledger+=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
       for(let ledger=51;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
       const acc=accidental(note.name);
@@ -484,26 +488,43 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
       if(noteIndex%perBeat===0)svg+=`<line class="beat-guide" x1="${x-step/2}" x2="${x-step/2}" y1="140" y2="245"/>`;
       noteIndex++;
     });
-    const stemsUp=ys.reduce((sum,y)=>sum+y,0)/ys.length>56;
-    group.notes.forEach((note,local)=>{
-      const x=xFor(start+local),y=ys[local],stemX=x+(stemsUp?6:-6),stemEnd=stemsUp?Math.min(...ys)-24:Math.max(...ys)+24;
-      svg+=`<line class="note-stem" x1="${stemX}" x2="${stemX}" y1="${y}" y2="${stemEnd}"/>`;
-    });
-    if(group.notes.length>1){
-      const beamY=stemsUp?Math.min(...ys)-24:Math.max(...ys)+24;
-      svg+=`<line class="note-beam" x1="${xFor(start)+(stemsUp?6:-6)}" x2="${xFor(noteIndex-1)+(stemsUp?6:-6)}" y1="${beamY}" y2="${beamY}"/>`;
-    }
     if(group.annotation&&group._showAnnotation!==false)svg+=`<text class="exercise-degree" x="${xFor(start)}" y="268">${esc(group.annotation)}</text>`;
-    if((groupIndex+1)%2===0||groupIndex===groups.length-1){
-      const x=xFor(noteIndex-1)+step/2;
-      svg+=`<line class="bar-line" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
-    }
   });
+  for(let start=0;start<renderedNotes.length;){
+    const first=renderedNotes[start],untilBeat=perBeat-first.globalIndex%perBeat;
+    const beatNotes=renderedNotes.slice(start,start+untilBeat);
+    const ys=beatNotes.map(note=>note.y),stemsUp=ys.reduce((sum,y)=>sum+y,0)/ys.length>56;
+    const stemEnd=stemsUp?Math.min(...ys)-24:Math.max(...ys)+24;
+    for(const note of beatNotes){
+      const stemX=note.x+(stemsUp?6:-6);
+      svg+=`<line class="note-stem" x1="${stemX}" x2="${stemX}" y1="${note.y}" y2="${stemEnd}"/>`;
+    }
+    if(beatNotes.length>1){
+      const x1=beatNotes[0].x+(stemsUp?6:-6),x2=beatNotes.at(-1).x+(stemsUp?6:-6);
+      svg+=`<line class="note-beam" x1="${x1}" x2="${x2}" y1="${stemEnd}" y2="${stemEnd}"/>`;
+      if(rhythm==='sixteenths')svg+=`<line class="note-beam secondary" x1="${x1}" x2="${x2}" y1="${stemEnd+(stemsUp?6:-6)}" y2="${stemEnd+(stemsUp?6:-6)}"/>`;
+      if(rhythm==='triplets'&&beatNotes.length===3)svg+=`<text class="tuplet-number" x="${(x1+x2)/2}" y="${stemEnd+(stemsUp?-6:14)}">3</text>`;
+    }
+    start+=beatNotes.length;
+  }
+  for(const note of renderedNotes){
+    if((note.globalIndex+1)%notesPerBar!==0)continue;
+    const x=note.x+step/2;
+    svg+=`<line class="bar-line" data-bar-end="${note.globalIndex+1}" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line" data-bar-end="${note.globalIndex+1}" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
+  }
+  if(finalRests){
+    for(let rest=0;rest<finalRests;rest++){
+      const x=xFor(notes.length+rest);
+      svg+=`<text class="notation-rest" x="${x}" y="87">𝄾</text>`;
+    }
+    const x=xFor(notes.length+finalRests-1)+step/2;
+    svg+=`<line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
+  }
   return svg+'</svg>';
 }
 
 export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
-  const systems=[],maxNotes=24;
+  const systems=[],perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,maxNotes=perBeat*4*(rhythm==='sixteenths'?2:rhythm==='triplets'?2:3);
   let current=[],count=0,globalStart=0,previousSource=null;
   const shownAnnotations=new Set();
   for(const [groupIndex,group] of groups.entries()){
@@ -515,5 +536,6 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
     previousSource=group.source||null;
   }
   if(current.length)systems.push(current);
-  return systems.map((system,index)=>notationSystemSvg(system,rhythm,title,index)).join('');
+  const totalNoteCount=flattenExercise(groups).length;
+  return systems.map((system,index)=>notationSystemSvg(system,rhythm,title,index,index===systems.length-1,totalNoteCount)).join('');
 }

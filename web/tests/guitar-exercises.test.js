@@ -155,6 +155,26 @@ test('notation aligns its single exercise title, written guitar notes and tablat
   assert.match(svg,/class="pattern-bracket" d="M [^"]+ 246 V 250 H [^"]+ V 246"/);
 });
 
+test('notation barlines follow 4/4 duration instead of arbitrary pattern groups',()=>{
+  const groups=cagedStudy(board,harmony,'groups3','triad','ascending');
+  for(const [rhythm,notesPerBar] of [['eighths',8],['triplets',12],['sixteenths',16]]){
+    const svg=exerciseNotationSvg(groups,rhythm,`${rhythm} grouping`);
+    const barEnds=[...svg.matchAll(/class="bar-line(?: final)?" data-bar-end="(\d+)"/g)].map(match=>Number(match[1]));
+    assert.ok(barEnds.length>0,`${rhythm} should draw barlines`);
+    assert.ok(barEnds.every(end=>end%notesPerBar===0),`${rhythm} barlines must end on complete 4/4 bars`);
+    assert.equal(new Set(barEnds).size,barEnds.length/2,'staff and TAB share the same bar boundaries');
+  }
+});
+
+test('rhythmic notation distinguishes triplets, sixteenths and an incomplete final bar',()=>{
+  const groups=cagedStudy(board,harmony,'groups3','triad','ascending').slice(0,1);
+  const eighths=exerciseNotationSvg(groups,'eighths','Eighth-note cell');
+  assert.equal((eighths.match(/class="notation-rest"/g)||[]).length,(8-flattenExercise(groups).length%8)%8);
+  assert.match(eighths,/class="bar-line final" data-bar-end="8"/);
+  assert.match(exerciseNotationSvg(groups,'triplets','Triplet cell'),/class="tuplet-number"/);
+  assert.match(exerciseNotationSvg(groups,'sixteenths','Sixteenth-note cell'),/class="note-beam secondary"/);
+});
+
 test('long notation wraps into multiple complete systems',()=>{
   const groups=cagedStudy(board,harmony,'alternating','seventh','up-down');
   const svg=exerciseNotationSvg(groups,'eighths','Combined tetrads');
