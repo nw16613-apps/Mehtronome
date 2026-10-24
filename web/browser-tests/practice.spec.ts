@@ -334,7 +334,7 @@ test('fourths progression and guitar diagrams update together in live playback, 
   expect(errors).toEqual([]);
 });
 
-test('stopped progression selection updates all diagrams, previews harmony only, and supports silent inspection', async ({page}) => {
+test('stopped progression selection updates all diagrams, previews harmony only, and supports keyboard inspection', async ({page}) => {
   await page.addInitScript(() => {
     const Original = window.AudioWorkletNode;
     window.AudioWorkletNode = class extends Original {
@@ -384,14 +384,12 @@ test('stopped progression selection updates all diagrams, previews harmony only,
     const samples = new Float32Array(a.fftSize); a.getFloatTimeDomainData(samples);
     return Math.max(...samples.map(Math.abs));
   })).toBeLessThan(.0001);
-  await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(2).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#chord-name')).toHaveText('Cmaj7♯11');
   await expect(page.locator('#guitar-scale')).toContainText('Lydian');
   await expect(page.locator('#note-list small')).toHaveText(['1','3','5','7','♯11']);
   await expect(page.locator('#progression-strip>button').nth(2)).toBeFocused();
-  await page.locator('#audition').check();
   await page.locator('#progression-strip>button').nth(0).focus();
   await page.keyboard.down('Space');
   await expect(page.locator('#preview-status')).toBeVisible();
@@ -409,7 +407,6 @@ test('stopped progression selection updates all diagrams, previews harmony only,
   await page.locator('#play').click();
   await expect(page.locator('#progression-strip>button').nth(2)).toBeEnabled();
   await page.waitForTimeout(300);
-  await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(2).click();
   await expect(page.locator('#chord-name')).toHaveText('Cmaj7♯11');
 });
@@ -538,7 +535,6 @@ test.skip('drop chord grips show real four-note fingerings and follow stopped an
   await expect(page.locator('#voicing-diagrams .fret-note text')).toContainText(['9']);
   await page.locator('#progression').click();
   await page.locator('#template').selectOption('major251');
-  await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(1).click();
   await expect(page.locator('#voicings-chord')).toHaveText('G7alt');
   await expect(page.locator('#voicings-tones')).toContainText('D♭ (♭5)');
@@ -582,7 +578,6 @@ test.skip('string-set dropdown shows all four inversions on exactly the chosen s
   await expect(page.locator('#voicing-diagrams h4').first()).toHaveText('Root position · F♯ bass');
   await page.locator('#progression').click();
   await page.locator('#template').selectOption('major251');
-  await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(1).click();
   await expect(page.locator('#voicing-strings')).toHaveValue('5321');
   await expect(page.locator('#voicing-diagrams .voicing-card')).toHaveCount(4);

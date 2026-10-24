@@ -665,3 +665,9 @@ html[data-theme=dark]:not([data-palette]),html[data-theme=dark][data-palette=dar
   .mini-detail-controls { display:none; flex-basis:100%; order:5; }
   .mini-transport.mobile-expanded .mini-detail-controls { display:flex; }
 }
+
+.reference-chords>li { min-width:0; }
+button.reference-chord { width:100%; height:100%; text-align:left; color:inherit; font:inherit; cursor:pointer; touch-action:pan-y; user-select:none; }
+button.reference-chord:focus-visible { outline:2px solid var(--accent,#c96e47); outline-offset:3px; }
+button.reference-chord:disabled { cursor:default; opacity:1; }
+.progression-reference .reference-preview-help { margin:6px 0 12px; font-size:10px; color:var(--muted,#78827c); }

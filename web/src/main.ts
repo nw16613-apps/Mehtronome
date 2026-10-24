@@ -114,7 +114,7 @@ app.innerHTML = `
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
       <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></div>
-      <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><label class="check"><input id="audition" type="checkbox" checked>Sound preview</label><span id="preview-status" role="status" hidden>Release to stop</span></div>
+      <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><span id="preview-status" role="status" hidden>Release to stop</span></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
@@ -378,13 +378,16 @@ function renderProgressionReference(activeStep=step) {
   const title=settings.progression?`${template.name}${settings.loopEnabled?' · Selected loop':''}`:'Pedal chord · sustained harmony';
   const cards=order.map((index:number)=>{
     const chord=chordInfo(index),bars=durations[index];
-    return `<li class="reference-chord ${index===active?'current':''}" ${index===active?'aria-current="step"':''} data-reference-step="${index}"><strong>${escapeHtml(label(index))}</strong><span>${escapeHtml(chord.roman)}${settings.progression?` · ${bars} bar${bars===1?'':'s'}`:''}</span><small>${escapeHtml(scale(chord))}</small></li>`;
+    return `<li><button type="button" class="reference-chord ${index===active?'current':''}" ${index===active?'aria-current="step"':''} data-reference-step="${index}" title="While stopped, hold to hear this chord" ${playing||exercisePlaying?'disabled':''}><strong>${escapeHtml(label(index))}</strong><span>${escapeHtml(chord.roman)}${settings.progression?` · ${bars} bar${bars===1?'':'s'}`:''}</span><small>${escapeHtml(scale(chord))}</small></button></li>`;
   }).join('');
   document.querySelectorAll<HTMLElement>('.progression-reference').forEach(element=>{
-    element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${order.reduce((sum:number,index:number)=>sum+durations[index],0)}-bar loop`:''}</span></div><ol class="reference-chords">${cards}</ol><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
+    element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${order.reduce((sum:number,index:number)=>sum+durations[index],0)}-bar loop`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
   });
 }
 function renderMusic() {
+  const referenceFocus=(document.activeElement as HTMLElement)?.closest<HTMLButtonElement>('button[data-reference-step]');
+  const focusedReference=referenceFocus?.closest('.progression-reference')?.getAttribute('aria-label');
+  const focusedReferenceStep=referenceFocus?.dataset.referenceStep;
   const template = progressionDefinition(settings);
   step = settings.progression ? step % template.roman.length : 0;
   const info = chordInfo(step);
@@ -439,6 +442,9 @@ function renderMusic() {
   el('extension-status').textContent=extensions.length?`Scale colours: ${extensions.map(choice=>choice.label).join(' · ')} · ${settings.extensionBars}-bar blend cycle`:'This scale has no additional extensions for the selected chord.';
   renderGuitar();
   syncMiniTransport();
+  if(focusedReference&&focusedReferenceStep!==undefined){
+    Array.from(document.querySelectorAll('.progression-reference')).find(reference=>reference.getAttribute('aria-label')===focusedReference)?.querySelector<HTMLButtonElement>(`button[data-reference-step="${focusedReferenceStep}"]`)?.focus({preventScroll:true});
+  }
 }
 function practiceContext(info:any){return {root:info.scaleNames[0],mode:info.mode,chord:`${info.name}${info.suffix}`};}
 function savePracticeProgress(){try{localStorage.setItem(PRACTICE_PROGRESS_KEY,JSON.stringify(practiceProgress));}catch{/* Keep progress for this session. */}}
@@ -888,13 +894,12 @@ async function prepareAudio() {
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
 async function previewChord(index: number, hold: string) {
-  if (playing || busy || stopping) return;
+  if (playing || exercisePlaying || busy || stopping) return;
   stopPreview();
   const generation = previewGeneration;
   previewHold = hold;
   step = index;
   renderMusic();
-  if (!input('audition').checked) return;
   el('error').hidden = true;
   try {
     previewPreparation ??= prepareAudio().finally(() => { previewPreparation = undefined; });
@@ -1167,46 +1172,42 @@ diagrams.addEventListener('keydown',event=>{
   if (gripButton(event.target) && event.repeat && ['Space','Enter'].includes(event.code)) event.preventDefault();
 });
 }
-const progressionStrip = el('progression-strip');
-const chordButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-step]') : null;
-progressionStrip.addEventListener('pointerdown', event => {
-  const button = chordButton(event.target);
-  if (!button || button.disabled || event.button !== 0 || !event.isPrimary) return;
-  event.preventDefault();
-  button.focus();
-  void previewChord(Number(button.dataset.step), `pointer:${event.pointerId}`);
-  // Capture on the stable container: selecting a chord redraws its buttons.
-  progressionStrip.setPointerCapture(event.pointerId);
+// Delegate on the stable document: selecting a chord redraws both reference panels.
+const chordButton=(target:EventTarget|null)=>target instanceof HTMLElement?target.closest<HTMLButtonElement>('#progression-strip button[data-step], .progression-reference button[data-reference-step]'):null;
+const chordIndex=(button:HTMLButtonElement)=>Number(button.dataset.referenceStep??button.dataset.step);
+document.addEventListener('pointerdown',event=>{
+  const button=chordButton(event.target);
+  if(!button||button.disabled||event.button!==0||!event.isPrimary)return;
+  event.preventDefault();button.focus();
+  void previewChord(chordIndex(button),`pointer:${event.pointerId}`);
+  document.documentElement.setPointerCapture(event.pointerId);
 });
-for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) {
-  window.addEventListener(type, event => {
-    if (previewHold === `pointer:${event.pointerId}`) stopPreview();
-  });
+for(const type of ['pointerup','pointercancel','lostpointercapture'] as const){
+  window.addEventListener(type,event=>{if(previewHold===`pointer:${event.pointerId}`)stopPreview();});
 }
-progressionStrip.addEventListener('keydown', event => {
-  const button = chordButton(event.target);
-  if (!button || button.disabled || !['Space', 'Enter'].includes(event.code)) return;
+document.addEventListener('keydown',event=>{
+  const button=chordButton(event.target);
+  if(!button||button.disabled||!['Space','Enter'].includes(event.code))return;
   event.preventDefault();
-  if (!event.repeat) void previewChord(Number(button.dataset.step), `key:${event.code}`);
+  if(!event.repeat)void previewChord(chordIndex(button),`key:${event.code}`);
 });
-window.addEventListener('keyup', event => {
-  if (previewHold === `key:${event.code}`) { event.preventDefault(); stopPreview(); }
+window.addEventListener('keyup',event=>{
+  if(previewHold===`key:${event.code}`){event.preventDefault();stopPreview();}
 });
-window.addEventListener('blur', stopPreview);
-progressionStrip.addEventListener('focusout', () => {
-  // Let a redraw restore focus before deciding whether keyboard focus left.
-  queueMicrotask(() => {
-    if (!previewGripShape && previewHold?.startsWith('key:') && !progressionStrip.contains(document.activeElement)) stopPreview();
+window.addEventListener('blur',stopPreview);
+document.addEventListener('focusout',()=>{
+  queueMicrotask(()=>{
+    const focused=chordButton(document.activeElement);
+    if(!previewGripShape&&previewHold?.startsWith('key:')&&(!focused||chordIndex(focused)!==step))stopPreview();
   });
 });
-progressionStrip.addEventListener('contextmenu', event => { if (previewHold) event.preventDefault(); });
+document.addEventListener('contextmenu',event=>{if(chordButton(event.target)&&previewHold)event.preventDefault();});
 // Assistive technology can select a chord without synthesizing a held press.
-progressionStrip.addEventListener('click', event => {
-  const button = chordButton(event.target);
-  if (button && !playing) { step = Number(button.dataset.step); renderMusic(); }
+document.addEventListener('click',event=>{
+  const button=chordButton(event.target);
+  if(button&&!button.disabled&&!playing&&!exercisePlaying){step=chordIndex(button);renderMusic();}
 });
 input('space').addEventListener('input', updateSpace);
-input('audition').addEventListener('input', () => { if (!input('audition').checked) stopPreview(); });
 async function toggle() {
   if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
