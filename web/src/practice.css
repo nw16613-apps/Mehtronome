@@ -633,3 +633,5 @@ html[data-theme=dark]:not([data-palette]),html[data-theme=dark][data-palette=dar
 .mix-channel>input[type=range]::-moz-range-track { width:5px; background:var(--line,#899b83); }
 .mix-channel>input[type=range]::-moz-range-thumb { width:32px; height:18px; border-radius:3px; background:var(--panel,#fcfcf8); border:1px solid var(--ink,#243535); }
 .mix-channel>input[type=range]:focus-visible { outline:2px solid var(--accent,#c96e47); outline-offset:4px; border-radius:4px; }
+
+.harmony .sound-row { grid-template-columns:minmax(0,1fr); }

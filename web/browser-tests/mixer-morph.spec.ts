@@ -78,9 +78,10 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
  await expect(page.locator('[data-mix-channel="harmony"] .mix-channel-state')).toHaveText('Solo muted');
  await page.locator('#open-sound-settings').click();await expect(page.locator('#sound-settings-title')).toBeVisible();await expect(page.locator('#mix-panel')).toBeHidden();
  await expect(page.locator('.sound-settings details:not([open])')).toHaveCount(0);await page.locator('#pad-brightness').selectOption('dark');
+ await expect(page.locator('.harmony #sound')).toHaveCount(0);await page.locator('#sound').selectOption('glass');
  await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#mixer-clear-solos').click();
  await expect(page.locator('[data-mute-channel="bass"]')).toHaveAttribute('aria-pressed','true');
- await page.locator('[data-workspace-target="sound-settings-title"]').click();await expect(page.locator('#pad-brightness')).toHaveValue('dark');
+ await page.locator('[data-workspace-target="sound-settings-title"]').click();await expect(page.locator('#pad-brightness')).toHaveValue('dark');await expect(page.locator('#sound')).toHaveValue('glass');
  await page.reload();await expect(page.locator('#sound-settings-title')).toBeVisible();
 });
 
