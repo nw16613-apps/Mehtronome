@@ -30,7 +30,7 @@ for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivi
   await expect(page.locator('#click')).toHaveValue('32');
   await page.getByText('Practice timer',{exact:true}).click();
   await page.locator('#pulse-minutes').fill('10');await page.locator('#pulse-minutes').dispatchEvent('input');
-  await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('3/2');
+  await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
   await page.locator('[data-pulse-beat="1"]').click();
   await page.locator('#subdivision').selectOption(String(subdivision));
@@ -68,7 +68,7 @@ test('timer completes on the audio clock and large display follows playback',asy
   await page.locator('#beats').selectOption('4');
   await page.getByText('Practice timer',{exact:true}).click();
   await page.locator('#pulse-minutes').fill('1');await page.locator('#pulse-minutes').dispatchEvent('input');
-  await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('3/2');
+  await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#pulse-large-open').click();
   await page.locator('#pulse-large-play').click();
   await expect(page.locator('#pulse-large-number')).toHaveText(/^[1-4]$/);
@@ -80,7 +80,7 @@ test('timer completes on the audio clock and large display follows playback',asy
 
 for(const width of [1440,390])test(`pulse tools fit at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
-  for(const summary of ['Click sound & swing','Practice timer','Polyrhythm'])await page.getByText(summary,{exact:true}).click();
+  for(const summary of ['Click sound & swing','Practice timer','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();
   const geometry=await page.locator('.transport').evaluate(element=>({
     fullWidth:Math.abs(element.getBoundingClientRect().width-document.querySelector('.workspace')!.getBoundingClientRect().width)<2,
@@ -115,7 +115,7 @@ test('older presets reset new pulse tools to their original behavior',async({pag
   await page.goto('/');
   await page.getByText('Click sound & swing',{exact:true}).click();await page.locator('#pulse-sound').selectOption('rim');
   await page.getByText('Practice timer',{exact:true}).click();await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
-  await page.getByText('Polyrhythm',{exact:true}).click();await page.locator('#pulse-poly').selectOption('5/4');
+  await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();
   await page.locator('[data-workspace-target="progress-title"]').click();
   await page.locator('#preset-list').selectOption('legacy');await page.locator('#preset-load').click();

@@ -15,7 +15,11 @@ from a single sample clock, with smooth volume changes. It includes:
   back to the main metronome. Play/stop, editable tempo and harmony controls remain
   available. **Focus view** hides setup panels and navigation; entering it from
   Metronome & Mixer or Progress opens the guitar reference.
-- **Levels & ambience** holds all levels together: click, polyrhythm, harmony,
+- **Levels & ambience** uses a full-width bank of channel cards (four columns on
+  desktop, two on tablet, one on phones), with sound settings underneath. Each
+  channel has a mute button that retains its volume and leaves timing running;
+  **Unmute all** clears mutes without enabling disabled instruments. Mutes save
+  with presets, and older presets load unmuted. All levels stay together: click, polyrhythm, harmony,
   drums, bass, electric piano, melodic movement and ambient space. Instrument
   switches stay in Backing ensemble and Melodic movement, with styles and
   pattern settings in independently collapsible groups. Longer
@@ -33,6 +37,11 @@ from a single sample clock, with smooth volume changes. It includes:
   chord durations, scale guides, current chord tones and the next chord. Selected
   loops keep their original order and durations. Playback highlights the current
   chord without requiring a switch to Harmony.
+- **Evolving chord extensions** in Harmony slowly blends scale-constrained upper
+  chord colours over a 4-, 8- or 16-bar cycle. The selected root, progression and
+  practice diagrams stay in place. New sustained voicing pitches come from each
+  chord's current scale guide; existing extension tones also rise and fall in the
+  blend. The feature is optional, follows the tempo clock, and saves with presets.
 - **Tempo trainer** adds a selected BPM increment after a chosen number of complete
   musical bars, up to a target. Count-in bars are excluded; click, harmony, bass,
   drums and sequence share the changing audio clock. The starting BPM is retained

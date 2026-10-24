@@ -1,0 +1,74 @@
+import {expect,test} from '@playwright/test';
+
+for(const [width,columns] of [[1440,4],[900,2],[390,1]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:1000});await page.goto('/');
+  await expect(page.locator('.mix-level-grid .mix-channel')).toHaveCount(8);
+  const layout=await page.locator('.mix-level-grid').evaluate(element=>{
+    const boxes=Array.from(element.children).map(child=>child.getBoundingClientRect());
+    const groups=Array.from(document.querySelectorAll('.mix-group')).map(group=>group.getBoundingClientRect());
+    return {columns:new Set(boxes.map(box=>Math.round(box.left))).size,overflow:document.documentElement.scrollWidth>innerWidth+1,settingsBelow:groups.slice(1).every(box=>box.top>=groups[0].bottom)};
+  });
+  expect(layout).toEqual({columns,overflow:false,settingsBelow:true});
+  const drums=page.locator('[data-mix-channel="drums"]');
+  await expect(drums).toHaveClass(/is-inactive/);await expect(drums.locator('.mix-channel-state')).toHaveText('Off');
+  await page.locator('#drums').check();await expect(drums).not.toHaveClass(/is-inactive/);
+  await page.locator('[data-mute-channel="drums"]').click();await expect(drums.locator('.mix-channel-state')).toHaveText('Muted');
+  await page.locator('#drums-volume').fill('63');await page.locator('#drums-volume').dispatchEvent('input');
+  await expect(page.locator('#drums-volume-value')).toHaveText('63%');
+  await page.locator('#mixer-unmute-all').click();await expect(page.locator('#drums-volume')).toHaveValue('63');
+  await expect(page.locator('#drums')).toBeChecked();await expect(page.locator('#bass')).not.toBeChecked();
+});
+
+test('mute silences audio while preserving playback, volume and independent polyrhythm',async({page})=>{
+  await page.addInitScript(()=>{
+    const Original=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Original{
+      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+        super(context,name,options);const analyser=context.createAnalyser();this.connect(analyser,0);(window as any).__muteAnalyser=analyser;
+      }
+    };
+  });
+  await page.goto('/');
+  await page.locator('#harmony').fill('0');await page.locator('#harmony').dispatchEvent('input');
+  await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');await page.locator('#play').click();
+  await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
+  const peak=()=>page.evaluate(()=>{const analyser=(window as any).__muteAnalyser as AnalyserNode;const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);return Math.max(...samples.map(Math.abs));});
+  await expect.poll(peak).toBeGreaterThan(.005);
+  await page.locator('[data-mute-channel="click"]').click();await expect.poll(peak).toBeLessThan(.00001);
+  await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#click')).toHaveValue('50');
+  await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
+  await expect.poll(peak).toBeGreaterThan(.005);
+  await page.locator('[data-mute-channel="poly"]').click();await expect.poll(peak).toBeLessThan(.00001);
+  await page.locator('#click').fill('67');await page.locator('#click').dispatchEvent('input');
+  await page.locator('#mixer-unmute-all').click();await expect(page.locator('#click')).toHaveValue('67');
+  await expect.poll(peak).toBeGreaterThan(.005);await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#mini-play').click();
+});
+
+test('mutes and mode extension morph restore through presets',async({page})=>{
+  await page.goto('/');await page.locator('[data-mute-channel="space"]').click();await page.locator('[data-mute-channel="harmony"]').click();
+  await page.locator('#harmony').fill('46');await page.locator('#harmony').dispatchEvent('input');
+  await page.locator('[data-workspace-target="harmony-title"]').click();
+  await page.locator('#extension-morph').check();await page.locator('#extension-bars').selectOption('16');
+  await expect(page.locator('#extension-status')).toContainText('16-bar blend cycle');
+  await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-name').fill('Evolving muted mix');await page.locator('#preset-save').click();
+  await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#mixer-unmute-all').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await page.locator('#extension-morph').uncheck();
+  await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-load').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await expect(page.locator('#extension-morph')).toBeChecked();await expect(page.locator('#extension-bars')).toHaveValue('16');
+  await page.locator('[data-workspace-target="pulse-title"]').click();
+  await expect(page.locator('[data-mute-channel="harmony"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('[data-mute-channel="space"]')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#harmony')).toHaveValue('46');
+  await page.locator('#mixer-unmute-all').click();await page.locator('[data-workspace-target="harmony-title"]').click();
+  await page.locator('#mini-play').click();await expect(page.locator('#extension-status')).toContainText('Blending:',{timeout:10000});await page.locator('#mini-play').click();
+});
+
+test('old presets clear mutes and extension morph instead of inheriting a prior mix',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('mehtronome-practice-presets-v1',JSON.stringify({version:1,items:[{id:'old',name:'Old mix',progression:false,controls:{bpm:'100',harmony:'35'}}]})));
+  await page.goto('/');await page.locator('[data-mute-channel="click"]').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await page.locator('#extension-morph').check();
+  await page.locator('[data-workspace-target="progress-title"]').click();await page.locator('#preset-list').selectOption('old');await page.locator('#preset-load').click();
+  await page.locator('[data-workspace-target="harmony-title"]').click();await expect(page.locator('#extension-morph')).not.toBeChecked();
+  await page.locator('[data-workspace-target="pulse-title"]').click();await expect(page.locator('[data-mute-channel="click"]')).toHaveAttribute('aria-pressed','false');
+});

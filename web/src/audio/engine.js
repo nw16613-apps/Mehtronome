@@ -1,3 +1,4 @@
+import {extensionChoices,extensionBlend} from './extensions.js';
 import {beatStrength, subdivisionAt, progressiveGap} from '../practice/pulse.js';
 import { GuitarStrum } from './guitar.js';
 import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
@@ -9,6 +10,7 @@ import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
+  mutedChannels:'', extensionMorph:false, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, polyVolume:.45, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3,
@@ -212,6 +214,7 @@ export class Engine {
     this.frequencies = [0, 0, 0];
     this.level = 0;
     this.clickLevel = 0;
+    this.polyLevel = 0;
     this.harmonyLevel = 0;
     this.running = true;
     this.sessionFrames = 0;
@@ -248,6 +251,8 @@ export class Engine {
       this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
+    this.muted=new Set(String(s.mutedChannels||'').split(','));
+    s.extensionBars=[4,8,16].includes(Number(s.extensionBars))?Number(s.extensionBars):8;
     s.clickSwing=Math.max(0,Math.min(1,Number(s.clickSwing)||0));
     s.polyBeats=[0,2,3,4,5,7].includes(Number(s.polyBeats))?Number(s.polyBeats):0;
     s.polyBase=[2,3,4].includes(Number(s.polyBase))?Number(s.polyBase):2;
@@ -305,7 +310,7 @@ export class Engine {
     this.step = step;
     const s = this.settings;
     const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.bass}`).join(','):'';
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${customSignature}`;
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${s.extensionMorph}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
@@ -321,7 +326,18 @@ export class Engine {
       else this.padVoicing.unshift({midi:harmony.bassMidi,role:'foundation',weight:1.35});
       this.padVoicing.sort((a,b)=>a.midi-b.midi);
     }
-    this.motionNotes=padMotionNotes(this.chordMidi);
+    this.extensionBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
+    this.extensionCandidates=s.extensionMorph?extensionChoices(harmony):[];
+    if(s.extensionMorph){
+      const allowed=new Set(harmony.scalePcs);
+      this.padVoicing=this.padVoicing.filter(entry=>allowed.has((entry.midi%12+12)%12));
+      this.extensionCandidates.forEach((choice,index)=>{
+        const existing=this.padVoicing.filter(entry=>entry.midi%12===choice.midi%12);
+        if(existing.length)existing.forEach(entry=>{entry.extensionIndex=index;});
+        else if(this.padVoicing.length<10)this.padVoicing.push({midi:choice.midi,role:'colour',weight:.7,extensionIndex:index});
+      });
+    }
+    this.motionNotes=padMotionNotes(s.extensionMorph?this.chordMidi.filter(midi=>harmony.scalePcs.includes(midi%12)):this.chordMidi);
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     this.assignPadVoices(this.depthMotionState);
@@ -339,7 +355,8 @@ export class Engine {
   padEntryWeight(entry,state=this.depthMotionState) {
     const base=entry.depthWeights?depthWeight(entry.depthWeights,state.position):entry.weight;
     const roleScale=entry.role==='foundation'?state.foundation:entry.role==='air'?state.air:state.body;
-    return base*roleScale*(this.settings.bass&&entry.role==='foundation'?.28:1);
+    const extension=entry.extensionIndex===undefined?1:extensionBlend(entry.extensionIndex,this.extensionCandidates.length,this.extensionBeat,this.settings.beats,this.settings.extensionBars);
+    return base*extension*roleScale*(this.settings.bass&&entry.role==='foundation'?.28:1);
   }
 
   assignPadVoices(state=this.depthMotionState) {
@@ -381,11 +398,15 @@ export class Engine {
 
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP) {
     const s = this.settings;
+    const clickVolume=this.muted.has('click')?0:s.click,polyVolume=this.muted.has('poly')?0:s.polyVolume;
+    const harmonyVolume=this.muted.has('harmony')?0:s.harmony;
+    const drumsVolume=this.muted.has('drums')?0:s.drumsVolume,bassVolume=this.muted.has('bass')?0:s.bassVolume;
+    const compingVolume=this.muted.has('comping')?0:s.compingVolume,sequenceVolume=this.muted.has('sequence')?0:s.sequenceVolume;
     if (this.guitar) {
       // Guitar bypasses pad layers and echoes, but feeds the shared room reverb.
       for (let i = 0; i < output.length; i++) {
         this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
-        const value = this.guitar.sample() * this.level * s.harmony;
+        const value = this.guitar.sample() * this.level * harmonyVolume;
         output[i] = harmonyOutput ? 0 : value;
         if (harmonyOutput) harmonyOutput[i] = value;
         if (harmonyRight) harmonyRight[i] = value;
@@ -434,6 +455,7 @@ export class Engine {
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
         onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+          extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
       const subdivision = subdivisionAt(this.phase/(60*this.rate),s.subdivision,s.clickSwing);
@@ -445,8 +467,9 @@ export class Engine {
       }
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
-      this.clickLevel += (s.click - this.clickLevel) * smoothing;
-      const backing = this.auditioning || this.beat >= this.remainingCount ? s.harmony : 0;
+      this.clickLevel += (clickVolume - this.clickLevel) * smoothing;
+      this.polyLevel+=(polyVolume-this.polyLevel)*smoothing;
+      const backing = this.auditioning || this.beat >= this.remainingCount ? harmonyVolume : 0;
       this.harmonyLevel += (backing - this.harmonyLevel) * smoothing;
       const t = this.clickAge++ / this.rate;
       const frequency=this.clickFrequency;
@@ -467,14 +490,14 @@ export class Engine {
         this.sessionFrames++;
       }
       const polyTime=this.polyAge++/this.rate;
-      const polyClick=s.polyBeats&&polyTime<.05?Math.sin(2*Math.PI*2200*polyTime)*Math.exp(-140*polyTime)*s.polyVolume:0;
+      const polyClick=s.polyBeats&&polyTime<.05?Math.sin(2*Math.PI*2200*polyTime)*Math.exp(-140*polyTime):0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
       if(s.sequence && backingActive && !this.auditioning){
         this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext);
       }
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render();
       else { this.sequence.left = 0; this.sequence.right = 0; }
-      this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?s.sequenceVolume:0)-this.sequenceLevel)*smoothing;
+      this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
       const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
@@ -482,9 +505,9 @@ export class Engine {
         const compNotes=this.padVoicing.filter(note=>!['foundation','air'].includes(note.role)).map(note=>note.midi);
         this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.compingNotes||[],this.age,this.step,onRhythm);
       }
-      this.drumsLevel+=((s.drums && rhythmActive?s.drumsVolume:0)-this.drumsLevel)*smoothing;
-      this.bassLevel+=((s.bass && rhythmActive?s.bassVolume:0)-this.bassLevel)*smoothing;
-      this.compingLevel+=((s.comping && rhythmActive?s.compingVolume:0)-this.compingLevel)*smoothing;
+      this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
+      this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;
+      this.compingLevel+=((s.comping && rhythmActive?compingVolume:0)-this.compingLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
       const comping=this.comping.render();
       // The sampled rhythm section needs enough headroom to sit in front of the
@@ -500,6 +523,7 @@ export class Engine {
         this.breathDelta=(breath-this.breath)/32;
         const musicalBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
         if((this.age&2047)===0){
+          this.extensionBeat=musicalBeat;
           const depthState=padDepthMotionState(s,musicalBeat);
           this.applyPadDepthState(depthState);
           depth=.4+1.4*depthState.position;
@@ -595,7 +619,7 @@ export class Engine {
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
-      const clickSample = this.level * .3 * this.clickLevel * (this.auditioning ? 0 : click * this.clickStrength + polyClick);
+      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*click*this.clickStrength + .5*this.polyLevel*polyClick);
       // Give transients and bass fundamentals a little room against the pad.
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.

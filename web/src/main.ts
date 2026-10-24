@@ -1,3 +1,5 @@
+import {MIX_CHANNELS} from './practice/mixer.js';
+import {extensionChoices} from './audio/extensions.js';
 import {tapBpm, beatStrength, formatTime} from './practice/pulse.js';
 import { roomImpulse } from './audio/ambience.js';
 import { theoryOptions } from './guitar/superimposition.js';
@@ -67,7 +69,7 @@ app.innerHTML = `
       <button class="play-button" id="play" aria-pressed="false"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
       <div class="pulse-options">
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in">One-bar count-in</label></div>
-      <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1">Quarter notes</option><option value="2">Eighth notes</option><option value="3">Eighth-note triplets</option><option value="4">Sixteenth notes</option><option value="5">Quintuplets · 5 per beat</option><option value="6">Sixteenth-note sextuplets</option><option value="7">Septuplets · 7 per beat</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
+      <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1" aria-label="Quarter notes" title="Quarter notes">♩</option><option value="2" aria-label="Eighth notes" title="Eighth notes">♪</option><option value="3" aria-label="Eighth-note triplets" title="Eighth-note triplets">♪³</option><option value="4" aria-label="Sixteenth notes" title="Sixteenth notes">♬</option><option value="5" aria-label="Quintuplets: five per beat" title="Quintuplets: five per beat">♬⁵</option><option value="6" aria-label="Sixteenth-note sextuplets" title="Sixteenth-note sextuplets">♬⁶</option><option value="7" aria-label="Septuplets: seven per beat" title="Septuplets: seven per beat">♬⁷</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
       </div>
       <div class="pulse-quick-tools"><button id="tap-tempo" type="button" class="practice-button">Tap tempo <kbd>T</kbd></button><span id="tap-status" class="practice-help" role="status">Tap at least twice to set the pulse.</span><button id="pulse-large-open" type="button" class="practice-button">Large beat display</button></div>
       <div class="pulse-shortcut-row"><span class="small-label">TEMPO SHORTCUTS</span><div id="tempo-shortcuts" class="tempo-shortcuts"></div><button id="tempo-save" type="button" class="practice-button">Save current tempo</button><span id="tempo-shortcut-status" class="practice-help" role="status"></span></div>
@@ -87,6 +89,7 @@ app.innerHTML = `
       <details class="chord-scale-explorer"><summary>Choose a chord first · find scales and modes</summary><div class="field-row chord-scale-controls"><label>Chord root<select id="scale-explorer-root">${names.map((name,index)=>`<option value="${index}" ${index===9?'selected':''}>${name}</option>`).join('')}</select></label><label>Chord quality<select id="scale-explorer-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}" ${id==='dom7'?'selected':''}>${chord.name}</option>`).join('')}</select></label></div><div class="scale-explorer-key"><span><i class="strict"></i>Contains every written chord tone</span><span><i class="contextual"></i>Contextual reinterpretation</span></div><div id="scale-explorer-results" class="scale-explorer-results"></div></details>
       <details class="backing-shape"><summary>Shape the backing</summary><div class="field-row"><label>Movement<select id="pad-movement"><option value="still">Still</option><option value="evolving" selected>Evolving</option><option value="expansive">Expansive</option></select></label><label>Depth centre<select id="pad-depth"><option value="intimate">Intimate</option><option value="wide" selected>Wide</option><option value="epic">Epic</option></select></label><label>Depth motion<select id="pad-depth-motion"><option value="fixed">Fixed</option><option value="expansion">Slow expansion</option><option value="breathing" selected>Phrase breathing</option><option value="bloom">Bass bloom</option><option value="drift">Register drift</option></select></label><label>Brightness<select id="pad-brightness"><option value="dark">Dark</option><option value="balanced" selected>Balanced</option><option value="luminous">Luminous</option></select></label></div><label class="volume-label" for="pad-depth-amount">Depth movement <output id="pad-depth-amount-value">65%</output></label><input id="pad-depth-amount" type="range" min="0" max="100" value="65"><p class="practice-help">Depth motion gradually redistributes the voicing between its bass foundation, middle register and upper air.</p></details>
 
+      <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox">Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Slowly add and release extensions from the current scale. The root and progression stay in place; this shapes the sustained harmony.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
       <p id="mode-tip" class="mode-tip"></p>
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
@@ -117,15 +120,8 @@ app.innerHTML = `
     <section class="notes panel workspace-page workspace-harmony" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">Under your fingers</h2><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div><label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p><div id="note-list" class="note-list"></div><p id="exercise-description">Play these notes on your instrument, at your own pace.</p></section>
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Your mix</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <div id="mix-sections" class="mix-sections">
-        <section class="mix-levels mix-group" aria-labelledby="levels-title"><h3 id="levels-title">Levels &amp; ambience</h3>
-          <label class="volume-label" for="click">Click <output id="click-value">50%</output></label><input id="click" type="range" min="0" max="100" value="50">
-          <label class="volume-label" for="pulse-poly-volume">Polyrhythm <output id="pulse-poly-volume-value">45%</output></label><input id="pulse-poly-volume" type="range" min="0" max="100" value="45">
-          <label class="volume-label" for="harmony">Harmony <output id="harmony-value">35%</output></label><input id="harmony" type="range" min="0" max="100" value="35">
-          <label class="volume-label" for="drums-volume">Drums <output id="drums-volume-value">35%</output></label><input id="drums-volume" type="range" min="0" max="100" value="35">
-          <label class="volume-label" for="bass-volume">Bass <output id="bass-volume-value">40%</output></label><input id="bass-volume" type="range" min="0" max="100" value="40">
-          <label class="volume-label" for="comping-volume">Electric piano <output id="comping-volume-value">30%</output></label><input id="comping-volume" type="range" min="0" max="100" value="30">
-          <label class="volume-label" for="sequence-volume">Melodic movement <output id="sequence-volume-value">25%</output></label><input id="sequence-volume" type="range" min="0" max="100" value="25">
-          <label class="volume-label" for="space">Ambient space <output id="space-value">75%</output></label><input id="space" type="range" min="0" max="100" value="75">
+        <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
+          <div class="mix-level-grid">${MIX_CHANNELS.map(channel=>`<div class="mix-channel" data-mix-channel="${channel.id}"><div class="mix-channel-header"><label for="${channel.control}">${channel.label}</label><output id="${channel.output}">${channel.value}%</output><input id="mute-${channel.id}" type="checkbox" hidden><button type="button" class="channel-mute" data-mute-channel="${channel.id}" aria-label="Mute ${channel.label}" aria-pressed="false">Mute</button></div><input id="${channel.control}" type="range" min="0" max="100" value="${channel.value}" aria-describedby="mix-state-${channel.id}"><span id="mix-state-${channel.id}" class="mix-channel-state">On</span></div>`).join('')}</div>
         </section>
     <section class="rhythm mix-group" aria-labelledby="rhythm-title">
       <div class="section-heading"><h3 id="rhythm-title">Backing ensemble</h3></div>
@@ -428,6 +424,8 @@ function renderMusic() {
   const displayed = arpeggio ? info.tones : notes();
   el('note-list').innerHTML = displayed.map((n: string, i: number) => `<div class="note ${arpeggio || info.chordPcs.includes(info.scalePcs[i]) ? 'chord-tone' : ''} ${highlight && colour.some((c: any)=>c.pc === (arpeggio ? info.chordPcs[i] : info.scalePcs[i])) ? 'characteristic' : ''}"><strong>${n}</strong><small>${arpeggio ? info.intervals[i] : MODES[info.mode as keyof typeof MODES].degrees[i]}</small></div>`).join('');
   el('exercise-description').textContent = arpeggio ? 'Intervals are measured from the current chord root. Follow the harmony on your instrument.' : settings.progression && settings.template !== 'diatonic' ? `${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}. Follow the scale guide through the harmony.` : 'Play the scale on your instrument. Highlighted notes belong to the current chord.';
+  const extensions=extensionChoices(info);
+  el('extension-status').textContent=extensions.length?`Scale colours: ${extensions.map(choice=>choice.label).join(' · ')} · ${settings.extensionBars}-bar blend cycle`:'This scale has no additional extensions for the selected chord.';
   renderGuitar();
   syncMiniTransport();
 }
@@ -611,7 +609,7 @@ function commitCustomEdit(autoMode=false){
 }
 function updateSpace() {
   el('space-value').textContent = `${input('space').value}%`;
-  if (wet && context) wet.gain.setTargetAtTime(Number(input('space').value) / 100 * .65, context.currentTime, .08);
+  if (wet && context) wet.gain.setTargetAtTime((input('mute-space').checked?0:Number(input('space').value) / 100 * .65), context.currentTime, .08);
 }
 function update() {
   if (previewGripShape || activeComparison) stopPreview();
@@ -623,6 +621,10 @@ function update() {
   settings.chord = select('chord').value;
   settings.sound = select('sound').value;
   settings.padMovement = select('pad-movement').value;
+  settings.extensionMorph=input('extension-morph').checked;
+  settings.extensionBars=Number(select('extension-bars').value);
+  el('extension-controls').hidden=!settings.extensionMorph;
+  el('extension-status').hidden=!settings.extensionMorph;
   settings.padDepth = select('pad-depth').value;
   settings.padDepthMotion = select('pad-depth-motion').value;
   settings.padDepthAmount = Number(input('pad-depth-amount').value)/100;
@@ -724,6 +726,8 @@ function update() {
   el('harmony-value').textContent = `${Math.round(settings.harmony * 100)}%`;
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
+  settings.mutedChannels=MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked).map(channel=>channel.id).join(',');
+  reflectMixerChannels();
   node?.port.postMessage({ type: 'settings', settings });
   syncMixerDetails();
   updateSpace();
@@ -819,7 +823,7 @@ async function prepareAudio() {
     impulse = context.createBuffer(2, room[0].length, context.sampleRate);
     room.forEach((samples,channel)=>impulse!.getChannelData(channel).set(samples));
     wet = context.createGain();
-    wet.gain.value = Number(input('space').value) / 100 * .65;
+    wet.gain.value = (input('mute-space').checked?0:Number(input('space').value) / 100 * .65);
     reverbGate = context.createGain();
     reverbGate.gain.value = 0;
     node.connect(reverbGate.gain,3);
@@ -840,6 +844,7 @@ async function prepareAudio() {
       if (typeof data.bpm === 'number') currentBpm = data.bpm;
       syncMiniTransport();
       syncTrainerStatus();
+      if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'passing between colours'} · ${settings.extensionBars}-bar cycle`;
       el('mini-beat').textContent = `${data.beat + 1} / ${settings.beats}`;
       renderBeats(data.beat);
       el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
@@ -1227,6 +1232,30 @@ async function toggle() {
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 
+function reflectMixerChannels(){
+  let mutedCount=0;
+  for(const channel of MIX_CHANNELS){
+    const muted=input('mute-'+channel.id).checked;
+    const enabled=channel.id==='poly'?settings.polyBeats>0:['drums','bass','comping','sequence'].includes(channel.id)?input(channel.id).checked:true;
+    const card=document.querySelector<HTMLElement>(`[data-mix-channel="${channel.id}"]`)!;
+    card.classList.toggle('is-muted',muted);card.classList.toggle('is-inactive',!enabled);
+    const button=card.querySelector<HTMLButtonElement>('.channel-mute')!;
+    button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',`${muted?'Unmute':'Mute'} ${channel.label}`);
+    button.textContent=muted?'Muted':'Mute';
+    el('mix-state-'+channel.id).textContent=!enabled?(muted?'Off · muted':'Off'):muted?'Muted':'On';
+    if(muted)mutedCount++;
+  }
+  el<HTMLButtonElement>('mixer-unmute-all').disabled=mutedCount===0;
+}
+function applyMixerMutes(){
+  settings.mutedChannels=MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked).map(channel=>channel.id).join(',');
+  node?.port.postMessage({type:'settings',settings});updateSpace();reflectMixerChannels();
+}
+el('mix-panel').addEventListener('click',event=>{
+  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-mute-channel]');if(!button)return;
+  const control=input('mute-'+button.dataset.muteChannel);control.checked=!control.checked;applyMixerMutes();
+});
+el('mixer-unmute-all').addEventListener('click',()=>{for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=false;applyMixerMutes();});
 let pulseTaps:number[]=[];
 function tapTempo(){
   const now=performance.now();
@@ -1273,7 +1302,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','pulse-poly-volume','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','pulse-poly-volume','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -1525,7 +1554,7 @@ async function previewComparison(slot:'a'|'b') {
     previewPreparation ??= prepareAudio().finally(()=>{previewPreparation=undefined;});await previewPreparation;
     if(generation!==previewGeneration || document.hidden)return;
     previewing=true;
-    node!.port.postMessage({type:'audition',settings:{...captured.settings,harmony:settings.harmony},step:captured.step});
+    node!.port.postMessage({type:'audition',settings:{...captured.settings,harmony:settings.harmony,mutedChannels:settings.mutedChannels},step:captured.step});
   }catch(error){stopPreview();el('error').textContent=error instanceof Error?error.message:'Could not compare chords.';el('error').hidden=false;}
 }
 el('compare-swap').addEventListener('click',()=>void previewComparison(activeComparison==='a'?'b':'a'));
@@ -1629,7 +1658,7 @@ el('preset-load').addEventListener('click',async()=>{
     stopPreview();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({'pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','pulse-poly-volume':'45','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','pulse-poly-volume':'45','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
