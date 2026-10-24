@@ -728,11 +728,11 @@ async function prepareAudio() {
       void context?.close();
     };
     context.onstatechange = () => {
-      if ((playing || previewing || exercisePlaying) && context?.state !== 'running') {
-        stopPreview();
-        playing = false;
-        reflectPlayback();
-        el('play-status').textContent = 'Audio paused by your browser. Press Start to resume.';
+      if (playing && context?.state === 'suspended') {
+        el('play-status').textContent = document.hidden
+          ? 'Playing in the background · audio will resume if your browser pauses it.'
+          : 'Audio paused by your browser · resuming…';
+        if (!document.hidden) void resumeBackgroundAudio();
       }
     };
   }
@@ -1179,9 +1179,19 @@ document.addEventListener('keydown', event => {
     event.preventDefault(); void toggle();
   }
 });
+async function resumeBackgroundAudio() {
+  if (!playing || !context || context.state !== 'suspended') return;
+  try { await context.resume(); }
+  catch { el('play-status').textContent = 'Playback is still active. Return to this tab to resume audio.'; }
+}
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (playing) void stop(); else stopPreview(); }
+  if (document.hidden) {
+    if (!playing) stopPreview();
+    return;
+  }
+  void resumeBackgroundAudio();
 });
+window.addEventListener('pageshow',()=>void resumeBackgroundAudio());
 function syncMixerDetails() {
   if ((settings.drums && !mixerDrums) || (settings.bass && !mixerBass) || (settings.comping && !mixerComping)) el<HTMLDetailsElement>('rhythm-details').open = true;
   if (settings.sequence && !mixerSequence) el<HTMLDetailsElement>('sequence-details').open = true;

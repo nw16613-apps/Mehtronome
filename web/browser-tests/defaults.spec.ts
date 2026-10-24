@@ -90,3 +90,19 @@ test('melodic movement roles expose phrases while the pattern library remains av
   await expect(page.locator('#sequence-interaction')).toHaveValue('answerDrums');
   await expect(page.locator('#sequence-pattern-library')).toBeHidden();
 });
+
+test('switching tabs preserves playback instead of stopping the transport',async({page})=>{
+  await page.goto('/');await page.locator('#play').click();
+  await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(()=>{
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(()=>{
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#play').click();
+});
