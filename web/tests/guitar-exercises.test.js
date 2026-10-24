@@ -232,6 +232,10 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
   }
   const exact=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'lesson64'});
   assert.deepEqual(exact[0].notes.map(note=>note.midi),[...descendingAvailable.slice(0,6),...descendingAvailable.slice(2,6)].map(note=>note.midi),'6s + 4s matches the source TAB: six notes, then four from the next string pair');
+  const ascendingAvailable=[...descendingAvailable].reverse();
+  const ascendingFiveFour=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'lesson54'});
+  assert.deepEqual(ascendingFiveFour[0].notes.map(note=>note.midi),[...ascendingAvailable.slice(0,5),...ascendingAvailable.slice(2,6)].map(note=>note.midi),'ascending 5s + 4s matches the source TAB: five notes, then four from the next string pair');
+  assert.equal(ascendingFiveFour[1].notes[0].midi,ascendingAvailable[2].midi,'the next ascending 5s + 4s cell begins one string pair higher');
   const variation=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'cascade64'});
   assert.notDeepEqual(variation[0].notes.map(note=>note.midi),exact[0].notes.map(note=>note.midi),'the earlier sliding picking variation remains available');
   assert.equal(variation[1].notes[0].midi,variation[0].notes[1].midi,'the sliding variation advances one pentatonic note at a time');
