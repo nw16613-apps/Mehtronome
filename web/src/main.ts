@@ -122,7 +122,6 @@ app.innerHTML = `
       <div class="section-heading"><div><h2 id="notes-title">Under your fingers</h2><p id="seventh-chords-context" class="mode-map-context"></p></div><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div>
       <label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p>
       <p class="mode-map-guide">Read down: scale note &amp; degree → seventh chord → its four chord tones.</p>
-      <div id="arpeggio-notes" class="arpeggio-notes" hidden></div>
       <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
       <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
     </section>
@@ -430,23 +429,21 @@ function renderMusic() {
   const arpeggio = select('exercise').value === 'arpeggio';
   const modeDegrees=MODES[info.mode as keyof typeof MODES].degrees;
   el('seventh-chords-context').textContent=`${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
-  el('arpeggio-notes').hidden=!arpeggio;
-  el('arpeggio-notes').innerHTML=arpeggio?`<span class="arpeggio-caption">Current arpeggio</span>${info.tones.map((note:string,index:number)=>`<span class="arpeggio-tone"><strong>${escapeHtml(note)}</strong><small>${escapeHtml(info.intervals[index])}</small></span>`).join('')}`:'';
   el('note-list').classList.toggle('arpeggio-view',arpeggio);
   el('note-list').innerHTML=harmonizedSevenths(info).map(chord=>{
     const current=chord.root===info.midi[0]%12;
     const chordTone=info.chordPcs.includes(chord.root);
     const characteristic=highlight&&colour.some((note:any)=>note.pc===chord.root)&&(!arpeggio||chordTone);
-    const roles=['Root','3rd','5th','7th'];
+    const suffix=chord.symbol.slice(chord.rootName.length);
     return `<li class="mode-seventh degree-stack${current?' current-root':''}${arpeggio&&!chordTone?' outside-arpeggio':''}" data-scale-degree="${chord.degree}" ${current?'aria-current="true"':''}>
       <div class="note scale-note${chordTone?' chord-tone':''}${characteristic?' characteristic':''}"><strong>${escapeHtml(chord.rootName)}</strong><small>Degree ${escapeHtml(modeDegrees[chord.degree-1])}</small></div>
       <span class="degree-link" aria-hidden="true"></span>
-      <div class="seventh-layer"><span class="seventh-label">Seventh chord</span><h4 title="${escapeHtml(chord.quality)}" aria-label="${escapeHtml(chord.rootName+' '+chord.quality)}">${escapeHtml(chord.symbol)}</h4>
-        <div class="seventh-tones" aria-label="Chord tones: ${escapeHtml(chord.notes.join(', '))}">${chord.notes.map((note,index)=>`<span class="chord-component"><strong class="chord-tone-note">${escapeHtml(note)}</strong><small>${roles[index]}</small></span>`).join('')}</div>
+      <div class="seventh-layer"><h4 title="${escapeHtml(chord.quality)}" aria-label="${escapeHtml(chord.rootName+' '+chord.quality)}"><span class="seventh-root">${escapeHtml(chord.rootName[0])}<span class="seventh-accidentals">${escapeHtml(chord.rootName.slice(1))}</span></span><span class="seventh-suffix">${escapeHtml(suffix)}</span></h4>
+        <p class="seventh-tones" aria-label="Chord tones: ${escapeHtml(chord.notes.join(', '))}">${chord.notes.map(note=>`<span class="chord-tone-note">${escapeHtml(note)}</span>`).join('<span class="tone-separator" aria-hidden="true">·</span>')}</p>
       </div>
     </li>`;
   }).join('');
-  el('exercise-description').textContent=arpeggio?'Play the current arpeggio above. Its intervals are measured from the current chord root; other scale notes are dimmed in the map. The outlined chord marks the current root.':'Filled note boxes belong to the current chord; dashed rings mark modal colour notes. Each seventh chord stacks alternate notes of this mode; the outlined chord marks the current root.';
+  el('exercise-description').textContent=arpeggio?'Play the highlighted scale notes as the current arpeggio. Other scale notes are dimmed; the outlined chord marks the current root.':'Filled note boxes belong to the current chord; dashed rings mark modal colour notes. Each seventh chord stacks alternate notes of this mode; the outlined chord marks the current root.';
 
   const extensions=extensionChoices(info);
   el('extension-status').textContent=extensions.length?`Scale colours: ${extensions.map(choice=>choice.label).join(' · ')} · ${settings.extensionBars}-bar blend cycle`:'This scale has no additional extensions for the selected chord.';

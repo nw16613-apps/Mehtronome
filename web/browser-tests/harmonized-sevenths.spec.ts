@@ -13,11 +13,10 @@ test('Harmony displays C Lydian augmented seventh chords and responds to root an
   await expect(chords.locator('.scale-note.chord-tone strong')).toHaveText(['C','D','E','G♯','B']);
   await page.locator('#highlight-mode').uncheck();await expect(chords.locator('.characteristic')).toHaveCount(0);await page.locator('#highlight-mode').check();
   await page.locator('#exercise').selectOption('arpeggio');
-  await expect(page.locator('#arpeggio-notes .arpeggio-tone strong')).toHaveText(['C','E','G♯','B','D']);
-  await expect(page.locator('#arpeggio-notes .arpeggio-tone small')).toHaveText(['1','3','♯5','7','9']);
+  await expect(chords.locator('.scale-note.chord-tone strong')).toHaveText(['C','D','E','G♯','B']);
   await expect(chords.locator('.scale-note.characteristic strong')).toHaveText(['G♯']);
   await expect(page.locator('.outside-arpeggio')).toHaveCount(2);
-  await page.locator('#exercise').selectOption('scale');await expect(page.locator('#arpeggio-notes')).toBeHidden();
+  await page.locator('#exercise').selectOption('scale');await expect(page.locator('.outside-arpeggio')).toHaveCount(0);
   await expect(page.locator('#seventh-chords-context')).toHaveText('C Lydian augmented');
   await expect(page.locator('#chord')).toHaveValue('augMaj9');
   await page.locator('#key').selectOption('2');await expect(chords.first().locator('h4')).toHaveText('Dmaj7♯5');

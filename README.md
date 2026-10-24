@@ -38,9 +38,10 @@ from a single sample clock, with smooth volume changes. It includes:
   loops keep their original order and durations. Playback highlights the current
   chord without requiring a switch to Harmony.
 - **Under your fingers** combines each scale note and degree, its diatonic seventh
-  chord, and the chord's root/third/fifth/seventh in one connected, layered graphic.
+  chord, and its four notes in one connected, layered graphic. Chords use a large
+  serif root, a smaller italic suffix and a spaced note list.
   Chord-tone fills and modal-colour rings stay on the top note boxes. Arpeggio view
-  shows the selected chord's notes and intervals and dims other scale notes while
+  emphasizes current chord tones and dims other scale notes while
   keeping the full seven-degree map available. The graphic follows the active
   scale guide during progressions and highlights the current chord root below.
 - **Evolving chord extensions** in Harmony slowly blends scale-constrained upper
