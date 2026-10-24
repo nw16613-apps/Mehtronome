@@ -133,8 +133,8 @@ test('jazz language and superimposition studies render synchronized notation and
   await expect(page.locator('#caged-exercise .exercise-title')).toHaveCount(1);
   await expect(page.locator('#caged-exercise .exercise-title')).toHaveText(/pentatonic sequences · [A-G](?:♯|♭)?/i);
   await expect(page.locator('#exercise-pattern')).toBeVisible();
-  await expect(page.locator('#exercise-pattern option')).toHaveCount(19);
-  for(const pattern of ['groups3','groups4','groups5','groups6','thirds','digital1324','rolling','alternating3','alternating4','alternating5','cascade64','cascade46','cascade43','cascade34','cascade45','cascade54','cascade65','cascade56','cascade456']){
+  await expect(page.locator('#exercise-pattern option')).toHaveCount(23);
+  for(const pattern of ['groups3','groups4','groups5','groups6','thirds','digital1324','rolling','alternating3','alternating4','alternating5','lesson3','lesson4','lesson5','lesson6','cascade64','cascade46','cascade43','cascade34','cascade45','cascade54','cascade65','cascade56','cascade456']){
     await page.locator('#exercise-pattern').selectOption(pattern);
     await expect(page.locator('#caged-exercise .note-head').first()).toBeVisible();
     await expect(page.locator('#caged-exercise .tab-fret').first()).toBeVisible();

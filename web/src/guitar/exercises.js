@@ -8,6 +8,7 @@ const FLAT_NAMES=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'
 export const PENTATONIC_PATTERNS={
   groups3:'Groups of 3',groups4:'Groups of 4',groups5:'Groups of 5',groups6:'Groups of 6',thirds:'Pentatonic thirds',digital1324:'Pentatonic 1–3–2–4',rolling:'Rolling 1–2–3–2',
   alternating3:'Alternating 3-note groups',alternating4:'Alternating 4-note groups',alternating5:'Alternating 5-note groups',
+  lesson3:'Lesson cascade · 3s across strings',lesson4:'Lesson cascade · 4s across strings',lesson5:'Lesson cascade · 5s across strings',lesson6:'Lesson cascade · 6s across strings',
   cascade64:'Cascading 6s + 4s',cascade46:'Cascading 4s + 6s',cascade43:'Cascading 4s + 3s',cascade34:'Cascading 3s + 4s',
   cascade45:'Cascading 4s + 5s',cascade54:'Cascading 5s + 4s',cascade65:'Cascading 6s + 5s',cascade56:'Cascading 5s + 6s',cascade456:'Cascading 4s + 5s + 6s',
 };
@@ -210,13 +211,13 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
   const descending=motion==='descending';
   const available=[...new Map(board.notes.filter(note=>choice.pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
   const run=size=>Array.from({length:size},(_,index)=>index);
-  // The compound cells overlap by one pentatonic degree. This creates the
-  // characteristic cascading reset instead of simply joining two scale runs.
-  const cascade=(...sizes)=>sizes.flatMap((size,cell)=>run(size).map(offset=>offset+cell));
-  const definitions={groups3:run(3),groups4:run(4),groups5:run(5),groups6:run(6),thirds:[0,2],digital1324:[0,2,1,3],rolling:[0,1,2,1],alternating3:run(3),alternating4:run(4),alternating5:run(5),
+  // In the source lesson every component restarts from the same two-note-per-
+  // string anchor; the complete cell then advances to the adjacent string.
+  const cascade=(...sizes)=>sizes.flatMap(size=>run(size));
+  const definitions={groups3:run(3),groups4:run(4),groups5:run(5),groups6:run(6),thirds:[0,2],digital1324:[0,2,1,3],rolling:[0,1,2,1],alternating3:run(3),alternating4:run(4),alternating5:run(5),lesson3:run(3),lesson4:run(4),lesson5:run(5),lesson6:run(6),
     cascade64:cascade(6,4),cascade46:cascade(4,6),cascade43:cascade(4,3),cascade34:cascade(3,4),cascade45:cascade(4,5),cascade54:cascade(5,4),cascade65:cascade(6,5),cascade56:cascade(5,6),cascade456:cascade(4,5,6)};
-  const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),groups=[];
-  for(let index=0;index+Math.max(...offsets)<available.length;index++){
+  const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),stringCascade=pattern.startsWith('cascade')||pattern.startsWith('lesson'),groups=[];
+  for(let index=0;index+Math.max(...offsets)<available.length;index+=stringCascade?2:1){
     let notes=offsets.map(offset=>available[index+offset]).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
     if(alternating&&index%2===1)notes.reverse();
     groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes});

@@ -187,7 +187,7 @@ test('jazz language library generates playable notation for every new study fami
 test('pentatonic library provides groups, cells and alternating up/down permutations',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  const patterns={groups3:3,groups4:4,groups5:5,groups6:6,thirds:2,digital1324:4,rolling:4,alternating3:3,alternating4:4,alternating5:5,
+  const patterns={groups3:3,groups4:4,groups5:5,groups6:6,thirds:2,digital1324:4,rolling:4,alternating3:3,alternating4:4,alternating5:5,lesson3:3,lesson4:4,lesson5:5,lesson6:6,
     cascade64:10,cascade46:10,cascade43:7,cascade34:7,cascade45:9,cascade54:9,cascade65:11,cascade56:11,cascade456:15};
   for(const [pattern,size] of Object.entries(patterns)){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern});
@@ -205,6 +205,11 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
 test('cascading pentatonic cells reproduce the video exercise families',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
+  for(const pattern of ['lesson3','lesson4','lesson5','lesson6']){
+    const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern});
+    assert.ok(groups.length>1,pattern);
+    assert.equal(groups[1].notes[0].midi,groups[0].notes[2].midi,`${pattern} moves to the adjacent two-note string pair`);
+  }
   for(const [pattern,runs] of Object.entries({cascade64:[6,4],cascade46:[4,6],cascade43:[4,3],cascade34:[3,4],cascade45:[4,5],cascade54:[5,4],cascade65:[6,5],cascade56:[5,6],cascade456:[4,5,6]})){
     const groups=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern});
     assert.ok(groups.length,pattern);
@@ -212,9 +217,10 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
     for(let cell=0;cell<runs.length;cell++){
       const run=midi.slice(cursor,cursor+runs[cell]);
       assert.ok(run.slice(1).every((note,index)=>note<run[index]),`${pattern} cell ${cell+1} descends`);
-      if(cell)assert.equal(run[0],midi[cursor-runs[cell-1]+1],`${pattern} resets by one pentatonic degree`);
+      if(cell)assert.equal(run[0],midi[0],`${pattern} restarts from the same anchor`);
       cursor+=runs[cell];
     }
+    if(groups.length>1)assert.equal(groups[1].notes[0].midi,groups[0].notes[2].midi,`${pattern} advances by one two-note string pair`);
   }
 });
 

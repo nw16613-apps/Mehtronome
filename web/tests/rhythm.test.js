@@ -68,6 +68,10 @@ test('electric piano movement uses deterministic modal ostinatos',()=>{
   }
   assert.deepEqual(compingHook({scalePcs:[0,2,4,5,7,9,11]},null,'still',4),[]);
   assert.equal(Object.keys(COMPING_MOVEMENTS).length,5);
+  const settings={...new Engine().settings,key:9,mode:'dorian',chord:'min13'};
+  const harmony=harmonyAt(settings,0);harmony.characteristicPcs=[6];
+  const hooks=['modal','inner','response','voiceLead'].map(movement=>compingHook(harmony,harmony,movement,3));
+  assert.equal(new Set(hooks.map(hook=>hook.join(','))).size,hooks.length,'each movement retains a distinct three-note contour');
 });
 
 test('comping hook amount adds repeatable cells without changing chord rhythm',()=>{

@@ -36,11 +36,11 @@ export function compingHook(harmony,nextHarmony,movement='modal',length=3){
   const shapes={
     modal:[guide,colourPc,resolution,guide],
     inner:[below,colourPc,above,resolution],
-    response:[guide,colourPc,above,resolution],
-    voiceLead:[guide,colourPc,above,resolution],
+    response:[colourPc,above,guide,below],
+    voiceLead:[guide,below,above,resolution],
   };
   const full=shapes[movement]||shapes.modal;
-  const pcs=count===2?[colourPc,resolution]:count===3?[guide,colourPc,resolution]:full;
+  const pcs=full.slice(0,count);
   const notes=[];
   for(const pc of pcs)notes.push(nearestMidi(pc,notes.length?notes.at(-1):74));
   return notes;
