@@ -8,9 +8,9 @@ const FLAT_NAMES=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'
 export const PENTATONIC_PATTERNS={
   groups3:'Groups of 3',groups4:'Groups of 4',groups5:'Groups of 5',groups6:'Groups of 6',thirds:'Pentatonic thirds',digital1324:'Pentatonic 1–3–2–4',rolling:'Rolling 1–2–3–2',
   alternating3:'Alternating 3-note groups',alternating4:'Alternating 4-note groups',alternating5:'Alternating 5-note groups',
-  lesson3:'Lesson transcription · 3s across strings',lesson4:'Lesson transcription · 4s across strings',lesson5:'Lesson transcription · 5s across strings',lesson6:'Lesson transcription · 6s across strings',
-  lesson64:'Lesson transcription · 6s + 4s',lesson46:'Lesson transcription · 4s + 6s',lesson43:'Lesson transcription · 4s + 3s',lesson34:'Lesson transcription · 3s + 4s',
-  lesson45:'Lesson transcription · 4s + 5s',lesson54:'Lesson transcription · 5s + 4s',lesson65:'Lesson transcription · 6s + 5s',lesson56:'Lesson transcription · 5s + 6s',lesson456:'Lesson transcription · 4s + 5s + 6s',
+  lesson3:'Video Ex. 7/8 · 3s across strings',lesson4:'Video Ex. 1/2 · 4s across strings',lesson5:'Video Ex. 10/11 · 5s across strings',lesson6:'Video Ex. 5/6 · 6s across strings',
+  lesson64:'Video Ex. 13 · 6s + 4s descending',lesson46:'Video Ex. 16 · 4s + 6s ascending',lesson43:'Video Ex. 17 · 4s + 3s descending',lesson34:'Video Ex. 18 · 3s + 4s descending',
+  lesson45:'Video Ex. 20 · 4s + 5s descending',lesson54:'Video Ex. 21 · 5s + 4s ascending',lesson65:'Video Ex. 22 · 6s + 5s descending',lesson56:'Video Ex. 23 · 5s + 6s ascending',lesson456:'Video Ex. 24 · 4s + 5s + 6s descending',
   cascade64:'Sliding picking variation · 6s + 4s',cascade46:'Sliding picking variation · 4s + 6s',cascade43:'Sliding picking variation · 4s + 3s',cascade34:'Sliding picking variation · 3s + 4s',
   cascade45:'Sliding picking variation · 4s + 5s',cascade54:'Sliding picking variation · 5s + 4s',cascade65:'Sliding picking variation · 6s + 5s',cascade56:'Sliding picking variation · 5s + 6s',cascade456:'Sliding picking variation · 4s + 5s + 6s',
 };
@@ -214,16 +214,26 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
   const available=[...new Map(board.notes.filter(note=>choice.pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
   const run=(size,start=0)=>Array.from({length:size},(_,index)=>index+start);
   const lessonRun=size=>run(size,descending&&size%2===1?1:0);
-  // In the source lesson every component begins on the next two-note string
-  // pair. The complete compound cell then repeats from the adjacent pair.
-  // Odd descending runs begin on that pair's lower note.
-  const lessonCascade=(...sizes)=>sizes.flatMap((size,cell)=>lessonRun(size).map(offset=>offset+cell*2));
+  // Note-for-note offsets transcribed from the six-string TAB in video
+  // exercises 13 and 16–24. Within a compound cell each new run begins one
+  // pentatonic note farther through the position, exactly as shown.
+  const lessonOffsets={
+    lesson64:[0,1,2,3,4,5,1,2,3,4],
+    lesson46:[0,1,2,3,1,2,3,4,5,6],
+    lesson43:[0,1,2,3,1,2,3],
+    lesson34:[0,1,2,1,2,3,4],
+    lesson45:[0,1,2,3,1,2,3,4,5],
+    lesson54:[0,1,2,3,4,1,2,3,4],
+    lesson65:[0,1,2,3,4,5,1,2,3,4,5],
+    lesson56:[0,1,2,3,4,1,2,3,4,5,6],
+    lesson456:[0,1,2,3,1,2,3,4,5,2,3,4,5,6,7],
+  };
   // Retain the earlier generated versions as useful right-hand picking
   // variations: each component shifts one scale note and each cell advances
   // one scale note instead of following the lesson's string-pair anchors.
   const slidingCascade=(...sizes)=>sizes.flatMap((size,cell)=>run(size,cell));
   const definitions={groups3:run(3),groups4:run(4),groups5:run(5),groups6:run(6),thirds:[0,2],digital1324:[0,2,1,3],rolling:[0,1,2,1],alternating3:run(3),alternating4:run(4),alternating5:run(5),lesson3:lessonRun(3),lesson4:lessonRun(4),lesson5:lessonRun(5),lesson6:lessonRun(6),
-    lesson64:lessonCascade(6,4),lesson46:lessonCascade(4,6),lesson43:lessonCascade(4,3),lesson34:lessonCascade(3,4),lesson45:lessonCascade(4,5),lesson54:lessonCascade(5,4),lesson65:lessonCascade(6,5),lesson56:lessonCascade(5,6),lesson456:lessonCascade(4,5,6),
+    ...lessonOffsets,
     cascade64:slidingCascade(6,4),cascade46:slidingCascade(4,6),cascade43:slidingCascade(4,3),cascade34:slidingCascade(3,4),cascade45:slidingCascade(4,5),cascade54:slidingCascade(5,4),cascade65:slidingCascade(6,5),cascade56:slidingCascade(5,6),cascade456:slidingCascade(4,5,6)};
   const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),stringCascade=pattern.startsWith('lesson'),groups=[];
   for(let index=0;index+Math.max(...offsets)<available.length;index+=stringCascade?2:1){
