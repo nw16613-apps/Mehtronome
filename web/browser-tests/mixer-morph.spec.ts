@@ -77,7 +77,7 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
  await page.goto('/');await page.locator('[data-mute-channel="bass"]').click();await page.locator('[data-solo-channel="click"]').click();
  await expect(page.locator('[data-mix-channel="harmony"] .mix-channel-state')).toHaveText('Solo muted');
  await page.locator('#open-sound-settings').click();await expect(page.locator('#sound-settings-title')).toBeVisible();await expect(page.locator('#mix-panel')).toBeHidden();
- await page.locator('.backing-shape summary').click();await page.locator('#pad-brightness').selectOption('dark');
+ await expect(page.locator('.sound-settings details:not([open])')).toHaveCount(0);await page.locator('#pad-brightness').selectOption('dark');
  await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#mixer-clear-solos').click();
  await expect(page.locator('[data-mute-channel="bass"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-workspace-target="sound-settings-title"]').click();await expect(page.locator('#pad-brightness')).toHaveValue('dark');
@@ -89,4 +89,8 @@ for(const palette of ['midnight','plum','slate'])test(`mixer follows ${palette} 
   const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),field:getComputedStyle(panel.querySelector('.mix-channel')!).backgroundColor,expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
   const rgb=(hex:string)=>{const value=hex.replace('#','');const full=value.length===3?value.split('').map(c=>c+c).join(''):value;return `rgb(${[0,2,4].map(i=>parseInt(full.slice(i,i+2),16)).join(', ')})`;};
   expect(colors.panel).toBe(rgb(colors.expected));expect(colors.field).toBe(rgb(colors.expectedField));
+  await page.locator('#open-sound-settings').click();
+  await expect(page.locator('.sound-settings')).toHaveCSS('background-color',rgb(colors.expected));
+  await expect(page.locator('#comping-tone')).toHaveCSS('background-color',rgb(colors.expectedField));
+  await expect(page.locator('.sound-settings details:not([open])')).toHaveCount(0);
 });
