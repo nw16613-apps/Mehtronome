@@ -348,3 +348,5 @@ Evolving chord extensions start enabled for new sessions (an eight-bar blend). S
 Theme surfaces use tonal layers throughout the workspaces: darker page backgrounds, lighter panels and raised cards, clearer controls and background-matched console fader caps. Palette accents and musical highlight colours remain consistent.
 
 Raised surfaces blend toward the palette accent rather than white, retaining their colour. Mixer fader caps match the surrounding mixer background.
+
+Learning Path groups, Sound Settings groups and CAGED diagrams share the raised surface. Dark palette panel and control shades also carry through the metronome, presets and focus bar. Preset placeholders and disabled actions use palette-derived colours.
