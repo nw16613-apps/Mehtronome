@@ -8,15 +8,14 @@ function engine(settings={}){const result=new Engine(1200);result.configure({bpm
 function render(engine,samples=3600){const audio=new Float32Array(samples),beats=[];engine.render(audio,event=>beats.push(event));return {audio,beats};}
 const peak=audio=>Math.max(...audio.map(Math.abs));
 
-test('click and polyrhythm mutes are independent and preserve volume settings and clock',()=>{
-  const click=engine({click:.6,polyBeats:3,mutedChannels:'poly'});
-  assert.ok(peak(render(click).audio)>.01);
-  click.configure({mutedChannels:'click,poly'});const quiet=render(click,6000);
+test('metronome volume and mute control both pulse and polyrhythm without stopping the clock',()=>{
+  const state=engine({click:.6,polyBeats:3});
+  assert.ok(peak(render(state).audio)>.01);
+  state.configure({mutedChannels:'click'});const quiet=render(state,6000);
   assert.ok(peak(quiet.audio.slice(-1200))<.000001);assert.ok(quiet.beats.length>0);
-  assert.equal(click.settings.click,.6);assert.equal(click.running,true);
-  click.configure({mutedChannels:'click'});assert.ok(peak(render(click).audio)>.01);
-  assert.equal(click.settings.polyVolume,.45);
-  click.configure({mutedChannels:''});assert.ok(peak(render(click).audio)>.01);
+  assert.equal(state.settings.click,.6);assert.equal(state.running,true);
+  state.configure({mutedChannels:'',click:0});assert.ok(peak(render(state,6000).audio.slice(-1200))<.000001);
+  state.configure({click:.6});assert.ok(peak(render(state).audio)>.01);
 });
 
 test('backing channel mutes retain enabled parts and their levels while their voices age',()=>{

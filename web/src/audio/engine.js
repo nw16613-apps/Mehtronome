@@ -11,7 +11,7 @@ const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   mutedChannels:'', extensionMorph:false, extensionBars:8,
-  clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, polyVolume:.45, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
+  clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
@@ -214,7 +214,6 @@ export class Engine {
     this.frequencies = [0, 0, 0];
     this.level = 0;
     this.clickLevel = 0;
-    this.polyLevel = 0;
     this.harmonyLevel = 0;
     this.running = true;
     this.sessionFrames = 0;
@@ -256,7 +255,6 @@ export class Engine {
     s.clickSwing=Math.max(0,Math.min(1,Number(s.clickSwing)||0));
     s.polyBeats=[0,2,3,4,5,7].includes(Number(s.polyBeats))?Number(s.polyBeats):0;
     s.polyBase=[2,3,4].includes(Number(s.polyBase))?Number(s.polyBase):2;
-    s.polyVolume=Math.max(0,Math.min(1,Number(s.polyVolume)||0));
     s.sessionSeconds=Math.max(0,Math.min(10800,Number(s.sessionSeconds)||0));
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     s.trainerBars = Math.max(1,Math.min(32,Math.floor(Number(s.trainerBars)||4)));
@@ -398,7 +396,7 @@ export class Engine {
 
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP) {
     const s = this.settings;
-    const clickVolume=this.muted.has('click')?0:s.click,polyVolume=this.muted.has('poly')?0:s.polyVolume;
+    const clickVolume=this.muted.has('click')?0:s.click;
     const harmonyVolume=this.muted.has('harmony')?0:s.harmony;
     const drumsVolume=this.muted.has('drums')?0:s.drumsVolume,bassVolume=this.muted.has('bass')?0:s.bassVolume;
     const compingVolume=this.muted.has('comping')?0:s.compingVolume,sequenceVolume=this.muted.has('sequence')?0:s.sequenceVolume;
@@ -468,7 +466,6 @@ export class Engine {
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
       this.clickLevel += (clickVolume - this.clickLevel) * smoothing;
-      this.polyLevel+=(polyVolume-this.polyLevel)*smoothing;
       const backing = this.auditioning || this.beat >= this.remainingCount ? harmonyVolume : 0;
       this.harmonyLevel += (backing - this.harmonyLevel) * smoothing;
       const t = this.clickAge++ / this.rate;
@@ -619,7 +616,7 @@ export class Engine {
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
-      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*click*this.clickStrength + .5*this.polyLevel*polyClick);
+      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*(click*this.clickStrength + .45*polyClick));
       // Give transients and bass fundamentals a little room against the pad.
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.

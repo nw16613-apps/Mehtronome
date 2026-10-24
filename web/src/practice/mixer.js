@@ -1,6 +1,5 @@
 export const MIX_CHANNELS=[
-  {id:'click',label:'Click',control:'click',output:'click-value',value:50},
-  {id:'poly',label:'Polyrhythm',control:'pulse-poly-volume',output:'pulse-poly-volume-value',value:45},
+  {id:'click',label:'Metronome',control:'click',output:'click-value',value:50},
   {id:'harmony',label:'Harmony',control:'harmony',output:'harmony-value',value:35},
   {id:'drums',label:'Drums',control:'drums-volume',output:'drums-volume-value',value:35},
   {id:'bass',label:'Bass',control:'bass-volume',output:'bass-volume-value',value:40},

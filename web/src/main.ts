@@ -726,8 +726,6 @@ function update() {
   settings.sessionFinishBar=input('pulse-finish-bar').checked;
   const [polyBeats,polyBase]=select('pulse-poly').value.split('/').map(Number);
   settings.polyBeats=polyBeats;settings.polyBase=polyBase;
-  settings.polyVolume=Number(input('pulse-poly-volume').value)/100;
-  el('pulse-poly-volume-value').textContent=`${Math.round(settings.polyVolume*100)}%`;
   if(el('pulse-poly-beats').children.length!==polyBeats)el('pulse-poly-beats').innerHTML=Array.from({length:polyBeats},(_,i)=>`<span>${i+1}</span>`).join('');
   settings.beats = Number(select('beats').value);
   settings.countIn = input('count-in').checked;
@@ -1249,7 +1247,7 @@ function reflectMixerChannels(){
   let mutedCount=0;
   for(const channel of MIX_CHANNELS){
     const muted=input('mute-'+channel.id).checked;
-    const enabled=channel.id==='poly'?settings.polyBeats>0:['drums','bass','comping','sequence'].includes(channel.id)?input(channel.id).checked:true;
+    const enabled=['drums','bass','comping','sequence'].includes(channel.id)?input(channel.id).checked:true;
     const card=document.querySelector<HTMLElement>(`[data-mix-channel="${channel.id}"]`)!;
     const solo=soloChannels.has(channel.id), excluded=soloChannels.size>0&&channel.id!=='space'&&!solo;
     card.classList.toggle('is-solo',solo);card.classList.toggle('is-excluded',excluded);
@@ -1322,7 +1320,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','pulse-poly-volume','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
+for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input', update);
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -1680,7 +1678,7 @@ el('preset-load').addEventListener('click',async()=>{
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','pulse-poly-volume':'45','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);

@@ -19,7 +19,7 @@ from a single sample clock, with smooth volume changes. It includes:
   desktop, two on tablet, one on phones), with sound settings underneath. Each
   channel has a mute button that retains its volume and leaves timing running;
   **Unmute all** clears mutes without enabling disabled instruments. Mutes save
-  with presets, and older presets load unmuted. All levels stay together: click, polyrhythm, harmony,
+  with presets, and older presets load unmuted. All levels stay together: metronome (including subdivisions and polyrhythm), harmony,
   drums, bass, electric piano, melodic movement and ambient space. Instrument
   switches stay in Backing ensemble and Melodic movement, with styles and
   pattern settings in independently collapsible groups. Longer

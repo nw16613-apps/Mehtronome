@@ -1,8 +1,8 @@
 import {expect,test} from '@playwright/test';
 
-for(const [width,columns] of [[1440,8],[900,4],[390,2]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
+for(const [width,columns] of [[1440,7],[900,4],[390,2]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
-  await expect(page.locator('.mix-level-grid .mix-channel')).toHaveCount(8);
+  await expect(page.locator('.mix-level-grid .mix-channel')).toHaveCount(7);
   const layout=await page.locator('.mix-level-grid').evaluate(element=>{
     const boxes=Array.from(element.children).map(child=>child.getBoundingClientRect());
 
@@ -19,7 +19,7 @@ for(const [width,columns] of [[1440,8],[900,4],[390,2]])test(`mixer levels use $
   await expect(page.locator('#drums')).toBeChecked();await expect(page.locator('#bass')).not.toBeChecked();
 });
 
-test('mute silences audio while preserving playback, volume and independent polyrhythm',async({page})=>{
+test('mute silences audio while preserving playback, volume and integrated polyrhythm',async({page})=>{
   await page.addInitScript(()=>{
     const Original=window.AudioWorkletNode;
     window.AudioWorkletNode=class extends Original{
@@ -37,8 +37,8 @@ test('mute silences audio while preserving playback, volume and independent poly
   await page.locator('[data-mute-channel="click"]').click();await expect.poll(peak).toBeLessThan(.00001);
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#click')).toHaveValue('50');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
-  await expect.poll(peak).toBeGreaterThan(.005);
-  await page.locator('[data-mute-channel="poly"]').click();await expect.poll(peak).toBeLessThan(.00001);
+  await expect.poll(peak).toBeLessThan(.00001);
+  await expect(page.locator('[data-mix-channel="poly"]')).toHaveCount(0);
   await page.locator('#click').fill('67');await page.locator('#click').dispatchEvent('input');
   await page.locator('#mixer-unmute-all').click();await expect(page.locator('#click')).toHaveValue('67');
   await expect.poll(peak).toBeGreaterThan(.005);await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
@@ -82,4 +82,11 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
  await expect(page.locator('[data-mute-channel="bass"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-workspace-target="sound-settings-title"]').click();await expect(page.locator('#pad-brightness')).toHaveValue('dark');
  await page.reload();await expect(page.locator('#sound-settings-title')).toBeVisible();
+});
+
+for(const palette of ['midnight','plum','slate'])test(`mixer follows ${palette} palette`,async({page})=>{
+  await page.goto('/');await page.addStyleTag({content:'* { transition:none !important; }'});await page.locator('#palette').selectOption(palette);
+  const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),field:getComputedStyle(panel.querySelector('.mix-channel')!).backgroundColor,expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
+  const rgb=(hex:string)=>{const value=hex.replace('#','');const full=value.length===3?value.split('').map(c=>c+c).join(''):value;return `rgb(${[0,2,4].map(i=>parseInt(full.slice(i,i+2),16)).join(', ')})`;};
+  expect(colors.panel).toBe(rgb(colors.expected));expect(colors.field).toBe(rgb(colors.expectedField));
 });
