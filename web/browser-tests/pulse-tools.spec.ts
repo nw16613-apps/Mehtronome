@@ -26,7 +26,7 @@ test('pulse sound, swing, gaps, timer and polyrhythm round-trip through presets'
   await expect(page.locator('#pulse-swing')).toBeDisabled();
   await page.locator('#subdivision').selectOption('2');
   await page.locator('#pulse-swing').fill('100');await page.locator('#pulse-swing').dispatchEvent('input');
-  await page.locator('#pulse-volume').fill('32');await page.locator('#pulse-volume').dispatchEvent('input');
+  await page.locator('#click').fill('32');await page.locator('#click').dispatchEvent('input');
   await expect(page.locator('#click')).toHaveValue('32');
   await page.getByText('Practice timer',{exact:true}).click();
   await page.locator('#pulse-minutes').fill('10');await page.locator('#pulse-minutes').dispatchEvent('input');
@@ -47,7 +47,7 @@ test('pulse sound, swing, gaps, timer and polyrhythm round-trip through presets'
   await expect(page.locator('#pulse-minutes')).toHaveValue('10');
   await expect(page.locator('#gap-progressive')).toBeChecked();
   await expect(page.locator('[data-pulse-beat="1"]')).toHaveClass(/silent/);
-  await expect(page.locator('#pulse-volume')).toHaveValue('32');
+  await expect(page.locator('#click')).toHaveValue('32');
 });
 
 test('timer completes on the audio clock and large display follows playback',async({page})=>{

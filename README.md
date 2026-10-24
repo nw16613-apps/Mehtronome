@@ -15,13 +15,15 @@ from a single sample clock, with smooth volume changes. It includes:
   back to the main metronome. Play/stop, editable tempo and harmony controls remain
   available. **Focus view** hides setup panels and navigation; entering it from
   Metronome & Mixer or Progress opens the guitar reference.
-- The mixer keeps instrument switches and volumes visible, with drum/bass styles
-  and melodic movement settings in independently collapsible groups. Longer
+- **Levels & ambience** holds all levels together: click, polyrhythm, harmony,
+  drums, bass, electric piano, melodic movement and ambient space. Instrument
+  switches stay in Backing ensemble and Melodic movement, with styles and
+  pattern settings in independently collapsible groups. Longer
   explanations sit behind **Learn more** disclosures.
 - **The pulse** fills the Metronome & Mixer workspace. Tap its button or press **T** to
   set the tempo, save up to eight tempo shortcuts, and click beat circles to cycle
   strong, soft and silent accents. Click sound & swing offers digital, woodblock,
-  rim and soft clicks, a synchronized volume control, and eighth-note swing from
+  rim and soft clicks, and eighth-note swing from
   straight to a triplet feel. The large beat display includes its own play/stop.
 - **Practice timer** measures time after the count-in and can stop at the chosen
   duration or finish the current bar. Set minutes to zero for an unlimited session.
