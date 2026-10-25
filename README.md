@@ -351,3 +351,7 @@ Theme offers Refined Midnight, Plum Ink, Evergreen and Soft Stone as the studio 
 The main mixer and focus-bar drawer share the same seven channel strips, including mute/solo states and saved volume levels. The console has logarithmic fader travel, dB gain readouts and percent values; keyboard arrows still adjust volume by one percentage point. Double-click a fader to restore its default level. Instruments can also be enabled directly on their strips.
 
 Meters show measured post-fader dry channel peaks, with stereo movement where the source is stereo. Ambient space measures the stereo reverb return. Peak holds decay after playback stops; the visual meters never generate or alter sound. On narrow screens, scroll across the strips to reach every channel.
+
+### Studio interface and icons
+
+All six workspaces share the studio surface treatment: inset displays and fields, tactile buttons, fine panel edges and restrained selected states. The four palettes remain selectable and saved between visits. Workspace symbols, module badges and familiar action icons retain visible labels; decorative SVGs are hidden from screen readers. Icons are refreshed with dynamic exercises, learning-path stages, harmony references and focus controls. Print and SVG export continue to use the musical notation without interface decoration.

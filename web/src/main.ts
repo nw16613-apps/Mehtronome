@@ -13,6 +13,9 @@ import './themes.css';
 import './practice.css';
 import './interface.css';
 import './console.css';
+import './studio.css';
+import './icons.css';
+import {applyStudioIcons} from './practice/icons.js';
 import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, parentMajorFor } from './guitar/fretboard.js';
 import { cagedStudy, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
@@ -173,7 +176,7 @@ app.innerHTML = `
     <section id="caged-exercise" class="caged-exercise panel workspace-page workspace-exercises" aria-labelledby="caged-exercise-title"></section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
-  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html?v=studio-four-20261025">Compare themes</a> · Headphones on. Distractions off.</span></footer>
+  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html?v=studio-icons-20261025">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>
 <div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><section id="floating-mixer" class="floating-mixer panel" aria-labelledby="floating-mixer-title" hidden><div class="floating-mixer-heading"><h2 id="floating-mixer-title">Your mix</h2><button id="floating-mixer-close" type="button" class="practice-button" aria-label="Close mixer">Close</button></div><div id="floating-mixer-content"></div></section><button id="mini-play" class="practice-button" aria-pressed="false">Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-mixer" type="button" class="practice-button" aria-expanded="false" aria-controls="floating-mixer">Mixer</button><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label>Root<select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
 
@@ -388,6 +391,7 @@ function renderProgressionReference(activeStep=step) {
   }).join('');
   document.querySelectorAll<HTMLElement>('.progression-reference').forEach(element=>{
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${order.reduce((sum:number,index:number)=>sum+durations[index],0)}-bar loop`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
+    applyStudioIcons(element);
   });
 }
 function renderMusic() {
@@ -470,6 +474,7 @@ function renderPracticeRoadmap(info:any){
     const value=modeProgress(practiceProgress,root,id),modePercent=Math.round(value/PRACTICE_TASKS.length*100);
     return `<div class="practice-mode-status${id===info.mode?' current':''}"><span>${escapeHtml(item.name)}</span><i><b style="width:${modePercent}%"></b></i><strong>${modePercent}%</strong></div>`;
   }).join('');
+  applyStudioIcons(document.querySelector('.practice-roadmap')!);
 }
 
 function renderScaleExplorer(){
@@ -557,6 +562,8 @@ function renderGuitar() {
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
   renderPracticeRoadmap(info);
   select('fret-view').value = select('exercise').value;
+  applyStudioIcons(document.querySelector('.guitar')!);
+  applyStudioIcons(el('caged-exercise'));
 }
 function renderBeats(active = -1) {
   const dots=el('beat-dots');
@@ -1045,7 +1052,7 @@ el('full-fretboard-expand').addEventListener('click',async()=>{
     if(document.fullscreenElement)await document.exitFullscreen();else await fullFretboardPanel.requestFullscreen();
   }catch{/* Fullscreen is optional; the wide, scrollable view remains available. */}
 });
-document.addEventListener('fullscreenchange',()=>{el('full-fretboard-expand').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen';});
+document.addEventListener('fullscreenchange',()=>{el('full-fretboard-expand').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen';applyStudioIcons(document.querySelector('.guitar')!);});
 el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
 function handleExerciseControl(event:Event){
@@ -1083,7 +1090,7 @@ function setNotationFocus(value:boolean) {
   el('caged-exercise').classList.toggle('notation-focused',value);
   document.body.classList.toggle('notation-focus-open',value);
   const button=document.querySelector<HTMLButtonElement>('#exercise-focus');
-  if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));}
+  if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));applyStudioIcons(el('caged-exercise'));}
 }
 async function auditionExerciseNote(index:number){
   if(playing||exercisePlaying||!currentExercise[index])return;await prepareAudio();const note=currentExercise[index],duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
@@ -1098,7 +1105,7 @@ function moveExercise(direction:number){
   renderGuitar();select('exercise-study').focus({preventScroll:true});
 }
 function exerciseFavourites(){try{return JSON.parse(localStorage.getItem(EXERCISE_FAVOURITES_KEY)||'[]');}catch{return [];}}
-function favouriteExercise(){const favourites=exerciseFavourites(),snapshot=exerciseSnapshot(),key=JSON.stringify(snapshot);if(!favourites.some((item:any)=>JSON.stringify(item)===key))favourites.push(snapshot);localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(favourites.slice(-30)));const button=document.querySelector<HTMLButtonElement>('#exercise-favourite');if(button)button.textContent='★ Saved';}
+function favouriteExercise(){const favourites=exerciseFavourites(),snapshot=exerciseSnapshot(),key=JSON.stringify(snapshot);if(!favourites.some((item:any)=>JSON.stringify(item)===key))favourites.push(snapshot);localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(favourites.slice(-30)));const button=document.querySelector<HTMLButtonElement>('#exercise-favourite');if(button){button.textContent='Saved';applyStudioIcons(el('caged-exercise'));}}
 function exportExerciseSvg(){
   const svgs=Array.from(document.querySelectorAll<SVGSVGElement>('#caged-exercise .exercise-notation'));if(!svgs.length)return;const width=1200,heights=svgs.map(svg=>Number(svg.viewBox.baseVal.height)||280),height=heights.reduce((a,b)=>a+b,0);let y=0;
   const body=svgs.map((svg,index)=>{const viewWidth=Number(svg.viewBox.baseVal.width)||760,result=`<svg x="0" y="${y}" width="${width}" height="${heights[index]}" viewBox="0 0 ${viewWidth} ${heights[index]}">${svg.innerHTML}</svg>`;y+=heights[index];return result;}).join('');
@@ -1547,6 +1554,7 @@ function setFocusView(value:boolean) {
   focusView=value;document.documentElement.classList.toggle('focus-view',value);
   el('focus-view').setAttribute('aria-pressed',String(value));el('focus-view').textContent=value?'Exit focus':'Focus view';
   el('exit-focus').hidden=!value;
+  applyStudioIcons(document.querySelector('header')!);
   syncMiniTransport();
   if(value&&!['harmony','guitar','exercises'].includes(document.body.dataset.workspace||''))showWorkspace('guitar','guitar-title');
 }
@@ -1782,3 +1790,5 @@ installConsole(()=>{
   if(!context||context.state!=='running'||!master||master.gain.value<.00001)return [0,0];
   return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
 });
+
+applyStudioIcons();
