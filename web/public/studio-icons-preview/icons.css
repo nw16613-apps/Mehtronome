@@ -1,0 +1,22 @@
+html:root[data-palette][data-theme][data-icon-preview] {
+ .studio-icon {display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:16px;height:16px;color:var(--muted);vertical-align:middle;margin-right:8px;pointer-events:none}
+ .studio-icon svg {display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}
+ .studio-icon-badge {width:28px;height:28px;border:1px solid color-mix(in srgb,var(--line) 65%,var(--panel));border-radius:5px;margin-right:10px;color:var(--accent);background:linear-gradient(var(--page),var(--panel));box-shadow:inset 0 2px 4px #0003,0 1px color-mix(in srgb,var(--ink) 8%,transparent)}
+ .studio-icon-badge svg {width:17px;height:17px}
+ .studio-icon-heading {display:flex;align-items:center;min-height:28px}
+ .studio-icon-label {align-items:center}
+ .workspace-tab>.studio-icon {margin-right:7px;width:17px;height:17px;color:var(--muted)}
+ .workspace-tab.selected>.studio-icon {color:var(--accent);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--accent) 18%,transparent))}
+ .workspace-tab>span:not(.studio-icon) {margin-right:6px;font-size:8px;opacity:.75}
+ .workspace-tab {display:flex;align-items:center;gap:0;white-space:nowrap}
+ :is(.practice-button,.panel-action).studio-icon-label:not([hidden]) {display:inline-flex;align-items:center;justify-content:center}
+ .practice-button>.studio-icon,.panel-action>.studio-icon {width:14px;height:14px;color:currentColor;margin-right:7px;opacity:.85}
+ .pulse-tool>summary>.studio-icon {color:var(--accent);margin-right:7px}
+ .position-heading h4>.studio-icon,.full-fretboard-toolbar strong>.studio-icon {color:var(--accent);width:15px;height:15px;margin-right:7px}
+ .progression-reference .eyebrow>.studio-icon {color:var(--accent);width:13px;height:13px;margin-right:6px}
+ .learn-more summary>.studio-icon {width:14px;height:14px}
+ .practice-roadmap fieldset legend>.studio-icon {color:var(--accent);width:13px;height:13px;margin-right:6px}
+ .tempo-training>.check>.studio-icon,.gap-training>.check>.studio-icon {margin-right:0;width:15px;height:15px;color:var(--accent)}
+ .mini-transport #mini-mixer>.studio-icon {width:15px;height:15px}
+ @media(max-width:760px){.studio-icon-badge{width:25px;height:25px;margin-right:8px}.studio-icon-badge svg{width:16px;height:16px}.workspace-tab>.studio-icon{width:15px;height:15px;margin-right:6px}.theme-controls .practice-button>.studio-icon{width:12px;height:12px;margin-right:5px}.workspace-tab>span:not(.studio-icon){font-size:8px;margin-right:5px}}
+}
