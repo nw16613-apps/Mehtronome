@@ -95,7 +95,7 @@ test('colour-note rings follow modal harmony and remain optional in scale and ar
   await page.locator('#progression').click();await page.locator('#template').selectOption('major251');await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(1).click();await expect(page.locator('#characteristic-notes')).toContainText('G Altered');await expect(page.locator('#characteristic-notes')).toContainText('A♭ (♭2)');
   await page.locator('#progression-strip>button').nth(2).click();await expect(page.locator('#characteristic-notes')).toContainText('F♯ (♯4)');
-  for(const palette of ['dark','midnight','paper','plum','slate','light']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     expect(await page.locator('.characteristic-ring').first().evaluate(n=>getComputedStyle(n).stroke)).not.toBe('none');
   }

@@ -140,13 +140,13 @@ test('minor mode families, simple chords, rhythm options and persisted dark mode
   await page.locator('#subdivision').selectOption('3');
   await page.locator('#accent').check();
   await page.getByRole('button', {name:'Stop practicing'}).click();
-  await page.locator('#theme').click();
+  await page.locator('#palette').selectOption('plum');
   await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
-  expect(await page.locator('html').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(16, 26, 27)');
+  expect(await page.locator('html').evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(24, 19, 31)');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
-  await page.locator('#theme').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+  await page.locator('#palette').selectOption('midnight');
+  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
   expect(errors).toEqual([]);
 });
 
@@ -297,7 +297,7 @@ test('CAGED positions, labels and chord-only view track the selected mode and ch
   await expect(page.locator('[data-position=III] .position-anchor')).toContainText('A string, fret 15');
   await expect(page.locator('#guitar-parent')).toContainText('CAGED shapes: C major');
   for(const position of ['I','II','III','IV','V']) await expect(page.locator(`[data-position=${position}] svg`)).toHaveAttribute('aria-label',new RegExp(`Dm13, position ${position},`));
-  await page.locator('#theme').click();
+  await page.locator('#palette').selectOption('midnight');
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for(const position of ['I','II','III','IV','V']) {
@@ -347,7 +347,7 @@ test('stopped progression selection updates all diagrams, previews harmony only,
     };
   });
   await openReference(page);
-  await page.locator('#theme').click();
+  await page.locator('#palette').selectOption('midnight');
   await expect(page.locator('.fret-note.chord circle').first()).toHaveCSS('fill', 'rgb(101, 216, 207)');
   await expect(page.locator('.note.chord-tone').first()).toHaveCSS('border-top-color', 'rgb(101, 216, 207)');
   await page.locator('#progression').click();
@@ -420,10 +420,9 @@ test('fretted diagrams and alternative themes work across reloads and mobile lay
     await expect(page.locator('.fret-note[data-fret="0"]')).toHaveCount(0);
   }
   const themes = [
-    ['midnight','dark','rgb(12, 20, 37)','rgb(105, 214, 245)'],
-    ['paper','light','rgb(244, 236, 223)','rgb(168, 70, 45)'],
-    ['plum','dark','rgb(29, 20, 37)','rgb(209, 184, 255)'],
-    ['slate','light','rgb(237, 241, 245)','rgb(35, 92, 181)'],
+    ['midnight','dark','rgb(10, 17, 27)','rgb(104, 201, 192)'],
+    ['plum','dark','rgb(24, 19, 31)','rgb(104, 201, 192)'],
+    ['evergreen','dark','rgb(12, 23, 21)','rgb(104, 201, 192)'],
   ];
   for (const [theme, mode, background, chord] of themes) {
     await page.locator('#palette').selectOption(theme);
@@ -440,25 +439,25 @@ test('fretted diagrams and alternative themes work across reloads and mobile lay
   }
   await page.goto('/?theme=midnight');
   await expect(page.locator('#palette')).toHaveValue('midnight');
-  await page.locator('#palette').selectOption('paper');
+  await page.locator('#palette').selectOption('evergreen');
   await expect(page).not.toHaveURL(/theme=/);
   await page.reload();
-  await expect(page.locator('#palette')).toHaveValue('paper');
-  await page.locator('#theme').click();
-  await expect(page.locator('#palette')).toHaveValue('dark');
+  await expect(page.locator('#palette')).toHaveValue('evergreen');
+  await page.locator('#palette').selectOption('midnight');
+  await expect(page.locator('#palette')).toHaveValue('midnight');
 });
 
-test('theme gallery loads four real previews and links to the matching live themes', async ({page}) => {
+test('theme gallery loads three real previews and links to the matching live themes', async ({page}) => {
   await page.goto('/themes.html');
-  await expect(page.locator('.card')).toHaveCount(4);
-  for (const theme of ['midnight','paper','plum','slate']) {
+  await expect(page.locator('.card')).toHaveCount(3);
+  for (const theme of ['midnight','plum','evergreen']) {
     await expect(page.locator(`a.picture[href="./?theme=${theme}"]`)).toBeVisible();
   }
-  await expect.poll(() => page.locator('.card img').evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth === 1280))).toBe(true);
+  await expect.poll(() => page.locator('.card img').evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth === 1440))).toBe(true);
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('link',{name:'Try Warm Paper'}).click();
-  await expect(page.locator('#palette')).toHaveValue('paper');
+  await page.getByRole('link',{name:'Try Evergreen'}).click();
+  await expect(page.locator('#palette')).toHaveValue('evergreen');
 });
 
 test('touch release and cancellation stop held previews', async ({page}) => {

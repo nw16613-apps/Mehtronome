@@ -77,7 +77,7 @@ test('pentatonic menu lists every parent-scale minor pentatonic and one modal ch
 
 test('pentatonic notes use a distinct colour from chord tones in every theme',async({page})=>{
   await page.goto('/');await page.locator('#theory-view').selectOption('pentatonic');
-  for(const palette of ['light','dark','midnight','paper','plum','slate']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     const colours=await card(page,'I').evaluate(node=>{
       const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
@@ -89,7 +89,7 @@ test('pentatonic notes use a distinct colour from chord tones in every theme',as
 
 test('pentatonic, triad A, triad B and chord tones all use distinct colours in every theme',async({page})=>{
   await page.goto('/');await page.locator('#theory-view').selectOption('triads');
-  for(const palette of ['light','dark','midnight','paper','plum','slate']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     const colours=await card(page,'I').evaluate(node=>{
       const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
@@ -129,7 +129,7 @@ test('shared theory choice survives presets and remains legible in featured Focu
   await page.locator('#fret-labels').selectOption('degrees');
   await expect(card(page,'I').locator('.fret-note > text').first()).toHaveText(/[1-7]/);
   await page.locator('#featured-position').selectOption('IV');await page.locator('#focus-view').click();
-  for(const palette of ['light','dark','midnight','plum']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     for(const width of [1440,900,390]){
       await page.setViewportSize({width,height:900});

@@ -40,7 +40,7 @@ test('all backing controls share the mixer',async({page})=>{
   const mixer=page.locator('section.mix');
   for(const id of ['click','harmony','space','drums','bass','sequence'])await expect(mixer.locator('#'+id)).toHaveCount(1);
   await mixer.locator('#drums').check();await mixer.locator('#bass').check();await mixer.locator('#sequence').check();
-  for(const palette of ['light','dark','midnight']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     for(const width of [1440,900,390]){
       await page.setViewportSize({width,height:1000});

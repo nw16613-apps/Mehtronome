@@ -3,17 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#122323" />
+    <meta name="theme-color" content="#0a111b" />
     <meta name="description" content="Practice scales and arpeggios with a precise metronome and warm harmony backing." />
     <script>
       (() => {
-        const available = ['light', 'dark', 'midnight', 'paper', 'plum', 'slate'];
+        const available = ['midnight', 'plum', 'evergreen'];
         let saved;
-        try { saved = localStorage.getItem('mehtronome-theme'); } catch { /* Use system preference. */ }
+        try { saved = localStorage.getItem('mehtronome-theme'); } catch { /* Use Refined Midnight. */ }
         const preview = new URLSearchParams(location.search).get('theme');
-        const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'midnight' : 'light';
+        const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : 'midnight';
         document.documentElement.dataset.palette = palette;
-        document.documentElement.dataset.theme = ['dark', 'midnight', 'plum'].includes(palette) ? 'dark' : 'light';
+        document.documentElement.dataset.theme = 'dark';
+        try { localStorage.setItem('mehtronome-theme',palette); } catch { /* Session-only. */ }
       })();
     </script>
     <title>Mehtronome — practice with harmony</title>

@@ -89,7 +89,7 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
  await page.reload();await expect(page.locator('#sound-settings-title')).toBeVisible();
 });
 
-for(const palette of ['midnight','plum','slate'])test(`mixer follows ${palette} palette`,async({page})=>{
+for(const palette of ['midnight','plum','evergreen'])test(`mixer follows ${palette} palette`,async({page})=>{
   await page.goto('/');await page.addStyleTag({content:'* { transition:none !important; }'});await page.locator('#palette').selectOption(palette);
   const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),console:getComputedStyle(panel.querySelector('.mix-level-grid')!).backgroundColor,expectedConsole:getComputedStyle(document.documentElement).getPropertyValue('--pulse').trim(),expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
   const rgb=(hex:string)=>{const value=hex.replace('#','');const full=value.length===3?value.split('').map(c=>c+c).join(''):value;return `rgb(${[0,2,4].map(i=>parseInt(full.slice(i,i+2),16)).join(', ')})`;};

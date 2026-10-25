@@ -235,12 +235,9 @@ Arpeggio notes include intervals relative to the current chord root, preserving
 extensions and alterations (for example 9, ♯11, ♭9 and ♯9). Dark mode uses bright
 teal chord-tone markers, amber roots and muted scale tones.
 
-Choose **Theme** in the header to try Midnight Studio (navy/cyan), Warm Paper
-(cream/terracotta), Plum Session (aubergine/rose), or Slate Minimal (grey/blue).
-Original light and dark remain available, and explicit choices persist locally.
+Choose **Theme** in the header for Refined Midnight (navy/blue), Plum Ink (aubergine/lilac), or Evergreen (forest/mint). The browser remembers your choice. Older saved themes fall back to Refined Midnight.
 Use **Compare themes** in the footer for the screenshot gallery at `themes.html`.
-Links such as `?theme=midnight` preview a palette without overwriting a saved
-preference; choosing from the menu saves the choice and clears that preview URL.
+Links such as `?theme=midnight` select and remember that theme. Choosing from the menu also saves the choice and clears the theme URL parameter.
 
 ### Develop
 
@@ -346,3 +343,5 @@ The focus bar’s Mixer button opens the shared console above the bar in any wor
 Evolving chord extensions start enabled for new sessions (an eight-bar blend). Saved presets retain their explicit on/off choice; older presets keep their original static harmony.
 
 The approved interface places Metronome beside Mixer on desktop, with secondary Practice tools below the mixer. Phone layouts stack the panels and scroll the console horizontally. Shared typography, spacing and control sizes carry through all six workspaces; existing palette tokens and musical highlight colours are unchanged.
+
+Theme offers Refined Midnight, Plum Ink and Evergreen as the studio palettes. The selected theme is remembered in this browser, including Evergreen on reload. These are the only available themes. Musical highlights retain consistent root, chord-tone and modal-colour roles across the three studio themes.

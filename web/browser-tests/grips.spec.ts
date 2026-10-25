@@ -23,7 +23,7 @@ test('chord overlay keeps the established shapes and mutes without prescribing f
   await page.locator('#progression').click();await page.locator('#template').selectOption('major251');await page.locator('#audition').uncheck();
   await page.locator('#progression-strip>button').nth(1).click();await expect(page.locator('#guitar-context')).toHaveText('G7alt');
   await expect(page.locator('.grip-preview')).toHaveCount(5);
-  for(const palette of ['dark','midnight','paper','plum','slate','light']){
+  for(const palette of ['midnight','plum','evergreen']){
     await page.locator('#palette').selectOption(palette);
     await expect(page.locator('.grip-ring').first()).toHaveCSS('fill','none');
     expect(await page.locator('.grip-ring').first().evaluate(n=>getComputedStyle(n).stroke)).not.toBe('none');

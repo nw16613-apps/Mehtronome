@@ -1,8 +1,8 @@
-/* Alternative palettes share the same controls, content and audio behavior. */
-:root[data-palette=midnight]{--page:#09111f;--panel:#121e32;--pulse:#0d192b;--ink:#edf2f7;--muted:#9bacbf;--line:#2b3d55;--field:#182840;--accent:#74cde8;--on-accent:#071d29;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#213650;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif}
-:root[data-palette=paper]{--page:#f4ecdf;--panel:#fffaf0;--pulse:#efe1cf;--ink:#382c26;--muted:#786052;--line:#c9b7a0;--field:#f5ebdc;--accent:#a8462d;--on-accent:#fff8ed;--root:#f0be60;--chord:#a8462d;--on-chord:#fffaf0;--scale:#e9ddca;--radius:5px;--title-font:Georgia,'Times New Roman',serif}
-:root[data-palette=plum]{--page:#1d1425;--panel:#2c2035;--pulse:#251b30;--ink:#f5e9f5;--muted:#c5accb;--line:#604667;--field:#3a2945;--accent:#f0acd4;--on-accent:#38182e;--root:#f2c783;--chord:#d1b8ff;--on-chord:#29183c;--scale:#47324f;--radius:22px;--title-font:Georgia,'Times New Roman',serif}
-:root[data-palette=slate]{--page:#edf1f5;--panel:#fff;--pulse:#e2e9f1;--ink:#172b42;--muted:#53677d;--line:#b6c6d7;--field:#f0f4f8;--accent:#235cb5;--on-accent:#fff;--root:#eab36a;--chord:#235cb5;--on-chord:#fff;--scale:#e0e8f2;--radius:9px;--title-font:ui-sans-serif,system-ui,sans-serif}
+:root[data-palette=evergreen]{--page:#0c1715;--panel:#142621;--pulse:#10201c;--field:#203a31;--line:#45695a;--ink:#edf3ed;--muted:#b4c8ba;--accent:#a1d5ba;--on-accent:#10291d;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#29483d;--modal:#d7adf3;--diagram-line:#759d89;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif}
+/* The three studio palettes share controls, content and musical colour roles. */
+html[data-palette] { color-scheme:dark; }
+:root[data-palette=midnight]{--page:#0a111b;--panel:#111e2c;--pulse:#0d1723;--ink:#edf2f7;--muted:#b5c3d1;--line:#425a70;--field:#1c2f43;--accent:#89c2f2;--on-accent:#0a2033;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#233c53;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif;--modal:#d7adf3;--diagram-line:#6d879e;}
+:root[data-palette=plum]{--page:#18131f;--panel:#241c2d;--pulse:#1d1725;--ink:#f3edf5;--muted:#cabbcf;--line:#655271;--field:#362840;--accent:#cfb9e8;--on-accent:#291d36;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#40304c;--radius:22px;--title-font:Georgia,'Times New Roman',serif;--modal:#ddb9f4;--diagram-line:#9a85a7;}
 .theme-controls{display:flex;gap:16px;align-items:center}
 .theme-picker{display:flex;align-items:center;gap:8px;font-size:11px;color:inherit}
 .theme-picker select{max-width:155px;padding:7px 9px;border:1px solid #789182;border-radius:5px;background:transparent;color:inherit;font-size:11px}
@@ -57,8 +57,6 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]){
   #preview-controls{color:var(--muted)}
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline-color:var(--accent)}
 }
-html[data-palette=slate] h2{letter-spacing:1.1px;text-transform:uppercase;font-size:13px}
-html[data-palette=paper] .panel{box-shadow:0 3px 0 #d9cab733}
 html[data-palette=midnight]{background-image:radial-gradient(circle at 18% -10%,#163356 0,transparent 34%),radial-gradient(circle at 92% 18%,#182442 0,transparent 28%);background-attachment:fixed}
 html[data-palette=midnight] .panel{box-shadow:0 14px 42px #02071155,inset 0 1px #ffffff06}
 html[data-palette=midnight] .transport{background:linear-gradient(155deg,#10243a,#0b192b 70%)}
@@ -67,3 +65,16 @@ html[data-palette=midnight] .panel>.section-heading{border-bottom:1px solid colo
 @media(max-width:360px){.theme-picker select{max-width:104px}.brand{font-size:17px}.theme-controls{gap:5px}header{padding:0 14px}}
 
 .theme-preview-link{color:inherit;text-underline-offset:3px}footer{flex-wrap:wrap}
+
+/* Shared musical colour roles for the three studio palettes. */
+html:root:is([data-palette=midnight],[data-palette=plum],[data-palette=evergreen]) {
+  --theory-a:#b7df65; --theory-a-ink:#17250a; --theory-a-ring:#e4f5bd;
+  --theory-b:#ff7f73; --theory-b-ink:#30100e; --theory-b-ring:#ffc2bd;
+  --theory-pentatonic:#d987f0; --theory-pentatonic-ink:#29102f; --theory-pentatonic-ring:#f1c8fa; --theory-pentatonic-root-ring:#9b43b5;
+  .workspace :is(.fret-wire,.guitar-string) { stroke:var(--diagram-line); }
+  #app .fret-note .characteristic-ring { stroke:var(--modal)!important; }
+  #app .note.characteristic { outline-color:var(--modal); }
+  #app .guitar-legend i.characteristic { border-color:var(--modal); }
+  #mix-panel .mix-channel.is-inactive :is(label,output),#floating-mixer .mix-channel.is-inactive :is(label,output) { opacity:1; color:var(--muted); }
+  .preset-fields input::placeholder { color:var(--muted); opacity:1; }
+}
