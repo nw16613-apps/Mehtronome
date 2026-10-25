@@ -12,6 +12,8 @@ import './style.css';
 import './themes.css';
 import './practice.css';
 import './interface.css';
+import './console.css';
+import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, parentMajorFor } from './guitar/fretboard.js';
 import { cagedStudy, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
@@ -123,7 +125,7 @@ app.innerHTML = `
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Mixer</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <p id="mixer-docked-note" class="practice-help" hidden>Mixer is open above the focus bar. <button id="mixer-return" type="button" class="panel-action">Return mixer here</button></p><div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
-          <div class="mix-level-grid">${MIX_CHANNELS.map(channel=>`<div class="mix-channel" data-mix-channel="${channel.id}"><div class="mix-channel-header"><label for="${channel.control}">${channel.label}</label><output id="${channel.output}">${channel.value}%</output><input id="mute-${channel.id}" type="checkbox" hidden><button type="button" class="channel-mute" data-mute-channel="${channel.id}" aria-label="Mute ${channel.label}" aria-pressed="false">Mute</button>${channel.id!=='space'?`<button type="button" class="channel-solo" data-solo-channel="${channel.id}" aria-label="Solo ${channel.label}" aria-pressed="false">Solo</button>`:''}</div><input id="${channel.control}" type="range" min="0" max="100" value="${channel.value}" aria-describedby="mix-state-${channel.id}"><span id="mix-state-${channel.id}" class="mix-channel-state">On</span></div>`).join('')}</div>
+          <div class="console-level-scroll" tabindex="0" aria-label="Scroll mixer channels"><div class="mix-level-grid">${MIX_CHANNELS.map(consoleChannel).join('')}</div></div>
         </section>
 <div class="mixer-quick-switches" aria-label="Enable instruments"><label class="check"><input id="drums" type="checkbox">Drums</label><label class="check"><input id="bass" type="checkbox">Bass</label><label class="check"><input id="comping" type="checkbox">Electric piano</label><label class="check"><input id="sequence" type="checkbox">Melodic movement</label><button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
 <section class="studio-tools panel workspace-page workspace-practice" aria-labelledby="practice-tools-title"><div class="section-heading"><h2 id="practice-tools-title">Practice tools</h2><span class="small-label">MAKE EACH SESSION COUNT</span></div>      <div class="pulse-shortcut-row"><span class="small-label">TEMPO SHORTCUTS</span><div id="tempo-shortcuts" class="tempo-shortcuts"></div><button id="tempo-save" type="button" class="practice-button">Save current tempo</button><span id="tempo-shortcut-status" class="practice-help" role="status"></span></div>      <div class="pulse-tool-grid">
@@ -189,6 +191,8 @@ let playing = false;
 let busy = false;
 let step = 0;
 let context: AudioContext | undefined;
+let ambientMeters:AnalyserNode[]=[];
+const ambientSamples=new Float32Array(256);
 let node: AudioWorkletNode | undefined;
 let stopping = false;
 let guitarDegrees = true;
@@ -628,6 +632,7 @@ function commitCustomEdit(autoMode=false){
 }
 function updateSpace() {
   el('space-value').textContent = `${input('space').value}%`;
+  syncConsole();
   if (wet && context) wet.gain.setTargetAtTime((input('mute-space').checked?0:Number(input('space').value) / 100 * .65), context.currentTime, .08);
 }
 function update() {
@@ -846,7 +851,11 @@ async function prepareAudio() {
     reverbGate.gain.value = 0;
     node.connect(reverbGate.gain,3);
     wet.connect(reverbGate).connect(master);
+    const meterSplit=context.createChannelSplitter(2);reverbGate.connect(meterSplit);
+    ambientMeters=[context.createAnalyser(),context.createAnalyser()];
+    ambientMeters.forEach((meter,index)=>{meter.fftSize=256;meterSplit.connect(meter,index);});
     node.port.onmessage = ({ data }) => {
+      if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number')renderProgressionReference(data.step);
       if (!playing) return;
       if(data.type==='session-complete'){
@@ -1259,10 +1268,11 @@ function reflectMixerChannels(){
     card.classList.toggle('is-muted',muted);card.classList.toggle('is-inactive',!enabled);
     const button=card.querySelector<HTMLButtonElement>('.channel-mute')!;
     button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',`${muted?'Unmute':'Mute'} ${channel.label}`);
-    button.textContent=muted?'Muted':'Mute';
+    button.textContent='M';button.title=`${muted?'Unmute':'Mute'} ${channel.label}`;
     el('mix-state-'+channel.id).textContent=!enabled?(muted?'Off · muted':'Off'):muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
     if(muted)mutedCount++;
   }
+  syncConsole();
   el<HTMLButtonElement>('mixer-unmute-all').disabled=mutedCount===0;
   el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
@@ -1766,4 +1776,9 @@ input('preset-file').addEventListener('change',async()=>{
     persistPresets(result.items,result.items.at(-1)?.id||'',`Imported ${result.imported} practice preset${result.imported===1?'':'s'}. Existing setups kept.`);
   }catch(error){el('preset-status').textContent=(error as Error).message;}
   finally{input('preset-file').value='';}
+});
+
+installConsole(()=>{
+  if(!context||context.state!=='running'||!master||master.gain.value<.00001)return [0,0];
+  return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
 });

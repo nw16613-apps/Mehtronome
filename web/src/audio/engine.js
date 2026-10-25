@@ -168,6 +168,7 @@ export class Engine {
     this.rhythm = new Rhythm(this.rate, this.drumKit);
     this.comping = new CompingInstrument(this.rate);
     this.drumsLevel = 0;
+    this.meterPeaks = new Float32Array(12);
     this.bassLevel = 0;
     this.compingLevel = 0;
     this.sequenceLevel = 0;
@@ -406,6 +407,8 @@ export class Engine {
       for (let i = 0; i < output.length; i++) {
         this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
         const value = this.guitar.sample() * this.level * harmonyVolume;
+        this.meterPeaks[2]=Math.max(this.meterPeaks[2],Math.abs(value));
+        this.meterPeaks[3]=Math.max(this.meterPeaks[3],Math.abs(value));
         output[i] = harmonyOutput ? 0 : value;
         if (harmonyOutput) harmonyOutput[i] = value;
         if (harmonyRight) harmonyRight[i] = value;
@@ -644,6 +647,18 @@ export class Engine {
       this.gapGain = target ? Math.min(1,this.gapGain+this.gapSlew) : Math.max(0,this.gapGain-this.gapSlew);
       const clickGate = s.gapTarget === 'backing' ? 1 : this.gapGain;
       const backingGate = s.gapTarget === 'click' ? 1 : this.gapGain;
+      // Post-fader, post-gap dry channel peaks. Monitoring never alters audio.
+      const peak=this.meterPeaks,gate=this.level*backingGate;
+      const clickPeak=Math.abs(clickSample*clickGate*.92);
+      peak[0]=Math.max(peak[0],clickPeak);peak[1]=Math.max(peak[1],clickPeak);
+      peak[2]=Math.max(peak[2],Math.abs(gate*.37*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking));
+      peak[3]=Math.max(peak[3],Math.abs(gate*.37*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking));
+      const drumPeak=Math.abs(gate*.5*this.drumsLevel*this.rhythm.drums),bassPeak=Math.abs(gate*.3*this.bassLevel*this.rhythm.bass),compPeak=Math.abs(gate*.24*this.compingLevel*comping);
+      peak[4]=Math.max(peak[4],drumPeak);peak[5]=Math.max(peak[5],drumPeak);
+      peak[6]=Math.max(peak[6],bassPeak);peak[7]=Math.max(peak[7],bassPeak);
+      peak[8]=Math.max(peak[8],compPeak);peak[9]=Math.max(peak[9],compPeak);
+      peak[10]=Math.max(peak[10],Math.abs(gate*.15*this.sequenceLevel*this.sequence.left));
+      peak[11]=Math.max(peak[11],Math.abs(gate*.15*this.sequenceLevel*this.sequence.right));
       if (gapOutput) gapOutput[i] = backingGate;
       const backingSample=this.level*left*backingGate;
       const rightSample=this.level*right*backingGate;

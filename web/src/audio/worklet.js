@@ -5,6 +5,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     super();
     this.engine = new Engine(sampleRate);
     this.active = false;
+    this.meterFrames = 0;
     this.onBeat = event => this.port.postMessage(event);
     this.port.onmessage = ({ data }) => {
       if (data.type === 'drum-kit') {
@@ -37,6 +38,11 @@ class HarmonyProcessor extends AudioWorkletProcessor {
       this.engine.render(channels[0].subarray(offset), this.onBeat, view(outputs,1), view(outputs,1,1), undefined, view(outputs,2), undefined, view(outputs,3), this.onBeat);
       if (outputs[2]?.length > 1) outputs[2][1].set(outputs[2][0].subarray(offset),offset);
       for (let i = 1; i < channels.length; i++) channels[i].set(channels[0].subarray(offset),offset);
+      this.meterFrames+=channels[0].length;
+      if(this.meterFrames>=sampleRate/20){
+        this.port.postMessage({type:'meters',peaks:Array.from(this.engine.meterPeaks)});
+        this.engine.meterPeaks.fill(0);this.meterFrames=0;
+      }
       if (!this.engine.running && this.engine.level < 0.00001) this.active = false;
     }
     return true;

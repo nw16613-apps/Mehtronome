@@ -345,3 +345,9 @@ Evolving chord extensions start enabled for new sessions (an eight-bar blend). S
 The approved interface places Metronome beside Mixer on desktop, with secondary Practice tools below the mixer. Phone layouts stack the panels and scroll the console horizontally. Shared typography, spacing and control sizes carry through all six workspaces; existing palette tokens and musical highlight colours are unchanged.
 
 Theme offers Refined Midnight, Plum Ink, Evergreen and Soft Stone as the studio palettes. The selected theme is remembered in this browser, including Soft Stone on reload. These are the only available themes. Musical highlights retain consistent root, chord-tone and modal-colour roles across all four studio themes.
+
+### Studio mixing console
+
+The main mixer and focus-bar drawer share the same seven channel strips, including mute/solo states and saved volume levels. The console has logarithmic fader travel, dB gain readouts and percent values; keyboard arrows still adjust volume by one percentage point. Double-click a fader to restore its default level. Instruments can also be enabled directly on their strips.
+
+Meters show measured post-fader dry channel peaks, with stereo movement where the source is stereo. Ambient space measures the stereo reverb return. Peak holds decay after playback stops; the visual meters never generate or alter sound. On narrow screens, scroll across the strips to reach every channel.
