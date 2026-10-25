@@ -1,0 +1,17 @@
+{
+  "page": "#b9b5aa",
+  "panel": "#cdc9bf",
+  "pulse": "#c4c0b5",
+  "field": "#dedad0",
+  "line": "#8d968c",
+  "ink": "#232c29",
+  "muted": "#3c4842",
+  "accent": "#42665b",
+  "on-accent": "#f1f0e8",
+  "root": "#dfaa69",
+  "chord": "#428073",
+  "on-chord": "#ffffff",
+  "scale": "#b9ccc0",
+  "modal": "#81528f",
+  "diagram-line": "#879187"
+}
