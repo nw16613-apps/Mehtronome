@@ -1,6 +1,8 @@
+:root[data-palette=soft-stone]{--page:#b9b5aa;--panel:#cdc9bf;--pulse:#c4c0b5;--field:#dedad0;--line:#8d968c;--ink:#232c29;--muted:#3c4842;--accent:#42665b;--on-accent:#f1f0e8;--root:#dfaa69;--chord:#428073;--on-chord:#ffffff;--scale:#b9ccc0;--modal:#81528f;--diagram-line:#879187;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif}
 :root[data-palette=evergreen]{--page:#0c1715;--panel:#142621;--pulse:#10201c;--field:#203a31;--line:#45695a;--ink:#edf3ed;--muted:#b4c8ba;--accent:#a1d5ba;--on-accent:#10291d;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#29483d;--modal:#d7adf3;--diagram-line:#759d89;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif}
-/* The three studio palettes share controls, content and musical colour roles. */
+/* The studio palettes share controls, content and musical colour roles. */
 html[data-palette] { color-scheme:dark; }
+html[data-palette=soft-stone] { color-scheme:light; }
 :root[data-palette=midnight]{--page:#0a111b;--panel:#111e2c;--pulse:#0d1723;--ink:#edf2f7;--muted:#b5c3d1;--line:#425a70;--field:#1c2f43;--accent:#89c2f2;--on-accent:#0a2033;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#233c53;--radius:16px;--title-font:ui-sans-serif,system-ui,sans-serif;--modal:#d7adf3;--diagram-line:#6d879e;}
 :root[data-palette=plum]{--page:#18131f;--panel:#241c2d;--pulse:#1d1725;--ink:#f3edf5;--muted:#cabbcf;--line:#655271;--field:#362840;--accent:#cfb9e8;--on-accent:#291d36;--root:#e8b675;--chord:#68c9c0;--on-chord:#082825;--scale:#40304c;--radius:22px;--title-font:Georgia,'Times New Roman',serif;--modal:#ddb9f4;--diagram-line:#9a85a7;}
 .theme-controls{display:flex;gap:16px;align-items:center}
@@ -66,8 +68,8 @@ html[data-palette=midnight] .panel>.section-heading{border-bottom:1px solid colo
 
 .theme-preview-link{color:inherit;text-underline-offset:3px}footer{flex-wrap:wrap}
 
-/* Shared musical colour roles for the three studio palettes. */
-html:root:is([data-palette=midnight],[data-palette=plum],[data-palette=evergreen]) {
+/* Shared musical colour roles for the studio palettes. */
+html:root:is([data-palette=midnight],[data-palette=plum],[data-palette=evergreen],[data-palette=soft-stone]) {
   --theory-a:#b7df65; --theory-a-ink:#17250a; --theory-a-ring:#e4f5bd;
   --theory-b:#ff7f73; --theory-b-ink:#30100e; --theory-b-ring:#ffc2bd;
   --theory-pentatonic:#d987f0; --theory-pentatonic-ink:#29102f; --theory-pentatonic-ring:#f1c8fa; --theory-pentatonic-root-ring:#9b43b5;
@@ -78,3 +80,5 @@ html:root:is([data-palette=midnight],[data-palette=plum],[data-palette=evergreen
   #mix-panel .mix-channel.is-inactive :is(label,output),#floating-mixer .mix-channel.is-inactive :is(label,output) { opacity:1; color:var(--muted); }
   .preset-fields input::placeholder { color:var(--muted); opacity:1; }
 }
+
+html:root[data-palette=soft-stone] .notes { --map-field:var(--field); --map-ink:var(--ink); --map-muted:var(--muted); --map-line:var(--line); --map-accent:var(--accent); }

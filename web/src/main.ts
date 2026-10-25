@@ -42,7 +42,7 @@ function sequencePatternOptions() {
 }
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
-<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>Mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><div class="theme-controls"><button id="focus-view" class="practice-button" aria-pressed="false">Focus view</button><label class="theme-picker">Theme<select id="palette" aria-label="Page theme"><option value="midnight">Refined Midnight</option><option value="plum">Plum Ink</option><option value="evergreen">Evergreen</option></select></label></div></header>
+<header><a class="brand" href="./" aria-label="Mehtronome home"><span class="brand-mark">m<span>·</span></span>Mehtronome</a><span class="header-note">A little rhythm. A little harmony.</span><div class="theme-controls"><button id="focus-view" class="practice-button" aria-pressed="false">Focus view</button><label class="theme-picker">Theme<select id="palette" aria-label="Page theme"><option value="midnight">Refined Midnight</option><option value="plum">Plum Ink</option><option value="evergreen">Evergreen</option><option value="soft-stone">Soft Stone</option></select></label></div></header>
 <nav class="workspace-nav" aria-label="Workspace navigation">
   <div class="workspace-nav-inner">
     <span class="workspace-nav-label">Workspace</span>
@@ -171,7 +171,7 @@ app.innerHTML = `
     <section id="caged-exercise" class="caged-exercise panel workspace-page workspace-exercises" aria-labelledby="caged-exercise-title"></section>
   </div>
   <p id="error" class="error" role="alert" hidden></p>
-  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html?v=studio-three-20261025">Compare themes</a> · Headphones on. Distractions off.</span></footer>
+  <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html?v=studio-four-20261025">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>
 <div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><section id="floating-mixer" class="floating-mixer panel" aria-labelledby="floating-mixer-title" hidden><div class="floating-mixer-heading"><h2 id="floating-mixer-title">Your mix</h2><button id="floating-mixer-close" type="button" class="practice-button" aria-label="Close mixer">Close</button></div><div id="floating-mixer-content"></div></section><button id="mini-play" class="practice-button" aria-pressed="false">Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-mixer" type="button" class="practice-button" aria-expanded="false" aria-controls="floating-mixer">Mixer</button><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label>Root<select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
 
@@ -1629,9 +1629,9 @@ function reflectTheme() {
   if(colour)document.querySelector('meta[name="theme-color"]')?.setAttribute('content',colour);
 }
 function applyTheme(palette: string) {
-  if(!['midnight','plum','evergreen'].includes(palette))palette='midnight';
+  if(!['midnight','plum','evergreen','soft-stone'].includes(palette))palette='midnight';
   document.documentElement.dataset.palette = palette;
-  document.documentElement.dataset.theme = 'dark';
+  document.documentElement.dataset.theme = palette === 'soft-stone' ? 'light' : 'dark';
   try { localStorage.setItem('mehtronome-theme', palette); } catch { /* Session-only if storage is unavailable. */ }
   // Clear the link parameter so the saved choice controls future visits.
   const url = new URL(location.href);

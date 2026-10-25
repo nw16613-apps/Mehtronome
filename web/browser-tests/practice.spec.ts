@@ -447,10 +447,10 @@ test('fretted diagrams and alternative themes work across reloads and mobile lay
   await expect(page.locator('#palette')).toHaveValue('midnight');
 });
 
-test('theme gallery loads three real previews and links to the matching live themes', async ({page}) => {
+test('theme gallery loads four real previews and links to the matching live themes', async ({page}) => {
   await page.goto('/themes.html');
-  await expect(page.locator('.card')).toHaveCount(3);
-  for (const theme of ['midnight','plum','evergreen']) {
+  await expect(page.locator('.card')).toHaveCount(4);
+  for (const theme of ['midnight','plum','evergreen','soft-stone']) {
     await expect(page.locator(`a.picture[href="./?theme=${theme}"]`)).toBeVisible();
   }
   await expect.poll(() => page.locator('.card img').evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth === 1440))).toBe(true);

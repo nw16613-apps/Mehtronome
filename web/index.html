@@ -7,13 +7,13 @@
     <meta name="description" content="Practice scales and arpeggios with a precise metronome and warm harmony backing." />
     <script>
       (() => {
-        const available = ['midnight', 'plum', 'evergreen'];
+        const available = ['midnight', 'plum', 'evergreen', 'soft-stone'];
         let saved;
         try { saved = localStorage.getItem('mehtronome-theme'); } catch { /* Use Refined Midnight. */ }
         const preview = new URLSearchParams(location.search).get('theme');
         const palette = available.includes(preview) ? preview : available.includes(saved) ? saved : 'midnight';
         document.documentElement.dataset.palette = palette;
-        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.dataset.theme = palette === 'soft-stone' ? 'light' : 'dark';
         try { localStorage.setItem('mehtronome-theme',palette); } catch { /* Session-only. */ }
       })();
     </script>
