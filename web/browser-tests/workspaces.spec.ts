@@ -11,6 +11,7 @@ test('workspace navigation preserves state and keeps all fretboard views togethe
   await expect(page.locator('#full-fretboard')).toBeVisible();
   await expect(page.locator('#position-overview .position-thumbnail')).toHaveCount(5);
   await expect(page.locator('#guitar-diagrams .position-card')).toHaveCount(1);
+  await expect(page.locator('.guitar-overview .guitar-controls')).toBeHidden();await page.locator('.guitar-setup>summary').click();
   await expect(page.locator('.guitar-overview .guitar-controls')).toBeVisible();
   await expect(page.locator('#caged-exercise')).toBeHidden();
 
@@ -27,7 +28,7 @@ test('workspace navigation preserves state and keeps all fretboard views togethe
   await expect(page.locator('#practice-roadmap-title')).toBeVisible();
 });
 
-for(const width of [1280,390])test(`fretboard controls precede full-width diagrams at ${width}px`,async({page})=>{
+for(const width of [1280,390])test(`principal fretboard precedes the full-neck context map at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});
   await page.goto('/');
   await page.locator('[data-workspace-target="guitar-title"]').click();
@@ -37,9 +38,9 @@ for(const width of [1280,390])test(`fretboard controls precede full-width diagra
     const map=rect('#full-fretboard-panel');
     const overview=rect('#position-overview');
     const diagram=rect('#guitar-diagrams');
-    return {controlsAbove:controls.bottom<=map.top,mapAbove:map.bottom<=overview.top,overviewAbove:overview.bottom<=diagram.top,fullWidth:Math.abs(map.width-diagram.width)<2,overflow:document.documentElement.scrollWidth>innerWidth+1};
+    return {controlsAbove:controls.bottom<=overview.top,diagramAboveMap:diagram.bottom<=map.top,overviewAbove:overview.bottom<=diagram.top,fullWidth:Math.abs(map.width-diagram.width)<2,overflow:document.documentElement.scrollWidth>innerWidth+1};
   });
-  expect(layout).toEqual({controlsAbove:true,mapAbove:true,overviewAbove:true,fullWidth:true,overflow:false});
+  expect(layout).toEqual({controlsAbove:true,diagramAboveMap:true,overviewAbove:true,fullWidth:true,overflow:false});
 });
 
 for(const width of [1440,390])test(`six workspaces keep each panel in its assigned tab at ${width}px`,async({page})=>{

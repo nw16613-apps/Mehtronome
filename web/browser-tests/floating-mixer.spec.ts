@@ -15,8 +15,8 @@ for(const width of [1440,900,390])test(`shared mixer docks above focus bar at ${
   await page.locator('#focus-view').click();await page.locator('#mini-mixer').click();await expect(page.locator('#floating-mixer')).toBeVisible();await page.locator('#open-sound-settings').click();await expect(page.locator('#sound-settings-title')).toBeVisible();await expect(page.locator('#floating-mixer')).toBeHidden();
 });
 test('mix changes preserve a running exercise and its tempo',async({page})=>{
-  await page.goto('/');await page.locator('[data-workspace-target="caged-exercise"]').click();await page.locator('#exercise-loop').check();await page.locator('#exercise-tempo').fill('73');await page.locator('#exercise-tempo').dispatchEvent('change');
+  await page.goto('/');await page.locator('[data-workspace-target="caged-exercise"]').click();await page.locator('.exercise-setup>summary').click();await page.locator('#exercise-loop').check();await page.locator('#exercise-tempo').fill('73');await page.locator('#exercise-tempo').dispatchEvent('change');
   await page.locator('#exercise-preview').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
   await page.locator('#mini-mixer').click();await page.locator('#harmony').fill('54');await page.locator('#harmony').dispatchEvent('input');await page.locator('[data-mute-channel="click"]').click();await page.locator('#drums').check();
-  await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#exercise-tempo')).toHaveValue('73');await page.locator('#floating-mixer-close').click();await page.locator('#exercise-preview').click();
+  await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#exercise-tempo')).toHaveValue('73');await expect(page.locator('#mini-bpm')).toHaveValue('73');await expect(page.locator('#mini-bpm')).toHaveAttribute('readonly','');await page.locator('#floating-mixer-close').click();await page.locator('#exercise-preview').click();
 });

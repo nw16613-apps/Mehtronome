@@ -89,7 +89,7 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
   for(const target of targets){
     const offsets=descending?pattern.descending:pattern.ascending;
     const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
-    if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:pattern.annotation,targetIndex:notes.length-1});
+    if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:offsets.map(offset=>offset===0?'target':`${Math.abs(offset)} semitone${Math.abs(offset)>1?'s':''} ${offset>0?'above':'below'}`).join(' · '),targetIndex:notes.length-1});
   }
   return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant)]:groups;
 }

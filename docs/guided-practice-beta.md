@@ -24,3 +24,13 @@ For each increment: musical/persistence unit checks, focused browser workflows, 
 - Authored audio phrases with rests/ties/accents, call-and-response scheduling and automatic voice-leading/fingering curricula need richer event data than the current uniform subdivision model. This beta supplies explicit rhythmic application prompts and existing passage playback; no fake audio playback controls.
 - Curated transformations, verified fingering/barre curriculum and advanced voicings: retain generated pitch-valid grips as suggestions, do not claim anatomical verification. Broader grip transformation lessons need separately reviewed content.
 - Full enharmonic spelling preference, account sync, spaced repetition, recording, tunings and restricted-string fingering remain backlog. Explain affected scale/chord spelling and compound intervals in this beta.
+
+## Checkpoint 2 — connected learning flow
+
+Implemented: six goal setups using existing controls and the current tonic; session navigation and learning-path access; exact-grip hand-off, full positional arpeggio and enclosure stages; short-cell/full-position/application views; exercise-specific guidance and explicit rhythmic application prompts; linked exercise fretboard with selected/playing/target markers, position selection and hide/reveal recall; formula/voiced notes/omissions/bass clarification; compact references, collapsible setup, focused Guitar material before the full-neck map; tempo ceiling and persistent stop coordination. Existing presets and exercise favourites remain separate, compatible tools.
+
+Guide-tone demonstrations currently play as melodic examples without accompaniment. Their uniform-subdivision playback must not be presented as bar-aligned progression targets. Chord-by-chord application is a player-performed task over the main backing. Authored example audio and chord-aligned exercise scheduling remain future work.
+
+Validation: unit checks cover all 12 roots and five CAGED regions for exact-grip pitch/string/fret agreement, larger arpeggio contents, target retention in short cells, and transposed third/seventh examples. Browser checks cover goal setup, grip-to-notation coordinates, linked highlighting, recall, positions, disclosures, playback stop, presets, chord audition and all themes. Device-level latency, acoustic fidelity and anatomical comfort are not claimed.
+
+Next: self-assessed review/notes and backup, full saved-session recall, then dedicated beat-level duration/scheduling and curated transformation content. The complete product brief is not yet finished.
