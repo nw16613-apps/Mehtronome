@@ -85,11 +85,11 @@ for(const width of [1440,390])test(`pulse tools fit at ${width}px`,async({page})
   await page.setViewportSize({width,height:1000});await page.goto('/');
   for(const summary of ['Swing','Practice timer','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();
-  const geometry=await page.locator('.transport').evaluate(element=>({
-    fullWidth:Math.abs(element.getBoundingClientRect().width-document.querySelector('.workspace')!.getBoundingClientRect().width)<2,
-    overflow:document.documentElement.scrollWidth>innerWidth+1,
-  }));
-  expect(geometry).toEqual({fullWidth:true,overflow:false});
+  const geometry=await page.evaluate(()=>{
+    const pulse=document.querySelector('.transport')!.getBoundingClientRect(),mix=document.querySelector('#mix-panel')!.getBoundingClientRect(),tools=document.querySelector('.studio-tools')!.getBoundingClientRect();
+    return {layout:innerWidth>760?pulse.right<=mix.left:pulse.bottom<=mix.top,toolsBelow:tools.top>=mix.bottom,overflow:document.documentElement.scrollWidth>innerWidth+1};
+  });
+  expect(geometry).toEqual({layout:true,toolsBelow:true,overflow:false});
 });
 
 test('Guitar and Exercises show the selected loop, chord scales and current playback chord',async({page})=>{

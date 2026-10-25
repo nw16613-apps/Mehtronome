@@ -344,3 +344,5 @@ Metronome click timbres live in Sound Settings; eighth-note swing stays with the
 The focus bar’s Mixer button opens the shared console above the bar in any workspace, including Focus view. The same faders, mute/solo buttons and instrument switches move between the main panel and the floating console, preserving their state. Channel strips scroll horizontally on smaller screens. Close or Escape returns the console; mixer level changes preserve exercise playback and tempo.
 
 Evolving chord extensions start enabled for new sessions (an eight-bar blend). Saved presets retain their explicit on/off choice; older presets keep their original static harmony.
+
+The approved interface places Metronome beside Mixer on desktop, with secondary Practice tools below the mixer. Phone layouts stack the panels and scroll the console horizontally. Shared typography, spacing and control sizes carry through all six workspaces; existing palette tokens and musical highlight colours are unchanged.

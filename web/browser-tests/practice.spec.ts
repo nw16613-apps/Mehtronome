@@ -18,7 +18,7 @@ test('real worklet generates audio, controls respond, and playback restarts', as
     };
   });
   await openReference(page);
-  await expect(page.getByRole('heading', { name: 'The pulse' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Metronome', exact: true })).toBeVisible();
   await page.locator('#count-in').uncheck();
   await page.getByRole('button', { name: 'Start practicing' }).click();
   await expect(page.locator('#play-status')).toContainText('Playing');

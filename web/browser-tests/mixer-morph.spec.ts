@@ -1,6 +1,6 @@
 import {expect,test} from '@playwright/test';
 
-for(const [width,columns] of [[1440,7],[900,4],[390,2]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
+for(const [width,columns] of [[1440,7],[900,7],[390,7]])test(`mixer levels use ${columns} columns at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
   await expect(page.locator('.mix-level-grid .mix-channel')).toHaveCount(7);
   const layout=await page.locator('.mix-level-grid').evaluate(element=>{
@@ -32,7 +32,11 @@ test('mute silences audio while preserving playback, volume and integrated polyr
   await page.locator('#harmony').fill('0');await page.locator('#harmony').dispatchEvent('input');
   await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');await page.locator('#play').click();
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');
-  const peak=()=>page.evaluate(()=>{const analyser=(window as any).__muteAnalyser as AnalyserNode;const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);return Math.max(...samples.map(Math.abs));});
+  // Sample across a beat so polling cannot repeatedly land between short clicks.
+  const peak=()=>page.evaluate(()=>new Promise<number>(resolve=>{
+    const analyser=(window as any).__muteAnalyser as AnalyserNode,samples=new Float32Array(analyser.fftSize),started=performance.now();let maximum=0;
+    const sample=()=>{analyser.getFloatTimeDomainData(samples);for(const value of samples)maximum=Math.max(maximum,Math.abs(value));if(performance.now()-started>=320)resolve(maximum);else requestAnimationFrame(sample);};sample();
+  }));
   await expect.poll(peak).toBeGreaterThan(.005);
   await page.locator('[data-mute-channel="click"]').click();await expect.poll(peak).toBeLessThan(.00001);
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#click')).toHaveValue('50');
@@ -87,9 +91,9 @@ test('solo preserves mutes and sound settings have their own workspace',async({p
 
 for(const palette of ['midnight','plum','slate'])test(`mixer follows ${palette} palette`,async({page})=>{
   await page.goto('/');await page.addStyleTag({content:'* { transition:none !important; }'});await page.locator('#palette').selectOption(palette);
-  const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),field:getComputedStyle(panel.querySelector('.mix-channel')!).backgroundColor,expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
+  const colors=await page.locator('#mix-panel').evaluate(panel=>({panel:getComputedStyle(panel).backgroundColor,expected:getComputedStyle(document.documentElement).getPropertyValue('--panel').trim(),console:getComputedStyle(panel.querySelector('.mix-level-grid')!).backgroundColor,expectedConsole:getComputedStyle(document.documentElement).getPropertyValue('--pulse').trim(),expectedField:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()}));
   const rgb=(hex:string)=>{const value=hex.replace('#','');const full=value.length===3?value.split('').map(c=>c+c).join(''):value;return `rgb(${[0,2,4].map(i=>parseInt(full.slice(i,i+2),16)).join(', ')})`;};
-  expect(colors.panel).toBe(rgb(colors.expected));expect(colors.field).toBe(rgb(colors.expectedField));
+  expect(colors.panel).toBe(rgb(colors.expected));expect(colors.console).toBe(rgb(colors.expectedConsole));
   await page.locator('#open-sound-settings').click();
   await expect(page.locator('.sound-settings')).toHaveCSS('background-color',rgb(colors.expected));
   await expect(page.locator('#comping-tone')).toHaveCSS('background-color',rgb(colors.expectedField));
