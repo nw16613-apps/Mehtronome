@@ -1,0 +1,63 @@
+/* Visual study only. Loaded into reference captures, not the live application. */
+html:root[data-palette][data-theme][data-studio-preview] {
+ --studio-edge:color-mix(in srgb,var(--line) 65%,var(--panel));
+ --studio-sheen:color-mix(in srgb,var(--ink) 12%,transparent);
+ --studio-shadow:color-mix(in srgb,var(--page) 65%,#0003);
+ header { background:linear-gradient(180deg,color-mix(in srgb,var(--field) 25%,var(--page)),var(--page)); box-shadow:inset 0 1px var(--studio-sheen),0 1px 0 var(--page); }
+ .workspace-nav {background:linear-gradient(var(--panel),color-mix(in srgb,var(--page) 75%,var(--panel)));box-shadow:inset 0 1px var(--studio-sheen),0 5px 15px #0001}
+ .workspace-tab {border-radius:5px 5px 0 0;margin-top:6px;min-height:50px;padding-top:10px;padding-bottom:10px}
+ .workspace-tab.selected {background:linear-gradient(color-mix(in srgb,var(--field) 85%,var(--panel)),var(--panel));box-shadow:inset 0 1px var(--studio-sheen),inset 1px 0 color-mix(in srgb,var(--line) 35%,transparent),inset -1px 0 color-mix(in srgb,var(--line) 35%,transparent);border-bottom-color:var(--accent)}
+ .workspace-tab.selected span {text-shadow:0 0 9px color-mix(in srgb,var(--accent) 25%,transparent)}
+ .panel {background:linear-gradient(145deg,color-mix(in srgb,var(--field) 26%,var(--panel)),var(--panel) 45%);border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),inset 0 -1px #0002,0 10px 24px #0002;border-radius:10px}
+ .panel>.section-heading {border-bottom-color:var(--studio-edge);box-shadow:0 1px 0 color-mix(in srgb,var(--page) 65%,transparent);padding-bottom:17px}
+ .section-heading h2 {font-size:16px;letter-spacing:-.025em;text-shadow:0 1px 1px #0001}
+ .eyebrow,.small-label {letter-spacing:.15em}
+ :is(.field-row,.template-field,.guitar-controls,.preset-fields,.exercise-controls,.exercise-display,.custom-editor,.sound-settings,.transport-options,.mini-transport) select,
+ .preset-fields input,.exercise-tempo input,.mini-transport input {
+ background:linear-gradient(color-mix(in srgb,var(--page) 40%,var(--field)),var(--field));border-color:var(--studio-edge);box-shadow:inset 0 2px 4px #0002,0 1px 0 var(--studio-sheen);border-radius:5px;color:var(--ink)
+ }
+ :is(.field-row,.guitar-controls,.preset-fields,.exercise-controls,.sound-settings) label:not(.check) {color:var(--muted)}
+ :is(.practice-button,.panel-action,.grip-preview,.position-nav button,.theme-picker select) {background:linear-gradient(color-mix(in srgb,var(--field) 88%,var(--ink)),var(--field) 24%,color-mix(in srgb,var(--panel) 45%,var(--field)));border-color:var(--studio-edge);box-shadow:inset 0 1px 0 var(--studio-sheen),0 2px 3px #0003;border-radius:5px}
+ :is(.practice-button,.panel-action,.position-nav button):active {box-shadow:inset 0 2px 5px #0005;transform:translateY(1px)}
+ :is(.practice-button,.panel-action)[aria-pressed=true] {border-color:var(--accent);box-shadow:inset 0 1px var(--studio-sheen),0 0 9px color-mix(in srgb,var(--accent) 12%,transparent)}
+ .tempo-controls {gap:14px}
+ .tempo-controls>div {padding:10px 0 14px;background:radial-gradient(ellipse at 50% 15%,color-mix(in srgb,var(--field) 35%,var(--page)),var(--page));border:1px solid var(--studio-edge);border-radius:7px;box-shadow:inset 0 3px 7px #0004,0 1px var(--studio-sheen)}
+ #bpm {font-variant-numeric:tabular-nums;font-size:94px;letter-spacing:-5px;height:110px;text-shadow:0 0 20px color-mix(in srgb,var(--accent) 9%,transparent)}
+ .bpm-label {font-size:8px;letter-spacing:.18em;color:var(--muted)}
+ .round {background:linear-gradient(var(--field),var(--panel));box-shadow:inset 0 1px var(--studio-sheen),0 2px 4px #0003;border-color:var(--studio-edge)}
+ .play-button,.play-button:hover {background:linear-gradient(color-mix(in srgb,var(--accent) 85%,var(--on-accent)),var(--accent) 20%,color-mix(in srgb,var(--accent) 90%,var(--on-accent)));border:1px solid color-mix(in srgb,var(--accent) 65%,var(--on-accent));box-shadow:inset 0 1px color-mix(in srgb,var(--accent) 60%,var(--ink)),0 3px 5px #0003;color:var(--on-accent)}
+ .beat {background:linear-gradient(var(--page),var(--panel));box-shadow:inset 0 2px 3px #0003,0 1px var(--studio-sheen);font-variant-numeric:tabular-nums}
+ .beat.active {box-shadow:inset 0 1px var(--studio-sheen),0 0 12px color-mix(in srgb,var(--accent) 24%,transparent)}
+ .tempo-range {height:6px!important;box-shadow:inset 0 1px 3px #0006,0 1px var(--studio-sheen)}
+ .tempo-range::-webkit-slider-thumb {width:20px!important;height:16px!important;border-radius:3px!important;border:1px solid var(--line)!important;background:linear-gradient(var(--field) 40%,var(--ink) 43% 51%,var(--panel) 54%)!important;box-shadow:0 2px 4px #0005,inset 0 1px var(--studio-sheen);margin-top:-5px!important}
+ .pulse-tool {background:linear-gradient(color-mix(in srgb,var(--field) 18%,var(--panel)),var(--panel));border-radius:5px;box-shadow:inset 0 1px var(--studio-sheen);padding-inline:10px}
+ .studio-tools .pulse-shortcut-row {padding:12px;background:var(--page);border:1px solid var(--studio-edge);border-radius:6px;box-shadow:inset 0 2px 4px #0003}
+ .harmony #chord-name {text-shadow:0 2px 2px #0001}
+ .segmented {background:var(--page);padding:5px;border:1px solid var(--studio-edge);box-shadow:inset 0 2px 4px #0003}
+ .segmented button.selected {background:linear-gradient(color-mix(in srgb,var(--accent) 85%,var(--ink)),var(--accent));border-radius:4px;box-shadow:inset 0 1px var(--studio-sheen),0 1px 3px #0003}
+ .progression-reference {background:linear-gradient(color-mix(in srgb,var(--field) 65%,var(--panel)),var(--panel));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen)}
+ .reference-chords>li,.progression-strip>button {background:linear-gradient(var(--field),color-mix(in srgb,var(--field) 50%,var(--panel)));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),0 2px 4px #0002}
+ .reference-chords>li.current,.progression-strip>button.current {box-shadow:inset 0 -2px var(--accent),inset 0 1px var(--studio-sheen);border-color:var(--accent)}
+ .scale-note {background:linear-gradient(var(--field),color-mix(in srgb,var(--field) 60%,var(--panel)))!important;box-shadow:inset 0 1px var(--studio-sheen),0 2px 3px #0002;border-color:var(--studio-edge)}
+ .scale-note.chord-tone {background:linear-gradient(color-mix(in srgb,var(--scale) 85%,var(--ink)),var(--scale))!important}
+ .seventh-layer {background:linear-gradient(var(--page),color-mix(in srgb,var(--page) 55%,var(--panel)));box-shadow:inset 0 2px 5px #0003,0 1px var(--studio-sheen);border-color:var(--studio-edge)}
+ .current-root .seventh-layer {box-shadow:inset 0 -2px var(--accent),inset 0 2px 4px #0003}
+ .guitar-controls {padding:16px!important;border:1px solid var(--studio-edge);border-radius:6px;background:linear-gradient(color-mix(in srgb,var(--field) 35%,var(--panel)),var(--panel));box-shadow:inset 0 1px var(--studio-sheen)}
+ .position-card,.full-fretboard-panel {background:linear-gradient(150deg,var(--pulse),color-mix(in srgb,var(--page) 60%,var(--pulse)));border-color:var(--studio-edge);box-shadow:inset 0 3px 9px #0003,0 1px var(--studio-sheen)}
+ .position-heading {border-bottom:1px solid color-mix(in srgb,var(--line) 50%,transparent);margin-bottom:14px;padding-bottom:12px}
+ .position-heading h4 {font-size:13px;letter-spacing:.015em}
+ .position-thumbnail {background:linear-gradient(var(--field),var(--panel));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),0 2px 3px #0002}
+ .position-thumbnail.current {box-shadow:inset 0 -2px var(--accent),inset 0 1px var(--studio-sheen);border-color:var(--accent)}
+ .notation-scroll {background:var(--pulse);border:1px solid var(--studio-edge);border-radius:7px;box-shadow:inset 0 3px 7px #0003;padding:12px}
+ .exercise-controls,.exercise-practice-bar {background:linear-gradient(color-mix(in srgb,var(--field) 24%,var(--panel)),var(--panel));padding:14px;border:1px solid var(--studio-edge);border-radius:6px;box-shadow:inset 0 1px var(--studio-sheen)}
+ .exercise-status-row {font-variant-numeric:tabular-nums}
+ .sound-settings>.mix-group,.sound-settings-grid>.mix-group {padding:18px!important;border:1px solid var(--studio-edge)!important;border-radius:7px;background:linear-gradient(color-mix(in srgb,var(--field) 25%,var(--panel)),var(--panel));box-shadow:inset 0 1px var(--studio-sheen),0 2px 5px #0002}
+ .sound-settings :is(h3,h4) {letter-spacing:.015em}
+ .preset-fields {padding:16px;border-radius:6px;background:var(--pulse);border:1px solid var(--studio-edge);box-shadow:inset 0 2px 5px #0003}
+ .practice-roadmap fieldset {background:linear-gradient(var(--field),var(--panel));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),0 2px 5px #0002}
+ .practice-roadmap progress {box-shadow:inset 0 2px 4px #0004;border-radius:3px}
+ .mini-transport {background:linear-gradient(color-mix(in srgb,var(--field) 40%,var(--panel)),var(--panel));border-color:var(--studio-edge);box-shadow:0 -7px 24px #0003,inset 0 1px var(--studio-sheen),inset 0 -1px #0003}
+ .mini-transport .mini-harmony {padding:2px 12px;border-inline:1px solid var(--studio-edge)}
+ #mini-beat {text-shadow:0 0 8px color-mix(in srgb,var(--accent) 25%,transparent)}
+ @media(max-width:760px){.tempo-controls{gap:8px}.tempo-controls>div{padding:8px 0 12px}#bpm{font-size:82px;height:100px}.preset-fields{padding:12px}.guitar-controls{padding:12px!important}.sound-settings>.mix-group,.sound-settings-grid>.mix-group{padding:14px!important}}
+}
