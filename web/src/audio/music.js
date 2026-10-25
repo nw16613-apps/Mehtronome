@@ -187,7 +187,10 @@ export const PROGRESSIONS = {
   oneFour2: { name: 'I–IV · 2 bars per chord', bars: 2, kind: 'parallel', roots: [0,5], letters: [0,3], roman: ['I','IV'] },
   fourths1: { name: 'Cycle of fourths · 1 bar per chord', bars: 1, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
   fourths2: { name: 'Cycle of fourths · 2 bars per chord', bars: 2, kind: 'parallel', cycle: true, roots: [0,5,10,3,8,1,6,11,4,9,2,7], roman: ['I','IV','♭VII','♭III','♭VI','♭II','♭V','VII','III','VI','II','V'] },
-  major251: { name: 'Jazz major ii–V–I · 4 bars', bars: 1, kind: 'jazz', roman: ['ii9','V7alt','Imaj9♯11'], steps: [
+  major251essential: {name:'Essential ii–V–I · seventh chords',bars:1,kind:'jazz',roman:['ii7','V7','Imaj7'],steps:[{root:2,letter:1,chord:'min7',mode:'dorian',bars:1},{root:7,letter:4,chord:'dom7',mode:'mixolydian',bars:1},{root:0,letter:0,chord:'maj7',mode:'major',bars:2}]},
+  major251extended: {name:'Extended diatonic ii–V–I',bars:1,kind:'jazz',roman:['ii9','V13','Imaj9'],steps:[{root:2,letter:1,chord:'min9',mode:'dorian',bars:1},{root:7,letter:4,chord:'dom13',mode:'mixolydian',bars:1},{root:0,letter:0,chord:'maj9',mode:'major',bars:2}]},
+  major251altered: {name:'Altered-dominant ii–V–I',bars:1,kind:'jazz',roman:['ii9','V7alt','Imaj9'],steps:[{root:2,letter:1,chord:'min9',mode:'dorian',bars:1},{root:7,letter:4,chord:'dom7alt',mode:'altered',bars:1},{root:0,letter:0,chord:'maj9',mode:'major',bars:2}]},
+  major251: { name: 'Lydian-tonic ii–V–I · altered dominant', bars: 1, kind: 'jazz', roman: ['ii9','V7alt','Imaj9♯11'], steps: [
     { root: 2, letter: 1, chord: 'min9', mode: 'dorian', bars: 1 },
     { root: 7, letter: 4, chord: 'dom7alt', mode: 'altered', bars: 1 },
     { root: 0, letter: 0, chord: 'maj9sharp11', mode: 'lydian', bars: 2 },
@@ -260,7 +263,7 @@ export function characteristicNotes(harmony) {
     return {degree, pc:harmony.scalePcs[index], name:harmony.scaleNames[index]};
   });
 }
-const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+export const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
   const letters = ['C','D','E','F','G','A','B'];
   const letter = (letters.indexOf(rootName[0]) + letterSteps) % 7;
