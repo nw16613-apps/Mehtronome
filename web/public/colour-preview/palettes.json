@@ -1,5 +1,72 @@
 [
- {"id":"midnight","label":"Refined Midnight","description":"Deep navy, cool blue controls and a restrained sky-blue accent.","base":"midnight","recommended":true,"colors":{"page":"#0a111b","panel":"#111e2c","pulse":"#0d1723","field":"#1c2f43","line":"#425a70","ink":"#edf2f7","muted":"#b5c3d1","accent":"#89c2f2","on-accent":"#0a2033","root":"#e8b675","chord":"#68c9c0","on-chord":"#082825","scale":"#233c53","modal":"#d7adf3","diagram-line":"#6d879e"}},
- {"id":"plum","label":"Plum Ink","description":"Dark aubergine, quiet violet surfaces and a soft lilac accent.","base":"plum","colors":{"page":"#18131f","panel":"#241c2d","pulse":"#1d1725","field":"#362840","line":"#655271","ink":"#f3edf5","muted":"#cabbcf","accent":"#cfb9e8","on-accent":"#291d36","root":"#e8b675","chord":"#68c9c0","on-chord":"#082825","scale":"#40304c","modal":"#ddb9f4","diagram-line":"#9a85a7"}},
- {"id":"paper","label":"Warm Ivory","description":"Warm off-white surfaces, dark ink and a deep teal accent.","base":"paper","colors":{"page":"#f0eadf","panel":"#faf7f0","pulse":"#f4efe5","field":"#ece4d6","line":"#8b7d6a","ink":"#2b3335","muted":"#5d6869","accent":"#245c61","on-accent":"#ffffff","root":"#e8b675","chord":"#277d76","on-chord":"#ffffff","scale":"#e0e7e4","modal":"#7952ba","diagram-line":"#80918c"}}
+  {
+    "id": "midnight",
+    "label": "Refined Midnight",
+    "description": "Deep navy, cool blue controls and a restrained sky-blue accent.",
+    "base": "midnight",
+    "recommended": true,
+    "colors": {
+      "page": "#0a111b",
+      "panel": "#111e2c",
+      "pulse": "#0d1723",
+      "field": "#1c2f43",
+      "line": "#425a70",
+      "ink": "#edf2f7",
+      "muted": "#b5c3d1",
+      "accent": "#89c2f2",
+      "on-accent": "#0a2033",
+      "root": "#e8b675",
+      "chord": "#68c9c0",
+      "on-chord": "#082825",
+      "scale": "#233c53",
+      "modal": "#d7adf3",
+      "diagram-line": "#6d879e"
+    }
+  },
+  {
+    "id": "plum",
+    "label": "Plum Ink",
+    "description": "Dark aubergine, quiet violet surfaces and a soft lilac accent.",
+    "base": "plum",
+    "colors": {
+      "page": "#18131f",
+      "panel": "#241c2d",
+      "pulse": "#1d1725",
+      "field": "#362840",
+      "line": "#655271",
+      "ink": "#f3edf5",
+      "muted": "#cabbcf",
+      "accent": "#cfb9e8",
+      "on-accent": "#291d36",
+      "root": "#e8b675",
+      "chord": "#68c9c0",
+      "on-chord": "#082825",
+      "scale": "#40304c",
+      "modal": "#ddb9f4",
+      "diagram-line": "#9a85a7"
+    }
+  },
+  {
+    "id": "evergreen",
+    "label": "Evergreen",
+    "description": "Deep forest-green surfaces, soft mint accents and warm, readable text.",
+    "base": "midnight",
+    "colors": {
+      "page": "#0c1715",
+      "panel": "#142621",
+      "pulse": "#10201c",
+      "field": "#203a31",
+      "line": "#45695a",
+      "ink": "#edf3ed",
+      "muted": "#b4c8ba",
+      "accent": "#a1d5ba",
+      "on-accent": "#10291d",
+      "root": "#e8b675",
+      "chord": "#68c9c0",
+      "on-chord": "#082825",
+      "scale": "#29483d",
+      "modal": "#d7adf3",
+      "diagram-line": "#759d89"
+    }
+  }
 ]

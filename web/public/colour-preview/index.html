@@ -8,21 +8,22 @@
 </style>
 </head>
 <body><main>
-<header><div><div class="eyebrow">MEHTRONOME · COLOUR STUDIES</div><h1>Same layout. Three colour directions.</h1><p>Compare each palette on the mixer, chord graphics and fretboard. The app’s live colours are unchanged while we review these options.</p></div><a href="../">Open the current app ↗</a></header>
+<header><div><div class="eyebrow">MEHTRONOME · COLOUR STUDIES</div><h1>Same layout. Three dark colour directions.</h1><p>Compare each palette on the mixer, chord graphics and fretboard. The app’s live colours are unchanged while we review these options.</p></div><a href="../">Open the current app ↗</a></header>
 <div id="palette-options" class="palette-options" role="group" aria-label="Colour direction"></div>
 <div class="toolbar"><div class="view-options" role="group" aria-label="Preview view"><button type="button" data-view="metronome" aria-pressed="true">Metronome &amp; mixer</button><button type="button" data-view="harmony" aria-pressed="false">Chord graphics</button><button type="button" data-view="guitar" aria-pressed="false">Fretboard</button><button type="button" data-view="phone" aria-pressed="false">Phone</button></div><a id="full-size" href="midnight-metronome.png" target="_blank" rel="noopener">Open image at full size ↗</a></div>
 <div class="selection"><div aria-live="polite"><h2 id="selection-title">Refined Midnight</h2><p id="selection-description">Deep navy, cool blue controls and a restrained sky-blue accent.</p></div><div id="swatches" class="swatches" aria-label="Palette surface colours"></div></div>
 <figure id="preview-frame" data-view="metronome"><img id="preview-image" src="midnight-metronome.png" alt="Refined Midnight: metronome and mixer colour study"></figure>
 <div class="legend"><b>Musical meaning stays consistent:</b><span><i id="root-swatch"></i>Root</span><span><i id="chord-swatch"></i>Chord tone</span><span><i class="modal"></i>Modal colour note</span></div>
 <p class="note">These are screenshots of the colour studies, using the implemented layout. Refined Midnight is my recommended starting point. Text, secondary labels and primary-action contrast have been checked for all three proposed palettes.</p>
-<noscript><p>Open a colour study directly:</p><a href="midnight-metronome.png">Refined Midnight</a> · <a href="plum-metronome.png">Plum Ink</a> · <a href="paper-metronome.png">Warm Ivory</a> · <a href="current-metronome.png">Current Midnight</a></noscript>
+<noscript><p>Open a colour study directly:</p><a href="midnight-metronome.png">Refined Midnight</a> · <a href="plum-metronome.png">Plum Ink</a> · <a href="evergreen-metronome.png">Evergreen</a> · <a href="current-metronome.png">Current Midnight</a></noscript>
 </main>
 <script type="module">
-const response=await fetch('./palettes.json');
+const response=await fetch('./palettes.json?v=evergreen-20261025');
 const palettes=await response.json();
 palettes.push({id:'current',label:'Current Midnight',description:'The existing live Midnight colours, for a direct comparison.',colors:{page:'#09111f',panel:'#121e32',field:'#182840',line:'#2b3d55',ink:'#edf2f7',muted:'#9bacbf',accent:'#74cde8','on-accent':'#071d29',root:'#e8b675',chord:'#68c9c0',modal:'#dcafff'}});
 const params=new URLSearchParams(location.search);
-let palette=palettes.find(item=>item.id===params.get('palette'))||palettes[0];
+const requestedPalette=params.get('palette')==='paper'?'evergreen':params.get('palette');
+let palette=palettes.find(item=>item.id===requestedPalette)||palettes[0];
 const viewNames={metronome:'Metronome & mixer',harmony:'Chord graphics',guitar:'Fretboard',phone:'Phone'};
 let view=Object.hasOwn(viewNames,params.get('view'))?params.get('view'):'metronome';
 const options=document.querySelector('#palette-options');
@@ -30,7 +31,7 @@ for(const item of palettes){const button=document.createElement('button');button
 for(const button of document.querySelectorAll('button[data-view]'))button.addEventListener('click',()=>{view=button.dataset.view;render();});
 function render(){
 for(const [role,color] of Object.entries(palette.colors))document.documentElement.style.setProperty(`--${role}`,color);
-document.documentElement.style.colorScheme=palette.id==='paper'?'light':'dark';
+document.documentElement.style.colorScheme='dark';
 for(const button of document.querySelectorAll('button[data-palette]'))button.setAttribute('aria-pressed',String(button.dataset.palette===palette.id));
 for(const button of document.querySelectorAll('button[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===view));
 document.querySelector('#selection-title').textContent=palette.label;
