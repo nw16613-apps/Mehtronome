@@ -131,3 +131,8 @@ Added a compact transition reference to the existing guide-tone and voice-led co
 Target buttons reuse existing note audition. Selecting one updates the correct chord’s diagram and highlights its actual note in the score; native buttons support keyboard activation. Existing playback and musical generators remain unchanged.
 
 Validation: all-key/five-framework unit checks for actual pitches, indices, intervals and string/fret agreement; explicit common-tone, semitone, octave and silent-slot cases. Browser checks cover linked target audition, keyboard use, source families, short-cell silence, narrow layout and existing timed audio/loop stopping. The broader musical-content/shape review remains deferred.
+
+
+## Chord-chart highlight correction
+
+The base chart button rule had higher specificity than the loop highlight, hiding its fill and underline. Scoped the loop styling to the chart and made the selection pale blue with a dark-blue underline. The moving beat now uses amber and a brown marker, with a visible key; these colours target the chart’s existing paper surface consistently across all four themes. Playback stopping restores the loop fill. Browser checks verify the computed fill/marker colours across themes, distinct live-beat colouring, clearing and drag selection.

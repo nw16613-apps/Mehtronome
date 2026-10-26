@@ -671,4 +671,4 @@ button.reference-chord:disabled { cursor:default; opacity:1; }
 
 .harmony-learning{margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}.harmony-learning .chord-stage{padding:20px 12px 28px}.harmony-learning .section-heading{margin-bottom:8px}
 
-#custom-beat-grid{user-select:none}.chart-beat.loop-selected{background:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 -4px var(--accent)}.chart-beat.loop-outside:not(.playing){opacity:.5}#loop-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}#loop-controls[hidden]{display:none}#loop-controls details{flex-basis:100%}
+#custom-beat-grid{user-select:none}.chart-beat.loop-outside:not(.playing){opacity:.5}#loop-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}#loop-controls[hidden]{display:none}#loop-controls details{flex-basis:100%}
