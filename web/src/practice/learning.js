@@ -17,15 +17,49 @@ export function gripFacts(grip,harmony){
  if(!grip)return null;const notes=grip.notes.toSorted((a,b)=>a.midi-b.midi),bass=notes[0],index=harmony.chordPcs.indexOf(bass.pc),interval=harmony.intervals[index];
  return {formula:harmony.intervals.join(' · '),voiced:notes.map(n=>`${n.name} (${harmony.intervals[harmony.chordPcs.indexOf(n.pc)]})`).join(' · '),omitted:grip.omitted.join(' · ')||'None',bass:`${bass.name} · ${interval==='1'?'root position':['3','♭3'].includes(interval)?'first inversion':['5','♭5','♯5'].includes(interval)?'second inversion':['7','♭7','♭♭7'].includes(interval)?'third inversion':'extension in bass'}`,strings:Array.from({length:6},(_,i)=>notes.find(n=>n.string===i)?.fret??'×').join(' · ')};
 }
+export function overlayDegrees(source,harmony){
+ const letters='CDEFGAB',root=harmony.chordPcs[0],rootLetter=letters.indexOf(harmony.name[0]),natural=[0,2,4,5,7,9,11];
+ return source.pcs.map((pc,i)=>{
+  const degree=(letters.indexOf(source.names[i][0])-rootLetter+7)%7;
+  const delta=((pc-root-natural[degree]+18)%12)-6;
+  return (delta<0?'♭'.repeat(-delta):'♯'.repeat(delta))+(degree+1);
+ });
+}
+export function lessonCells(groups,limit=2){
+ const cells=[];
+ for(const group of groups){
+  if(!group.notes?.length)continue;
+  let offset=0;
+  const lengths=group.cellLengths||[group.notes?.length||0];
+  for(const [i,length]of lengths.entries()){
+   const notes=group.notes.slice(offset,offset+length);offset+=length;
+   if(!notes.length)continue;
+   cells.push({name:group.materialCells?.[i]||group.chord,notes:notes.map(n=>n.name).join(' · ')});
+   if(cells.length===limit)return cells;
+  }
+ }
+ return cells;
+}
 export function overlayPurpose(source,harmony){
  if(!source)return '';const missing=harmony.tones.filter((_,i)=>!source.pcs.includes(harmony.chordPcs[i]));
  const missingColours=characteristicNotes(harmony).filter(n=>!source.pcs.includes(n.pc)).map(n=>`${n.name} (${n.degree})`);
- return `${source.groups?'Triads: '+source.groups.map(g=>g.name+' ['+g.names.join(' · ')+']').join(' / ')+'. ':''}Included degrees: ${source.degrees.join(' · ')}. Characteristic colours omitted: ${missingColours.join(' · ')||'none'}. Chord tones omitted: ${missing.join(' · ')||'none'}. ${source.explanation} Resolve a short idea to ${harmony.tones[1]||harmony.name}, then leave space.`;
+ return `${source.groups?'Triads: '+source.groups.map(g=>g.name+' ['+g.names.join(' · ')+']').join(' / ')+'. ':''}Notes: ${source.names.join(' · ')}. Degrees over ${harmony.name}${harmony.suffix}: ${overlayDegrees(source,harmony).join(' · ')}. Characteristic colours omitted: ${missingColours.join(' · ')||'none'}. Chord tones omitted: ${missing.join(' · ')||'none'}. ${source.explanation} Resolve a short idea to ${harmony.tones[1]||harmony.name}, then leave space.`;
 }
-export function exerciseLesson(study,groups,harmony,source){
+export function exerciseLesson(study,groups,harmony,source,options={}){
  const annotation=groups[0]?.annotation;
- let trains='Hear chords built from the scale and compare them with the backing.',pattern='Stack alternate scale degrees to form the selected triads, seventh or ninth chords. Read the chord name above each group.',listen='Some study families move through diatonic chords while the backing stays on the selected harmony. Hear how each group colours that backing.',apply='Pick three notes, repeat their rhythm, then change the ending and leave space.';
- if(study==='grip'){trains='Learn the exact sounding notes of this voicing.';pattern='Low-to-high notes of the displayed grip, without adding the omitted chord tones.';listen='Keep the chord sound in mind while picking each string.';apply='Strum once, pick the grip notes, then choose Full positional arpeggio to explore the larger region.';}
+ let trains='Hear chords built from the scale and compare them with the backing.',pattern='Stack alternate scale degrees to form the selected triads, seventh or ninth chords. Each cell is one arpeggio built by stacking alternate notes of the scale guide; the backing chord symbols above the staff describe the accompaniment.',listen='Hear how each study cell colours the held chord. A cell’s chord can differ from the accompaniment.',apply='Pick three notes, repeat their rhythm, then change the ending and leave space.';
+ if(study==='chordtones'||study==='chordtonesalternating'){
+  trains='Build a new diatonic arpeggio from each available tone of the backing chord.';
+  pattern='Use each chord tone as a cell root, then stack alternate notes of the scale guide: 1–3–5 for triads, 1–3–5–7 for tetrads, or 1–3–5–7–9 for ninth chords. These numbers are relative to that cell root.';
+  listen='The cells can be different chords. For Bm7 in B Dorian, seventh-chord cells rooted on B, D, F♯ and A are Bm7, Dmaj7, F♯m7 and Amaj7—not four inversions of Bm7. Only cells that fit the region are shown.';
+  if(harmony.name!=='B'||harmony.chordId!=='min7'||harmony.mode!=='dorian')listen='Each cell starts from a tone of the current chord but can form a different diatonic chord. Compare its colour with the backing; these are not simply inversions of the current chord.';
+  apply='Choose one cell, keep its rhythm, then resolve into a tone of the backing chord and leave space.';
+ }else if(study==='harmonized'||study==='alternating'){
+  trains='Hear the scale harmonised in successive arpeggio cells.';
+  pattern='Stack alternate scale notes from successive available scale degrees. Material chooses triads (1–3–5), tetrads (1–3–5–7) or ninth chords (1–3–5–7–9), relative to each cell root.';
+  listen='A study cell and the backing can be different chords. Compare the first displayed cells below; the symbols above the staff name only the accompaniment.';
+  apply='Take one arpeggio cell, vary its ending and resolve to a tone of the backing chord.';
+ }else if(study==='grip'){trains='Learn the exact sounding notes of this voicing.';pattern='Low-to-high notes of the displayed grip, without adding the omitted chord tones.';listen='Keep the chord sound in mind while picking each string.';apply='Strum once, pick the grip notes, then choose Full positional arpeggio to explore the larger region.';}
  else if(study==='positional'){trains='Connect the broader chord arpeggio in this CAGED region.';pattern='Every available chord-tone pitch, low to high (or the selected direction), beyond the exact grip.';listen='Hear the same chord in several registers.';apply='Choose two grip notes, add a nearby arpeggio note, then finish on the third.';}
  else if(/^enclosures|chromaticneighbors|doubleapproach/.test(study)){trains='Hear approach notes resolve into a target.';pattern=annotation||'Approach a chord tone chromatically, then resolve.';listen='The marked last note is the resolution target. Its beat depends on cell length and subdivision; it is not always a strong beat.';apply='Use one cell, resolve to the third, then rest for two beats. Place the target deliberately by shifting when you start.';}
  else if(study==='approach'){trains='Connect one arpeggio to the next with a chromatic approach.';pattern='Play the named arpeggio, then a half-step approach to the first note of the next group.';listen='The last note of a group can be an approach, not the resolution. The resolution begins the next group.';apply='Connect just two groups, resolve, then stop and listen to the backing.';}
@@ -36,7 +70,10 @@ export function exerciseLesson(study,groups,harmony,source){
  else if(study==='triadpairs'||study==='pentatonic'){trains=study==='triadpairs'?'Combine two triads as a melodic palette.':'Move a small pentatonic idea through the position.';pattern=overlayPurpose(source,harmony)||annotation||'Use the selected source and pattern.';listen='Compare included colours with the chord tones the source omits.';apply='Play one cell, rest, and finish on a chord tone. Avoid treating every source as equally defining the mode.';}
  else if(['thirds','fourths','sixths','groups3','groups4','digital1324','cells'].includes(study)){trains='Hear and navigate a scale pattern rather than running the scale.';pattern={thirds:'1–3, 2–4, 3–5… (diatonic thirds)',fourths:'1–4, 2–5, 3–6… (diatonic fourths)',sixths:'1–6, 2–7, 3–8… (diatonic sixths)',groups3:'1–2–3, 2–3–4…',groups4:'1–2–3–4, 2–3–4–5…',digital1324:'1–3–2–4, 2–4–3–5…',cells:'1–2–3–5 from each scale degree'}[study];listen='Sing the interval before playing it; hear the return to a chord tone.';apply='Use only one cell in a phrase. Repeat its rhythm with a different ending, then leave space.';}
  else if(study==='guidetones'||study==='connections'){trains='Connect chord changes through nearby chord tones.';pattern=study==='guidetones'?'Play the displayed third or seventh on each chord change and sustain it for that chord’s duration.': 'Play each named chord’s arpeggio when its chord arrives, then rest until the next change.';listen='Hear common tones and semitone resolutions. This is a melodic path, not a simultaneous voicing.';apply='Sustain one target per chord, then add a short approach before the next target.';}
- return {trains,pattern,listen,apply,rhythm:`Try this yourself in 4/4: play ${harmony.tones[1]||harmony.name} on beat 1, hold through beat 2, rest on beat 3, then play ${harmony.tones[0]} on beat 4. This is an application prompt, not the subdivision exercise playback.`};
+ if(options.progression)listen+=' At each backing change, the same exercise is rebuilt from the new chord’s scale guide. Study cells do not change the backing progression.';
+ const first=groups.flatMap(g=>g.notes||[])[0];
+ const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
+ return {trains,pattern,listen,apply,starting,cells:lessonCells(groups),rhythm:`Try this yourself in 4/4: play ${harmony.tones[1]||harmony.name} on beat 1, hold through beat 2, rest on beat 3, then play ${harmony.tones[0]} on beat 4. This is an application prompt, not the subdivision exercise playback.`};
 }
 export function shortCell(groups){return groups.length?[{...groups[0],notes:groups[0].notes.slice(0,8),targetIndex:groups[0].targetIndex<8?groups[0].targetIndex:undefined}]:[];}
 export function positionalArpeggio(board,harmony,motion='ascending'){

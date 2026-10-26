@@ -4,3 +4,12 @@ test('short cells preserve target semantics and never mutate full groups',()=>{c
 test('lesson families explain rhythm and keep exact grip distinct from wider arpeggio',()=>{const h=harmonyAt({...DEFAULTS,chord:'min7'});assert.match(exerciseLesson('enclosures',[{annotation:'above · below · target'}],h).listen,/not always a strong beat/);assert.match(exerciseLesson('grip',[],h).pattern,/without adding/);assert.match(exerciseLesson('positional',[],h).pattern,/beyond the exact grip/);assert.equal(new Set(GOALS.map(g=>g.id)).size,6);assert.match(exerciseLesson('thirds',[],h).rhythm,/rest on beat 3/);});
 
 test('authored major ii V I target paths transpose with the key',()=>{for(let key=0;key<12;key++){const settings={...DEFAULTS,key,progression:true,template:'major251essential'};const h=[0,1,2].map(i=>harmonyAt(settings,i)),paths=guideToneExamples(h);assert.equal(paths.length,2);assert.equal(paths[0],`${h[0].tones[1]} → ${h[1].tones[3]} → ${h[2].tones[1]}`);if(key===0)assert.deepEqual(paths,['F → F → E','C → B → B']);}});
+
+test('cell guidance distinguishes chord-tone-rooted stacks from inversions and names actual cells',async()=>{
+ const {cagedStudy}=await import('../src/guitar/exercises.js');const {lessonCells,overlayDegrees,overlayPurpose}=await import('../src/practice/learning.js');
+ const h=harmonyAt({key:11,mode:'dorian',chord:'min7'}),groups=cagedStudy(fretboardFor(h,'E'),h,'chordtones','seventh');
+ const lesson=exerciseLesson('chordtones',groups,h);assert.match(lesson.pattern,/relative to that cell root/);assert.match(lesson.listen,/Bm7, Dmaj7, F♯m7 and Amaj7/);assert.match(lesson.starting,/First written note/);assert.deepEqual(lesson.cells,lessonCells(groups));
+ const source={pcs:[9,0,2,4,7],names:['A','C','D','E','G'],degrees:['1','♭3','4','5','♭7'],explanation:'A minor pentatonic.'};
+ const changed=harmonyAt({key:0,mode:'major',progression:true,template:'diatonic'},1);assert.deepEqual(overlayDegrees(source,changed),['1','♭3','4','5','♭7']);assert.match(overlayPurpose(source,changed),/Degrees over Am7: 1 · ♭3 · 4 · 5 · ♭7/);
+ const adapted={notes:groups.flatMap(g=>g.notes),materialCells:groups.map(g=>g.chord),cellLengths:groups.map(g=>g.notes.length)};assert.deepEqual(lessonCells([adapted]),lessonCells(groups));assert.match(exerciseLesson('harmonized',groups,h,null,{progression:true}).listen,/rebuilt from the new chord/);
+});
