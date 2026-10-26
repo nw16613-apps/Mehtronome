@@ -274,7 +274,7 @@ export function characteristicNotes(harmony) {
   });
 }
 export const ROOT_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
+export function spellPitch(key, letterSteps, semitones, rootName = ROOT_NAMES[key]) {
   const letters = ['C','D','E','F','G','A','B'];
   const letter = (letters.indexOf(rootName[0]) + letterSteps) % 7;
   const accidental = ((key + semitones - [0,2,4,5,7,9,11][letter] + 18) % 12) - 6;

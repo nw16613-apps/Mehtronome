@@ -38,7 +38,7 @@ import { COMPING_PATTERNS, COMPING_MOVEMENTS, COMPING_TONES } from './audio/comp
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
-import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode } from './practice/custom-progression.js';
+import { CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { scaleChoicesForChord } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
@@ -339,7 +339,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   if(!settings.progression&&exerciseView.study==='grip')currentExerciseGroups=gripStudy(board,info);
   if(!settings.progression&&exerciseView.study==='positional')currentExerciseGroups=positionalArpeggio(board,info,exerciseView.motion);
   if(isAlignedStudy()){
-    positionPath=positionPath||progressionPositionPath(exerciseProgression,{start:board.start,end:board.end});
+    positionPath=positionPath||progressionPositionPath(exerciseProgression,{name:'Selected position',start:board.start,end:board.end});
     if(!['ascending','descending'].includes(exerciseView.motion))exerciseView.motion='ascending';
     currentExerciseGroups=alignedProgressionGroups(board,exerciseProgression,exerciseView.study,exerciseView.material,exerciseView.motion,positionPath?.map((choice:any,index:number)=>fretboardFor(exerciseProgression[index],choice.geometryShape)));
     if(exerciseView.stage==='cell')currentExerciseGroups=currentExerciseGroups.map((group:any,index:number)=>index?{...group,notes:[]}:group);
@@ -362,7 +362,6 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   const alternatingLabel={ascending:'Up/down',descending:'Down/up','up-down':'Up/down then down/up','down-up':'Down/up then up/down'}[exerciseView.motion] || 'Up/down';
   const materialTitle=materialName[0].toUpperCase()+materialName.slice(1);
   const studyName={grip:'Exact grip notes',positional:'Full positional arpeggio',harmonized:`Harmonized ${materialName}`,alternating:`${alternatingLabel} diatonic ${materialName}`,chordtones:`${materialTitle} from each chord tone`,chordtonesalternating:`${alternatingLabel} ${materialName} from each chord tone`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',fourths:'Scale in fourths',sixths:'Scale in sixths',digital1324:'Diatonic 1–3–2–4 pattern',groups3:'Ascending groups of three',groups4:'Ascending groups of four',inversions:`${info.name}${info.suffix} inversion cycle`,enclosures:'Jazz enclosures · above then below',enclosuresbelowabove:'Jazz enclosures · below then above',enclosureschromatic:'Tight chromatic enclosures',enclosuresdouble:'Double jazz enclosures',enclosuresfiveone:'Five-note enclosure 1',enclosuresfivetwo:'Five-note enclosure 2',enclosuresfivethree:'Five-note enclosure 3',enclosuresfivefour:'Five-note enclosure 4',approach:`Chromatic approach-note ${materialName}`,doubleapproach:'Double chromatic approaches',chromaticneighbors:'Chromatic neighbour cells',passingtones:'Chromatic passing-tone scale',approacheverytone:`Approach every ${materialName.slice(0,-1)} tone`,upperstructure:'3–5–7–9 upper structures',guidetones:'Guide-tone voice leading',connections:`Voice-led ${materialName} connections`,triadpairs:'Triad-pair lines',pentatonic:'Superimposed pentatonic sequences'}[exerciseView.study] || `Harmonized ${materialName}`;
-  const startsHigh=exerciseView.motion==='descending'||exerciseView.motion==='down-up';
   const alternatingStudy=['alternating','chordtonesalternating'].includes(exerciseView.study);
   const directionOptions=isAlignedStudy()?(exerciseView.study==='guidetones'?'<option value="ascending">Lower starting guide</option><option value="descending">Upper starting guide</option>':'<option value="ascending">Ascending arpeggios</option><option value="descending">Descending arpeggios</option>'):alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
   const exerciseFooter=exercisePlan?'This study follows the progression in chord order. Direction changes the pitch path, not the chord order.':currentExercise[0]?`This study starts on ${currentExercise[0].name}, string ${6-currentExercise[0].string}, fret ${currentExercise[0].fret}, in the displayed ${position.shape} framework.`:'No complete study fits this position. Choose another position or exercise.';
@@ -433,9 +432,17 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
   const nextStart=start+duration;exerciseNextStart=nextStart;
   const lookahead=Math.min(1,Math.max(.2,duration*.25));
-  exerciseTimer=setTimeout(()=>{
+  // A backed, timed one-shot ends on the engine's sample-counted completion
+  // message. A wall timer can outrun the audio thread under CPU load.
+  if(!exerciseView.loop&&exerciseView.backing&&exercisePlan)return;
+  const complete=()=>{
+    if(!exercisePlaying||!context)return;
+    const remaining=nextStart-context.currentTime;
+    if(!exerciseView.loop&&remaining>0){exerciseTimer=setTimeout(complete,Math.max(10,remaining*1000+60));return;}
+
     if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart;node?.port.postMessage({type:'settings',settings:{...exerciseBackingConfig(),bpm:exerciseView.tempo}});}scheduleExercise(nextStart);}else stopExercisePreview();
-  },Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
+  };
+  exerciseTimer=setTimeout(complete,Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
 
 async function toggleExercisePreview() {
@@ -683,7 +690,7 @@ async function restoreCustomEdit(undo:boolean){
  saveCustomProgression(undo?'Progression edit undone.':'Progression edit redone.');fillLoopOptions(true);update();
 }
 
-function actualCustomName(offset:number){return names[(Number(select('key').value)+offset)%12];}
+function actualCustomName(offset:number,letter?:number){return customPitchName(Number(select('key').value),offset,letter);}
 function saveCustomProgression(message='Custom progression saved in this browser.'){
   customProgression=normalizeCustomProgression(customProgression);
   settings.customProgression=customProgression;
@@ -744,14 +751,14 @@ function renderCustomBuilder(){
     const control=select(id);
     Array.from(control.options).forEach(option=>{
       if(option.value==='')return;
-      const offset=Number(option.value),roman=['I','♭II','II','♭III','III','IV','♭V','V','♭VI','VI','♭VII','VII'][offset];
-      option.textContent=id==='custom-bass'?`${actualCustomName(offset)} (${roman}) pedal / slash bass`:`${actualCustomName(offset)} · ${roman}`;
+      const offset=Number(option.value),letter=id==='custom-bass'?(offset===current.bass?current.bassLetter:undefined):(offset===current.root?current.letter:undefined),roman=romanForStep({root:offset,letter,chord:'major'});
+      option.textContent=id==='custom-bass'?`${actualCustomName(offset,letter)} (${roman}) pedal / slash bass`:`${actualCustomName(offset,letter)} · ${roman}`;
     });
   }
   el('custom-timeline').innerHTML=customProgression.steps.map((item:any,index:number)=>{
     const chord=CHORDS[item.chord as keyof typeof CHORDS];
-    const bass=item.bass===null?'':`/${actualCustomName(item.bass)}`;
-    return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.beats!==undefined?item.beats+' beat'+(item.beats===1?'':'s'):item.bars+' bar'+(item.bars===1?'':'s')}</small></button>`;
+    const bass=item.bass===null?'':`/${actualCustomName(item.bass,item.bassLetter)}`;
+    return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root,item.letter)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.beats!==undefined?item.beats+' beat'+(item.beats===1?'':'s'):item.bars+' bar'+(item.bars===1?'':'s')}</small></button>`;
   }).join('');
   select('custom-root').value=String(current.root);
   select('custom-chord').value=current.chord;
@@ -770,12 +777,12 @@ function renderCustomBuilder(){
 function commitCustomEdit(autoMode=false){
   rememberCustomEdit();
   const item=customProgression.steps[customStepIndex];
-  item.root=Number(select('custom-root').value);
+  const nextRoot=Number(select('custom-root').value);if(item.root!==nextRoot)delete item.letter;item.root=nextRoot;
   item.chord=select('custom-chord').value;
   if(autoMode)select('custom-mode').value=recommendedMode(item.chord);
   item.mode=select('custom-mode').value;
   if(select('custom-duration-unit').value==='beats'){item.beats=Number(select('custom-beats').value);delete item.bars;}else{item.bars=Number(select('custom-bars').value);delete item.beats;}
-  item.bass=select('custom-bass').value===''?null:Number(select('custom-bass').value);
+  const nextBass=select('custom-bass').value===''?null:Number(select('custom-bass').value);if(item.bass!==nextBass)delete item.bassLetter;item.bass=nextBass;
   saveCustomProgression();fillLoopOptions(true);step=Math.min(step,customProgression.steps.length-1);update();
 }
 function updateSpace() {
@@ -1578,7 +1585,7 @@ select('template').addEventListener('input', () => {
 el('customize-progression').addEventListener('click',()=>{
   stopPreview();
   rememberCustomEdit();
-  customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode);
+  customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
   customProgression.name='My progression';customStepIndex=0;
   saveCustomProgression('Template copied. Edit any chord below; changes save automatically.');
   select('template').value='custom';settings.progression=true;input('loop-enabled').checked=false;step=0;

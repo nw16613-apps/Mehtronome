@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-async function drag(page:any,start:number,end:number){const a=await page.locator(`[data-grid-beat="${start}"]`).boundingBox(),b=await page.locator(`[data-grid-beat="${end}"]`).boundingBox();await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:10});await page.mouse.up();}
+async function drag(page:any,start:number,end:number){await page.locator(`[data-grid-beat="${start}"]`).scrollIntoViewIfNeeded();const a=await page.locator(`[data-grid-beat="${start}"]`).boundingBox(),b=await page.locator(`[data-grid-beat="${end}"]`).boundingBox();await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:10});await page.mouse.up();}
 test('drag chart beats to loop without copying or editing; reverse, cancel and clear',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#progression').click();await page.locator('#template').selectOption('major251essential');
  await expect(page.getByText('Compare two chords',{exact:true})).toHaveCount(0);await expect(page.locator('#custom-progression-builder #loop-controls')).toHaveCount(1);

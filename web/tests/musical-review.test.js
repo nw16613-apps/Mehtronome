@@ -56,3 +56,16 @@ test('guide tones use actual thirds/sevenths rather than arbitrary chord array p
   for(const p of POSITIONS){const b=fretboardFor(h,p.shape),groups=alignedProgressionGroups(b,[h],'guidetones','seventh','ascending',[b]);for(const n of groups.flatMap(g=>g.notes)){const i=h.chordPcs.indexOf(n.pc);assert.ok(['3','♭3','7','♭7','♭♭7'].includes(h.intervals[i]));assert.equal(n.name,h.tones[i]);}}
  }
 });
+test('editable template copies preserve chord pitches, duration and scale collection in every key',async()=>{
+ const {cloneTemplate}=await import('../src/practice/custom-progression.js');const {PROGRESSIONS,progressionBeatDurations}=await import('../src/audio/music.js');
+ for(let key=0;key<12;key++)for(const template of Object.keys(PROGRESSIONS).filter(id=>id!=='custom')){
+  const s={key,mode:'minor',chord:'min7',beats:4,progression:true,template},definition=progressionDefinition(s),copy=cloneTemplate(definition,s.chord,s.mode,s),next={...s,template:'custom',customProgression:copy};
+  assert.deepEqual(progressionBeatDurations(next),progressionBeatDurations(s));
+  for(let i=0;i<copy.steps.length;i++){const before=harmonyAt(s,i),after=harmonyAt(next,i);assert.deepEqual(after.chordPcs,before.chordPcs,`${key} ${template} ${i} chord`);assert.deepEqual(after.scalePcs.toSorted(),before.scalePcs.toSorted(),`${key} ${template} ${i} guide`);assert.equal(after.name,before.name,`${template}: preserve root spelling`);}
+ }
+});
+test('automatic custom scale suggestions contain every chord tone, including altered extensions',async()=>{
+ const {recommendedMode,normalizeCustomProgression,customPitchName,progressionText}=await import('../src/practice/custom-progression.js');
+ for(const [id,chord]of Object.entries(CHORDS)){const mode=MODES[recommendedMode(id)];assert.ok(chord.intervals.every(n=>mode.intervals.includes(n%12)),`${id} must fit ${recommendedMode(id)}`);}
+ const p=normalizeCustomProgression({steps:[{root:6,letter:3,chord:'dim7',mode:'ultralocrian'}]});assert.equal(p.roman[0],'♯iv°7');assert.equal(customPitchName(0,6,3),'F♯');assert.match(progressionText(p),/\[♯IV /);assert.equal(customPitchName(0,6),'G♭');
+});

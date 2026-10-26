@@ -3,9 +3,21 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: Checkpoint 10 adds Find a chord tone self-checks to the existing exercise fretboard. Shared navigation, exact beat loops and beamed progression notation remain included.
+- Current preview app checkpoint: Checkpoints 11–13 complete the agreed musical-review, teaching and beta acceptance pass. See [the acceptance report](beta-acceptance.md) for scope, checks and limits.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
+
+## Try the completed review (checkpoints 11–13)
+
+1. Start **Learn a grip and its arpeggio** from Metronome & Mixer. In Guitar, use **Practise this shape**, then compare Exact grip and Full positional arpeggio in Exercises.
+2. Change **CAGED position** directly above the Exercises diagram. Open **How to practise** to see the actual starting note and first study cells.
+3. For a concrete teaching example, select B Dorian / Bm7 and **Arpeggios from each chord tone**. The explanation distinguishes Bm7, Dmaj7, F♯m7 and Amaj7 cells from inversions of Bm7.
+4. In Harmony, choose a minor-key **Diatonic sevenths** template. Its actual qualities/Roman degrees include ♭VImaj7. Make an editable copy: chords and scale pitches are retained. The same preservation applies to modal templates.
+5. Select **Ionian ♯5** or **Lydian ♯2** and inspect Guitar/Exercises: all five positions remain separately selectable.
+6. Try Apply it musically in 4/4, then Demonstrate, then your turn; save the session in Progress and resume it. Playback remains stopped on resume.
+7. Use the mixer and navigation at phone width; the floating mixer and focus transport stay available. Stored presets/journals remain local to this preview origin.
+
+See [beta acceptance](beta-acceptance.md) for the complete delivered/deferred map and validation limits. The live GitHub Pages app remains unchanged.
 
 ## Try checkpoint 10
 

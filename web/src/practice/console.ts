@@ -43,7 +43,7 @@ export function installConsole(ambient:()=>number[]){
  }
  const lanes=Array.from(document.querySelectorAll<HTMLElement>('.console-meter-lane'));const shown=new Float32Array(14),held=new Float32Array(14);let previous=performance.now();
  function frame(now:number){
-  const dt=Math.min(.1,(now-previous)/1000);previous=now;
+  const dt=Math.max(0,Math.min(.1,(now-previous)/1000));previous=now;
   const visible=document.getElementById('mix-sections')!.getClientRects().length>0&&!document.hidden;
   if(visible){const tail=ambient();for(let i=0;i<14;i++){
    const raw=i<12?(now-receivedAt<180?recentPeaks[i]||0:0):tail[i-12]||0;
