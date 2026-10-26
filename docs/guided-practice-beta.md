@@ -168,3 +168,10 @@ Validation: all-key/five-region checks for chord pitch/interval/name agreement, 
 Reused one card renderer for Guitar and Exercises, showing the actual progression study’s chords, CAGED positions/shapes and fret ranges in both manual and nearest-position modes. The exercise cards sit above the linked diagram, outside its hide/show body, near self-check controls. Selection reuses Inspect chord and does not rebuild the written score. Guitar and exercise highlights stay synchronized. Cards are disabled during playback.
 
 When a self-check is active, choosing a progression card starts the same requested tone on the new chord, using its new diagram and answer set. The self-check stays open and the selected tone type is retained; no answer from the previous chord survives. Keyboard selection in Guitar retains focus after its cards update. Validation covers both modes, cross-workspace selections, unchanged notes, self-check context, keyboard selection, narrow layout and existing shared-route/recall workflows.
+
+
+## Progression control layout consolidation
+
+Moved Position navigation out of Guitar’s diagram-settings disclosure and out of the Exercises toolbar into the visible progression header, alongside Fretboard region. The manual exercise Starting position control sits in the same header; its redundant disabled display is hidden in automatic mode, where the active card identifies the position. Guitar’s remaining diagram settings contain Diagram and Labels.
+
+Removed Inspect chord and its input handler. Native progression-card buttons now use a shared inspection event and retain keyboard access, current-chord highlighting, self-check continuity and playback locks. No hidden duplicate selector is retained. Browser validation covers control placement in both modes, absence of Inspect chord, keyboard selection, mobile layout and existing shared-route/self-check behavior.

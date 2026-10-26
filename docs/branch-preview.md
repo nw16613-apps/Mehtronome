@@ -13,19 +13,19 @@ The preview has its own origin and browser storage. Sign in with the owning Chat
 2. Choose Third, Seventh, Root or Fifth, then **Find this tone**. All visible dots become neutral and their labels/answer rings are hidden. The question uses the current chord’s actual interval (for example ♭3 or ♭7), not its scale-guide degree.
 3. Click a dot, or Tab to one and press Enter/Space. Any visible octave of the correct pitch class is accepted. A wrong choice invites another try. A correct choice reveals the note and rings its available locations.
 4. Use **Reveal answer** to self-check without guessing; **Next tone** cycles to another available target. **End self-check** restores normal diagram interaction.
-5. Try another **Inspect chord** selection or position: old questions clear. Playback also ends the question and restores the normal diagram; stop to start another question.
+5. Choose another progression card or position. Cards start a fresh question when a self-check is active; other context changes clear old questions. Playback also ends the question and restores the normal diagram; stop to start another question.
 
 Suspended chords do not acquire an invented third. If the formula or position lacks a requested tone, the app explains that and leaves the diagram unmasked. The self-check tests a clicked note, not your played audio or mastery. It does not change learning-path completion, journal ratings or stored presets.
 
 ## Progression cards beside practice material
 
-The chord/position/fret-range cards are visible in **both Guitar and Exercises**, in **Manual selection** and **Follow nearest positions**. In Exercises they sit directly above the linked fretboard and self-check, so you can choose a chord without returning to the upper Inspect chord dropdown. The dropdown remains synchronized as a keyboard-friendly alternative.
+The chord/position/fret-range cards are visible in **both Guitar and Exercises**, in **Manual selection** and **Follow nearest positions**. In Exercises they sit directly above the linked fretboard and self-check, so you can choose a chord beside the practice material. The redundant Inspect chord dropdown has been removed; the cards are native buttons and support keyboard selection.
 
 Selecting a card in either workspace updates the same inspected chord and current position. During an active self-check, card selection starts a fresh question for the new chord while preserving your chosen tone type. Cards remain visible when the fretboard body is hidden; they are disabled during playback while the active highlight follows the progression.
 
 ## Connected Guitar / Exercises navigation
 
-In Exercises, **Position navigation → Follow nearest positions** uses Guitar’s same route and **Fretboard region**. **Inspect chord** names the chord, CAGED position and fret range, and selects that same chord/position in Guitar. Guitar route-card selection is reflected in Inspect chord when returning to Exercises. Inspection leaves the exercise’s written notes and playback order intact.
+In both workspaces, **Position navigation** is grouped with **Fretboard region** directly above the progression cards. **Follow nearest positions** uses the same route in Guitar and Exercises. In manual mode, Exercises shows **Starting position** in that same group. Choose a progression card to select its chord and position in both workspaces. Inspection leaves the exercise’s written notes and playback order intact.
 
 The shared route also applies to guide-tone and voice-led connection studies. During exercise playback the diagram and Guitar reference follow the current chord; stopping retains that chord for inspection. Route/inspection controls are locked during playback. Manual position changes still use the existing shared position selection. Guitar route cards outside an active loop are disabled because that chord is outside the current exercise.
 
@@ -140,6 +140,6 @@ Exercise chord symbols now follow the selected backing progression at its actual
 
 Choose a progression in Harmony, then select an exercise in Exercises. The written notes now change with each chord: for example, short thirds cells over Bm7 → E7 → Amaj7 are B–D, E–G♯ and A–C♯. Arpeggios, chord-tone cells, enclosures and other study families use each chord’s own harmonic context. Complete cells are fitted to the chord slot; remaining time is a written rest. If a cell cannot fit, the slot explains the rest rather than dropping its resolution target. Longer durations or faster subdivisions expose more material.
 
-The chosen position anchors a nearby CAGED route. The compact fretboard is above the full-width score and follows the current chord during playback. Use **Inspect chord** while stopped to examine another chord’s notes, scale and grip information. **Starting position** moves the route; **Try without diagram** still hides/reveals it. Source pentatonics or triad pairs are adapted only to available choices, with the per-chord choices listed in **How to practise → Material and region for each chord**.
+The chosen position anchors a nearby CAGED route. The compact fretboard is above the full-width score and follows the current chord during playback. Select a progression card while stopped to examine another chord’s notes, scale and grip information. **Starting position** moves the route; **Try without diagram** still hides/reveals it. Source pentatonics or triad pairs are adapted only to available choices, with the per-chord choices listed in **How to practise → Material and region for each chord**.
 
 Short-cell mode now gives one cell per chord for these adaptive studies. Dedicated guide-line studies retain their separate short-cell behavior. Pedal mode remains a held-chord study. Existing presets and journal formats are unchanged.

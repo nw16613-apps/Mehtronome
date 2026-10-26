@@ -16,8 +16,7 @@ function syncRouteChoices(state:any){
 }
 function chooseChord(state:any,slot:number){
  if(state.playing)return;
- const control=(state.panel as HTMLElement).querySelector<HTMLSelectElement>('#exercise-progression-chord');if(!control)return;
- const fromGuitar=document.activeElement?.closest('#position-path');const continueQuestion=state.phase!=='idle';control.value=String(slot);control.dispatchEvent(new Event('input',{bubbles:true}));if(continueQuestion)begin(state);if(fromGuitar)document.querySelector<HTMLButtonElement>(`#position-path [data-inspect-slot="${slot}"]`)?.focus({preventScroll:true});
+ const fromGuitar=document.activeElement?.closest('#position-path');const continueQuestion=state.phase!=='idle';state.panel.dispatchEvent(new CustomEvent('exercise-inspect-chord',{detail:{slot},bubbles:true}));if(continueQuestion)begin(state);if(fromGuitar)document.querySelector<HTMLButtonElement>(`#position-path [data-inspect-slot="${slot}"]`)?.focus({preventScroll:true});
 }
 export function selectRecallChord(panel:HTMLElement,slot:number){const state=controllers.get(panel);if(state)chooseChord(state,slot);}
 function begin(state:any){

@@ -1205,6 +1205,12 @@ el('full-fretboard-expand').addEventListener('click',async()=>{
 document.addEventListener('fullscreenchange',()=>{el('full-fretboard-expand').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen';applyStudioIcons(document.querySelector('.guitar')!);});
 el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
+el('caged-exercise').addEventListener('exercise-inspect-chord',event=>{
+ if(playing||exercisePlaying||exercisePreparing)return;
+ const chosen=Number((event as CustomEvent).detail?.slot);if(!Number.isInteger(chosen))return;
+ const group=currentExerciseGroups[chosen];if(!group?.harmony)return;
+ stopExercisePreview();step=progressionOrder(settings)[chosen];renderMusic(true,group.position);exerciseMapSlot=chosen;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);
+});
 function handleExerciseControl(event:Event){
   const target=event.target;
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
@@ -1216,11 +1222,6 @@ function handleExerciseControl(event:Event){
   if(event.type==='input'&&deferredNumber)return;
   if(event.type==='change'&&!deferredNumber)return;
   if(target.id==='exercise-favourites'&&target.value!==''){restoreExercise(exerciseFavourites()[Number(target.value)]);return;}
-  if(target.id==='exercise-progression-chord'){
-   if(playing||exercisePlaying||exercisePreparing){target.value=String(exerciseMapSlot);return;}
-   const chosen=Number(target.value),group=currentExerciseGroups[chosen];if(!group?.harmony)return;
-   stopExercisePreview();step=progressionOrder(settings)[chosen];renderMusic(true,group.position);exerciseMapSlot=chosen;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);return;
-  }
   if(target.id==='exercise-position-navigation'){stopExercisePreview();select('featured-position').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position-region'){stopExercisePreview();select('position-region').value=target.value;renderMusic();return;}
   exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;
@@ -1659,7 +1660,7 @@ function syncTrainerStatus() {
 function syncMiniTransport() {
   setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
-  for(const id of ['exercise-progression-chord','exercise-position-navigation','exercise-position-region']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
+  for(const id of ['exercise-position-navigation','exercise-position-region','featured-position','position-region']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
   const mini = el('mini-transport');
   mini.hidden = false;
   if (document.activeElement !== input('mini-bpm')) input('mini-bpm').value = String(exercisePlaying?exerciseView.tempo:playing ? currentBpm : settings.bpm);
@@ -1984,6 +1985,7 @@ async function startGuidedGoal(){
 // Move the existing setup and context map below the principal practice material.
 const guitarSetup=document.createElement('details');guitarSetup.className='guitar-setup';guitarSetup.innerHTML='<summary>Diagram and chord-shape settings</summary>';
 const guitarOverview=document.querySelector('.guitar-overview')!;
+const guitarRouteControls=document.createElement('div');guitarRouteControls.className='position-path-controls';const guitarRouteHeading=el('position-path-guide').querySelector('.position-path-heading')!;guitarRouteHeading.prepend(guitarRouteControls);guitarRouteControls.append(select('featured-position').closest('label')!,select('position-region').closest('label')!);
 for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
