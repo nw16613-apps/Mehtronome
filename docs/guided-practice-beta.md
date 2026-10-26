@@ -145,3 +145,10 @@ Drag selection now stores inclusive beat endpoints and clips the edge chords. Th
 Progression notation now joins contiguous short notes within each quarter-note beat. Rests, chord changes and bar lines break groups. Semiquavers have secondary beams, isolated notes retain flags, and accents sit above their beam group. Chord bands measure beams/stems to retain clearance; SVG output keeps the notation. Musical pitches and event times are unchanged by beaming.
 
 Validation includes real-engine beat/count-in agreement in several metres and built-in/custom progressions; timeline clipping, one-beat and reverse bounds, legacy wrapped loops, timed-exercise alignment and preset transfer; browser drag/playback/highlights, saved setup recall, single-beat controls, beam rendering, chord-symbol clearance, mobile layout and SVG export. Device audio fidelity is not claimed.
+
+
+## Connected chord inspection and position routes
+
+Follow nearest positions now supplies the same full-progression route to Guitar and Exercises, filtered to the playback loop. Adaptive exercises and guide-tone/connection studies use the corresponding per-chord fretboards. Exercises exposes the shared navigation and region controls; Inspect chord labels each chord with its position and frets and updates Guitar’s current context. Inspection changes the displayed context without rebuilding the written exercise. Guitar route-card changes select the matching inspection slot. Route cards outside the active loop are unavailable.
+
+Exercise playback updates the connected Guitar context at chord boundaries without rebuilding/stopping the score. Stopping retains the current chord rather than resetting only the diagram to chord one. Inspection controls are locked during playback; the existing shared manual-position workflow remains available. Validation includes route coordinate/chord membership across keys and regions, bidirectional selection, unchanged notation on inspection, shared region controls, narrow layout and uninterrupted timed playback. Anatomical fingering and the deferred content review are not claimed resolved.

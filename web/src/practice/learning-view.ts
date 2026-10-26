@@ -1,3 +1,4 @@
+import {FRET_REGIONS} from '../guitar/position-path.js';
 import {voiceLeadingTargets} from './voice-leading.js';
 import {APPLICATIONS} from './applications.js';
 import {diagramSvg} from '../guitar/fretboard.js';
@@ -30,8 +31,12 @@ export function learningView(panel:HTMLElement,context:any){
    details.after(path);
   }
  }
+ if(context.progression){
+  toolbar.insertAdjacentHTML('beforeend',`<label>Position navigation<select id="exercise-position-navigation"><option value="all" ${context.navigation!=='path'?'selected':''}>Manual selection</option><option value="path" ${context.navigation==='path'?'selected':''}>Follow nearest positions</option></select></label>${context.navigation==='path'?`<label>Fretboard region<select id="exercise-position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id===context.region?'selected':''}>${esc(region.name)}</option>`).join('')}</select></label>`:''}<label>Inspect chord<select id="exercise-progression-chord">${groups.map((g:any)=>`<option value="${g.slot}">${esc(g.chord)} · Position ${esc(g.position.numeral)} · frets ${g.board.start}–${g.board.end}</option>`).join('')}</select></label>`);
+  if(context.navigation==='path'){const positionControl=toolbar.querySelector<HTMLSelectElement>('#exercise-position')!;positionControl.disabled=true;positionControl.parentElement!.firstChild!.textContent='CAGED position ';}
+ }
  if(context.adaptive){
-  toolbar.insertAdjacentHTML('beforeend',`<label>Inspect chord<select id="exercise-progression-chord">${groups.map((g:any)=>`<option value="${g.slot}">${esc(g.chord)}</option>`).join('')}</select></label>`);
+
   const timing=panel.querySelector<HTMLElement>('.progression-timing-help');if(timing)timing.textContent='The selected exercise is rebuilt from each chord’s tones or scale guide, using nearby CAGED regions. Complete cells fit inside each chord slot; any remaining time is a rest. Short-cell mode plays one cell for every chord. Increase chord duration or subdivision to explore more material. '+(context.timingWarnings||[]).join(' ');
   details.insertAdjacentHTML('beforeend',`<details class="progression-materials"><summary>Material and region for each chord</summary><ol>${groups.map((g:any)=>`<li><b>${esc(g.chord)}</b> · ${esc(g.harmony.scaleNames[0])} ${esc(MODES[g.harmony.mode as keyof typeof MODES].name)} · Position ${esc(g.position.numeral)}, frets ${g.board.start}–${g.board.end}${g.sourceName?' · '+esc(g.sourceName)+(g.sourceAdapted?' (adapted to this scale)':''):''}<br>${esc(g.materialCells.join(' → ')||g.warning)}</li>`).join('')}</ol></details>`);
  }
@@ -81,4 +86,5 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  panel.querySelector('#exercise-map-body > p')!.textContent=`Frets ${board.start}–${board.end}. ${harmony.scaleNames[0]} ${MODES[harmony.mode as keyof typeof MODES].name}. Labels follow this chord’s ${['grip','positional'].includes(study)?'chord intervals':'scale guide'}; dashed rings mark resolution targets.`;
  const details=panel.querySelector('#exercise-map-body details');if(details)details.innerHTML=facts?`<summary>${esc(group.chord)} · grip and chord information</summary><p><b>Formula:</b> ${esc(facts.formula)}<br><b>Voiced low to high:</b> ${esc(facts.voiced)}<br><b>Bass:</b> ${esc(facts.bass)}<br><b>Omitted:</b> ${esc(facts.omitted)}<br><b>Frets:</b> ${esc(facts.strings)}</p>`:'<summary>Grip information</summary><p>No suggested grip in this region.</p>';
  const select=panel.querySelector<HTMLSelectElement>('#exercise-progression-chord');if(select)select.value=String(group.slot);
+ if(panel.querySelector<HTMLSelectElement>('#exercise-position-navigation')?.value==='path'){const positionSelect=panel.querySelector<HTMLSelectElement>('#exercise-position');if(positionSelect)positionSelect.value=position.numeral;}
 }

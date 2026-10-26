@@ -9,7 +9,7 @@ import {MODES} from '../audio/music.js';
 export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const {study,material='seventh',motion='ascending',rhythm='eighths',stage='full',source='',pattern='groups3'}=options;
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
- const path=progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
+ const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  let globalStart=0;
  return harmonies.map((harmony,slot)=>{
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));

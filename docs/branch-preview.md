@@ -7,6 +7,12 @@
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
 
+## Connected Guitar / Exercises navigation
+
+In Exercises, **Position navigation → Follow nearest positions** uses Guitar’s same route and **Fretboard region**. **Inspect chord** names the chord, CAGED position and fret range, and selects that same chord/position in Guitar. Guitar route-card selection is reflected in Inspect chord when returning to Exercises. Inspection leaves the exercise’s written notes and playback order intact.
+
+The shared route also applies to guide-tone and voice-led connection studies. During exercise playback the diagram and Guitar reference follow the current chord; stopping retains that chord for inspection. Route/inspection controls are locked during playback. Manual position changes still use the existing shared position selection. Guitar route cards outside an active loop are disabled because that chord is outside the current exercise.
+
 ## Try checkpoint 9
 
 1. Launch **Outline an essential ii–V–I**, or select **Guide-tone voice leading** in Exercises with a progression active.

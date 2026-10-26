@@ -549,21 +549,22 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
 
 /** One study group per progression step, in playback order. Direction changes
  * the pitch path, never the chord order. Empty slots retain harmonic time. */
-export function alignedProgressionGroups(board,progression,study,material='seventh',motion='ascending') {
+export function alignedProgressionGroups(board,progression,study,material='seventh',motion='ascending',boards=/** @type {any[]} */ ([])) {
   const descending=motion==='descending'||motion==='down-up';
-  let previous=descending?Math.max(...board.notes.map(n=>n.midi)):Math.min(...board.notes.map(n=>n.midi));
+  let previous=descending?Math.max(...(boards[0]||board).notes.map(n=>n.midi)):Math.min(...(boards[0]||board).notes.map(n=>n.midi));
   return progression.map((current,slot)=>{
+    const activeBoard=boards[slot]||board;
     let notes=[];
     if(study==='guidetones'){
       const pcs=[current.chordPcs[1],current.chordPcs[3]].filter(pc=>pc!==undefined);
       const candidates=[];
-      for(const pc of pcs)for(let midi=40;midi<89;midi++)if(midi%12===pc){const note=noteAtMidi(board,midi,current);if(note)candidates.push(note);}
+      for(const pc of pcs)for(let midi=40;midi<89;midi++)if(midi%12===pc){const note=noteAtMidi(activeBoard,midi,current);if(note)candidates.push(note);}
       const note=candidates.toSorted((a,b)=>Math.abs(a.midi-previous)-Math.abs(b.midi-previous)||(descending?b.midi-a.midi:a.midi-b.midi))[0];
       if(note)notes=[note];
     }else{
       const size=MATERIAL_SIZES[material]||4,pcs=current.chordPcs.slice(0,size),names=current.tones.slice(0,pcs.length),candidates=[];
       for(let inversion=0;inversion<pcs.length;inversion++){
-        const path=pathForPcs(board,[...pcs.slice(inversion),...pcs.slice(0,inversion)],[...names.slice(inversion),...names.slice(0,inversion)],!descending,previous);
+        const path=pathForPcs(activeBoard,[...pcs.slice(inversion),...pcs.slice(0,inversion)],[...names.slice(inversion),...names.slice(0,inversion)],!descending,previous);
         if(path?.length===pcs.length)candidates.push(path);
       }
       notes=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0]||[];
