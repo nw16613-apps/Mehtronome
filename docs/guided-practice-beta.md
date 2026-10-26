@@ -136,3 +136,12 @@ Validation: all-key/five-framework unit checks for actual pitches, indices, inte
 ## Chord-chart highlight correction
 
 The base chart button rule had higher specificity than the loop highlight, hiding its fill and underline. Scoped the loop styling to the chart and made the selection pale blue with a dark-blue underline. The moving beat now uses amber and a brown marker, with a visible key; these colours target the chart’s existing paper surface consistently across all four themes. Playback stopping restores the loop fill. Browser checks verify the computed fill/marker colours across themes, distinct live-beat colouring, clearing and drag selection.
+
+
+## Exact beat loops and progression beaming
+
+Drag selection now stores inclusive beat endpoints and clips the edge chords. The shared progression timeline drives engine chord changes, chart beat highlights, references and exercise durations. Single-beat loops are valid; reverse drags normalize their endpoints. Numeric beat controls and the original wrapped whole-chord mode coexist. Count-in remains one full bar and the metronome retains its metre; loops repeat without silent padding. Optional preset controls store the new unit/endpoints, with whole-chord defaults for older setups; existing preset and journal envelopes are retained.
+
+Progression notation now joins contiguous short notes within each quarter-note beat. Rests, chord changes and bar lines break groups. Semiquavers have secondary beams, isolated notes retain flags, and accents sit above their beam group. Chord bands measure beams/stems to retain clearance; SVG output keeps the notation. Musical pitches and event times are unchanged by beaming.
+
+Validation includes real-engine beat/count-in agreement in several metres and built-in/custom progressions; timeline clipping, one-beat and reverse bounds, legacy wrapped loops, timed-exercise alignment and preset transfer; browser drag/playback/highlights, saved setup recall, single-beat controls, beam rendering, chord-symbol clearance, mobile layout and SVG export. Device audio fidelity is not claimed.

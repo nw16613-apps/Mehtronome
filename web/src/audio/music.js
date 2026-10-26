@@ -231,26 +231,29 @@ export function progressionDurations(settings) {
   const template = progressionDefinition(settings);
   return template.steps ? template.steps.map(step => step.beats!==undefined?step.beats/Math.max(1,settings.beats||4):step.bars) : template.roman.map(() => template.bars);
 }
-// Inclusive ranges may cross the end of a template (for example V back to ii).
-export function progressionOrder(settings) {
-  const count = progressionDurations(settings).length;
-  if (!settings.loopEnabled) return Array.from({length:count}, (_, i) => i);
-  const bound = value => Math.max(0, Math.min(count - 1, Math.floor(Number(value) || 0)));
-  const start = bound(settings.loopStart), end = bound(settings.loopEnd);
-  return Array.from({length:(end - start + count) % count + 1}, (_, i) => (start + i) % count);
+// Legacy chord loops can wrap. Beat ranges use inclusive, normalized endpoints.
+export function progressionTimeline(settings){
+ const durations=progressionBeatDurations(settings),total=durations.reduce((a,b)=>a+b,0);
+ const starts=[];let offset=0;for(const duration of durations){starts.push(offset);offset+=duration;}
+ if(settings.loopEnabled&&settings.loopUnit==='beats'){
+  const bound=value=>Math.max(0,Math.min(total-1,Math.floor(Number(value)||0)));
+  const a=bound(settings.loopBeatStart),b=bound(settings.loopBeatEnd),start=Math.min(a,b),end=Math.max(a,b)+1;
+  return durations.flatMap((duration,step)=>{const from=Math.max(start,starts[step]),to=Math.min(end,starts[step]+duration);return to>from?[{step,start:from,duration:to-from}]:[];});
+ }
+ const count=durations.length,bound=value=>Math.max(0,Math.min(count-1,Math.floor(Number(value)||0))),start=bound(settings.loopStart),end=bound(settings.loopEnd);
+ const order=settings.loopEnabled?Array.from({length:(end-start+count)%count+1},(_,i)=>(start+i)%count):durations.map((_,i)=>i);
+ return order.map(step=>({step,start:starts[step],duration:durations[step]}));
 }
-export function progressionStep(settings, bar) {return progressionStepAtBeat(settings,bar*Math.max(1,settings.beats||4));}
+export function progressionOrder(settings){return progressionTimeline(settings).map(segment=>segment.step);}
+export function progressionPlaybackBeatDurations(settings){const durations=progressionBeatDurations(settings).map(()=>0);for(const segment of progressionTimeline(settings))durations[segment.step]=segment.duration;return durations;}
+export function progressionStep(settings,bar){return progressionStepAtBeat(settings,bar*Math.max(1,settings.beats||4));}
 export function progressionBeatDurations(settings){const definition=progressionDefinition(settings),beats=Math.max(1,settings.beats||4);return definition.steps?definition.steps.map(step=>step.beats??step.bars*beats):definition.roman.map(()=>definition.bars*beats);}
-export function progressionStepAtBeat(settings, beat) {
-  const durations = progressionBeatDurations(settings);
-  const order = progressionOrder(settings);
-  let position = Math.max(0,beat) % order.reduce((sum, index) => sum + durations[index], 0);
-  for (const index of order) {
-    if (position < durations[index]) return index;
-    position -= durations[index];
-  }
-  return order[0];
+export function progressionPositionAtBeat(settings,beat){
+ const timeline=progressionTimeline(settings);let position=Math.max(0,beat)%timeline.reduce((sum,segment)=>sum+segment.duration,0);
+ for(const segment of timeline){if(position<segment.duration)return {step:segment.step,chartBeat:segment.start+position};position-=segment.duration;}
+ return {step:timeline[0].step,chartBeat:timeline[0].start};
 }
+export function progressionStepAtBeat(settings,beat){return progressionPositionAtBeat(settings,beat).step;}
 export const CHARACTERISTIC_DEGREES = {
   major:['3','7'], dorian:['6'], phrygian:['♭2'], lydian:['♯4'], mixolydian:['♭7'], minor:['♭6'], locrian:['♭2','♭5'],
   melodic_minor:['6','7'], dorian_b2:['♭2','6'], lydian_augmented:['♯4','♯5'], lydian_dominant:['♯4','♭7'],

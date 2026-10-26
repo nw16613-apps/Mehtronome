@@ -17,7 +17,15 @@ The preview has its own origin and browser storage. Sign in with the owning Chat
 
 ## Chart loop selection
 
-Drag across chart chords to select a loop. Selection snaps to complete chords, in either drag direction. Reverse dragging chooses the same contiguous range; use **Choose loop with controls** for wrapped end-to-start loops and keyboard editing. The chosen chords have a pale-blue fill and dark-blue underline; the playing beat is amber with a brown marker. A key below the chart identifies both. **Clear loop** restores the whole progression. Dragging does not create a personal copy or edit a chord. Press Escape while dragging to cancel. Selecting while stopped leaves audio stopped; selecting during playback restarts playback at the selected range with the existing count-in setting. Mouse and pen support drag selection; touch users can use the controls. Presets/journals retain the existing loop settings. Compare two chords has been removed.
+Drag across chart beats to select an exact inclusive beat range. Partial chords and a single beat are supported; dragging backward selects the same range. The chosen beats are pale blue with a dark-blue underline; the playing beat is amber. Clear loop restores the whole progression. Escape cancels an unfinished drag.
+
+**Choose loop with controls** offers **Beats** for numeric endpoints (counted from beat 1 of the chart) and **Whole chords** for the original chord ranges, including wrapped end-to-start loops. Dragging always selects beats. Mouse/pen support dragging; touch users can use the numeric controls.
+
+Stopped audio stays stopped. A selection during playback restarts at its first beat, preserving the existing count-in setting. The metronome keeps the selected metre; a short loop repeats immediately without padding to a full bar. Guitar/Exercises references use the clipped chord durations, and progression exercises follow the same timeline. Their notation can show several loop cycles to finish on a bar line.
+
+New presets and journal sessions retain beat endpoints. Older saved setups default to whole-chord mode. Beat-loop exports need this preview or a compatible newer app; the older live app cannot interpret those endpoints. Compare two chords remains removed.
+
+Progression-following exercise notation now beams quavers, triplets and semiquavers within each quarter-note beat, breaking at rests, bars and chord changes. Long/tied notes keep their durations; exported SVG retains the beams and chord-symbol clearance.
 
 ## Try the unified progression chart
 

@@ -13,7 +13,7 @@ export const DEFAULTS = {
   mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
-  loopEnabled:false, loopStart:0, loopEnd:3,
+  loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
@@ -341,7 +341,7 @@ export class Engine {
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     this.assignPadVoices(this.depthMotionState);
-    const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,s.template==='custom'?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
+    const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,(s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
     this.compingNotes=compingHook(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
@@ -446,7 +446,7 @@ export class Engine {
         }
         const step = s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0;
         this.setChord(step);
-        const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,s.template==='custom'?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmonyAt(s,this.step);
+        const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,(s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmonyAt(s,this.step);
         this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
         this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);

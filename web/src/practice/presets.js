@@ -9,7 +9,7 @@ export const PRESET_CONTROLS = [
   'exercise','click','harmony','space','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density',
   'sequence-swing','sequence-volume','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-movement-amount','comping-hook-length','drums-volume','bass-volume','comping-volume',
   'fret-labels','highlight-mode','show-grip',
-  'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end',
+  'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end',
   'trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','position-region',
   'theory-view','theory-choice',
   // Retained so older exported presets can migrate their Position I choice to
