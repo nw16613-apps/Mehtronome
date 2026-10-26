@@ -3,9 +3,19 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: Checkpoint 9 adds explicit targets for the existing guide-tone and voice-led connection studies. Drag-to-loop chart selection and the combined harmony reference remain included.
+- Current preview app checkpoint: Checkpoint 10 adds Find a chord tone self-checks to the existing exercise fretboard. Shared navigation, exact beat loops and beamed progression notation remain included.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
+
+## Try checkpoint 10
+
+1. In **Exercises**, show the linked fretboard and open **Find a chord tone · self-check** just above the diagram.
+2. Choose Third, Seventh, Root or Fifth, then **Find this tone**. All visible dots become neutral and their labels/answer rings are hidden. The question uses the current chord’s actual interval (for example ♭3 or ♭7), not its scale-guide degree.
+3. Click a dot, or Tab to one and press Enter/Space. Any visible octave of the correct pitch class is accepted. A wrong choice invites another try. A correct choice reveals the note and rings its available locations.
+4. Use **Reveal answer** to self-check without guessing; **Next tone** cycles to another available target. **End self-check** restores normal diagram interaction.
+5. Try another **Inspect chord** selection or position: old questions clear. Playback also ends the question and restores the normal diagram; stop to start another question.
+
+Suspended chords do not acquire an invented third. If the formula or position lacks a requested tone, the app explains that and leaves the diagram unmasked. The self-check tests a clicked note, not your played audio or mastery. It does not change learning-path completion, journal ratings or stored presets.
 
 ## Connected Guitar / Exercises navigation
 

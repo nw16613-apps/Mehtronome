@@ -1,3 +1,4 @@
+import {setFretRecallPlaying} from './practice/fret-recall-view.js';
 import {applicationStudy} from './practice/applications.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
 import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
@@ -1207,6 +1208,7 @@ el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
 function handleExerciseControl(event:Event){
   const target=event.target;
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
+  if(target.id==='fret-recall-tone')return;
   const deferredNumber=target instanceof HTMLInputElement&&target.type==='number'&&['exercise-tempo','exercise-auto-increment','exercise-auto-target'].includes(target.id);
   // Rebuilding the panel on each keystroke dismisses mobile number keyboards and
   // makes multi-digit values effectively impossible to enter. Commit those fields
@@ -1655,6 +1657,7 @@ function syncTrainerStatus() {
   el('trainer-status').textContent = !settings.trainerEnabled ? 'Starts at your selected tempo.' : playing ? `${currentBpm} BPM · ${currentBpm >= Math.max(settings.bpm,settings.trainerTarget) ? 'Target reached' : `towards ${settings.trainerTarget} BPM`}. Starting tempo: ${settings.bpm} BPM.` : `Start at ${settings.bpm} BPM; add ${settings.trainerIncrement} every ${settings.trainerBars} bars, up to ${Math.max(settings.bpm,settings.trainerTarget)} BPM.`;
 }
 function syncMiniTransport() {
+  setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
   for(const id of ['exercise-progression-chord','exercise-position-navigation','exercise-position-region']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
   const mini = el('mini-transport');
   mini.hidden = false;
