@@ -34,3 +34,9 @@ Guide-tone demonstrations currently play as melodic examples without accompanime
 Validation: unit checks cover all 12 roots and five CAGED regions for exact-grip pitch/string/fret agreement, larger arpeggio contents, target retention in short cells, and transposed third/seventh examples. Browser checks cover goal setup, grip-to-notation coordinates, linked highlighting, recall, positions, disclosures, playback stop, presets, chord audition and all themes. Device-level latency, acoustic fidelity and anatomical comfort are not claimed.
 
 Next: self-assessed review/notes and backup, full saved-session recall, then dedicated beat-level duration/scheduling and curated transformation content. The complete product brief is not yet finished.
+
+## Checkpoint 3 — personal review and session recall
+
+A separate browser-local journal records self-assessment, optional comfortable tempo and notes alongside a snapshot of existing preset controls/custom progression and exercise position, study, material, direction, rhythm, stage, display, recall, accompaniment, loop range and tempo-training setup. Resume reuses preset restoration, stops audio and opens Exercises without starting playback. Review-only edits retain the original snapshot. Completion remains separate from mastery. Journal export/import is versioned, validated, limited to 100 entries and merges without replacing existing records. Preset, favourite and learning-path formats are unchanged.
+
+Validation: persistence/transfer unit checks, save/reload/resume and review-only browser workflows, malformed and duplicate import handling, mobile overflow, playback stopping and guided-flow/workspace regressions. Remaining work: chord-aligned guide playback, richer authored timing and curated content. Smaller shape/context corrections deferred as requested.

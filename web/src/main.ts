@@ -1,3 +1,4 @@
+import {installJournal} from './practice/journal-view.js';
 import {GOALS,gripStudy,positionalArpeggio,gripFacts,shortCell,overlayPurpose,guideToneExamples} from './practice/learning.js';
 import {learningView,highlightLearningNote} from './practice/learning-view.js';
 import {musicalContext,spellingHelp} from './practice/context.js';
@@ -1781,8 +1782,7 @@ function restoreControl(id: string, value: unknown) {
     control.value = String(Math.max(Number(control.min),Math.min(Number(control.max),number)));
   }
 }
-el('preset-load').addEventListener('click',async()=>{
-  const preset = presets.find(p => p.id === select('preset-list').value);
+async function loadPracticePreset(preset:PracticePreset|undefined){
   if (!preset || busy || stopping) return;
   busy = true;
   reflectPresetButtons();
@@ -1819,7 +1819,8 @@ el('preset-load').addEventListener('click',async()=>{
     input('preset-name').value = preset.name;
     el('preset-status').textContent = `Loaded “${preset.name}”. Ready to practice.`;
   } finally { busy = false; reflectPresetButtons(); }
-});
+}
+el('preset-load').addEventListener('click',()=>void loadPracticePreset(presets.find(p=>p.id===select('preset-list').value)));
 renderPresets();
 
 el('preset-export').addEventListener('click',()=>{
@@ -1884,3 +1885,13 @@ const guitarOverview=document.querySelector('.guitar-overview')!;
 for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
+
+installJournal({
+ capture:()=>{const preset=snapshotPreset();return {preset,exercise:{...exerciseView},position:overviewPosition,step,goal:activeGoal,gripOnly};},
+ restore:async(saved:any)=>{if(busy||stopping)throw new Error('Wait for playback to finish stopping.');
+  await loadPracticePreset(saved.preset);stopPreview();
+  Object.assign(exerciseView,saved.exercise);overviewPosition=saved.position;step=Math.max(0,Math.min(progressionDurations(settings).length-1,saved.step));activeGoal=saved.goal;gripOnly=saved.gripOnly;
+  exerciseSelectionStart=null;exerciseSelectionEnd=null;update();
+  el('guided-session').hidden=true;if(focusView)setFocusView(false);showWorkspace('exercises','caged-exercise');
+ },
+});

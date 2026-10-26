@@ -3,7 +3,7 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: the banner identifies the exact code commit. Checkpoint 2 adds goal setups, a chord-grip → exercise flow, linked exercise diagrams, specific guidance and recall. Personal review notes and the longer-term scheduling/content work remain in development.
+- Current preview app checkpoint: the banner identifies the exact code commit. Checkpoint 3 adds the practice journal: self-assessment, comfortable tempo, notes, saved exercise setup recall and portable backups. Earlier guided flow and linked diagrams remain. Scheduling/content work remains in development.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
 
@@ -15,7 +15,8 @@ The preview has its own origin and browser storage. Sign in with the owning Chat
 4. Compare **Full positional arpeggio** and **Add an enclosure**. Change Position here without returning to Guitar. Try short-cell, full-position and application stages; expand **How to practise** for the purpose and pattern.
 5. Use **Try without diagram**, then reveal it to self-check. Open **Playback, material and display settings** for looping, slower speed, tempo training and its ceiling. The persistent Stop button also stops an exercise.
 6. Try **Outline an essential ii–V–I**. Its guide lines are unaccompanied demonstrations; read the explicit example targets and apply them yourself over the main progression. These demonstrations do not yet schedule one target per chord bar.
-7. The original context changes remain: in Harmony choose a ii–V–I level and distinguish progression tonic, current chord, scale guide and next chord.
+7. Choose **Review / save session**, enter a name, notes, self-assessment and optional comfortable tempo, then save. Reload, select the entry in Progress and resume. The saved exercise, position, stage, tempo and musical setup return with audio stopped. **Update review only** preserves the original setup. Export/import journals separately from presets; imports retain existing entries.
+8. The original context changes remain: in Harmony choose a ii–V–I level and distinguish progression tonic, current chord, scale guide and next chord.
 
 Application prompts containing holds and rests are instructions for the player, not falsely advertised playback of authored rhythms. Goal setups use existing controls; presets save backing/display setups and exercise favourites save the study selection.
 
