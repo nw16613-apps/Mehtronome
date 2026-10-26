@@ -10,6 +10,16 @@ function message(state:any,value:string){const target=state.panel.querySelector(
 function reset(state:any,value='Choose a tone, then find it without note labels or colour cues. This checks your selection, not your playing or mastery.'){
  restore(state);state.question=null;state.phase='idle';message(state,value);const button=state.panel.querySelector('#fret-recall-start');if(button)button.textContent='Find this tone';const reveal=state.panel.querySelector('#fret-recall-reveal');if(reveal)reveal.disabled=true;
 }
+function syncRouteChoices(state:any){
+ const panel=state.panel as HTMLElement;
+ panel.querySelectorAll<HTMLButtonElement>('.exercise-position-route [data-inspect-slot]').forEach(button=>{const current=Number(button.dataset.inspectSlot)===(state.slot??0);button.classList.toggle('current',current);button.setAttribute('aria-pressed',String(current));if(current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');button.disabled=state.playing;});
+}
+function chooseChord(state:any,slot:number){
+ if(state.playing)return;
+ const control=(state.panel as HTMLElement).querySelector<HTMLSelectElement>('#exercise-progression-chord');if(!control)return;
+ const fromGuitar=document.activeElement?.closest('#position-path');const continueQuestion=state.phase!=='idle';control.value=String(slot);control.dispatchEvent(new Event('input',{bubbles:true}));if(continueQuestion)begin(state);if(fromGuitar)document.querySelector<HTMLButtonElement>(`#position-path [data-inspect-slot="${slot}"]`)?.focus({preventScroll:true});
+}
+export function selectRecallChord(panel:HTMLElement,slot:number){const state=controllers.get(panel);if(state)chooseChord(state,slot);}
 function begin(state:any){
  if(state.playing)return;
  if(state.phase==='correct'||state.phase==='revealed'){
@@ -37,6 +47,7 @@ export function installFretRecall(panel:HTMLElement,board:any,harmony:any){
  if(!state){state={panel,board,harmony,question:null,phase:'idle',playing:false,originals:new Map()};controllers.set(panel,state);
   panel.addEventListener('click',event=>{const target=event.target instanceof Element?event.target:null;if(!target)return;
    const node=target.closest<SVGGElement>('.exercise-map-diagram .fret-note');if(node&&state.phase==='asking'){event.preventDefault();event.stopImmediatePropagation();answer(state,node);return;}
+   const chord=target.closest<HTMLElement>('.exercise-position-route [data-inspect-slot]');if(chord){event.preventDefault();event.stopImmediatePropagation();chooseChord(state,Number(chord.dataset.inspectSlot));return;}
    if(target.closest('#fret-recall-start'))begin(state);
    if(target.closest('#fret-recall-reveal'))reveal(state);
    if(target.closest('#fret-recall-end')||target.closest('#exercise-recall')||target.closest('#exercise-map-toggle'))reset(state);
@@ -44,9 +55,9 @@ export function installFretRecall(panel:HTMLElement,board:any,harmony:any){
   panel.addEventListener('keydown',event=>{const target=event.target instanceof Element?event.target.closest<SVGGElement>('.exercise-map-diagram .fret-note'):null;if(state.phase==='asking'&&target&&['Enter',' '].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();answer(state,target);}} ,true);
   panel.addEventListener('input',event=>{if((event.target as HTMLElement).id==='fret-recall-tone')reset(state);});
  }
- state.board=board;state.harmony=harmony;
+ state.board=board;state.harmony=harmony;state.slot=0;
  const control=document.createElement('details');control.className='fret-recall';control.innerHTML='<summary>Find a chord tone · self-check</summary><div class="fret-recall-controls"><label>Tone<select id="fret-recall-tone"><option value="third">Third</option><option value="seventh">Seventh</option><option value="root">Root</option><option value="fifth">Fifth</option></select></label><button id="fret-recall-start" type="button" class="practice-button">Find this tone</button><button id="fret-recall-reveal" type="button" class="practice-button" disabled>Reveal answer</button><button id="fret-recall-end" type="button" class="practice-button">End self-check</button></div><p id="fret-recall-feedback" class="practice-help" role="status"></p>';
- panel.querySelector('.exercise-map-diagram')!.before(control);reset(state);for(const id of ['fret-recall-tone','fret-recall-start'])(panel.querySelector('#'+id) as HTMLInputElement).disabled=state.playing;if(state.playing)message(state,'Self-check paused during playback. Stop playback to try a target.');
+ panel.querySelector('.exercise-map-diagram')!.before(control);reset(state);syncRouteChoices(state);for(const id of ['fret-recall-tone','fret-recall-start'])(panel.querySelector('#'+id) as HTMLInputElement).disabled=state.playing;if(state.playing)message(state,'Self-check paused during playback. Stop playback to try a target.');
 }
-export function updateFretRecall(panel:HTMLElement,board:any,harmony:any){const state=controllers.get(panel);if(!state)return;state.board=board;state.harmony=harmony;reset(state,'Chord or position updated. Start a new self-check for this view.');}
-export function setFretRecallPlaying(panel:HTMLElement,playing:boolean){const state=controllers.get(panel);if(!state||state.playing===playing)return;state.playing=playing;if(playing)reset(state,'Self-check paused during playback. Stop playback to try a target.');for(const id of ['fret-recall-tone','fret-recall-start']){const control=panel.querySelector<HTMLInputElement>('#'+id);if(control)control.disabled=playing;}}
+export function updateFretRecall(panel:HTMLElement,board:any,harmony:any,slot=0){const state=controllers.get(panel);if(!state)return;state.board=board;state.harmony=harmony;state.slot=slot;reset(state,'Chord or position updated. Start a new self-check for this view.');syncRouteChoices(state);}
+export function setFretRecallPlaying(panel:HTMLElement,playing:boolean){const state=controllers.get(panel);if(!state||state.playing===playing)return;state.playing=playing;if(playing)reset(state,'Self-check paused during playback. Stop playback to try a target.');syncRouteChoices(state);for(const id of ['fret-recall-tone','fret-recall-start']){const control=panel.querySelector<HTMLInputElement>('#'+id);if(control)control.disabled=playing;}}

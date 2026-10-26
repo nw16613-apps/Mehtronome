@@ -1,4 +1,5 @@
-import {setFretRecallPlaying} from './practice/fret-recall-view.js';
+import {positionRouteCards} from './practice/position-route.js';
+import {setFretRecallPlaying,selectRecallChord} from './practice/fret-recall-view.js';
 import {applicationStudy} from './practice/applications.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
 import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
@@ -391,7 +392,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,application:exercisePlan?.application,response:exerciseView.response,applicationSupported:settings.beats===4,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,application:exercisePlan?.application,response:exerciseView.response,applicationSupported:settings.beats===4,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
   exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
@@ -584,11 +585,9 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   ):[];
   const following=settings.progression&&requestedFeatured==='path';
   const featured=following?path[step]?.numeral||'I':'all';
-  el('position-path-guide').hidden=!following;
-  el('position-path').innerHTML=following?path.map((choice,index)=>{
-    const harmony=chordInfo(index);
-    return `<button type="button" data-position-step="${index}" data-position="${choice.numeral}" data-shape="${choice.shape}" class="${index===step?'current':''}" aria-pressed="${index===step}" ${playing||!progressionOrder(settings).includes(index)?'disabled':''}><strong>${escapeHtml(harmony.name+harmony.suffix)}</strong><span>Position ${choice.numeral} · ${choice.shape} shape</span><small>Frets ${choice.start}–${choice.end}</small></button>`;
-  }).join(''):'';
+  el('position-path-guide').hidden=!settings.progression;
+  select('position-region').parentElement!.hidden=!following;
+  el('position-path-guide').querySelector('p')!.textContent=following?'Nearest CAGED route through this progression':'CAGED positions through this progression';
   el('guitar-title').closest('section')!.classList.add('has-featured');
   el('grip-legend').hidden = !showGrip;
   const info = chordInfo(step);
@@ -636,6 +635,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   reflectFullFretboard();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,following?progressionOrder(settings).map((index:number)=>path[index]):undefined);
+  el('position-path').innerHTML=settings.progression?positionRouteCards(currentExerciseGroups,progressionOrder(settings),step,playing||exercisePlaying||exercisePreparing,true):'';
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
@@ -921,7 +921,7 @@ function tempo(value: number) {
 function reflectPlayback() {
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('progression-strip').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
-  el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing; });
+  el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(exercisePreview)exercisePreview.disabled=playing||!currentExercise.length;
   el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
@@ -1658,6 +1658,7 @@ function syncTrainerStatus() {
 }
 function syncMiniTransport() {
   setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
+  el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
   for(const id of ['exercise-progression-chord','exercise-position-navigation','exercise-position-region']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
   const mini = el('mini-transport');
   mini.hidden = false;
@@ -1790,11 +1791,9 @@ el('mix-collapse').addEventListener('click',()=>setMixerCollapsed(!mixPanel.clas
 select('featured-position').addEventListener('input',renderGuitar);
 select('position-region').addEventListener('input',renderGuitar);
 el('position-path').addEventListener('click',event=>{
-  const button=event.target instanceof HTMLElement?event.target.closest<HTMLButtonElement>('button[data-position-step]'):null;
+  const button=event.target instanceof HTMLElement?event.target.closest<HTMLButtonElement>('button[data-inspect-slot]'):null;
   if(!button||button.disabled)return;
-  stopPreview();
-  step=Number(button.dataset.positionStep);
-  renderMusic();
+  selectRecallChord(el('caged-exercise'),Number(button.dataset.inspectSlot));
 });
 fillChords();
 renderScaleExplorer();

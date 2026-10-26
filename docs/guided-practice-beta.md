@@ -161,3 +161,10 @@ Added a small self-check within the existing exercise fretboard, alongside hide/
 The controller reuses the linked diagram and current harmony. Inspection/position changes clear stale questions. Playback cancels the question and restores normal interaction; quiz controls are unavailable during playback. No microphone grading, mastery inference, new saved-data format or automatic learning-path completion is introduced.
 
 Validation: all-key/five-region checks for chord pitch/interval/name agreement, octave locations, altered/diminished/suspended formulas and missing positions. Browser tests cover neutral masking and accessible names, wrong/right answers, keyboard use, reveal, context changes, playback, responsive layout, shared routes and existing guided practice. Anatomical fingering and the previously deferred content audit remain outstanding.
+
+
+## Visible progression cards in both practice workspaces
+
+Reused one card renderer for Guitar and Exercises, showing the actual progression study’s chords, CAGED positions/shapes and fret ranges in both manual and nearest-position modes. The exercise cards sit above the linked diagram, outside its hide/show body, near self-check controls. Selection reuses Inspect chord and does not rebuild the written score. Guitar and exercise highlights stay synchronized. Cards are disabled during playback.
+
+When a self-check is active, choosing a progression card starts the same requested tone on the new chord, using its new diagram and answer set. The self-check stays open and the selected tone type is retained; no answer from the previous chord survives. Keyboard selection in Guitar retains focus after its cards update. Validation covers both modes, cross-workspace selections, unchanged notes, self-check context, keyboard selection, narrow layout and existing shared-route/recall workflows.

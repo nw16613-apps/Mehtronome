@@ -17,6 +17,12 @@ The preview has its own origin and browser storage. Sign in with the owning Chat
 
 Suspended chords do not acquire an invented third. If the formula or position lacks a requested tone, the app explains that and leaves the diagram unmasked. The self-check tests a clicked note, not your played audio or mastery. It does not change learning-path completion, journal ratings or stored presets.
 
+## Progression cards beside practice material
+
+The chord/position/fret-range cards are visible in **both Guitar and Exercises**, in **Manual selection** and **Follow nearest positions**. In Exercises they sit directly above the linked fretboard and self-check, so you can choose a chord without returning to the upper Inspect chord dropdown. The dropdown remains synchronized as a keyboard-friendly alternative.
+
+Selecting a card in either workspace updates the same inspected chord and current position. During an active self-check, card selection starts a fresh question for the new chord while preserving your chosen tone type. Cards remain visible when the fretboard body is hidden; they are disabled during playback while the active highlight follows the progression.
+
 ## Connected Guitar / Exercises navigation
 
 In Exercises, **Position navigation → Follow nearest positions** uses Guitar’s same route and **Fretboard region**. **Inspect chord** names the chord, CAGED position and fret range, and selects that same chord/position in Guitar. Guitar route-card selection is reflected in Inspect chord when returning to Exercises. Inspection leaves the exercise’s written notes and playback order intact.
