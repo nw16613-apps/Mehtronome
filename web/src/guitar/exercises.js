@@ -1,3 +1,4 @@
+import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
 import {theoryOptions} from './superimposition.js';
 
@@ -19,7 +20,13 @@ export const PENTATONIC_PATTERNS={
 function chordSuffix(rootPc,pcs) {
   const signature=pcs.slice(1).map(pc=>(pc-rootPc+12)%12).join(',');
   const suffixes={'4,7':'','3,7':'m','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'dim7','4,8,11':'maj7♯5','3,7,11':'m(maj7)'};
-  return Object.hasOwn(suffixes,signature)?suffixes[signature]:(pcs.length===5?'9':'7');
+  if(Object.hasOwn(suffixes,signature))return suffixes[signature];
+  if(pcs.length===5){
+    const seventh=chordSuffix(rootPc,pcs.slice(0,4)),ninth=(pcs[4]-rootPc+12)%12;
+    if(ninth===2)return ({maj7:'maj9',m7:'m9','7':'9','m7♭5':'m9♭5','m(maj7)':'m(maj9)','maj7♯5':'maj9♯5'})[seventh]||`${seventh}(add9)`;
+    return `${seventh}(${ninth===1?'♭9':ninth===3?'♯9':`add ${ninth}`})`;
+  }
+  return '7';
 }
 
 function pathForPcs(board,pcs,names,ascending=true,targetMidi=60,anchorMidi=null) {
@@ -446,13 +453,6 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
 
 export function flattenExercise(groups) { return groups.flatMap(group=>group.notes); }
 
-function accidental(name) { return name.slice(1); }
-function staffY(note) {
-  const letter=LETTERS.indexOf(note.name[0]);
-  const octave=Math.floor(note.midi/12)-1;
-  // Guitar sounds an octave below its written treble-clef pitch.
-  return 101-((octave*7+letter)-(4*7+2))*5-35;
-}
 function esc(text) { return String(text).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
 
 function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0,options={backingChord:'',groupChords:false,beats:4}) {
@@ -472,6 +472,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
   for(let string=0;string<6;string++)svg+=`<line class="notation-line tab-line" x1="44" x2="${width-12}" y1="${150+string*18}" y2="${150+string*18}"/>`;
   let noteIndex=0;
   const renderedNotes=[];
+  const accidentals=new Map();
   groups.forEach((group,groupIndex)=>{
     const start=noteIndex;
     const globalStart=group._globalStart??start;
@@ -487,7 +488,8 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
       renderedNotes.push({x,y,globalIndex});
       for(let ledger=111;ledger<=y+1;ledger+=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
       for(let ledger=51;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
-      const acc=accidental(note.name);
+      if(globalIndex%notesPerBar===0)accidentals.clear();
+      const acc=notationAccidental(note,accidentals);
       if(acc)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(acc)}</text>`;
       svg+=`<g class="exercise-note${target?' target-note':''}" data-note-index="${globalIndex}" data-group-index="${group._groupIndex??groupIndex}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="6.5" ry="4.5" transform="rotate(-18 ${x} ${y})"/><rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
       if(noteIndex%perBeat===0)svg+=`<line class="beat-guide" x1="${x-step/2}" x2="${x-step/2}" y1="140" y2="245"/>`;
@@ -556,7 +558,7 @@ export function alignedProgressionGroups(board,progression,study,material='seven
     const activeBoard=boards[slot]||board;
     let notes=[];
     if(study==='guidetones'){
-      const pcs=[current.chordPcs[1],current.chordPcs[3]].filter(pc=>pc!==undefined);
+      const pcs=current.chordPcs.filter((_,i)=>['3','♭3','7','♭7','♭♭7'].includes(current.intervals[i]));
       const candidates=[];
       for(const pc of pcs)for(let midi=40;midi<89;midi++)if(midi%12===pc){const note=noteAtMidi(activeBoard,midi,current);if(note)candidates.push(note);}
       const note=candidates.toSorted((a,b)=>Math.abs(a.midi-previous)-Math.abs(b.midi-previous)||(descending?b.midi-a.midi:a.midi-b.midi))[0];
@@ -569,7 +571,7 @@ export function alignedProgressionGroups(board,progression,study,material='seven
       }
       notes=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0]||[];
     }
-    notes=notes.map(note=>({...note,chromaticDegree:current.intervals[current.chordPcs.indexOf(note.pc)]||note.chromaticDegree}));
+    notes=notes.map(note=>({...note,name:current.tones[current.chordPcs.indexOf(note.pc)]||note.name,chromaticDegree:current.intervals[current.chordPcs.indexOf(note.pc)]||note.chromaticDegree}));
     if(notes.length)previous=notes.at(-1).midi;
     return {slot,chord:`${current.name}${current.suffix}`,rootName:current.name,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),notes,annotation:study==='guidetones'?(notes.length?`${current.intervals[current.chordPcs.indexOf(notes[0].pc)]} · hold for this chord`:'Rest · no guide tone in this region'):notes.length?'Chord tones · rest until the next change':'Rest · no complete arpeggio fits this region'};
   });

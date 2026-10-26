@@ -16,6 +16,7 @@ export const POSITIONS = [
 ];
 const ROOT_STRING_SHAPES = {E:[0,2,5],D:[2,4],C:[1,4],A:[1,3],G:[0,3,5]};
 export function cagedPositionFor(board) {
+  if(board.positionIdentity)return POSITIONS.find(position=>position.shape===board.positionIdentity);
   const strings=[...new Set(board.notes.filter(note=>note.root).map(note=>note.string))];
   const matches=Object.entries(ROOT_STRING_SHAPES).filter(([,roots])=>roots.every(string=>strings.includes(string)));
   const shape=(matches.sort((a,b)=>(strings.length-a[1].length)-(strings.length-b[1].length))[0]?.[0]) || board.shape;
@@ -52,6 +53,33 @@ export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11], family 
   const end = windows ? rootFret + Math.max(...windows.map(window=>window[1])) : start + 4;
   return {shape,start,end,rootString:definition.rootString,rootFret,windows};
 }
+// Five root frameworks form a cycle around the neck. Assign the whole cycle,
+// rather than naming each box independently: altered parent-scale boundaries
+// can omit a root and otherwise give two different boxes the same identity.
+const identityCache=new Map();
+function positionIdentities(rootPc,anchorPc,intervals,family){
+  const key=[rootPc,anchorPc,intervals.join(','),family].join(':');
+  if(identityCache.has(key))return identityCache.get(key);
+  const roots=POSITIONS.map(({shape})=>{
+    const p=positionFor(anchorPc,shape,intervals,family);
+    return TUNING.flatMap((open,string)=>{
+      const from=p.windows?p.rootFret+p.windows[string][0]:p.start;
+      const to=p.windows?p.rootFret+p.windows[string][1]:p.end;
+      for(let fret=from;fret<=to;fret++)if((open+fret)%12===rootPc)return [string];
+      return [];
+    });
+  });
+  let best=0,cost=Infinity;
+  for(let rotation=0;rotation<5;rotation++){
+    const next=roots.reduce((sum,strings,i)=>{
+      const expected=ROOT_STRING_SHAPES[POSITIONS[(i+rotation)%5].shape];
+      return sum+expected.filter(string=>!strings.includes(string)).length*4+strings.filter(string=>!expected.includes(string)).length;
+    },0);
+    if(next<cost){cost=next;best=rotation;}
+  }
+  const identities=Object.fromEntries(POSITIONS.map((p,i)=>[p.shape,POSITIONS[(i+best)%5].shape]));
+  identityCache.set(key,identities);return identities;
+}
 export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   const rootPc = harmony.midi[0] % 12;
   // Related major-scale modes share the parent's exact fingering. Chord roots,
@@ -78,7 +106,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
         characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
   }
-  return { ...position, rootPc, anchorPc, anchorName, parentMajor, notes };
+  return { ...position, rootPc, anchorPc, anchorName, parentMajor, positionIdentity:positionIdentities(rootPc,anchorPc,intervals,parentMajor?.family)[shape], notes };
 }
 
 export function fullFretboardFor(harmony, start = 1, end = 17, chordOnly = false) {

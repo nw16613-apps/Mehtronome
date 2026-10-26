@@ -1,6 +1,6 @@
+import {staffY,notationAccidental} from './notation-pitch.js';
 import {chordSvg} from './chord-symbol.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const staffY=note=>101-((Math.floor(note.midi/12)-1)*7+'CDEFGAB'.indexOf(note.name[0])-30)*5-35;
 const durationPart=(remaining,at,division)=>{
  const fraction=at-Math.floor(at);if(division!==3&&fraction>1e-6)return [.5,.25].find(n=>n<=remaining+1e-6&&n<=1-fraction+1e-6)||Math.min(remaining,1-fraction);
  if(division===3&&(Math.abs(at-Math.round(at))>1e-6||remaining<1-1e-6))return Math.min(1/3,remaining);
@@ -22,7 +22,7 @@ export function progressionNotationSvg(plan,title){
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
    const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
    for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit,hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+=chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="272">${esc(change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':change.annotation.match(/\d+ cells?/)?.[0]||'Cell'))}</text>`;}
-   const beamNotes=[];
+   const beamNotes=[],accidentals=new Map();
    let at=start;
    while(at<end-1e-6){
     const event=plan.events.find(e=>at>=e.start-1e-6&&at<e.start+e.duration-1e-6);
@@ -37,7 +37,8 @@ export function progressionNotationSvg(plan,title){
      const note=event.note,y=staffY(note),tabY=150+(5-note.string)*18;
      for(let ledger=111;ledger<=y+1;ledger+=10)svg+=`<line class="ledger-line" x1="${x-10}" x2="${x+10}" y1="${ledger}" y2="${ledger}"/>`;
      for(let ledger=51;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-10}" x2="${x+10}" y1="${ledger}" y2="${ledger}"/>`;
-     if(note.name.slice(1)&&Math.abs(at-event.start)<1e-6)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(note.name.slice(1))}</text>`;
+     const acc=notationAccidental(note,accidentals);
+     if(acc&&Math.abs(at-event.start)<1e-6)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(acc)}</text>`;
      svg+=`<g class="exercise-note${event.target?' target-note':''}" data-note-index="${event.index}" data-group-index="${event.slot}" data-start-beat="${at}" data-duration-beats="${duration}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}, ${duration} beats`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="${duration>=4?8:6.5}" ry="4.5" transform="rotate(-18 ${x} ${y})"/>${duration>=2?`<ellipse class="note-hole" cx="${x}" cy="${y}" rx="4" ry="2" transform="rotate(-18 ${x} ${y})"/>`:''}<rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
      if(duration<1)beamNotes.push({x,y,at,duration,slot:event.slot,accent:event.accent&&Math.abs(at-event.start)<1e-6});
      else if(duration<4)svg+=`<line class="note-stem" x1="${x+6}" x2="${x+6}" y1="${y}" y2="${y-28}"/>`;

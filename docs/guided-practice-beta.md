@@ -175,3 +175,13 @@ When a self-check is active, choosing a progression card starts the same request
 Moved Position navigation out of Guitar’s diagram-settings disclosure and out of the Exercises toolbar into the visible progression header, alongside Fretboard region. The manual exercise Starting position control sits in the same header; its redundant disabled display is hidden in automatic mode, where the active card identifies the position. Guitar’s remaining diagram settings contain Diagram and Labels.
 
 Removed Inspect chord and its input handler. Native progression-card buttons now use a shared inspection event and retain keyboard access, current-chord highlighting, self-check continuity and playback locks. No hidden duplicate selector is retained. Browser validation covers control placement in both modes, absence of Inspect chord, keyboard selection, mobile layout and existing shared-route/self-check behavior.
+
+## Checkpoint 11 — musical correctness review
+
+Reviewed pitch/spelling agreement in all 12 roots, all 21 modes and five frameworks, and compact grips for every chord type. Position identities now follow one complete CAGED cycle instead of independent root-mask guesses that duplicated two positions in Ionian ♯5 and Lydian ♯2. Parent geometry and current-root identities remain distinct; no scale pitches were changed. Guide-tone studies now choose actual thirds/sevenths, use functional chord spelling, and use real nearby per-chord CAGED boards in manual mode too.
+
+Diatonic progression Roman numerals, mode-aware template captions and descriptions now agree with seventh-chord qualities and altered degrees (including ♭VI in natural minor). Custom half-diminished/diminished qualities retain lowercase numerals. Ninth-arpeggio cell labels retain their seventh quality and altered ninth instead of defaulting to dominant 9.
+
+Both notation renderers share written-spelling octave placement and bar-scoped accidental state: B♯/C♭ cross-octave spellings stay on the correct staff step, and a natural explicitly cancels a preceding accidental. TAB and sounding MIDI remain unchanged. Suggested compact grips retain defining thirds, sevenths/sixths and altered fifths, and honour a requested slash bass or report no suggestion. Spans/muted strings/omissions remain disclosed; these are pitch-validated suggestions, not anatomically verified fingerings.
+
+Focused new checks cover unique positions, spelled pitch/physical coordinate agreement, quality-defining grip contents and slash bass, Roman labels, ninth qualities, both notation renderers and suspended/altered guide-tone cases. Curated fingering/barre/transformations remain the agreed later project.

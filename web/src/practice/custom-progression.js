@@ -21,7 +21,8 @@ export function recommendedMode(chord){
 function qualitySuffix(chord){
   if(chord==='halfDim')return 'ø7';
   if(chord==='halfDim9')return 'ø9';
-  if(chord==='halfDim11')return 'ø11';
+  if(chord==='halfDim11')return 'ø7(add11)';
+  if(chord==='halfDim13')return 'ø7(add11,13)';
   if(chord==='dim7')return '°7';
   if(chord==='minor')return '';
   if(chord.startsWith('min'))return (CHORDS[chord]?.symbol||'m').replace(/^m/,'');
@@ -32,7 +33,7 @@ function qualitySuffix(chord){
 export function romanForStep(step){
   const root=((Number(step.root)||0)%12+12)%12;
   let numeral=DEGREE_NAMES[root];
-  if(step.chord?.startsWith('min')||step.chord==='minor'||step.chord==='halfDim')numeral=numeral.toLowerCase();
+  if(step.chord?.startsWith('min')||step.chord==='minor'||step.chord?.startsWith('halfDim')||step.chord==='dim7')numeral=numeral.toLowerCase();
   return numeral+qualitySuffix(step.chord||'major');
 }
 

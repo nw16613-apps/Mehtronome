@@ -24,13 +24,16 @@ export function recommendedGrip(harmony,board) {
   const preferred=new Set(indices.map(i=>harmony.chordPcs[i]));
   const intervals=harmony.midi.map(n=>n-harmony.midi[0]);
   const third=intervals.findIndex(n=>[3,4,5,2].includes(n));
-  const seventh=intervals.findIndex(n=>[10,11].includes(n));
-  const required=[third,seventh].filter(i=>i>=0).map(i=>harmony.chordPcs[i]);
+  const seventh=intervals.findIndex(n=>[10,11].includes(n)||harmony.chordId==='dim7'&&n===9);
+  const defining=intervals.map((n,i)=>[6,8,9].includes(n)?i:-1).filter(i=>i>=0);
+  const required=[third,seventh,...defining].filter(i=>i>=0).map(i=>harmony.chordPcs[i]);
+  const requestedBass=harmony.bassMidi==null?null:harmony.bassMidi%12;
   const options=Array.from({length:6},(_,string)=>board.notes.filter(n=>n.string===string&&n.chord));
   const desired=pcs.length===3?3:4;
   let best=null,bestScore=Infinity;
   const consider=notes=>{
     if(notes.length<3)return;
+    if(requestedBass!==null&&[...notes].sort((a,b)=>a.midi-b.midi)[0].pc!==requestedBass)return;
     const included=new Set(notes.map(n=>n.pc));
     if(included.size<Math.min(3,pcs.length)||required.some(pc=>!included.has(pc)))return;
     const frets=notes.map(n=>n.fret),span=Math.max(...frets)-Math.min(...frets);

@@ -339,6 +339,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   if(!settings.progression&&exerciseView.study==='grip')currentExerciseGroups=gripStudy(board,info);
   if(!settings.progression&&exerciseView.study==='positional')currentExerciseGroups=positionalArpeggio(board,info,exerciseView.motion);
   if(isAlignedStudy()){
+    positionPath=positionPath||progressionPositionPath(exerciseProgression,{start:board.start,end:board.end});
     if(!['ascending','descending'].includes(exerciseView.motion))exerciseView.motion='ascending';
     currentExerciseGroups=alignedProgressionGroups(board,exerciseProgression,exerciseView.study,exerciseView.material,exerciseView.motion,positionPath?.map((choice:any,index:number)=>fretboardFor(exerciseProgression[index],choice.geometryShape)));
     if(exerciseView.stage==='cell')currentExerciseGroups=currentExerciseGroups.map((group:any,index:number)=>index?{...group,notes:[]}:group);
@@ -503,7 +504,7 @@ function renderMusic(skipExercise=false,positionOverride:any=null) {
   }).join('');
   if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
   el('harmony-explanation').textContent = spellingHelp(info)+' '+(modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip);
-  el('backing-description').textContent = custom ? 'Your progression follows the chord, duration, bass-note and scale-guide choices in the builder.' : modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic triads, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
+  el('backing-description').textContent = custom ? 'Your progression follows the chord, duration, bass-note and scale-guide choices in the builder.' : modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic seventh chords, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const colour = characteristicNotes(info);
   const highlight = input('highlight-mode').checked;
@@ -1554,6 +1555,7 @@ function fillChords(preserve = false) {
   el('mode-tip').textContent = MODES[mode].tip;
   el('mode-template').textContent = `Try ${MODES[mode].name} progression`;
   el('mode-template').hidden = settings.progression && select('template').value === `modal_${mode}`;
+  select('template').querySelector<HTMLOptionElement>('[value=diatonic]')!.textContent=progressionDefinition({mode,template:'diatonic'}).name;
   const modal = mode !== 'major' && mode !== 'minor';
   select('template').querySelector<HTMLOptionElement>('[value=diatonic]')!.disabled = modal;
   if (modal && select('template').value === 'diatonic') select('template').value = 'parallel1';

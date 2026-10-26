@@ -162,7 +162,7 @@ function modalRoman(mode,degree,chord) {
   const roman=['I','II','III','IV','V','VI','VII'][degree];
   const accidental=MODES[mode].degrees[degree].replace(/[1-7]/g,'');
   const minor=['minor','min7','min9','min11','min13','min11b9','min13b9','min11b13','min13sharp11','min6','minMaj7','minMaj9','halfDim','halfDim9','halfDim11','halfDim13','dim7'].includes(chord);
-  const suffix={minor:'',min7:'7',min9:'9',min11:'11',min13:'13',min11b9:'11♭9',min13b9:'13♭9',min11b13:'11♭13',min13sharp11:'13♯11',minMaj7:'(maj7)',minMaj9:'(maj9)',halfDim:'ø7',halfDim9:'ø9',halfDim11:'ø11',halfDim13:'ø13',dim7:'°7'}[chord] || CHORDS[chord].symbol;
+  const suffix={minor:'',min7:'7',min9:'9',min11:'11',min13:'13',min11b9:'11♭9',min13b9:'13♭9',min11b13:'11♭13',min13sharp11:'13♯11',min6:'6',minMaj7:'(maj7)',minMaj9:'(maj9)',halfDim:'ø7',halfDim9:'ø9',halfDim11:'ø11',halfDim13:'ø13',dim7:'°7'}[chord] || CHORDS[chord].symbol;
   return accidental+(minor?roman.toLowerCase():roman)+suffix;
 }
 export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS).map(([mode,plan])=>{
@@ -225,6 +225,11 @@ export const PROGRESSIONS = {
 };
 export function progressionDefinition(settings) {
   if(settings.template==='custom'&&settings.customProgression?.steps?.length)return settings.customProgression;
+  if(settings.template==='diatonic'){
+    const mode=modeId(settings),degrees=[0,5,3,4];
+    const roman=degrees.map(degree=>modalRoman(mode,degree,modalSeventh(mode,degree)));
+    return {...PROGRESSIONS.diatonic,roman,name:`Diatonic sevenths · ${roman.join('–')} · 1 bar per chord`};
+  }
   return PROGRESSIONS[settings.template || 'parallel1'];
 }
 export function progressionDurations(settings) {
@@ -294,7 +299,7 @@ export function harmonyAt(settings, step = 0) {
     const intervalNames={0:'1',3:'♭3',4:'3',6:'♭5',7:'5',8:'♯5',9:'6',10:'♭7',11:'7'};
     return { name: scaleNames[degree], suffix: chord.symbol, tones: degrees.map(i => scaleNames[i % 7]), intervals: chord.intervals.map(i=>chordId==='dim7'&&i===9?'♭♭7':intervalNames[i]), midi,
       scaleNames, scalePcs: scale.map(i => (settings.key + i) % 12), chordPcs: midi.map(i => i % 12),
-      mode, chordId, roman: mode === 'minor' ? ['i7','VImaj7','iv7','v7'][step] : PROGRESSIONS.diatonic.roman[step] };
+      mode, chordId, roman: modalRoman(mode,degree,chordId) };
   }
   const offset = change ? change.root : settings.progression ? definition.roots[step] : 0;
   const key = (settings.key + offset) % 12;
