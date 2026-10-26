@@ -72,3 +72,11 @@ Replaced the custom beat tiles with a responsive lead sheet using serif chord sy
 Added chord symbols to standard exercise notation and restyled timed-progression symbols consistently. Material chords are distinct from the held reference/backing label; chromatic target/sequence names are not passed off as chord symbols. Print/SVG output retains symbol typography. Existing note selection, audition, linked diagrams and timed playback remain intact.
 
 Validation: bar/beat placement and partial-bar markup, safe accidental/quality/slash-bass formatting, material/reference labeling; browser chart editing/live marker, narrow layout, notation labels and SVG export, plus beat-editing, guided-flow and timed-playback regressions. All unit test files pass. Rendered chart and notation inspected.
+
+## Exercise backing-symbol correction
+
+Removed arpeggio/cell chord names above the staff. All exercise symbols now describe the backing: selected progression changes or the held pedal chord. Ordinary exercise accompaniment follows a selected progression too; the exercise pitches remain the selected study. On repeated/selected passages the symbols are recalculated against the continuing backing clock while notes and selection DOM are retained. Fixed tempo is used with progression accompaniment; automatic exercise tempo increases remain available without that accompaniment.
+
+Chord symbols have a separate untransformed SVG band; staff/notes are shifted according to measured and numeric note/stem/beam extents. This handles high-register notes and font readiness, preserves TAB alignment and exports the actual layout. Standard notation now uses the selected metre for its bar lines.
+
+Validation: all unit files pass; browser checks cover backing sequence versus cell names, ordinary progression audio settings, loop-cycle symbol changes matching the current chord, high-register separation in both ordinary/timed notation, narrow widths, SVG export and prior guided workflows. No device audio-fidelity claim.

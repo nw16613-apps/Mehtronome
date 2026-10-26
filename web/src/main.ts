@@ -1,3 +1,4 @@
+import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
 import {chordSheet} from './practice/chord-sheet.js';
 import {progressionStudyPlan,planPosition} from './practice/progression-timing.js';
 import {progressionNotationSvg} from './practice/progression-notation.js';
@@ -37,7 +38,7 @@ import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, prog
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { scaleChoicesForChord } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 let customProgression:any;
@@ -244,6 +245,7 @@ let exerciseNextStart:number|undefined;
 let exerciseTimelineStart:number|undefined;
 let exerciseAnimationFrame=0;
 let exerciseRepetitions=0;
+let exerciseSymbolCycle=-1;
 let exerciseSelectionStart:number|null=null,exerciseSelectionEnd:number|null=null;
 let exerciseDragPointer:number|null=null,exerciseDragMoved=false,suppressExerciseNoteClick=false;
 const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
@@ -262,14 +264,14 @@ function stopExercisePreview() {
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
-  exerciseSources=[];exercisePlaying=false;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
+  exerciseSources=[];exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
   if(stopBacking){node?.port.postMessage({type:'stop'});renderProgressionReference();}
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');button.removeAttribute('aria-busy');}
   const rangeButton=document.querySelector<HTMLButtonElement>('#exercise-play-range');if(rangeButton)rangeButton.textContent='▶ Play selection';
   document.querySelectorAll('.exercise-note').forEach(note=>note.classList.remove('playing','played'));
   highlightLearningNote(null,currentExercise);syncMiniTransport();
-  reflectExerciseSelection();
+  reflectExerciseSelection();refreshBackingSymbols();
 }
 
 function exerciseRange(){
@@ -302,7 +304,8 @@ function updateExerciseCursor(){
   else if(sequence.length){
     const elapsedExercise=Math.max(0,elapsed-countIn),phraseDuration=sequence.length*noteLength;
     const cycleDuration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
-    const cyclePosition=elapsedExercise%cycleDuration,repetition=Math.floor(elapsedExercise/cycleDuration)+1;
+    const cyclePosition=elapsedExercise%cycleDuration;const cycle=Math.floor(elapsedExercise/cycleDuration);if(cycle!==exerciseSymbolCycle){exerciseSymbolCycle=cycle;refreshBackingSymbols(cycle*cycleDuration*exerciseView.tempo/60);}
+    const repetition=Math.floor(elapsedExercise/cycleDuration)+1;
     const resting=cyclePosition>=phraseDuration,index=resting?sequence.length-1:Math.min(sequence.length-1,Math.floor(cyclePosition/noteLength)),globalIndex=exerciseRange().start+index;
     document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const value=Number(note.dataset.noteIndex);note.classList.toggle('playing',value===globalIndex);note.classList.toggle('played',value<globalIndex&&value>=exerciseRange().start);});
     highlightLearningNote(resting?null:globalIndex,currentExercise);
@@ -336,6 +339,7 @@ function renderCagedExercise(position:any,board:any,info:any) {
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionDurations(settings),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else{exercisePlan=null;if(exerciseView.stage!=='full')currentExerciseGroups=shortCell(currentExerciseGroups);}
+  if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
   const materialName=exerciseView.material==='triad'?'triads':exerciseView.material==='extensions'?'ninth chords':'tetrads';
@@ -347,7 +351,7 @@ function renderCagedExercise(position:any,board:any,info:any) {
   const directionOptions=isAlignedStudy()?(exerciseView.study==='guidetones'?'<option value="ascending">Lower starting guide</option><option value="descending">Upper starting guide</option>':'<option value="ascending">Ascending arpeggios</option><option value="descending">Descending arpeggios</option>'):alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
   const exerciseFooter=exercisePlan?'This study follows the progression in chord order. Direction changes the pitch path, not the chord order.':`This study starts at the ${startsHigh?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position.`;
   const exerciseRoot=exerciseView.study==='pentatonic'&&sourceChoice?.rootPc!==undefined?info.scaleNames[info.scalePcs.indexOf(sourceChoice.rootPc)]:info.scaleNames[0];
-  const notation=exercisePlan?progressionNotationSvg(exercisePlan,`${studyName} · ${exerciseRoot}`):exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,`${studyName} · ${exerciseRoot}`,{backingChord:info.name+info.suffix,groupChords:['harmonized','alternating','chordtones','chordtonesalternating','inversions','approach','approacheverytone','triadpairs'].includes(exerciseView.study)});
+  const notation=exercisePlan?progressionNotationSvg(exercisePlan,`${studyName} · ${exerciseRoot}`):exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,`${studyName} · ${exerciseRoot}`,{backingChord:settings.progression?'':info.name+info.suffix,groupChords:false,beats:settings.beats});
   const favouriteOptions=exerciseFavourites().map((item:any,index:number)=>`<option value="${index}">${escapeHtml(item.study)} · ${escapeHtml(item.pattern||item.material)}</option>`).join('');
   const sourceControl=sourceChoices.length?`<label>Source<select id="exercise-source">${sourceChoices.map((choice:any)=>`<option value="${escapeHtml(choice.id)}">${escapeHtml(choice.name)}</option>`).join('')}</select></label>`:'';
   const patternControl=exerciseView.study==='pentatonic'?`<label>Pattern<select id="exercise-pattern">${Object.entries(PENTATONIC_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label>`:'';
@@ -373,12 +377,17 @@ function renderCagedExercise(position:any,board:any,info:any) {
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
+  refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
+  void document.fonts.ready.then(()=>reserveChordBands(el('caged-exercise')));
 }
 
+function backingChordAt(beat:number){const config=exerciseBackingConfig(),index=config.progression?progressionStepAtBeat(config,beat):0,info=harmonyAt(config,index);return info.name+info.suffix;}
+function refreshBackingSymbols(baseBeat=0){if(exercisePlan)return;const division=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;updateBackingSymbols(el('caged-exercise'),backingChordAt,division,settings.beats,exercisePlaying?exerciseRange():{start:0,end:currentExercise.length-1},baseBeat);}
+
 function exerciseBackingConfig(){
-  if(isAlignedStudy())return {...settings,trainerEnabled:false,gapEnabled:false,extensionMorph:false};
+  if(settings.progression)return {...settings,trainerEnabled:false,gapEnabled:false,extensionMorph:false};
   if(!studyHarmony)return settings;
   return {...settings,progression:false,key:studyHarmony.chordPcs[0],chord:studyHarmony.chordId,mode:studyHarmony.scalePcs[0]===studyHarmony.chordPcs[0]?studyHarmony.mode:recommendedMode(studyHarmony.chordId),extensionMorph:false};
 }
@@ -418,7 +427,7 @@ async function toggleExercisePreview() {
   stopPreview();
   const generation=++exercisePrepareGeneration;exercisePreparing=true;el('exercise-preview').textContent='Loading… click to cancel';el('exercise-preview').setAttribute('aria-busy','true');syncMiniTransport();
   try{
-    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;syncMiniTransport();
+    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.08:undefined;
     if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
@@ -443,7 +452,7 @@ function renderProgressionReference(activeStep=step) {
   }).join('');
   document.querySelectorAll<HTMLElement>('.progression-reference').forEach(element=>{
     const referenceExpanded=element.querySelector<HTMLDetailsElement>('details')?.open??(element.getAttribute('aria-label')==='Exercise progression reference'?exerciseReferenceExpanded:false);
-    if(exercisePlaying&&exerciseView.backing&&!['guidetones','connections'].includes(exerciseView.study)&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
+    if(exercisePlaying&&exerciseView.backing&&!settings.progression&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'?order.reduce((sum:number,index:number)=>sum+progressionBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
     const context=musicalContext(settings,activeStep);
     if(element.classList.contains('compact-reference')){const list=element.querySelector('ol')!;const help=element.querySelector('.reference-preview-help')!;const details=document.createElement('details');details.open=referenceExpanded;details.innerHTML='<summary>Full progression · hold a chord to hear it</summary>';details.append(list,help);element.append(details);element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
