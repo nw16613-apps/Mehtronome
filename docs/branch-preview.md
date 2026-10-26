@@ -143,3 +143,5 @@ Choose a progression in Harmony, then select an exercise in Exercises. The writt
 The chosen position anchors a nearby CAGED route. The compact fretboard is above the full-width score and follows the current chord during playback. Select a progression card while stopped to examine another chord’s notes, scale and grip information. **Starting position** moves the route; **Try without diagram** still hides/reveals it. Source pentatonics or triad pairs are adapted only to available choices, with the per-chord choices listed in **How to practise → Material and region for each chord**.
 
 Short-cell mode now gives one cell per chord for these adaptive studies. Dedicated guide-line studies retain their separate short-cell behavior. Pedal mode remains a held-chord study. Existing presets and journal formats are unchanged.
+
+The pedal-chord Exercises view now places CAGED position directly above its fretboard. Change it there to rebuild the linked notation and diagram together. Progression studies retain their grouped route controls.

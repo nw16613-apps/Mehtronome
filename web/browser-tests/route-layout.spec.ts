@@ -6,3 +6,7 @@ test('navigation controls sit with progression cards and Inspect chord is remove
  await page.locator('.exercise-position-route [data-inspect-slot="1"]').focus();await page.keyboard.press('Enter');await expect(page.locator('.exercise-map-heading')).toContainText('E7');await page.locator('.exercise-position-route').screenshot({path:'/workspace/route-layout-exercises.png'});
  await page.locator('#exercise-position-navigation').selectOption('all');await expect(page.locator('.exercise-position-route #exercise-position')).toBeVisible();await expect(page.locator('.exercise-position-route #exercise-position-region')).toHaveCount(0);await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await expect(page.locator('.exercise-position-route #exercise-position-navigation')).toBeVisible();
 });
+test('pedal study position can be changed beside the diagram and keeps notation linked',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
+ const position=page.locator('.exercise-linked-fretboard #exercise-position');await expect(position).toBeVisible();await position.selectOption('II');await expect(page.locator('.exercise-map-heading')).toContainText('Position II');await expect(page.locator('#exercise-position')).toHaveValue('II');await expect(page.locator('.exercise-learning-toolbar #exercise-position')).toHaveCount(0);
+});
