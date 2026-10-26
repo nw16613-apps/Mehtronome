@@ -1,3 +1,5 @@
+import {progressionStudyPlan,planPosition} from './practice/progression-timing.js';
+import {progressionNotationSvg} from './practice/progression-notation.js';
 import {installJournal} from './practice/journal-view.js';
 import {GOALS,gripStudy,positionalArpeggio,gripFacts,shortCell,overlayPurpose,guideToneExamples} from './practice/learning.js';
 import {learningView,highlightLearningNote} from './practice/learning-view.js';
@@ -23,7 +25,7 @@ import './icons.css';
 import {applyStudioIcons} from './practice/icons.js';
 import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, parentMajorFor } from './guitar/fretboard.js';
-import { cagedStudy, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
+import { cagedStudy, alignedProgressionGroups, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import { COMPING_PATTERNS, COMPING_MOVEMENTS, COMPING_TONES } from './audio/comping.js';
@@ -223,6 +225,9 @@ const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhy
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let studyHarmony:any,studyBoard:any,studyPosition:any;
 let exerciseBackingStep=0;
+let exercisePlan:any=null;
+function isAlignedStudy(){return settings.progression&&['guidetones','connections'].includes(exerciseView.study);}
+function selectedPlanEvents(){const range=exerciseRange();return exercisePlan.events.filter((e:any)=>e.index>=range.start&&e.index<=range.end);}
 let activeGoal='';
 let gripOnly=false;
 let exerciseReferenceExpanded=false;
@@ -284,6 +289,15 @@ function updateExerciseCursor(){
   const elapsed=context.currentTime-exerciseTimelineStart,countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const status=document.querySelector<HTMLElement>('#exercise-playback-status'),progress=document.querySelector<HTMLElement>('#exercise-progress-fill');
   if(elapsed<countIn){const beat=Math.max(1,Math.ceil((countIn-elapsed)/(60/exerciseView.tempo)));if(status)status.textContent=`Count-in · ${settings.beats-beat+1} / ${settings.beats}`;}
+  else if(sequence.length&&exercisePlan){
+    const elapsedBeats=Math.max(0,elapsed-countIn)*exerciseView.tempo/60;
+    const position=planPosition({...exercisePlan,events:selectedPlanEvents()},elapsedBeats);
+    const index=position.event?.index??null;
+    document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',index!==null&&Number(note.dataset.noteIndex)===index&&position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
+    highlightLearningNote(index,currentExercise);
+    if(status)status.textContent=`${position.slot.chord} · ${index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play chord tones'} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
+    if(progress)progress.style.width=`${position.beat/exercisePlan.duration*100}%`;
+  }
   else if(sequence.length){
     const elapsedExercise=Math.max(0,elapsed-countIn),phraseDuration=sequence.length*noteLength;
     const cycleDuration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
@@ -306,16 +320,21 @@ function renderCagedExercise(position:any,board:any,info:any) {
   studyHarmony=info;studyBoard=board;studyPosition=position;
   if(exerciseView.tempoLinked)exerciseView.tempo=settings.bpm;
   if(!settings.progression&&['guidetones','connections'].includes(exerciseView.study))exerciseView.study='harmonized';
-  if(['guidetones','connections'].includes(exerciseView.study))exerciseView.backing=false;
   const exerciseProgression=settings.progression?progressionOrder(settings).map((index:number)=>chordInfo(index)):[info];
   const suggestions=theoryOptions(info);
   const sourceChoices=exerciseView.study==='triadpairs'?suggestions.triadPairs:exerciseView.study==='pentatonic'?suggestions.pentatonics:[];
   const sourceChoice=sourceChoices.find((choice:any)=>choice.id===exerciseView.source)||sourceChoices[0];
   if(sourceChoice)exerciseView.source=sourceChoice.id;
-  currentExerciseGroups=cagedStudy(board,info,exerciseView.study,exerciseView.material,exerciseView.motion,{progression:exerciseProgression,source:sourceChoice?.id,pattern:exerciseView.pattern});
+  currentExerciseGroups=isAlignedStudy()?[]:cagedStudy(board,info,exerciseView.study,exerciseView.material,exerciseView.motion,{progression:exerciseProgression,source:sourceChoice?.id,pattern:exerciseView.pattern});
   if(exerciseView.study==='grip')currentExerciseGroups=gripStudy(board,info);
   if(exerciseView.study==='positional')currentExerciseGroups=positionalArpeggio(board,info,exerciseView.motion);
-  if(exerciseView.stage!=='full')currentExerciseGroups=shortCell(currentExerciseGroups);
+  if(isAlignedStudy()){
+    if(!['ascending','descending'].includes(exerciseView.motion))exerciseView.motion='ascending';
+    currentExerciseGroups=alignedProgressionGroups(board,exerciseProgression,exerciseView.study,exerciseView.material,exerciseView.motion);
+    if(exerciseView.stage==='cell')currentExerciseGroups=currentExerciseGroups.map((group:any,index:number)=>index?{...group,notes:[]}:group);
+    exerciseView.autoTempo=false;
+    exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionDurations(settings),settings.beats,exerciseView.study,exerciseView.rhythm);
+  }else{exercisePlan=null;if(exerciseView.stage!=='full')currentExerciseGroups=shortCell(currentExerciseGroups);}
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
   const materialName=exerciseView.material==='triad'?'triads':exerciseView.material==='extensions'?'ninth chords':'tetrads';
@@ -324,14 +343,15 @@ function renderCagedExercise(position:any,board:any,info:any) {
   const studyName={grip:'Exact grip notes',positional:'Full positional arpeggio',harmonized:`Harmonized ${materialName}`,alternating:`${alternatingLabel} diatonic ${materialName}`,chordtones:`${materialTitle} from each chord tone`,chordtonesalternating:`${alternatingLabel} ${materialName} from each chord tone`,cells:'Diatonic 1–2–3–5 cells',thirds:'Scale in thirds',fourths:'Scale in fourths',sixths:'Scale in sixths',digital1324:'Diatonic 1–3–2–4 pattern',groups3:'Ascending groups of three',groups4:'Ascending groups of four',inversions:`${info.name}${info.suffix} inversion cycle`,enclosures:'Jazz enclosures · above then below',enclosuresbelowabove:'Jazz enclosures · below then above',enclosureschromatic:'Tight chromatic enclosures',enclosuresdouble:'Double jazz enclosures',enclosuresfiveone:'Five-note enclosure 1',enclosuresfivetwo:'Five-note enclosure 2',enclosuresfivethree:'Five-note enclosure 3',enclosuresfivefour:'Five-note enclosure 4',approach:`Chromatic approach-note ${materialName}`,doubleapproach:'Double chromatic approaches',chromaticneighbors:'Chromatic neighbour cells',passingtones:'Chromatic passing-tone scale',approacheverytone:`Approach every ${materialName.slice(0,-1)} tone`,upperstructure:'3–5–7–9 upper structures',guidetones:'Guide-tone voice leading',connections:`Voice-led ${materialName} connections`,triadpairs:'Triad-pair lines',pentatonic:'Superimposed pentatonic sequences'}[exerciseView.study] || `Harmonized ${materialName}`;
   const startsHigh=exerciseView.motion==='descending'||exerciseView.motion==='down-up';
   const alternatingStudy=['alternating','chordtonesalternating'].includes(exerciseView.study);
-  const directionOptions=alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
+  const directionOptions=isAlignedStudy()?(exerciseView.study==='guidetones'?'<option value="ascending">Lower starting guide</option><option value="descending">Upper starting guide</option>':'<option value="ascending">Ascending arpeggios</option><option value="descending">Descending arpeggios</option>'):alternatingStudy?'<option value="ascending">Up/down · low to high</option><option value="descending">Down/up · high to low</option>':'<option value="ascending">Ascending</option><option value="descending">Descending</option><option value="up-down">Ascending and descending</option><option value="down-up">Descending and ascending</option>';
+  const exerciseFooter=exercisePlan?'This study follows the progression in chord order. Direction changes the pitch path, not the chord order.':`This study starts at the ${startsHigh?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position.`;
   const exerciseRoot=exerciseView.study==='pentatonic'&&sourceChoice?.rootPc!==undefined?info.scaleNames[info.scalePcs.indexOf(sourceChoice.rootPc)]:info.scaleNames[0];
-  const notation=exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,`${studyName} · ${exerciseRoot}`);
+  const notation=exercisePlan?progressionNotationSvg(exercisePlan,`${studyName} · ${exerciseRoot}`):exerciseNotationSvg(currentExerciseGroups,exerciseView.rhythm,`${studyName} · ${exerciseRoot}`);
   const favouriteOptions=exerciseFavourites().map((item:any,index:number)=>`<option value="${index}">${escapeHtml(item.study)} · ${escapeHtml(item.pattern||item.material)}</option>`).join('');
   const sourceControl=sourceChoices.length?`<label>Source<select id="exercise-source">${sourceChoices.map((choice:any)=>`<option value="${escapeHtml(choice.id)}">${escapeHtml(choice.name)}</option>`).join('')}</select></label>`:'';
   const patternControl=exerciseView.study==='pentatonic'?`<label>Pattern<select id="exercise-pattern">${Object.entries(PENTATONIC_PATTERNS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label>`:'';
   const voiceLeadingControl=settings.progression?'<optgroup label="Voice leading"><option value="guidetones">Guide-tone lines</option><option value="connections">Arpeggio connections</option></optgroup>':'';
-  el('caged-exercise').innerHTML=`<section class="progression-reference compact-reference" aria-label="Exercise progression reference"></section><div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Selected chord"><option value="grip">Exact grip notes</option><option value="positional">Full positional arpeggio</option></optgroup><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Diatonic triads & arpeggios"><option value="harmonized">Harmonized scale</option><option value="alternating">Alternating diatonic arpeggios</option><option value="chordtones">Arpeggios from each chord tone</option><option value="chordtonesalternating">Alternating arpeggios from each chord tone</option><option value="inversions">Selected-chord inversions</option><option value="upperstructure">3-to-9 arpeggios</option></optgroup>${voiceLeadingControl}<optgroup label="Chromatic language"><option value="enclosures">Enclosures · above then below</option><option value="enclosuresbelowabove">Enclosures · below then above</option><option value="enclosureschromatic">Tight chromatic enclosures</option><option value="enclosuresdouble">Double jazz enclosures</option><option value="enclosuresfiveone">Five-note enclosure 1 · −1 +2 +1 −1</option><option value="enclosuresfivetwo">Five-note enclosure 2 · +1 −2 −1 +1</option><option value="enclosuresfivethree">Five-note enclosure 3 · −2 +1 −2 −1</option><option value="enclosuresfivefour">Five-note enclosure 4 · +2 −1 +2 +1</option><option value="approach">Approach-note arpeggios</option><option value="doubleapproach">Double chromatic approaches</option><option value="chromaticneighbors">Chromatic neighbour cells</option><option value="passingtones">Chromatic passing-tone scale</option><option value="approacheverytone">Approach every arpeggio tone</option></optgroup><optgroup label="Superimpositions"><option value="triadpairs">Triad-pair lines</option><option value="pentatonic">Pentatonic sequences</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label>${sourceControl}${patternControl}<label>Direction<select id="exercise-motion">${directionOptions}</select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label><label class="check exercise-backing"><input id="exercise-backing" type="checkbox">Use accompaniment</label></div><div class="exercise-practice-bar"><div class="exercise-tempo"><label>Exercise tempo <input id="exercise-tempo" type="number" min="30" max="240" value="${exerciseView.tempo}"></label><button type="button" class="practice-button" data-tempo-ratio=".5">½ speed</button><button type="button" class="practice-button" data-tempo-ratio=".75">¾ speed</button><button type="button" class="practice-button" data-tempo-ratio="1">Main tempo</button></div><div class="exercise-display"><label>Favourites<select id="exercise-favourites"><option value="">Saved exercises</option>${favouriteOptions}</select></label><label>Display<select id="exercise-display"><option value="both">Notation + TAB</option><option value="tab">TAB only</option><option value="notation">Notation only</option><option value="names">Note names + TAB</option><option value="degrees">Degrees + TAB</option></select></label><label>Size<select id="exercise-zoom"><option value="fit">Fit width</option><option value="comfortable">Comfortable</option><option value="large">Large</option></select></label></div><label class="check"><input id="exercise-auto-tempo" type="checkbox">Auto-increase tempo</label><label>Every <select id="exercise-auto-every"><option>2</option><option selected>4</option><option>8</option></select> repetitions</label><label>+ <input id="exercise-auto-increment" type="number" min="1" max="20" value="2"> BPM</label></div><div class="exercise-status-row"><span id="exercise-playback-status" role="status">Ready · click a note to hear it.</span><div class="exercise-progress"><i id="exercise-progress-fill"></i></div><div class="notation-legend"><span><i class="legend-target"></i>Target</span><span><i class="legend-active"></i>Playing</span></div></div><div class="exercise-range-controls" aria-label="Notation selection"><button id="exercise-play-range" type="button" class="practice-button" disabled>▶ Play selection</button><button id="exercise-clear-range" type="button" class="practice-button" disabled>Clear selection</button><span>Drag across notation notes to select and hear a passage.</span></div><div class="notation-scroll display-${exerciseView.display} zoom-${exerciseView.zoom}">${notation}</div><div class="exercise-footer"><p>This study starts at the ${startsHigh?'highest':'lowest'} available note and stays inside the displayed ${position.shape}-position. Note names or degrees can be shown beneath the synchronized notation and TAB.</p><div class="exercise-actions"><button id="exercise-history-back" type="button" class="practice-button" aria-label="Previous exercise">←</button><button id="exercise-history-forward" type="button" class="practice-button" aria-label="Next exercise">→</button><button id="exercise-favourite" type="button" class="practice-button">☆ Favourite</button><button id="exercise-export" type="button" class="practice-button">Export SVG</button><button id="exercise-print" type="button" class="practice-button">Print / PDF</button><button id="exercise-focus" type="button" class="practice-button" aria-pressed="false">Focus notation</button><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear jazz guitar</button></div></div>`;
+  el('caged-exercise').innerHTML=`<section class="progression-reference compact-reference" aria-label="Exercise progression reference"></section><div class="exercise-heading"><div><p class="eyebrow">POSITION PRACTICE</p><h3 id="caged-exercise-title">${escapeHtml(studyName)} · Position ${position.numeral}</h3></div><span>${escapeHtml(info.scaleNames[0])} ${escapeHtml(MODES[info.mode as keyof typeof MODES].name)} · ${exercisePlan&&exerciseView.study==='guidetones'?'Sustain through each chord':rhythmName}</span></div><div class="exercise-controls"><label>Exercise<select id="exercise-study"><optgroup label="Selected chord"><option value="grip">Exact grip notes</option><option value="positional">Full positional arpeggio</option></optgroup><optgroup label="Scale sequences"><option value="thirds">Scale in thirds</option><option value="fourths">Scale in fourths</option><option value="sixths">Scale in sixths</option><option value="groups3">Groups of three</option><option value="groups4">Groups of four</option><option value="digital1324">Diatonic 1–3–2–4</option><option value="cells">Diatonic 1–2–3–5</option></optgroup><optgroup label="Diatonic triads & arpeggios"><option value="harmonized">Harmonized scale</option><option value="alternating">Alternating diatonic arpeggios</option><option value="chordtones">Arpeggios from each chord tone</option><option value="chordtonesalternating">Alternating arpeggios from each chord tone</option><option value="inversions">Selected-chord inversions</option><option value="upperstructure">3-to-9 arpeggios</option></optgroup>${voiceLeadingControl}<optgroup label="Chromatic language"><option value="enclosures">Enclosures · above then below</option><option value="enclosuresbelowabove">Enclosures · below then above</option><option value="enclosureschromatic">Tight chromatic enclosures</option><option value="enclosuresdouble">Double jazz enclosures</option><option value="enclosuresfiveone">Five-note enclosure 1 · −1 +2 +1 −1</option><option value="enclosuresfivetwo">Five-note enclosure 2 · +1 −2 −1 +1</option><option value="enclosuresfivethree">Five-note enclosure 3 · −2 +1 −2 −1</option><option value="enclosuresfivefour">Five-note enclosure 4 · +2 −1 +2 +1</option><option value="approach">Approach-note arpeggios</option><option value="doubleapproach">Double chromatic approaches</option><option value="chromaticneighbors">Chromatic neighbour cells</option><option value="passingtones">Chromatic passing-tone scale</option><option value="approacheverytone">Approach every arpeggio tone</option></optgroup><optgroup label="Superimpositions"><option value="triadpairs">Triad-pair lines</option><option value="pentatonic">Pentatonic sequences</option></optgroup></select></label><label>Material<select id="exercise-material"><option value="triad">Triads</option><option value="seventh">Tetrads</option><option value="extensions">Ninth chords</option></select></label>${sourceControl}${patternControl}<label>Direction<select id="exercise-motion">${directionOptions}</select></label><label>Rhythm<select id="exercise-rhythm"><option value="eighths">Eighth notes</option><option value="triplets">Triplets</option><option value="sixteenths">Sixteenth notes</option></select></label><label class="check exercise-loop"><input id="exercise-loop" type="checkbox">Loop</label><label class="check exercise-backing"><input id="exercise-backing" type="checkbox">Use accompaniment</label></div><div class="exercise-practice-bar"><div class="exercise-tempo"><label>Exercise tempo <input id="exercise-tempo" type="number" min="30" max="240" value="${exerciseView.tempo}"></label><button type="button" class="practice-button" data-tempo-ratio=".5">½ speed</button><button type="button" class="practice-button" data-tempo-ratio=".75">¾ speed</button><button type="button" class="practice-button" data-tempo-ratio="1">Main tempo</button></div><div class="exercise-display"><label>Favourites<select id="exercise-favourites"><option value="">Saved exercises</option>${favouriteOptions}</select></label><label>Display<select id="exercise-display"><option value="both">Notation + TAB</option><option value="tab">TAB only</option><option value="notation">Notation only</option><option value="names">Note names + TAB</option><option value="degrees">Degrees + TAB</option></select></label><label>Size<select id="exercise-zoom"><option value="fit">Fit width</option><option value="comfortable">Comfortable</option><option value="large">Large</option></select></label></div><label class="check"><input id="exercise-auto-tempo" type="checkbox">Auto-increase tempo</label><label>Every <select id="exercise-auto-every"><option>2</option><option selected>4</option><option>8</option></select> repetitions</label><label>+ <input id="exercise-auto-increment" type="number" min="1" max="20" value="2"> BPM</label></div><div class="exercise-status-row"><span id="exercise-playback-status" role="status">Ready · click a note to hear it.</span><div class="exercise-progress"><i id="exercise-progress-fill"></i></div><div class="notation-legend"><span><i class="legend-target"></i>Target</span><span><i class="legend-active"></i>Playing</span></div></div><div class="exercise-range-controls" aria-label="Notation selection"><button id="exercise-play-range" type="button" class="practice-button" disabled>▶ Play selection</button><button id="exercise-clear-range" type="button" class="practice-button" disabled>Clear selection</button><span>Drag across notation notes to select and hear a passage.</span></div><div class="notation-scroll display-${exerciseView.display} zoom-${exerciseView.zoom}">${notation}</div><div class="exercise-footer"><p>${escapeHtml(exerciseFooter)} Note names or degrees can be shown beneath the synchronized notation and TAB.</p><div class="exercise-actions"><button id="exercise-history-back" type="button" class="practice-button" aria-label="Previous exercise">←</button><button id="exercise-history-forward" type="button" class="practice-button" aria-label="Next exercise">→</button><button id="exercise-favourite" type="button" class="practice-button">☆ Favourite</button><button id="exercise-export" type="button" class="practice-button">Export SVG</button><button id="exercise-print" type="button" class="practice-button">Print / PDF</button><button id="exercise-focus" type="button" class="practice-button" aria-pressed="false">Focus notation</button><button id="exercise-preview" type="button" class="practice-button" aria-pressed="false" ${playing||!currentExercise.length?'disabled':''}>▶ Hear jazz guitar</button></div></div>`;
   renderProgressionReference();
   select('exercise-study').value=exerciseView.study;
   select('exercise-material').value=exerciseView.material;
@@ -352,14 +372,16 @@ function renderCagedExercise(position:any,board:any,info:any) {
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
 }
 
 function exerciseBackingConfig(){
-  if(!studyHarmony||['guidetones','connections'].includes(exerciseView.study))return settings;
+  if(isAlignedStudy())return {...settings,trainerEnabled:false,gapEnabled:false,extensionMorph:false};
+  if(!studyHarmony)return settings;
   return {...settings,progression:false,key:studyHarmony.chordPcs[0],chord:studyHarmony.chordId,mode:studyHarmony.scalePcs[0]===studyHarmony.chordPcs[0]?studyHarmony.mode:recommendedMode(studyHarmony.chordId),extensionMorph:false};
 }
+function exerciseAudioSettings(){return {...exerciseBackingConfig(),bpm:exerciseView.tempo,sessionSeconds:exercisePlan&&!exerciseView.loop?exercisePlan.duration*60/exerciseView.tempo:0,sessionFinishBar:false};}
 function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   if(!context||!master||!currentExercise.length||!exercisePlaying)return;
   const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
@@ -367,9 +389,9 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const countIn=scheduledStart===undefined&&settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const start=scheduledStart??context.currentTime+.03+countIn;
   if(exerciseTimelineStart===undefined){exerciseTimelineStart=timelineOrigin??start-countIn;updateExerciseCursor();}
-  sequence.forEach((note,index)=>{
-    const at=start+index*noteLength;
-    const duration=Math.max(.045,noteLength*.96),release=Math.min(.045,duration*.3);
+  const events=exercisePlan?selectedPlanEvents().map((e:any)=>({note:e.note,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
+  events.forEach(({note,at,length}:any)=>{
+    const duration=Math.max(.045,Math.min(12,length*.96)),release=Math.min(.045,duration*.3);
     const samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration);
     const buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);
     const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
@@ -380,7 +402,7 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
     source.onended=()=>{const sourceIndex=exerciseSources.indexOf(source);if(sourceIndex>=0)exerciseSources.splice(sourceIndex,1);};
   });
-  const phraseDuration=sequence.length*noteLength;
+  const phraseDuration=exercisePlan?exercisePlan.duration*60/exerciseView.tempo:sequence.length*noteLength;
   const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
   const nextStart=start+duration;exerciseNextStart=nextStart;
   const lookahead=Math.min(1,Math.max(.2,duration*.25));
@@ -395,9 +417,9 @@ async function toggleExercisePreview() {
   stopPreview();
   const generation=++exercisePrepareGeneration;exercisePreparing=true;el('exercise-preview').textContent='Loading… click to cancel';el('exercise-preview').setAttribute('aria-busy','true');syncMiniTransport();
   try{
-    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=0;syncMiniTransport();
+    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;syncMiniTransport();
     const backingStart=exerciseView.backing?context!.currentTime+.08:undefined;
-    if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseBackingConfig(),sessionSeconds:0,bpm:exerciseView.tempo,countIn:settings.countIn}});
+    if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
     if(backingStart!==undefined){const countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;scheduleExercise(backingStart+countIn,backingStart);}
@@ -901,6 +923,7 @@ async function initialiseAudio() {
     ambientMeters.forEach((meter,index)=>{meter.fftSize=256;meterSplit.connect(meter,index);});
     node.port.onmessage = ({ data }) => {
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
+      if(!playing&&exercisePlaying&&data.type==='session-complete'){stopExercisePreview();return;}
       if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number'){exerciseBackingStep=data.step;renderProgressionReference(data.step);syncMiniTransport();}
       if (!playing) return;
       if(data.type==='session-complete'){
@@ -1151,7 +1174,7 @@ function favouriteExercise(){const favourites=exerciseFavourites(),snapshot=exer
 function exportExerciseSvg(){
   const svgs=Array.from(document.querySelectorAll<SVGSVGElement>('#caged-exercise .exercise-notation'));if(!svgs.length)return;const width=1200,heights=svgs.map(svg=>Number(svg.viewBox.baseVal.height)||280),height=heights.reduce((a,b)=>a+b,0);let y=0;
   const body=svgs.map((svg,index)=>{const viewWidth=Number(svg.viewBox.baseVal.width)||760,result=`<svg x="0" y="${y}" width="${width}" height="${heights[index]}" viewBox="0 0 ${viewWidth} ${heights[index]}">${svg.innerHTML}</svg>`;y+=heights[index];return result;}).join('');
-  const file=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><style>text{fill:#17201d}.notation-paper,.tab-fret-bg{fill:#fffdf8}.notation-line,.ledger-line,.bar-line,.note-stem{stroke:#26302c}.note-head{fill:#17201d}.note-beam{stroke:#17201d;stroke-width:5}</style>${body}</svg>`,url=URL.createObjectURL(new Blob([file],{type:'image/svg+xml'})),link=document.createElement('a');link.href=url;link.download=`mehtronome-${exerciseView.study}.svg`;link.click();URL.revokeObjectURL(url);
+  const file=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><style>text{fill:#17201d}.notation-paper,.tab-fret-bg{fill:#fffdf8}.notation-line,.ledger-line,.bar-line,.note-stem{stroke:#26302c}.note-head{fill:#17201d}.note-hole{fill:#fffdf8}.note-flag,.note-tie{fill:none;stroke:#17201d;stroke-width:1.5}.duration-dot{fill:#17201d}.note-beam{stroke:#17201d;stroke-width:5}</style>${body}</svg>`,url=URL.createObjectURL(new Blob([file],{type:'image/svg+xml'})),link=document.createElement('a');link.href=url;link.download=`mehtronome-${exerciseView.study}.svg`;link.click();URL.revokeObjectURL(url);
 }
 function exerciseNoteAtPoint(x:number,y:number){
   const direct=document.elementFromPoint(x,y)?.closest<SVGElement>('#caged-exercise .exercise-note');if(direct)return direct;
@@ -1327,7 +1350,7 @@ function reflectMixerChannels(){
   el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
 function sendMixerSettings(){
-  node?.port.postMessage({type:'settings',settings:exercisePlaying?{...exerciseBackingConfig(),bpm:exerciseView.tempo,sessionSeconds:0}:settings});
+  node?.port.postMessage({type:'settings',settings:exercisePlaying?exerciseAudioSettings():settings});
 }
 function updateMixerLevels(){
   settings.click=Number(input('click').value)/100;
@@ -1872,10 +1895,10 @@ async function startGuidedGoal(){
  if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';
- Object.assign(exerciseView,{study:goal.study,stage:'cell',fretboard:true,recall:false,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:goal.id!=='jazz'});exerciseSelectionStart=null;exerciseSelectionEnd=null;
+ Object.assign(exerciseView,{study:goal.study,stage:goal.id==='jazz'?'full':'cell',fretboard:true,recall:false,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
  fillLoopOptions(true);tempo(80);update();
  if(goal.id==='pentatonic'){const choices=theoryOptions(chordInfo(0)).pentatonics;exerciseView.source=choices[0]?.id||'';renderGuitar();}
- el('guided-session-title').textContent=goal.name;el('guided-session-tip').textContent=goal.tip+(goal.id==='jazz'?' Guide-line audition is unaccompanied; use the main progression to apply the targets yourself.':accompaniment==='modal'?' Modal exploration has evolving extensions enabled.':' Stable harmony is selected unless the setup states otherwise.');el('guided-session').hidden=false;input('preset-name').value=goal.name;
+ el('guided-session-title').textContent=goal.name;el('guided-session-tip').textContent=goal.tip+(goal.id==='jazz'?' Guide tones follow the chord durations. Choose Explore the position to hear every chord; a short cell leaves the other chord slots silent.':accompaniment==='modal'?' Modal exploration has evolving extensions enabled.':' Stable harmony is selected unless the setup states otherwise.');el('guided-session').hidden=false;input('preset-name').value=goal.name;
  showWorkspace(goal.workspace,learningTargets[goal.workspace]);
 }
 

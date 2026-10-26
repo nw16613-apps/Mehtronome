@@ -539,3 +539,30 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
   const totalNoteCount=flattenExercise(groups).length;
   return systems.map((system,index)=>notationSystemSvg(system,rhythm,title,index,index===systems.length-1,totalNoteCount)).join('');
 }
+
+/** One study group per progression step, in playback order. Direction changes
+ * the pitch path, never the chord order. Empty slots retain harmonic time. */
+export function alignedProgressionGroups(board,progression,study,material='seventh',motion='ascending') {
+  const descending=motion==='descending'||motion==='down-up';
+  let previous=descending?Math.max(...board.notes.map(n=>n.midi)):Math.min(...board.notes.map(n=>n.midi));
+  return progression.map((current,slot)=>{
+    let notes=[];
+    if(study==='guidetones'){
+      const pcs=[current.chordPcs[1],current.chordPcs[3]].filter(pc=>pc!==undefined);
+      const candidates=[];
+      for(const pc of pcs)for(let midi=40;midi<89;midi++)if(midi%12===pc){const note=noteAtMidi(board,midi,current);if(note)candidates.push(note);}
+      const note=candidates.toSorted((a,b)=>Math.abs(a.midi-previous)-Math.abs(b.midi-previous)||(descending?b.midi-a.midi:a.midi-b.midi))[0];
+      if(note)notes=[note];
+    }else{
+      const size=MATERIAL_SIZES[material]||4,pcs=current.chordPcs.slice(0,size),names=current.tones.slice(0,pcs.length),candidates=[];
+      for(let inversion=0;inversion<pcs.length;inversion++){
+        const path=pathForPcs(board,[...pcs.slice(inversion),...pcs.slice(0,inversion)],[...names.slice(inversion),...names.slice(0,inversion)],!descending,previous);
+        if(path?.length===pcs.length)candidates.push(path);
+      }
+      notes=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0]||[];
+    }
+    notes=notes.map(note=>({...note,chromaticDegree:current.intervals[current.chordPcs.indexOf(note.pc)]||note.chromaticDegree}));
+    if(notes.length)previous=notes.at(-1).midi;
+    return {slot,chord:`${current.name}${current.suffix}`,rootName:current.name,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),notes,annotation:study==='guidetones'?(notes.length?`${current.intervals[current.chordPcs.indexOf(notes[0].pc)]} · hold for this chord`:'Rest · no guide tone in this region'):notes.length?'Chord tones · rest until the next change':'Rest · no complete arpeggio fits this region'};
+  });
+}
