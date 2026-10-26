@@ -108,7 +108,7 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
-        <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div>
+        <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div></div>
         <div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p><div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor">
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
@@ -669,6 +669,19 @@ function fillLoopOptions(reset = false) {
   }
 }
 let customStepIndex=0;
+const customUndo:any[]=[],customRedo:any[]=[];
+function rememberCustomEdit(){customUndo.push({progression:structuredClone(customProgression),index:customStepIndex});if(customUndo.length>50)customUndo.shift();customRedo.length=0;}
+async function restoreCustomEdit(undo:boolean){
+ if(stopping)return;
+ const source=undo?customUndo:customRedo,destination=undo?customRedo:customUndo;
+ const previous=source.pop();if(!previous)return;
+ el<HTMLButtonElement>('custom-undo').disabled=true;el<HTMLButtonElement>('custom-redo').disabled=true;
+ stopPreview();stopExercisePreview();if(playing)await stop();
+ destination.push({progression:structuredClone(customProgression),index:customStepIndex});
+ customProgression=previous.progression;customStepIndex=previous.index;step=customStepIndex;
+ saveCustomProgression(undo?'Progression edit undone.':'Progression edit redone.');fillLoopOptions(true);update();
+}
+
 function actualCustomName(offset:number){return names[(Number(select('key').value)+offset)%12];}
 function saveCustomProgression(message='Custom progression saved in this browser.'){
   customProgression=normalizeCustomProgression(customProgression);
@@ -694,6 +707,7 @@ function renderCustomBuilder(){
   el('customize-progression').hidden=!settings.progression||active;
   if(!active)return;
   customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
+  el<HTMLButtonElement>('custom-undo').disabled=!customUndo.length;el<HTMLButtonElement>('custom-redo').disabled=!customRedo.length;
   const current=customProgression.steps[customStepIndex];
   el('custom-progression-title').textContent=customProgression.name;
   for(const id of ['custom-root','custom-bass']){
@@ -724,6 +738,7 @@ function renderCustomBuilder(){
   el<HTMLButtonElement>('custom-right').disabled=customStepIndex===customProgression.steps.length-1;
 }
 function commitCustomEdit(autoMode=false){
+  rememberCustomEdit();
   const item=customProgression.steps[customStepIndex];
   item.root=Number(select('custom-root').value);
   item.chord=select('custom-chord').value;
@@ -1515,6 +1530,7 @@ select('template').addEventListener('input', () => {
 });
 el('customize-progression').addEventListener('click',()=>{
   stopPreview();
+  rememberCustomEdit();
   customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode);
   customProgression.name='My progression';customStepIndex=0;
   saveCustomProgression('Template copied. Edit any chord below; changes save automatically.');
@@ -1534,26 +1550,31 @@ el('custom-timeline').addEventListener('dragover',event=>event.preventDefault())
 el('custom-timeline').addEventListener('drop',event=>{
   event.preventDefault();const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-custom-step]');
   if(!button||draggedCustomStep===null)return;const destination=Number(button.dataset.customStep);
+  if(destination===draggedCustomStep)return;rememberCustomEdit();
   const [item]=customProgression.steps.splice(draggedCustomStep,1);customProgression.steps.splice(destination,0,item);customStepIndex=destination;draggedCustomStep=null;
   saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
 });
 for(const id of ['custom-root','custom-mode','custom-bars','custom-beats','custom-duration-unit','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(false));
 el('custom-chord').addEventListener('input',()=>commitCustomEdit(true));
+el('custom-undo').addEventListener('click',()=>restoreCustomEdit(true));
+el('custom-redo').addEventListener('click',()=>restoreCustomEdit(false));
 el('custom-add').addEventListener('click',()=>{
+  rememberCustomEdit();
   const previous=customProgression.steps.at(customStepIndex)||customProgression.steps.at(-1);
   customProgression.steps.splice(customStepIndex+1,0,{...previous,root:(previous.root+5)%12,bass:null,mode:recommendedMode(previous.chord)});
   customStepIndex++;saveCustomProgression('Chord added.');fillLoopOptions(true);update();
 });
 el('custom-duplicate').addEventListener('click',()=>{
+  rememberCustomEdit();
   customProgression.steps.splice(customStepIndex+1,0,{...customProgression.steps[customStepIndex]});customStepIndex++;
   saveCustomProgression('Chord duplicated.');fillLoopOptions(true);update();
 });
 el('custom-delete').addEventListener('click',()=>{
-  if(customProgression.steps.length===1)return;customProgression.steps.splice(customStepIndex,1);customStepIndex=Math.min(customStepIndex,customProgression.steps.length-1);
+  if(customProgression.steps.length===1)return;rememberCustomEdit();customProgression.steps.splice(customStepIndex,1);customStepIndex=Math.min(customStepIndex,customProgression.steps.length-1);
   saveCustomProgression('Chord removed.');fillLoopOptions(true);update();
 });
 for(const [id,direction]of [['custom-left',-1],['custom-right',1]] as const)el(id).addEventListener('click',()=>{
-  const destination=customStepIndex+direction;if(destination<0||destination>=customProgression.steps.length)return;
+  const destination=customStepIndex+direction;if(destination<0||destination>=customProgression.steps.length)return;rememberCustomEdit();
   [customProgression.steps[customStepIndex],customProgression.steps[destination]]=[customProgression.steps[destination],customProgression.steps[customStepIndex]];customStepIndex=destination;
   saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
 });
@@ -1864,7 +1885,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     }
     restoreControl('quality',preset.controls.quality);
     restoreControl('key',preset.controls.key);
-    if(preset.customProgression){customProgression=normalizeCustomProgression(preset.customProgression);saveCustomProgression(`Loaded custom progression from “${preset.name}”.`);}
+    if(preset.customProgression){customUndo.length=0;customRedo.length=0;customProgression=normalizeCustomProgression(preset.customProgression);saveCustomProgression(`Loaded custom progression from “${preset.name}”.`);}
     settings.progression = preset.progression;
     fillChords(); // Refresh mode-dependent template availability before restoring it.
     restoreControl('template',preset.controls.template);

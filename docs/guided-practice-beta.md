@@ -99,3 +99,10 @@ Demonstrate/your-turn flow appends a matching response section without lead note
 These forms currently support 4/4 only. Other metres retain the ordinary study and manual prompt. Written forms use fixed tempo and their own rhythm, with no extra playback engine.
 
 Validation: 38 unit-test files passed. Focused browser suites cover written rests/accents, response AudioContext scheduling and exact completion, backing changes, journal recall, mobile layout, adaptive exercises and chord-sheet regressions. Device audio fidelity and anatomical fingering remain outside these checks. Deferred musical-content/shape bugs remain for the later review.
+
+
+## Checkpoint 8 — reversible progression editing
+
+My progression now has labelled native Undo/Redo buttons beside Add chord. History covers chord root, quality, mode, bass, bar/beat durations, add, duplicate, delete, reorder and copying a template. Restoring history also restores the editor selection, rebuilds chart/loop options and saves the resulting arrangement. Playback stops first. A new edit clears redo; up to 50 edits are retained per page session. Reload or loading a saved custom progression resets history; saved-data formats are unchanged. Tonic, mixer and loop-selection controls are outside progression history.
+
+Validation: production build and focused browser workflows cover duration round trips, multiple structural edits, redo invalidation, automatic persistence/reload, playback stopping and mobile overflow, alongside existing chart/editing/export regressions. The deferred musical-content and shape review remains deferred.

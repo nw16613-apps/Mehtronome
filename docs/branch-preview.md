@@ -3,9 +3,18 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: Checkpoint 7 adds written application phrases and demonstrate/your-turn playback. Earlier progression, chord-sheet and adaptive exercise changes remain included.
+- Current preview app checkpoint: Checkpoint 8 adds Undo and Redo to My progression. Earlier features remain included.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
+
+## Try checkpoint 8
+
+1. Open **Harmony**, choose a progression and **Create from this progression**.
+2. In **My progression**, change a chord or duration, duplicate/delete a chord, or reorder it.
+3. Use **Undo** and **Redo** beside **Add chord**. The selected chord and arrangement return together; the chart and saved progression update.
+4. Undo, then make a different edit: Redo clears. Undo/redo stops playback before restoring an arrangement.
+
+History holds up to 50 edits in this page session. It resets on reload or when a saved session/preset loads a custom progression. The restored arrangement itself remains saved in this browser. History covers progression content, not tonic, mixer, or loop-selection controls.
 
 ## Try checkpoint 7
 
