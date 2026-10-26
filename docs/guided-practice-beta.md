@@ -88,3 +88,14 @@ Supersedes the starting-material limitation from the preceding symbol correction
 The existing beat plan drives notation, playback and multiple target markers for all progression exercises. Current/next harmony stays aligned with the backing, including custom beat durations and wrapped loops. The linked map updates its chord/scale labels, notes, grip facts and active pitch at chord boundaries. A stopped Inspect chord control exposes each context. Short-cell mode applies one cell to each chord; dedicated guide-tone/connection handling is retained. Pedal material, preset and journal schemas are unchanged.
 
 Moved the compact fretboard above the full-width score at all viewport sizes, retaining hide/show and recall. Validation: all unit files pass, with new chord-membership, mode/interval, physical-coordinate, target/cell-boundary, source-adaptation and region checks across keys, five frameworks and altered harmony. Browser workflows verify different notes for Bm7/E7/Amaj7, live diagram/harmony changes, manual inspection, desktop/mobile stacking, exports, beat editing, guide playback, pedal fallback and journal recall. These checks do not verify anatomical fingering or device audio fidelity.
+
+
+## Checkpoint 7 — written application and response
+
+The existing Apply stage now offers three authored rhythmic forms using the selected study’s pitches: cell/hold/space, delayed resolution, and cell/answer. Complete source cells and enclosure targets are preserved; rests, held durations and accents are written and played. Progression phrases retain their chord slots and nearby CAGED context. Cells that cannot fit receive explicit warnings and silence rather than truncation.
+
+Demonstrate/your-turn flow appends a matching response section without lead notes, while enabled backing continues. The transport and score identify the response; looping repeats both parts, and one-shot playback stops after the response. No microphone assessment or timing score is implied. Journal entries and favourites retain phrase/flow choices; older entries use compatible defaults without schema migration.
+
+These forms currently support 4/4 only. Other metres retain the ordinary study and manual prompt. Written forms use fixed tempo and their own rhythm, with no extra playback engine.
+
+Validation: 38 unit-test files passed. Focused browser suites cover written rests/accents, response AudioContext scheduling and exact completion, backing changes, journal recall, mobile layout, adaptive exercises and chord-sheet regressions. Device audio fidelity and anatomical fingering remain outside these checks. Deferred musical-content/shape bugs remain for the later review.

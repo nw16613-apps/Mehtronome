@@ -20,17 +20,17 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   // makes the current chord context audible without changing the exercise.
   const rootCell=cells.findIndex(cell=>cell.notes[0]?.pc===harmony.chordPcs[0]);
   if(rootCell>0)cells=[...cells.slice(rootCell),...cells.slice(0,rootCell)];
-  const notes=[],targetIndices=[],used=[];
+  const notes=[],targetIndices=[],used=[],cellLengths=[];
   if(study==='positional'&&cells.length)cells=[{...cells[0],notes:cells[0].notes.slice(0,capacity)}];
   for(const cell of cells){
    if(!cell.notes.length)continue;
    if(notes.length+cell.notes.length>capacity)break;
-   const start=notes.length;notes.push(...cell.notes);used.push(cell.chord);
+   const start=notes.length;notes.push(...cell.notes);used.push(cell.chord);cellLengths.push(cell.notes.length);
    if(cell.targetIndex!==undefined)targetIndices.push(start+cell.targetIndex);
    if(stage==='cell')break;
   }
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:'';
-  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,globalStart,warning,
+  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });

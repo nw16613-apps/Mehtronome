@@ -20,3 +20,4 @@ html:root[data-palette][data-theme] .exercise-linked-fretboard .fret-note{opacit
 .custom-editor label[hidden]{display:none}
 /* The current chord map leads into a full-width score. */
 .exercise-material-layout{grid-template-columns:minmax(0,1fr)}.exercise-material-layout .exercise-linked-fretboard .fretboard{max-height:240px;max-width:680px;margin-inline:auto}.exercise-map-diagram{width:100%;max-width:760px;margin-inline:auto}.progression-materials{margin-top:12px}.progression-materials li{margin:10px 0;line-height:1.65}
+.note-accent{fill:#17201d;font:bold 18px Georgia,serif;pointer-events:none}.display-tab .note-accent{display:none}.application-challenge{padding:10px 12px;border-left:3px solid var(--accent)}

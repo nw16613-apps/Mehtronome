@@ -3,11 +3,21 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: Checkpoint 6 adds beat-level custom progression durations and a live chord sheet with bar lines, beat slashes and formatted chord symbols. Existing bar-based progressions remain compatible. The checkpoint 5 movement lab has been removed following feedback.
+- Current preview app checkpoint: Checkpoint 7 adds written application phrases and demonstrate/your-turn playback. Earlier progression, chord-sheet and adaptive exercise changes remain included.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
 
-## Try this checkpoint
+## Try checkpoint 7
+
+1. In Exercises choose a study, then **Stage → Apply it musically** in 4/4.
+2. Compare the **Written phrase** choices: Cell, hold, space; Delay the resolution; Cell and answer. Read the rests, holds and accents in the score. These rhythmic forms use the selected study’s pitches.
+3. Choose **Practice flow → Demonstrate, then your turn**, then **Hear jazz guitar**. Listen first; play during the equally long response section. The lead guitar rests while enabled backing continues. Loop repeats both sections. This does not record or score your playing.
+4. Try a progression: each phrase uses that chord’s study material. Short chord slots that cannot fit a complete cell show a warning and rest.
+5. Save a journal session, reload and resume it to recall the stage, phrase and practice flow.
+
+Authored forms currently use 4/4. Other metres retain the regular study and manual application prompt, with an explicit notice. Written phrases use fixed tempo; the ordinary subdivision choice remains available in other stages.
+
+## Earlier checkpoint checks
 
 1. In Metronome & Mixer, choose **Learn a grip and its arpeggio** and **Clear harmony study**, then **Set up this session**. It keeps the selected tonic, configures stable harmony and enables count-in; no sound starts automatically.
 2. In Guitar, compare **Learn grip only** with **Connect to scale**. Read the formula, actual voiced notes, bass and omitted tones. Strum the grip while stopped.
@@ -19,7 +29,7 @@ The preview has its own origin and browser storage. Sign in with the owning Chat
 8. Choose **Review / save session**, enter a name, notes, self-assessment and optional comfortable tempo, then save. Reload, select the entry in Progress and resume. The saved exercise, position, stage, tempo and musical setup return with audio stopped. **Update review only** preserves the original setup. Export/import journals separately from presets; imports retain existing entries.
 9. The original context changes remain: in Harmony choose a ii–V–I level and distinguish progression tonic, current chord, scale guide and next chord.
 
-The guide-tone and connection studies now play their displayed holds/rests on the chord timeline. Separate prose application prompts remain instructions for the player; they do not change the written exercise. Timed studies use fixed tempo and stable extensions; ordinary position studies keep their tempo trainer. Long guitar notes decay naturally. Small chord slots warn if the selected subdivision cannot fit every arpeggio note. Goal setups use existing controls; presets save backing/display setups and exercise favourites save the study selection.
+The guide-tone and connection studies now play their displayed holds/rests on the chord timeline. In the 4/4 Apply stage the application is now written and played; outside that supported stage, prose prompts remain instructions for the player. Timed studies use fixed tempo and stable extensions; ordinary position studies keep their tempo trainer. Long guitar notes decay naturally. Small chord slots warn if the selected subdivision cannot fit every arpeggio note. Goal setups use existing controls; presets save backing/display setups and exercise favourites save the study selection.
 
 This is a versioned checkpoint, not automatic deployment on every branch push. Rebuild and publish the separate preview after subsequent completed increments.
 

@@ -2,6 +2,7 @@ import {chordSvg} from './chord-symbol.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const staffY=note=>101-((Math.floor(note.midi/12)-1)*7+'CDEFGAB'.indexOf(note.name[0])-30)*5-35;
 const durationPart=(remaining,at,division)=>{
+ const fraction=at-Math.floor(at);if(division!==3&&fraction>1e-6)return [.5,.25].find(n=>n<=remaining+1e-6&&n<=1-fraction+1e-6)||Math.min(remaining,1-fraction);
  if(division===3&&(Math.abs(at-Math.round(at))>1e-6||remaining<1-1e-6))return Math.min(1/3,remaining);
  return [4,3,2,1,.5,.25].find(n=>n<=remaining+1e-6)||remaining;
 };
@@ -20,7 +21,7 @@ export function progressionNotationSvg(plan,title){
    const start=bar*plan.beats,end=start+plan.beats,left=90+(bar-first)*barWidth,unit=(barWidth-35)/plan.beats;
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
    const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
-   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit,hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+=chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="272">${esc(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':change.annotation.match(/\d+ cells?/)?.[0]||'Cell')}</text>`;}
+   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit,hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+=chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="272">${esc(change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':change.annotation.match(/\d+ cells?/)?.[0]||'Cell'))}</text>`;}
    let at=start;
    while(at<end-1e-6){
     const event=plan.events.find(e=>at>=e.start-1e-6&&at<e.start+e.duration-1e-6);
@@ -40,6 +41,7 @@ export function progressionNotationSvg(plan,title){
      if(duration<4){svg+=`<line class="note-stem" x1="${x+6}" x2="${x+6}" y1="${y}" y2="${y-28}"/>`;if(duration<1)svg+=`<path class="note-flag" d="M ${x+6} ${y-28} q 13 6 3 17"/>`;if(duration<.3)svg+=`<path class="note-flag" d="M ${x+6} ${y-22} q 13 6 3 17"/>`;}
      if(bar===first&&at>event.start+1e-6&&Math.abs(at-start)<1e-6)svg+=`<path class="note-tie" d="M ${left-6} ${y+9} q 12 10 ${x-left} 0"/>`;
      if(at+duration<event.start+event.duration-1e-6){const crossesBar=Math.abs(at+duration-end)<1e-6,reach=crossesBar?(bar+1<first+count?barWidth+6-(x-left):barWidth-20-(x-left)):duration*unit-12;svg+=`<path class="note-tie" d="M ${x+6} ${y+9} q ${reach/2} 12 ${reach} 0"/>`;}
+     if(event.accent&&Math.abs(at-event.start)<1e-6)svg+=`<text class="note-accent" x="${x}" y="${y-38}" text-anchor="middle">&gt;</text>`;
      if(duration===3)svg+=`<circle class="duration-dot" cx="${x+13}" cy="${y}" r="2"/>`;
     }
     if(plan.division===3&&duration<1&&Math.abs(at-Math.round(at))<1e-6)svg+=`<text class="tuplet-number" x="${x+unit/3}" y="53">3</text>`;

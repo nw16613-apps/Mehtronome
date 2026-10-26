@@ -1,3 +1,4 @@
+import {applicationStudy} from './practice/applications.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
 import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
 import {chordSheet} from './practice/chord-sheet.js';
@@ -224,7 +225,7 @@ try { fullFretboardCollapsed=localStorage.getItem('mehtronome-full-fretboard-col
 const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
 let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
-const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',fretboard:true,recall:false,setupOpen:false};
+const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',application:'cell-space',response:'demo',fretboard:true,recall:false,setupOpen:false};
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let studyHarmony:any,studyBoard:any,studyPosition:any;
 let exerciseBackingStep=0;
@@ -247,6 +248,7 @@ let exerciseNextStart:number|undefined;
 let exerciseTimelineStart:number|undefined;
 let exerciseAnimationFrame=0;
 let exerciseRepetitions=0;
+let exerciseResponseActive=false;
 let exerciseSymbolCycle=-1;
 let exerciseSelectionStart:number|null=null,exerciseSelectionEnd:number|null=null;
 let exerciseDragPointer:number|null=null,exerciseDragMoved=false,suppressExerciseNoteClick=false;
@@ -266,7 +268,7 @@ function stopExercisePreview() {
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
-  exerciseSources=[];exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
+  exerciseSources=[];exerciseResponseActive=false;exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
   if(stopBacking){node?.port.postMessage({type:'stop'});renderProgressionReference();}
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');button.removeAttribute('aria-busy');}
@@ -298,10 +300,11 @@ function updateExerciseCursor(){
     const elapsedBeats=Math.max(0,elapsed-countIn)*exerciseView.tempo/60;
     const position=planPosition({...exercisePlan,events:selectedPlanEvents()},elapsedBeats);
     const index=position.event?.index??null;
+    if(exerciseResponseActive!==Boolean(position.slot.response)){exerciseResponseActive=Boolean(position.slot.response);syncMiniTransport();}
     document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',index!==null&&Number(note.dataset.noteIndex)===index&&position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
     if(position.slot.slot!==exerciseMapSlot&&currentExerciseGroups[position.slot.slot]?.harmony){exerciseMapSlot=position.slot.slot;updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
     highlightLearningNote(index,currentExercise);
-    if(status)status.textContent=`${position.slot.chord} · ${index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
+    if(status)status.textContent=`${position.slot.chord} · ${position.slot.response?'Your turn · play over the backing':index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
     if(progress)progress.style.width=`${position.beat/exercisePlan.duration*100}%`;
   }
   else if(sequence.length){
@@ -343,10 +346,14 @@ function renderCagedExercise(position:any,board:any,info:any) {
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionDurations(settings),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else if(settings.progression){
-    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionBeatDurations(settings)[index]),board,{...exerciseView,source:sourceChoice?.id||''});
+    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionBeatDurations(settings)[index]),board,{...exerciseView,rhythm:exerciseView.stage==='apply'&&settings.beats===4?'sixteenths':exerciseView.rhythm,source:sourceChoice?.id||''});
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionDurations(settings),settings.beats,exerciseView.study,exerciseView.rhythm);
-  }else{exercisePlan=null;if(exerciseView.stage!=='full')currentExerciseGroups=shortCell(currentExerciseGroups);}
+  }else{exercisePlan=null;if(exerciseView.stage==='cell')currentExerciseGroups=shortCell(currentExerciseGroups);}
+  if(exerciseView.stage==='apply'&&settings.beats===4){
+    if(!exercisePlan){const source=currentExerciseGroups[0];currentExerciseGroups=[{...source,chord:info.name+info.suffix,slot:0,notes:source?.notes||[],harmony:info,board,position,globalStart:0,cellLengths:[source?.notes.length||0]}];exercisePlan=progressionStudyPlan(currentExerciseGroups,[0],[1],4,exerciseView.study,exerciseView.rhythm);}
+    const application=applicationStudy(currentExerciseGroups,exercisePlan,exerciseView.application,exerciseView.response);currentExerciseGroups=application.groups;exercisePlan=application.plan;exerciseView.autoTempo=false;
+  }
   if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
@@ -385,7 +392,7 @@ function renderCagedExercise(position:any,board:any,info:any) {
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,application:exercisePlan?.application,response:exerciseView.response,applicationSupported:settings.beats===4,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
   exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=0;updateProgressionMap(el('caged-exercise'),currentExerciseGroups[0],exerciseView.study);}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
@@ -408,14 +415,14 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const countIn=scheduledStart===undefined&&settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const start=scheduledStart??context.currentTime+.03+countIn;
   if(exerciseTimelineStart===undefined){exerciseTimelineStart=timelineOrigin??start-countIn;updateExerciseCursor();}
-  const events=exercisePlan?selectedPlanEvents().map((e:any)=>({note:e.note,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
-  events.forEach(({note,at,length}:any)=>{
+  const events=exercisePlan?selectedPlanEvents().map((e:any)=>({note:e.note,accent:e.accent,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
+  events.forEach(({note,at,length,accent}:any)=>{
     const duration=Math.max(.045,Math.min(12,length*.96)),release=Math.min(.045,duration*.3);
     const samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration);
     const buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);
     const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
     filter.type='lowpass';filter.frequency.value=3100;filter.Q.value=.45;
-    gain.gain.setValueAtTime(.3,at);gain.gain.setValueAtTime(.3,at+duration-release);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    gain.gain.setValueAtTime(accent ? .42 : .3,at);gain.gain.setValueAtTime(accent ? .42 : .3,at+duration-release);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
     source.connect(filter).connect(gain).connect(master!);
     if(reverb)gain.connect(reverb);
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
@@ -1165,6 +1172,8 @@ function handleExerciseControl(event:Event){
   exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;
   stopExercisePreview();
   if(target.id==='exercise-position'){chooseOverviewPosition(target.value);el('exercise-position').focus({preventScroll:true});return;}
+  if(target.id==='exercise-application')exerciseView.application=target.value;
+  if(target.id==='exercise-response')exerciseView.response=target.value;
   if(target.id==='exercise-stage'){exerciseView.stage=target.value;exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-auto-target')exerciseView.ceiling=Math.max(30,Math.min(240,Number(target.value)||160));
   if(['exercise-material','exercise-study','exercise-motion','exercise-source','exercise-pattern'].includes(target.id)){exerciseSelectionStart=null;exerciseSelectionEnd=null;}
@@ -1197,8 +1206,8 @@ async function auditionExerciseNote(index:number){
   if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
 }
 function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying)return;highlightLearningNote(index,currentExercise);void auditionExerciseNote(index);}
-function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked};}
-function restoreExercise(snapshot:any){if(!snapshot)return;Object.assign(exerciseView,snapshot);stopExercisePreview();renderGuitar();}
+function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,stage:exerciseView.stage,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked,application:exerciseView.application,response:exerciseView.response};}
+function restoreExercise(snapshot:any){if(!snapshot)return;Object.assign(exerciseView,{stage:'full',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
 function moveExercise(direction:number){
   const options=Array.from(select('exercise-study').options),index=options.findIndex(option=>option.value===exerciseView.study),next=options[index+direction];if(!next)return;
   stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseView.study=next.value;
@@ -1210,7 +1219,7 @@ function favouriteExercise(){const favourites=exerciseFavourites(),snapshot=exer
 function exportExerciseSvg(){
   const svgs=Array.from(document.querySelectorAll<SVGSVGElement>('#caged-exercise .exercise-notation'));if(!svgs.length)return;const width=1200,heights=svgs.map(svg=>Number(svg.viewBox.baseVal.height)||280),height=heights.reduce((a,b)=>a+b,0);let y=0;
   const body=svgs.map((svg,index)=>{const viewWidth=Number(svg.viewBox.baseVal.width)||760,result=`<svg x="0" y="${y}" width="${width}" height="${heights[index]}" viewBox="0 0 ${viewWidth} ${heights[index]}">${svg.innerHTML}</svg>`;y+=heights[index];return result;}).join('');
-  const file=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><style>text{fill:#17201d}.notation-paper,.tab-fret-bg{fill:#fffdf8}.notation-line,.ledger-line,.bar-line,.note-stem{stroke:#26302c}.notation-chord-symbol{font-family:Georgia,serif;fill:#17201d}.score-chord-root{font-size:19px;font-weight:600}.score-chord-quality{font-size:13px;font-style:italic}.score-chord-bass{font-size:15px}.notation-backing{font:10px sans-serif}.note-head{fill:#17201d}.note-hole{fill:#fffdf8}.note-flag,.note-tie{fill:none;stroke:#17201d;stroke-width:1.5}.duration-dot{fill:#17201d}.note-beam{stroke:#17201d;stroke-width:5}</style>${body}</svg>`,url=URL.createObjectURL(new Blob([file],{type:'image/svg+xml'})),link=document.createElement('a');link.href=url;link.download=`mehtronome-${exerciseView.study}.svg`;link.click();URL.revokeObjectURL(url);
+  const file=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><style>text{fill:#17201d}.notation-paper,.tab-fret-bg{fill:#fffdf8}.notation-line,.ledger-line,.bar-line,.note-stem{stroke:#26302c}.notation-chord-symbol{font-family:Georgia,serif;fill:#17201d}.score-chord-root{font-size:19px;font-weight:600}.score-chord-quality{font-size:13px;font-style:italic}.score-chord-bass{font-size:15px}.notation-backing{font:10px sans-serif}.note-accent{fill:#17201d;font:bold 18px Georgia,serif}.note-head{fill:#17201d}.note-hole{fill:#fffdf8}.note-flag,.note-tie{fill:none;stroke:#17201d;stroke-width:1.5}.duration-dot{fill:#17201d}.note-beam{stroke:#17201d;stroke-width:5}</style>${body}</svg>`,url=URL.createObjectURL(new Blob([file],{type:'image/svg+xml'})),link=document.createElement('a');link.href=url;link.download=`mehtronome-${exerciseView.study}.svg`;link.click();URL.revokeObjectURL(url);
 }
 function exerciseNoteAtPoint(x:number,y:number){
   const direct=document.elementFromPoint(x,y)?.closest<SVGElement>('#caged-exercise .exercise-note');if(direct)return direct;
@@ -1602,7 +1611,7 @@ function syncMiniTransport() {
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
   el('mini-mode').title=`Tonic ${active.tonic} · next ${active.nextChord}`;
   el('mini-chord').textContent = info.name+info.suffix;
-  el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
+  el('mini-mode').textContent = `${exercisePlaying?(exercisePlan?.application?(exerciseResponseActive?'Your turn · ':'Listen · '):'Study · '):''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
   el('mini-root-purpose').textContent=settings.progression?'Tonic':'Root';
   select('mini-key').value=select('key').value;
   select('mini-mode-select').value=select('quality').value;
@@ -1931,7 +1940,7 @@ async function startGuidedGoal(){
  if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';
- Object.assign(exerciseView,{study:goal.study,stage:goal.id==='jazz'?'full':'cell',fretboard:true,recall:false,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
+ Object.assign(exerciseView,{study:goal.study,application:'cell-space',response:'demo',stage:goal.id==='jazz'?'full':'cell',fretboard:true,recall:false,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
  fillLoopOptions(true);tempo(80);update();
  if(goal.id==='pentatonic'){const choices=theoryOptions(chordInfo(0)).pentatonics;exerciseView.source=choices[0]?.id||'';renderGuitar();}
  el('guided-session-title').textContent=goal.name;el('guided-session-tip').textContent=goal.tip+(goal.id==='jazz'?' Guide tones follow the chord durations. Choose Explore the position to hear every chord; a short cell leaves the other chord slots silent.':accompaniment==='modal'?' Modal exploration has evolving extensions enabled.':' Stable harmony is selected unless the setup states otherwise.');el('guided-session').hidden=false;input('preset-name').value=goal.name;
@@ -1949,7 +1958,7 @@ installJournal({
  capture:()=>{const preset=snapshotPreset();return {preset,exercise:{...exerciseView},position:overviewPosition,step,goal:activeGoal,gripOnly};},
  restore:async(saved:any)=>{if(busy||stopping)throw new Error('Wait for playback to finish stopping.');
   await loadPracticePreset(saved.preset);stopPreview();
-  Object.assign(exerciseView,saved.exercise);overviewPosition=saved.position;step=Math.max(0,Math.min(progressionDurations(settings).length-1,saved.step));activeGoal=saved.goal;gripOnly=saved.gripOnly;
+  Object.assign(exerciseView,{application:'cell-space',response:'demo'},saved.exercise);overviewPosition=saved.position;step=Math.max(0,Math.min(progressionDurations(settings).length-1,saved.step));activeGoal=saved.goal;gripOnly=saved.gripOnly;
   exerciseSelectionStart=null;exerciseSelectionEnd=null;update();
   el('guided-session').hidden=true;if(focusView)setFocusView(false);showWorkspace('exercises','caged-exercise');
  },
