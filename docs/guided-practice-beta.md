@@ -64,3 +64,11 @@ Guide-tone/connection plans accept short chord slots, notate multiple changes pe
 Acceptance: two 2-beat chords occupy one 4/4 bar and change on beat 3; bar/beat editing survives reload and preset transfer; legacy bars follow metre while explicit beats remain fixed; root, scale, fretboard/reference and grid follow worklet changes; selected/wrapped loops, count-in, journal and original workspaces remain operational. Unit checks cover migration, export/import, real engine beat changes across several metres, duration-edit signatures, exercise/engine agreement and notation. Browser checks cover editing, playback, persistence, metre changes, narrow layout and the established study/journal/workspace flows. Device-level audio fidelity/latency is not claimed.
 
 Remaining: sub-beat durations, progression undo/redo, authored phrase/application content, and the consolidated timing/shape/usability review requested for later.
+
+## Chord-sheet presentation update
+
+Replaced the custom beat tiles with a responsive lead sheet using serif chord symbols, bar lines, beat slashes and repeat signs. Beat/chord editing and the underlying durations/storage are unchanged; live markers use the same worklet beat events and clear on stop. Partial bars remain partial. The first 128 beats of very long charts are displayed with an explicit limit label.
+
+Added chord symbols to standard exercise notation and restyled timed-progression symbols consistently. Material chords are distinct from the held reference/backing label; chromatic target/sequence names are not passed off as chord symbols. Print/SVG output retains symbol typography. Existing note selection, audition, linked diagrams and timed playback remain intact.
+
+Validation: bar/beat placement and partial-bar markup, safe accidental/quality/slash-bass formatting, material/reference labeling; browser chart editing/live marker, narrow layout, notation labels and SVG export, plus beat-editing, guided-flow and timed-playback regressions. All unit test files pass. Rendered chart and notation inspected.

@@ -1,3 +1,4 @@
+import {chordSvg} from '../practice/chord-symbol.js';
 import {theoryOptions} from './superimposition.js';
 
 const LETTERS=['C','D','E','F','G','A','B'];
@@ -454,16 +455,19 @@ function staffY(note) {
 }
 function esc(text) { return String(text).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
 
-function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0) {
+function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0,options={backingChord:'',groupChords:false}) {
   const notes=flattenExercise(groups);
   const perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
   const notesPerBar=perBeat*4;
   const finalRests=isLastSystem?(notesPerBar-totalNoteCount%notesPerBar)%notesPerBar:0;
-  const step=30,left=90,right=24,width=Math.max(760,left+(notes.length+finalRests)*step+right),height=280;
+  const step=30,left=90,right=24,width=Math.max(760,left+(notes.length+finalRests)*step+right),height=304;
   const xFor=index=>left+index*step+step/2;
   let svg=`<svg class="exercise-notation" data-system-index="${systemIndex}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
-  svg+=`<rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">4</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
+  svg+=`<rect width="${width}" height="${height}" rx="8" class="notation-paper"/>`;
   if(systemIndex===0)svg+=`<text class="exercise-title" x="90" y="20">${esc(title)}</text>`;
+  if(options.backingChord)svg+=`<text class="notation-backing" x="${width-16}" y="20" text-anchor="end">Reference: ${esc(options.backingChord)}</text>`;
+  svg+=`<g class="notation-music" transform="translate(0 18)"><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">4</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
+
   for(let line=0;line<5;line++)svg+=`<line class="notation-line" x1="44" x2="${width-12}" y1="${61+line*10}" y2="${61+line*10}"/>`;
   for(let string=0;string<6;string++)svg+=`<line class="notation-line tab-line" x1="44" x2="${width-12}" y1="${150+string*18}" y2="${150+string*18}"/>`;
   let noteIndex=0;
@@ -474,6 +478,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
     const bracketStart=xFor(start)-step*.34,bracketEnd=xFor(start+group.notes.length-1)+step*.34;
     svg+=`<path class="pattern-bracket" d="M ${bracketStart} 246 V 250 H ${bracketEnd} V 246"/>`;
     if(group.source&&group._showSource!==false)svg+=`<text class="exercise-source" x="${xFor(start)-10}" y="137">${esc(group.source)}</text>`;
+    if(options.groupChords){const label=String(group.chord||'').replace(/^From .*? · /,'').split(' · ')[0];if(/^[A-G](?:♯|♭|#|b|𝄪|𝄫)*(?:m|maj|dim|aug|[0-9]|ø|°|sus|add|\(|$)/.test(label))svg+=chordSvg(label,xFor(start)-6,40);}
     const ys=[];
     group.notes.forEach((note,localIndex)=>{
       const x=xFor(noteIndex),y=staffY(note),tabY=150+(5-note.string)*18;
@@ -520,10 +525,11 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
     const x=xFor(notes.length+finalRests-1)+step/2;
     svg+=`<line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
   }
-  return svg+'</svg>';
+  if(!options.groupChords&&options.backingChord)for(let at=0;at<notes.length;at++){if((systemIndex===0&&at===0)||(renderedNotes[at]?.globalIndex%notesPerBar===0))svg+=chordSvg(options.backingChord,xFor(at)-6,40,'reference');}
+  return svg+'</g></svg>';
 }
 
-export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise') {
+export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise',options={backingChord:'',groupChords:false}) {
   const systems=[],perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,maxNotes=perBeat*4*(rhythm==='sixteenths'?2:rhythm==='triplets'?2:3);
   let current=[],count=0,globalStart=0,previousSource=null;
   const shownAnnotations=new Set();
@@ -537,7 +543,7 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
   }
   if(current.length)systems.push(current);
   const totalNoteCount=flattenExercise(groups).length;
-  return systems.map((system,index)=>notationSystemSvg(system,rhythm,title,index,index===systems.length-1,totalNoteCount)).join('');
+  return systems.map((system,index)=>notationSystemSvg(system,rhythm,title,index,index===systems.length-1,totalNoteCount,options)).join('');
 }
 
 /** One study group per progression step, in playback order. Direction changes

@@ -1,3 +1,4 @@
+import {chordSvg} from './chord-symbol.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const staffY=note=>101-((Math.floor(note.midi/12)-1)*7+'CDEFGAB'.indexOf(note.name[0])-30)*5-35;
 const durationPart=(remaining,at,division)=>{
@@ -19,7 +20,7 @@ export function progressionNotationSvg(plan,title){
    const start=bar*plan.beats,end=start+plan.beats,left=90+(bar-first)*barWidth,unit=(barWidth-35)/plan.beats;
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
    const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
-   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit;svg+=`<text class="exercise-source" x="${x}" y="40">${esc(change.chord)} · ${at-start+1}</text><text class="exercise-degree" x="${x}" y="272">${esc(plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':'Arpeggio → rest')}</text>`;}
+   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit;svg+=chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="272">${esc(plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':'Arpeggio → rest')}</text>`;}
    let at=start;
    while(at<end-1e-6){
     const event=plan.events.find(e=>at>=e.start-1e-6&&at<e.start+e.duration-1e-6);
