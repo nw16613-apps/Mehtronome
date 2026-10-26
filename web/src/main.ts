@@ -1,3 +1,4 @@
+import {renderMovementLab} from './practice/movement-view.js';
 import {progressionStudyPlan,planPosition} from './practice/progression-timing.js';
 import {progressionNotationSvg} from './practice/progression-notation.js';
 import {installJournal} from './practice/journal-view.js';
@@ -214,6 +215,7 @@ let previewGripShape: string | null = null;
 type TheorySuggestion = {id:string; name:string; rootPc?:number; pcs:number[]; names:string[]; degrees:string[]; explanation:string; groups?:{name:string; rootPc?:number; pcs:number[]; names:string[]}[]};
 type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
+const movementVoices=new Map<string,any>();
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
 let fullFretboardCollapsed=false;
@@ -615,6 +617,7 @@ function renderGuitar() {
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
+  renderMovementLab(info,(selectedPosition.board.start+selectedPosition.board.end)/2,{register:(id,voice)=>{if(previewGripShape===id)stopPreview();movementVoices.set(id,voice);},preview:id=>void previewGrip(id),stop:stopPreview},playing||exercisePlaying||busy||stopping);
   renderPracticeRoadmap(info);
   select('fret-view').value = select('exercise').value;
   applyStudioIcons(document.querySelector('.guitar')!);
@@ -883,6 +886,7 @@ function stopPreview() {
   reflectChordPreviews();
   el('grip-preview-status').hidden = true;
   el('preview-status').hidden = true;
+  syncMiniTransport();
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
@@ -1001,15 +1005,15 @@ async function previewChord(index: number, hold: string) {
   }
 }
 async function previewGrip(shape: string) {
-  if (playing || busy || stopping) return;
+  if (playing || exercisePlaying || busy || stopping) return;
   if (previewGripShape === shape) { stopPreview(); return; }
-  const grip = positionGrips.get(shape);
+  const grip = movementVoices.get(shape)??positionGrips.get(shape);
   if (!grip) return;
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
   const generation = previewGeneration;
   previewGripShape = shape;
-  reflectChordPreviews();
+  reflectChordPreviews();syncMiniTransport();
   el('error').hidden = true;
   try {
     if (replacing && master && context?.state === 'running') {
@@ -1574,6 +1578,11 @@ function syncMiniTransport() {
   select('mini-chord-select').value=select('chord').value;
   select('mini-chord-select').disabled=select('chord').disabled;
   select('mini-progression').value=settings.progression?select('template').value:'off';
+  const movementPreview=previewGripShape?movementVoices.get(previewGripShape):null;
+  if(movementPreview&&!playing&&!exercisePlaying){
+    el('mini-chord').textContent=movementPreview.name;el('mini-mode').textContent='Chord movement preview';el('mini-mode').title='Chord comparison · backing setup retained';document.querySelector<HTMLElement>('.mini-harmony-controls')!.hidden=true;
+    el('active-musical-context').innerHTML=`<div><small>Comparison root</small><strong>${escapeHtml(movementPreview.rootName)}</strong></div><div><small>Auditioning</small><strong>${escapeHtml(movementPreview.name)}</strong></div><div><small>Sounding low to high</small><strong>${movementPreview.notes.map((note:any)=>escapeHtml(note.name)).join(' · ')}</strong></div><p>Chord movement comparison; no scale guide is being prescribed. Your backing setup is retained.</p>`;
+  }
   input('mini-count-in').checked=input('count-in').checked;
   input('mini-count-in').disabled=input('count-in').disabled;
   input('mini-accent').checked=input('accent').checked;
@@ -1907,7 +1916,7 @@ const guitarSetup=document.createElement('details');guitarSetup.className='guita
 const guitarOverview=document.querySelector('.guitar-overview')!;
 for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
-const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
+const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);contextMap.before(el('movement-lab'));
 
 installJournal({
  capture:()=>{const preset=snapshotPreset();return {preset,exercise:{...exerciseView},position:overviewPosition,step,goal:activeGoal,gripOnly};},
