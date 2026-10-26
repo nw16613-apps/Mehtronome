@@ -4,13 +4,14 @@ export function progressionStudyPlan(groups,steps,bars,beats,study,rhythm='eight
   const events=[],slots=[],warnings=[];let offset=0,index=0;
   for(const [slot,step]of steps.entries()){
     const duration=Math.round(Math.max(1/beats,bars[step]??1)*beats),group=groups.find(g=>g.slot===slot);
+    if(group?.warning)warnings.push(group.warning);
     const fits=study==='guidetones'?1:Math.floor(duration*division);
     if((group?.notes.length||0)>fits)warnings.push(`${group.chord}: only the first ${fits} notes fit at this rhythm. Choose a faster subdivision or a longer chord duration to hear the full arpeggio.`);
     slots.push({slot,step,start:offset,duration,chord:group?.chord||'',annotation:group?.annotation||''});
     for(const [local,note]of (group?.notes||[]).entries()){
       const at=study==='guidetones'?0:local/division;
       if(at>=duration)break;
-      events.push({index:index+local,note,step,slot,start:offset+at,duration:study==='guidetones'?duration:Math.min(1/division,duration-at)});
+      events.push({index:index+local,note,step,slot,target:group?.targetIndices?.includes(local)||group?.targetIndex===local,start:offset+at,duration:study==='guidetones'?duration:Math.min(1/division,duration-at)});
     }
     index+=group?.notes.length||0;offset+=duration;
   }
