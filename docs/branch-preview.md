@@ -3,9 +3,18 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app checkpoint: Checkpoint 8 adds Undo and Redo to My progression. Earlier features remain included.
+- Current preview app update: all Harmony progression templates and My progression use the same editable chord chart. Click a template chord to create/edit a personal copy at that chord.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
+
+## Try the unified progression chart
+
+1. In **Harmony → Chord progression**, choose any template. Its chords now appear as the same chord chart used by **My progression**.
+2. Click a chord/beat, or focus it and press Enter. A template becomes a personal copy and opens that chord’s editor. The original template remains in the selector. **Create from this progression** opens the same chart editor at the start.
+3. Edit the chord, scale guide, bass or duration; add, duplicate, move, delete, undo and redo using the existing controls. Chord tiles no longer duplicate the chart.
+4. Hold a chart chord, or focus it and hold Space, to hear it while stopped. Release to stop. Playback highlights chart beats for templates as well as personal progressions. Clicking to edit stops playback.
+
+The current chord symbol and its complete note list now sit inside **Under your fingers**, above the scale degrees and seven seventh-chord cards, within the same Harmony panel. Extensions remain in the current chord display rather than being reduced to the seventh chord shown below.
 
 ## Try checkpoint 8
 

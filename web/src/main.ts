@@ -106,9 +106,8 @@ app.innerHTML = `
       <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
-      <button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
-        <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div></div>
+        <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div></div>
         <div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p><div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor">
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
@@ -121,21 +120,22 @@ app.innerHTML = `
         <details class="custom-share"><summary>Share or copy progression</summary><textarea id="custom-text" rows="3" aria-label="Custom progression text" readonly></textarea><button id="custom-copy" type="button" class="practice-button">Copy progression</button></details>
         <p id="custom-status" class="practice-help" role="status">Changes save automatically in this browser and transpose with the tonic key.</p>
       </section>
-      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <div class="progression-strip" id="progression-strip" hidden></div>
+    <section class="notes harmony-learning" aria-labelledby="notes-title">
+      <div class="section-heading"><div><h2 id="notes-title">Under your fingers</h2><p id="seventh-chords-context" class="mode-map-context"></p></div><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div>
+      <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><p class="small-label current-chord-label">CURRENT CHORD</p><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
+      <label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p>
+      <p class="mode-map-guide">Read down: scale note &amp; degree → seventh chord → its four chord tones.</p>
+      <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
+      <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
+    </section>
       <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></div>
       <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><span id="preview-status" role="status" hidden>Release to stop</span></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
       <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
-    <section class="notes panel workspace-page workspace-harmony" aria-labelledby="notes-title">
-      <div class="section-heading"><div><h2 id="notes-title">Under your fingers</h2><p id="seventh-chords-context" class="mode-map-context"></p></div><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div>
-      <label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p>
-      <p class="mode-map-guide">Read down: scale note &amp; degree → seventh chord → its four chord tones.</p>
-      <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
-      <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
-    </section>
+
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Mixer</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <p id="mixer-docked-note" class="practice-help" hidden>Mixer is open above the focus bar. <button id="mixer-return" type="button" class="panel-action">Return mixer here</button></p><div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
@@ -211,6 +211,7 @@ let node: AudioWorkletNode | undefined;
 let stopping = false;
 let guitarDegrees = true;
 let previewHold: string | null = null;
+let chartPreviewTimer:ReturnType<typeof setTimeout>|undefined;
 let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
 let previewPreparation: Promise<void> | undefined;
 let previewing = false;
@@ -494,8 +495,8 @@ function renderMusic() {
   const custom = template.kind === 'custom';
   el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : custom ? `${progressionBeatDurations(settings).reduce((sum:number,beats:number)=>sum+beats,0)}-BEAT CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
-  el('progression-strip').hidden = !settings.progression;
-  el('preview-controls').hidden = !settings.progression;
+  el('progression-strip').hidden = true;
+  el('preview-controls').hidden = !settings.progression;el('preview-controls').querySelector('p')!.textContent='Click a chart chord or press Enter to edit. While stopped, hold it or hold Space to hear it; release to stop.';
   const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
@@ -694,18 +695,24 @@ function saveCustomProgression(message='Custom progression saved in this browser
 function beatLength(total:number){const bars=Math.floor(total/settings.beats),remaining=total%settings.beats;return `${total} beats · ${bars} bar${bars===1?'':'s'}${remaining?` + ${remaining} beat${remaining===1?'':'s'}`:''}`;}
 function durationLabel(index:number){const bars=progressionDurations(settings)[index];return settings.template==='custom'?`${progressionBeatDurations(settings)[index]} beats`:`${bars} bar${bars===1?'':'s'}`;}
 function renderCustomBeatGrid(){
- const durations=progressionBeatDurations({...settings,template:'custom',customProgression}),total=durations.reduce((a:number,b:number)=>a+b,0);
- const chords=customProgression.steps.map((item:any)=>actualCustomName(item.root)+CHORDS[item.chord as keyof typeof CHORDS].symbol+(item.bass===null?'':'/'+actualCustomName(item.bass)));
- el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:customProgression.name,key:names[settings.key],selected:customStepIndex});
+ const durations=progressionBeatDurations(settings),total=durations.reduce((a:number,b:number)=>a+b,0);
+ const definition=progressionDefinition(settings);
+ const chords=definition.roman.map((_:any,index:number)=>{const c=chordInfo(index);return c.name+c.suffix;});
+ el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],selected:settings.template==='custom'?customStepIndex:step});
  el('custom-grid-help').textContent=`${beatLength(total)} in ${settings.beats}/4. ${total%settings.beats?'This cycle repeats immediately, so the next cycle starts partway through a bar.':'The cycle ends on a bar boundary.'} Beat durations stay fixed when the metre changes; bar durations follow the metre.${total>128?' First 128 beats shown.':''}`;
 }
 function highlightCustomBeat(beat:number){const duration=progressionOrder(settings).reduce((sum:number,index:number)=>sum+progressionBeatDurations(settings)[index],0),position=beat%duration;const order=progressionOrder(settings);let elapsed=0;let target=0;for(const index of order){const length=progressionBeatDurations(settings)[index];if(position<elapsed+length){target=progressionBeatDurations(settings).slice(0,index).reduce((a:number,b:number)=>a+b,0)+position-elapsed;break;}elapsed+=length;}document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>{const active=Number(cell.dataset.gridBeat)===target;cell.classList.toggle('playing',active);if(active)cell.setAttribute('aria-current','true');else cell.removeAttribute('aria-current');});}
-el('custom-beat-grid').addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLElement>('[data-grid-step]');if(button){const beat=button.dataset.gridBeat;customStepIndex=Number(button.dataset.gridStep);if(!playing)step=customStepIndex;renderCustomBuilder();renderMusic();document.querySelector<HTMLElement>(`[data-grid-beat="${beat}"]`)?.focus({preventScroll:true});}});
+el('custom-beat-grid').addEventListener('click',async event=>{const button=(event.target as Element).closest<HTMLElement>('[data-grid-step]');if(button){if(stopping)return;const beat=button.dataset.gridBeat,chosen=Number(button.dataset.gridStep);stopPreview();stopExercisePreview();if(playing)await stop();if(settings.template!=='custom')el('customize-progression').click();customStepIndex=chosen;if(!playing)step=customStepIndex;renderCustomBuilder();renderMusic();document.querySelector<HTMLElement>(`[data-grid-beat="${beat}"]`)?.focus({preventScroll:true});}});
 function renderCustomBuilder(){
   const active=settings.progression&&settings.template==='custom';
-  el('custom-progression-builder').hidden=!active;
+  el('custom-progression-builder').hidden=!settings.progression;
   el('customize-progression').hidden=!settings.progression||active;
-  if(!active)return;
+  el('custom-timeline').hidden=true;
+  el('custom-progression-builder').querySelector<HTMLElement>('.custom-editor')!.hidden=!active;
+  el('custom-progression-builder').querySelector<HTMLElement>('.custom-actions')!.hidden=!active;
+  el('custom-progression-builder').querySelector<HTMLElement>('.custom-history-actions')!.hidden=!active;
+  el('custom-status').hidden=!active;el('custom-progression-builder').querySelector<HTMLElement>('.custom-share')!.hidden=!active;
+  if(!active){if(settings.progression){el('custom-progression-title').textContent=progressionDefinition(settings).name;renderCustomBeatGrid();el('custom-grid-help').textContent+=' Select any chord to edit a personal copy; the original template stays available.';}return;}
   customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
   el<HTMLButtonElement>('custom-undo').disabled=!customUndo.length;el<HTMLButtonElement>('custom-redo').disabled=!customRedo.length;
   const current=customProgression.steps[customStepIndex];
@@ -926,6 +933,7 @@ function reflectChordPreviews() {
   });
 }
 function stopPreview() {
+  clearTimeout(chartPreviewTimer);chartPreviewTimer=undefined;
   noteAuditionGeneration++;
   stopExercisePreview();
   clearTimeout(gripRingTimer);
@@ -1001,7 +1009,7 @@ async function initialiseAudio() {
       el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
       el('pulse-large-status').textContent=el('play-status').textContent;
       if (step !== data.step) { step = data.step; renderMusic(); }
-      if(settings.template==='custom'&&!data.counting)highlightCustomBeat((data.bar-1)*settings.beats+data.beat);
+      if(settings.progression&&!data.counting)highlightCustomBeat((data.bar-1)*settings.beats+data.beat);
     };
     node.onprocessorerror = () => {
       stopPreview();
@@ -1318,21 +1326,22 @@ diagrams.addEventListener('keydown',event=>{
 });
 }
 // Delegate on the stable document: selecting a chord redraws both reference panels.
-const chordButton=(target:EventTarget|null)=>target instanceof HTMLElement?target.closest<HTMLButtonElement>('#progression-strip button[data-step], .progression-reference button[data-reference-step]'):null;
-const chordIndex=(button:HTMLButtonElement)=>Number(button.dataset.referenceStep??button.dataset.step);
+const chordButton=(target:EventTarget|null)=>target instanceof HTMLElement?target.closest<HTMLButtonElement>('#progression-strip button[data-step], #custom-beat-grid button[data-grid-step], .progression-reference button[data-reference-step]'):null;
+const chordIndex=(button:HTMLButtonElement)=>Number(button.dataset.referenceStep??button.dataset.gridStep??button.dataset.step);
 document.addEventListener('pointerdown',event=>{
   const button=chordButton(event.target);
   if(!button||button.disabled||event.button!==0||!event.isPrimary)return;
-  event.preventDefault();button.focus();
-  void previewChord(chordIndex(button),`pointer:${event.pointerId}`);
-  document.documentElement.setPointerCapture(event.pointerId);
+  if(button.dataset.gridStep===undefined)event.preventDefault();button.focus();
+  if(button.dataset.gridStep!==undefined){clearTimeout(chartPreviewTimer);chartPreviewTimer=setTimeout(()=>{void previewChord(chordIndex(button),`pointer:${event.pointerId}`);},180);}
+  else void previewChord(chordIndex(button),`pointer:${event.pointerId}`);
+  if(button.dataset.gridStep===undefined)document.documentElement.setPointerCapture(event.pointerId);
 });
 for(const type of ['pointerup','pointercancel','lostpointercapture'] as const){
-  window.addEventListener(type,event=>{if(previewHold===`pointer:${event.pointerId}`)stopPreview();});
+  window.addEventListener(type,event=>{clearTimeout(chartPreviewTimer);chartPreviewTimer=undefined;if(previewHold===`pointer:${event.pointerId}`)stopPreview();});
 }
 document.addEventListener('keydown',event=>{
   const button=chordButton(event.target);
-  if(!button||button.disabled||!['Space','Enter'].includes(event.code))return;
+  if(!button||button.disabled||!['Space','Enter'].includes(event.code)||(button.dataset.gridStep!==undefined&&event.code==='Enter'))return;
   event.preventDefault();
   if(!event.repeat)void previewChord(chordIndex(button),`key:${event.code}`);
 });

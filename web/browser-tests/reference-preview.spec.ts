@@ -13,12 +13,13 @@ const peak=(page:any)=>page.evaluate(()=>{const analyser=(window as any).__refer
 for(const [target,label] of [['harmony-title','Harmony'],['guitar-title','Guitar'],['caged-exercise','Exercises']])test(`${label} chords sound while held and stop on release`,async({page})=>{
   await setup(page);await expect(page.locator('#audition')).toHaveCount(0);await page.locator(`[data-workspace-target="${target}"]`).click();
   if(target!=='harmony-title')await page.locator(`${target==='guitar-title'?'.workspace-guitar':'#caged-exercise'} .compact-reference details>summary`).click();
-  const selector=target==='harmony-title'?'#progression-strip button[data-step="1"]':target==='guitar-title'?'.workspace-guitar button[data-reference-step="1"]':'#caged-exercise button[data-reference-step="1"]';
+  const selector=target==='harmony-title'?'#custom-beat-grid button[data-grid-step="1"] >> nth=0':target==='guitar-title'?'.workspace-guitar button[data-reference-step="1"]':'#caged-exercise button[data-reference-step="1"]';
   await page.locator(selector).hover();await page.mouse.down();await expect.poll(()=>peak(page)).toBeGreaterThan(.005);await expect(page.locator('#chord-name')).toHaveText('G7alt');
   await expect(page.locator('#play')).toHaveAttribute('aria-pressed','false');
   await page.mouse.move(4,4);await page.mouse.up();await expect.poll(()=>peak(page)).toBeLessThan(.0001);await expect(page.locator('#chord-name')).toHaveText('G7alt');
   await page.locator(selector).focus();await page.keyboard.down('Space');await expect.poll(()=>peak(page)).toBeGreaterThan(.005);await expect(page.locator(selector)).toBeFocused();
   await page.keyboard.up('Space');await expect.poll(()=>peak(page)).toBeLessThan(.0001);
+  if(target==='harmony-title'){await page.keyboard.press('Enter');await expect(page.locator('#template')).toHaveValue('custom');await expect(page.locator('#custom-chord')).toHaveValue('dom7alt');return;}
   await page.keyboard.down('Enter');await expect.poll(()=>peak(page)).toBeGreaterThan(.005);await page.locator('#mini-bpm').focus();await expect.poll(()=>peak(page)).toBeLessThan(.0001);await page.keyboard.up('Enter');
 });
 test('pedal reference preview, cancellation and old disabled-preview presets',async({page})=>{

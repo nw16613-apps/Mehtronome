@@ -106,3 +106,12 @@ Validation: 38 unit-test files passed. Focused browser suites cover written rest
 My progression now has labelled native Undo/Redo buttons beside Add chord. History covers chord root, quality, mode, bass, bar/beat durations, add, duplicate, delete, reorder and copying a template. Restoring history also restores the editor selection, rebuilds chart/loop options and saves the resulting arrangement. Playback stops first. A new edit clears redo; up to 50 edits are retained per page session. Reload or loading a saved custom progression resets history; saved-data formats are unchanged. Tonic, mixer and loop-selection controls are outside progression history.
 
 Validation: production build and focused browser workflows cover duration round trips, multiple structural edits, redo invalidation, automatic persistence/reload, playback stopping and mobile overflow, alongside existing chart/editing/export regressions. The deferred musical-content and shape review remains deferred.
+
+
+## Unified progression chart presentation
+
+All Harmony templates now render through the same chord-sheet renderer and container as My progression. Clicking a template beat opens a personal copy at that chord; Enter edits and Space retains hold-to-hear audition. The explicit create action uses the same editor. Original templates remain available. Custom editor controls appear after copying, redundant chord tiles are hidden, and beat highlights now work for built-in templates too. Existing duration, loop, preset, history and storage models are reused. Selecting a chart chord to edit stops playback first.
+
+Validation includes template-to-copy selection, template immutability, beat-duration editing/undo, playback highlights, hold/release audition, preset restoration, chord-sheet/export regressions and narrow-screen layout. The separate musical-content review remains deferred.
+
+The current chord hero and complete chord-note list are now combined with the scale/seventh-chord map inside one Harmony panel. The selected chord retains extensions (for example Bm9) while the diatonic cards continue to show seventh chords (Bm7), avoiding loss or conflation of either reference. Both update from the same active harmony.
