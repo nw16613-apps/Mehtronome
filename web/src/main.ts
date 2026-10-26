@@ -1,4 +1,3 @@
-import {renderMovementLab} from './practice/movement-view.js';
 import {progressionStudyPlan,planPosition} from './practice/progression-timing.js';
 import {progressionNotationSvg} from './practice/progression-notation.js';
 import {installJournal} from './practice/journal-view.js';
@@ -37,7 +36,7 @@ import { CUSTOM_PROGRESSION_KEY, cloneTemplate, normalizeCustomProgression, prog
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { scaleChoicesForChord } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
-import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
+import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 let customProgression:any;
@@ -106,13 +105,13 @@ app.innerHTML = `
       <button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
         <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div>
-        <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
+        <div id="custom-beat-grid" class="custom-beat-grid" aria-label="Progression beat grid"></div><p id="custom-grid-help" class="practice-help"></p><div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor">
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
           <label>Chord type<select id="custom-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}">${chord.name}</option>`).join('')}</select></label>
           <label>Scale guide<select id="custom-mode">${modeOptions()}</select></label>
-          <label>Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
-          <label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
+          <label>Duration unit<select id="custom-duration-unit"><option value="bars">Bars</option><option value="beats">Beats</option></select></label><label id="custom-bars-label">Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
+          <label id="custom-beats-label" hidden>Duration<select id="custom-beats">${Array.from({length:32},(_,i)=>`<option value="${i+1}">${i+1} beat${i?'s':''}</option>`).join('')}</select></label><label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
         </div>
         <div class="custom-actions"><button id="custom-left" type="button" class="practice-button" aria-label="Move chord left">← Move</button><button id="custom-right" type="button" class="practice-button" aria-label="Move chord right">Move →</button><button id="custom-duplicate" type="button" class="practice-button">Duplicate</button><button id="custom-delete" type="button" class="practice-button">Delete</button></div>
         <details class="custom-share"><summary>Share or copy progression</summary><textarea id="custom-text" rows="3" aria-label="Custom progression text" readonly></textarea><button id="custom-copy" type="button" class="practice-button">Copy progression</button></details>
@@ -215,7 +214,6 @@ let previewGripShape: string | null = null;
 type TheorySuggestion = {id:string; name:string; rootPc?:number; pcs:number[]; names:string[]; degrees:string[]; explanation:string; groups?:{name:string; rootPc?:number; pcs:number[]; names:string[]}[]};
 type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
-const movementVoices=new Map<string,any>();
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
 let fullFretboardCollapsed=false;
@@ -439,13 +437,13 @@ function renderProgressionReference(activeStep=step) {
   const scale=(chord:ReturnType<typeof chordInfo>)=>`${chord.scaleNames[0]} ${MODES[chord.mode as keyof typeof MODES].name}`;
   const title=settings.progression?`${template.name}${settings.loopEnabled?' · Selected loop':''}`:'Pedal chord · sustained harmony';
   const cards=order.map((index:number)=>{
-    const chord=chordInfo(index),bars=durations[index];
-    return `<li><button type="button" class="reference-chord ${index===active?'current':''}" ${index===active?'aria-current="step"':''} data-reference-step="${index}" title="While stopped, hold to hear this chord" ${playing||exercisePlaying?'disabled':''}><strong>${escapeHtml(label(index))}</strong><span>${escapeHtml(chord.roman)}${settings.progression?` · ${bars} bar${bars===1?'':'s'}`:''}</span><small>${escapeHtml(scale(chord))}</small></button></li>`;
+    const chord=chordInfo(index),bars=durations[index],duration=settings.template==='custom'?durationLabel(index):`${bars} bar${bars===1?'':'s'}`;
+    return `<li><button type="button" class="reference-chord ${index===active?'current':''}" ${index===active?'aria-current="step"':''} data-reference-step="${index}" title="While stopped, hold to hear this chord" ${playing||exercisePlaying?'disabled':''}><strong>${escapeHtml(label(index))}</strong><span>${escapeHtml(chord.roman)}${settings.progression?` · ${duration}`:''}</span><small>${escapeHtml(scale(chord))}</small></button></li>`;
   }).join('');
   document.querySelectorAll<HTMLElement>('.progression-reference').forEach(element=>{
     const referenceExpanded=element.querySelector<HTMLDetailsElement>('details')?.open??(element.getAttribute('aria-label')==='Exercise progression reference'?exerciseReferenceExpanded:false);
     if(exercisePlaying&&exerciseView.backing&&!['guidetones','connections'].includes(exerciseView.study)&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
-    element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${order.reduce((sum:number,index:number)=>sum+durations[index],0)}-bar loop`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
+    element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'?order.reduce((sum:number,index:number)=>sum+progressionBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
     const context=musicalContext(settings,activeStep);
     if(element.classList.contains('compact-reference')){const list=element.querySelector('ol')!;const help=element.querySelector('.reference-preview-help')!;const details=document.createElement('details');details.open=referenceExpanded;details.innerHTML='<summary>Full progression · hold a chord to hear it</summary>';details.append(list,help);element.append(details);element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
     applyStudioIcons(element);
@@ -461,21 +459,21 @@ function renderMusic() {
   const order = progressionOrder(settings);
   el('loop-controls').hidden = !settings.progression;
   el('loop-range').hidden = !settings.loopEnabled;
-  el('loop-summary').textContent = `${order.map((i: number) => { const c=chordInfo(i); return c.name+c.suffix; }).join(' → ')} · ${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)} bars. Original chord durations are kept.${settings.loopStart > settings.loopEnd ? ' Wraps across the end of the template.' : ''}`;
+  el('loop-summary').textContent = `${order.map((i: number) => { const c=chordInfo(i); return c.name+c.suffix; }).join(' → ')} · ${settings.template==='custom'?beatLength(order.reduce((sum:number,i:number)=>sum+progressionBeatDurations(settings)[i],0)):order.reduce((sum:number,i:number)=>sum+progressionDurations(settings)[i],0)+' bars'}. Original chord durations are kept.${settings.loopStart > settings.loopEnd ? ' Wraps across the end of the template.' : ''}`;
   el('chord-name').innerHTML = `${info.name}<span>${info.suffix}</span>`;
   el('chord-notes').textContent = info.tones.join(' · ');
 
   const jazz = template.kind === 'jazz';
   const modal = template.kind === 'modal';
   const custom = template.kind === 'custom';
-  el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : custom ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
+  el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${order.reduce((sum: number,i: number)=>sum+progressionDurations(settings)[i],0)}-BAR SELECTED LOOP` : custom ? `${progressionBeatDurations(settings).reduce((sum:number,beats:number)=>sum+beats,0)}-BEAT CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = !settings.progression;
   el('preview-controls').hidden = !settings.progression;
   const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
-    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz || modal || custom ? `<small>${progressionDurations(settings)[i]} bar${progressionDurations(settings)[i] === 1 ? '' : 's'}</small>` : ''}</button>`;
+    return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz || modal || custom ? `<small>${durationLabel(i)}</small>` : ''}</button>`;
   }).join('');
   if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
   el('harmony-explanation').textContent = spellingHelp(info)+' '+(modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip);
@@ -617,7 +615,6 @@ function renderGuitar() {
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
   el('guitar-context').textContent = chord;
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
-  renderMovementLab(info,(selectedPosition.board.start+selectedPosition.board.end)/2,{register:(id,voice)=>{if(previewGripShape===id)stopPreview();movementVoices.set(id,voice);},preview:id=>void previewGrip(id),stop:stopPreview},playing||exercisePlaying||busy||stopping);
   renderPracticeRoadmap(info);
   select('fret-view').value = select('exercise').value;
   applyStudioIcons(document.querySelector('.guitar')!);
@@ -654,6 +651,16 @@ function saveCustomProgression(message='Custom progression saved in this browser
   catch{message='The progression is ready for this session, but browser storage is unavailable.';}
   el('custom-status').textContent=message;
 }
+function beatLength(total:number){const bars=Math.floor(total/settings.beats),remaining=total%settings.beats;return `${total} beats · ${bars} bar${bars===1?'':'s'}${remaining?` + ${remaining} beat${remaining===1?'':'s'}`:''}`;}
+function durationLabel(index:number){const bars=progressionDurations(settings)[index];return settings.template==='custom'?`${progressionBeatDurations(settings)[index]} beats`:`${bars} bar${bars===1?'':'s'}`;}
+function renderCustomBeatGrid(){
+ el('custom-beat-grid').style.setProperty('--beats-per-bar',String(settings.beats));
+ const durations=progressionBeatDurations({...settings,template:'custom',customProgression}),total=durations.reduce((a:number,b:number)=>a+b,0);let offset=0;
+ el('custom-beat-grid').innerHTML=durations.flatMap((duration:number,index:number)=>{const start=offset;offset+=duration;return Array.from({length:Math.max(0,Math.min(duration,128-start))},(_,n)=>`<button type="button" class="custom-grid-beat ${(start+n)%settings.beats===0?'bar-start':''} ${index===customStepIndex?'selected':''}" data-grid-step="${index}" data-grid-beat="${start+n}" aria-label="Bar ${Math.floor((start+n)/settings.beats)+1}, beat ${(start+n)%settings.beats+1}: ${escapeHtml(actualCustomName(customProgression.steps[index].root)+CHORDS[customProgression.steps[index].chord as keyof typeof CHORDS].symbol)}"><small>${Math.floor((start+n)/settings.beats)+1}.${(start+n)%settings.beats+1}</small><span>${n===0?escapeHtml(actualCustomName(customProgression.steps[index].root)+CHORDS[customProgression.steps[index].chord as keyof typeof CHORDS].symbol):'—'}</span></button>`);}).join('');
+ el('custom-grid-help').textContent=`${beatLength(total)} in ${settings.beats}/4. ${total%settings.beats?'This cycle repeats immediately, so the next cycle starts partway through a bar.':'The cycle ends on a bar boundary.'} Beat durations stay fixed when the metre changes; bar durations follow the metre.${total>128?' First 128 beats shown.':''}`;
+}
+function highlightCustomBeat(beat:number){const duration=progressionOrder(settings).reduce((sum:number,index:number)=>sum+progressionBeatDurations(settings)[index],0),position=beat%duration;const order=progressionOrder(settings);let elapsed=0;let target=0;for(const index of order){const length=progressionBeatDurations(settings)[index];if(position<elapsed+length){target=progressionBeatDurations(settings).slice(0,index).reduce((a:number,b:number)=>a+b,0)+position-elapsed;break;}elapsed+=length;}document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>cell.classList.toggle('playing',Number(cell.dataset.gridBeat)===target));}
+el('custom-beat-grid').addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLElement>('[data-grid-step]');if(button){customStepIndex=Number(button.dataset.gridStep);if(!playing)step=customStepIndex;renderCustomBuilder();renderMusic();}});
 function renderCustomBuilder(){
   const active=settings.progression&&settings.template==='custom';
   el('custom-progression-builder').hidden=!active;
@@ -673,12 +680,16 @@ function renderCustomBuilder(){
   el('custom-timeline').innerHTML=customProgression.steps.map((item:any,index:number)=>{
     const chord=CHORDS[item.chord as keyof typeof CHORDS];
     const bass=item.bass===null?'':`/${actualCustomName(item.bass)}`;
-    return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.bars} bar${item.bars===1?'':'s'}</small></button>`;
+    return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.beats!==undefined?item.beats+' beat'+(item.beats===1?'':'s'):item.bars+' bar'+(item.bars===1?'':'s')}</small></button>`;
   }).join('');
   select('custom-root').value=String(current.root);
   select('custom-chord').value=current.chord;
   select('custom-mode').value=current.mode;
-  select('custom-bars').value=String(current.bars);
+  select('custom-bars').value=String(current.bars||1);
+  select('custom-duration-unit').value=current.beats!==undefined?'beats':'bars';
+  select('custom-beats').value=String(current.beats??Math.min(32,(current.bars||1)*settings.beats));
+  el('custom-bars-label').hidden=current.beats!==undefined;el('custom-beats-label').hidden=current.beats===undefined;
+  renderCustomBeatGrid();
   select('custom-bass').value=current.bass===null?'':String(current.bass);
   input('custom-text').value=progressionText(customProgression,(id:string)=>CHORDS[id as keyof typeof CHORDS]?.symbol||id);
   el<HTMLButtonElement>('custom-delete').disabled=customProgression.steps.length===1;
@@ -691,7 +702,7 @@ function commitCustomEdit(autoMode=false){
   item.chord=select('custom-chord').value;
   if(autoMode)select('custom-mode').value=recommendedMode(item.chord);
   item.mode=select('custom-mode').value;
-  item.bars=Number(select('custom-bars').value);
+  if(select('custom-duration-unit').value==='beats'){item.beats=Number(select('custom-beats').value);delete item.bars;}else{item.bars=Number(select('custom-bars').value);delete item.beats;}
   item.bass=select('custom-bass').value===''?null:Number(select('custom-bass').value);
   saveCustomProgression();fillLoopOptions(true);step=Math.min(step,customProgression.steps.length-1);update();
 }
@@ -704,6 +715,7 @@ function update() {
   if (previewGripShape || activeComparison) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|');
   const previous = [settings.key, settings.mode, settings.chord, settings.template].join('|');
+  settings.beats = Number(select('beats').value);
   settings.key = Number(select('key').value);
   settings.mode = select('quality').value;
   settings.minor = settings.mode === 'minor';
@@ -805,7 +817,6 @@ function update() {
   const [polyBeats,polyBase]=select('pulse-poly').value.split('/').map(Number);
   settings.polyBeats=polyBeats;settings.polyBase=polyBase;
   if(el('pulse-poly-beats').children.length!==polyBeats)el('pulse-poly-beats').innerHTML=Array.from({length:polyBeats},(_,i)=>`<span>${i+1}</span>`).join('');
-  settings.beats = Number(select('beats').value);
   settings.countIn = input('count-in').checked;
   settings.click = Number(input('click').value) / 100;
   settings.harmony = Number(input('harmony').value) / 100;
@@ -886,7 +897,6 @@ function stopPreview() {
   reflectChordPreviews();
   el('grip-preview-status').hidden = true;
   el('preview-status').hidden = true;
-  syncMiniTransport();
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
@@ -949,6 +959,7 @@ async function initialiseAudio() {
       el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
       el('pulse-large-status').textContent=el('play-status').textContent;
       if (step !== data.step) { step = data.step; renderMusic(); }
+      if(settings.template==='custom'&&!data.counting)highlightCustomBeat((data.bar-1)*settings.beats+data.beat);
     };
     node.onprocessorerror = () => {
       stopPreview();
@@ -1005,15 +1016,15 @@ async function previewChord(index: number, hold: string) {
   }
 }
 async function previewGrip(shape: string) {
-  if (playing || exercisePlaying || busy || stopping) return;
+  if (playing || busy || stopping) return;
   if (previewGripShape === shape) { stopPreview(); return; }
-  const grip = movementVoices.get(shape)??positionGrips.get(shape);
+  const grip = positionGrips.get(shape);
   if (!grip) return;
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
   const generation = previewGeneration;
   previewGripShape = shape;
-  reflectChordPreviews();syncMiniTransport();
+  reflectChordPreviews();
   el('error').hidden = true;
   try {
     if (replacing && master && context?.state === 'running') {
@@ -1482,7 +1493,7 @@ el('customize-progression').addEventListener('click',()=>{
 });
 el('custom-timeline').addEventListener('click',event=>{
   const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-custom-step]');
-  if(!button)return;customStepIndex=Number(button.dataset.customStep);step=customStepIndex;renderCustomBuilder();renderMusic();
+  if(!button)return;customStepIndex=Number(button.dataset.customStep);if(!playing)step=customStepIndex;renderCustomBuilder();renderMusic();
 });
 let draggedCustomStep:number|null=null;
 el('custom-timeline').addEventListener('dragstart',event=>{
@@ -1496,7 +1507,7 @@ el('custom-timeline').addEventListener('drop',event=>{
   const [item]=customProgression.steps.splice(draggedCustomStep,1);customProgression.steps.splice(destination,0,item);customStepIndex=destination;draggedCustomStep=null;
   saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
 });
-for(const id of ['custom-root','custom-mode','custom-bars','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(false));
+for(const id of ['custom-root','custom-mode','custom-bars','custom-beats','custom-duration-unit','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(false));
 el('custom-chord').addEventListener('input',()=>commitCustomEdit(true));
 el('custom-add').addEventListener('click',()=>{
   const previous=customProgression.steps.at(customStepIndex)||customProgression.steps.at(-1);
@@ -1578,11 +1589,6 @@ function syncMiniTransport() {
   select('mini-chord-select').value=select('chord').value;
   select('mini-chord-select').disabled=select('chord').disabled;
   select('mini-progression').value=settings.progression?select('template').value:'off';
-  const movementPreview=previewGripShape?movementVoices.get(previewGripShape):null;
-  if(movementPreview&&!playing&&!exercisePlaying){
-    el('mini-chord').textContent=movementPreview.name;el('mini-mode').textContent='Chord movement preview';el('mini-mode').title='Chord comparison · backing setup retained';document.querySelector<HTMLElement>('.mini-harmony-controls')!.hidden=true;
-    el('active-musical-context').innerHTML=`<div><small>Comparison root</small><strong>${escapeHtml(movementPreview.rootName)}</strong></div><div><small>Auditioning</small><strong>${escapeHtml(movementPreview.name)}</strong></div><div><small>Sounding low to high</small><strong>${movementPreview.notes.map((note:any)=>escapeHtml(note.name)).join(' · ')}</strong></div><p>Chord movement comparison; no scale guide is being prescribed. Your backing setup is retained.</p>`;
-  }
   input('mini-count-in').checked=input('count-in').checked;
   input('mini-count-in').disabled=input('count-in').disabled;
   input('mini-accent').checked=input('accent').checked;
@@ -1916,7 +1922,7 @@ const guitarSetup=document.createElement('details');guitarSetup.className='guita
 const guitarOverview=document.querySelector('.guitar-overview')!;
 for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
-const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);contextMap.before(el('movement-lab'));
+const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
 
 installJournal({
  capture:()=>{const preset=snapshotPreset();return {preset,exercise:{...exerciseView},position:overviewPosition,step,goal:activeGoal,gripOnly};},

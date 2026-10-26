@@ -3,7 +3,7 @@ export function progressionStudyPlan(groups,steps,bars,beats,study,rhythm='eight
   const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
   const events=[],slots=[],warnings=[];let offset=0,index=0;
   for(const [slot,step]of steps.entries()){
-    const duration=Math.max(1,bars[step]||1)*beats,group=groups.find(g=>g.slot===slot);
+    const duration=Math.round(Math.max(1/beats,bars[step]??1)*beats),group=groups.find(g=>g.slot===slot);
     const fits=study==='guidetones'?1:Math.floor(duration*division);
     if((group?.notes.length||0)>fits)warnings.push(`${group.chord}: only the first ${fits} notes fit at this rhythm. Choose a faster subdivision or a longer chord duration to hear the full arpeggio.`);
     slots.push({slot,step,start:offset,duration,chord:group?.chord||'',annotation:group?.annotation||''});
@@ -14,7 +14,16 @@ export function progressionStudyPlan(groups,steps,bars,beats,study,rhythm='eight
     }
     index+=group?.notes.length||0;offset+=duration;
   }
-  return {events,slots,warnings,duration:offset,beats,division,study};
+  const harmonicDuration=offset;
+  const gcd=(a,b)=>b?gcd(b,a%b):a;
+  const cycles=beats/gcd(Math.round(offset),beats);
+  const baseEvents=[...events],baseSlots=[...slots];
+  for(let cycle=1;cycle<cycles;cycle++){
+    events.push(...baseEvents.map(event=>({...event,start:event.start+cycle*harmonicDuration})));
+    slots.push(...baseSlots.map(slot=>({...slot,start:slot.start+cycle*harmonicDuration})));
+  }
+  if(cycles>1)warnings.push(`This ${harmonicDuration}-beat progression is shown ${cycles} times so the notation and repeated study return together to beat 1.`);
+  return {events,slots,warnings,duration:offset*cycles,harmonicDuration,cycles,beats,division,study};
 }
 export function planPosition(plan,elapsedBeats){
   const beat=((elapsedBeats%plan.duration)+plan.duration)%plan.duration;

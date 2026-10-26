@@ -229,7 +229,7 @@ export function progressionDefinition(settings) {
 }
 export function progressionDurations(settings) {
   const template = progressionDefinition(settings);
-  return template.steps ? template.steps.map(step => step.bars) : template.roman.map(() => template.bars);
+  return template.steps ? template.steps.map(step => step.beats!==undefined?step.beats/Math.max(1,settings.beats||4):step.bars) : template.roman.map(() => template.bars);
 }
 // Inclusive ranges may cross the end of a template (for example V back to ii).
 export function progressionOrder(settings) {
@@ -239,10 +239,12 @@ export function progressionOrder(settings) {
   const start = bound(settings.loopStart), end = bound(settings.loopEnd);
   return Array.from({length:(end - start + count) % count + 1}, (_, i) => (start + i) % count);
 }
-export function progressionStep(settings, bar) {
-  const durations = progressionDurations(settings);
+export function progressionStep(settings, bar) {return progressionStepAtBeat(settings,bar*Math.max(1,settings.beats||4));}
+export function progressionBeatDurations(settings){const definition=progressionDefinition(settings),beats=Math.max(1,settings.beats||4);return definition.steps?definition.steps.map(step=>step.beats??step.bars*beats):definition.roman.map(()=>definition.bars*beats);}
+export function progressionStepAtBeat(settings, beat) {
+  const durations = progressionBeatDurations(settings);
   const order = progressionOrder(settings);
-  let position = bar % order.reduce((sum, index) => sum + durations[index], 0);
+  let position = Math.max(0,beat) % order.reduce((sum, index) => sum + durations[index], 0);
   for (const index of order) {
     if (position < durations[index]) return index;
     position -= durations[index];

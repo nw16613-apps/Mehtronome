@@ -7,7 +7,9 @@ const durationPart=(remaining,at,division)=>{
 /** True-duration notation/TAB for chord-aligned studies. Notes crossing bars
  * are tied and retain the same audition/selection index in every segment. */
 export function progressionNotationSvg(plan,title){
- const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',perSystem=guide?4:3,barWidth=Math.max(guide?155:230,plan.beats*(guide?30:48)),systems=[];
+ const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=dense?2:guide?4:3;
+ const unit=Math.max(guide?30:48,...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
+ const barWidth=Math.max(guide?155:230,plan.beats*unit+35),systems=[];
  for(let first=0;first<barCount;first+=perSystem){
   const count=Math.min(perSystem,barCount-first),width=100+Math.min(perSystem,barCount)*barWidth,height=290,staffEnd=90+count*barWidth-8;
   let svg=`<svg class="exercise-notation aligned-notation" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)} · chord-aligned rhythm</title><rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text class="exercise-title" x="90" y="20">${esc(title)}${first?' · continued':''}</text><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">${plan.beats}</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
@@ -16,7 +18,8 @@ export function progressionNotationSvg(plan,title){
   for(let bar=first;bar<first+count;bar++){
    const start=bar*plan.beats,end=start+plan.beats,left=90+(bar-first)*barWidth,unit=(barWidth-35)/plan.beats;
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
-   svg+=`<text class="exercise-source" x="${left+12}" y="40">${esc(slot?.chord||'')} · bar ${bar+1}</text>`;
+   const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
+   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit;svg+=`<text class="exercise-source" x="${x}" y="40">${esc(change.chord)} · ${at-start+1}</text><text class="exercise-degree" x="${x}" y="272">${esc(plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':'Arpeggio → rest')}</text>`;}
    let at=start;
    while(at<end-1e-6){
     const event=plan.events.find(e=>at>=e.start-1e-6&&at<e.start+e.duration-1e-6);
@@ -41,7 +44,7 @@ export function progressionNotationSvg(plan,title){
     if(plan.division===3&&duration<1&&Math.abs(at-Math.round(at))<1e-6)svg+=`<text class="tuplet-number" x="${x+unit/3}" y="53">3</text>`;
     at+=duration;
    }
-   const right=left+barWidth-8;svg+=`<line class="bar-line" data-bar="${bar+1}" x1="${right}" x2="${right}" y1="61" y2="101"/><line class="bar-line" x1="${right}" x2="${right}" y1="150" y2="240"/><text class="exercise-degree" x="${left+14}" y="272">${esc(slot?.annotation||'')}</text>`;
+   const right=left+barWidth-8;svg+=`<line class="bar-line" data-bar="${bar+1}" x1="${right}" x2="${right}" y1="61" y2="101"/><line class="bar-line" x1="${right}" x2="${right}" y1="150" y2="240"/>`;
   }
   systems.push(svg+'</svg>');
  }

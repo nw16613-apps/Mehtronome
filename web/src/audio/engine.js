@@ -5,7 +5,7 @@ import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { CompingInstrument, compingHook } from './comping.js';
 import { Sequence } from './sequence.js';
-import { pedalNotes, SOUNDS, harmonyAt, progressionStep, characteristicNotes } from './music.js';
+import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, characteristicNotes } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
@@ -285,7 +285,7 @@ export class Engine {
     }
     const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
     this.gapMuted = !this.auditioning && this.beat >= this.remainingCount && gapAt(s,bar);
-    this.setChord(this.auditioning ? this.step : s.progression ? progressionStep(s, bar) : 0);
+    this.setChord(this.auditioning ? this.step : s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0);
   }
 
   /** @param {number[] | null} [notes] */
@@ -308,7 +308,7 @@ export class Engine {
   setChord(step) {
     this.step = step;
     const s = this.settings;
-    const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.bass}`).join(','):'';
+    const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.beats}:${item.bass}`).join(','):'';
     const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${s.extensionMorph}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
@@ -341,7 +341,7 @@ export class Engine {
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     this.assignPadVoices(this.depthMotionState);
-    const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmony;
+    const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,s.template==='custom'?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
     this.compingNotes=compingHook(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
@@ -444,9 +444,9 @@ export class Engine {
           this.clockSettings.bpm = this.currentBpm;
           this.trainerNextBar = bar + s.trainerBars;
         }
-        const step = s.progression ? progressionStep(s, bar) : 0;
+        const step = s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0;
         this.setChord(step);
-        const nextHarmony=s.progression ? harmonyAt(s,progressionStep(s,bar+1)) : harmonyAt(s,this.step);
+        const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,s.template==='custom'?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmonyAt(s,this.step);
         this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
         this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
