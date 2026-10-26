@@ -108,7 +108,8 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
         <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div></div>
-        <div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p><div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
+        <p id="chart-loop-status" class="practice-help" role="status">Drag across chords to loop them. Click a chord to edit; hold to hear it. Loop boundaries include complete chords.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><details><summary>Choose loop with controls</summary><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></details></div>
+<div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor">
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
           <label>Chord type<select id="custom-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}">${chord.name}</option>`).join('')}</select></label>
@@ -129,11 +130,10 @@ app.innerHTML = `
       <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
       <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
     </section>
-      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selected chords</label><div id="loop-range" hidden><div class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><p id="loop-summary" class="practice-help"></p></div></div>
+
       <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><span id="preview-status" role="status" hidden>Release to stop</span></div>
       <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
-      <details class="compare-panel"><summary>Compare two chords</summary><p class="practice-help">Capture the current harmony in A and B, then listen to the difference while stopped.</p><div class="compare-slots"><div><button id="compare-a" class="practice-button">Capture as A</button><button id="compare-play-a" class="practice-button" aria-pressed="false" disabled>Listen to A</button><p id="compare-name-a">No chord captured</p></div><div><button id="compare-b" class="practice-button">Capture as B</button><button id="compare-play-b" class="practice-button" aria-pressed="false" disabled>Listen to B</button><p id="compare-name-b">No chord captured</p></div></div><button id="compare-swap" class="practice-button" disabled>Alternate A / B</button><p id="compare-status" class="practice-help" role="status">Capture two chords to compare.</p></details>
     </section>
 
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Mixer</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
@@ -257,9 +257,6 @@ const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
 let focusView = false;
-type ComparedChord = {settings:typeof settings; step:number; name:string};
-const comparisons:Partial<Record<'a'|'b',ComparedChord>> = {};
-let activeComparison:'a'|'b'|null = null;
 let mixerDrums = false, mixerBass = false, mixerComping = false, mixerSequence = false;
 
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
@@ -698,10 +695,33 @@ function renderCustomBeatGrid(){
  const durations=progressionBeatDurations(settings),total=durations.reduce((a:number,b:number)=>a+b,0);
  const definition=progressionDefinition(settings);
  const chords=definition.roman.map((_:any,index:number)=>{const c=chordInfo(index);return c.name+c.suffix;});
- el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],selected:settings.template==='custom'?customStepIndex:step});
+ el<HTMLButtonElement>('chart-loop-clear').disabled=!settings.loopEnabled;
+ el('chart-loop-status').textContent=settings.loopEnabled?`Loop selected: chords ${settings.loopStart+1}–${settings.loopEnd+1}. Drag to change it, or clear the loop.`:'Drag across chords to loop them. Click a chord to edit; hold to hear it. Loop boundaries include complete chords.';
+ el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],selected:settings.template==='custom'?customStepIndex:step,loopSteps:settings.loopEnabled?progressionOrder(settings):[]});
  el('custom-grid-help').textContent=`${beatLength(total)} in ${settings.beats}/4. ${total%settings.beats?'This cycle repeats immediately, so the next cycle starts partway through a bar.':'The cycle ends on a bar boundary.'} Beat durations stay fixed when the metre changes; bar durations follow the metre.${total>128?' First 128 beats shown.':''}`;
 }
 function highlightCustomBeat(beat:number){const duration=progressionOrder(settings).reduce((sum:number,index:number)=>sum+progressionBeatDurations(settings)[index],0),position=beat%duration;const order=progressionOrder(settings);let elapsed=0;let target=0;for(const index of order){const length=progressionBeatDurations(settings)[index];if(position<elapsed+length){target=progressionBeatDurations(settings).slice(0,index).reduce((a:number,b:number)=>a+b,0)+position-elapsed;break;}elapsed+=length;}document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>{const active=Number(cell.dataset.gridBeat)===target;cell.classList.toggle('playing',active);if(active)cell.setAttribute('aria-current','true');else cell.removeAttribute('aria-current');});}
+type ChartDrag={pointer:number;start:number;end:number;x:number;y:number;moved:boolean};
+let chartDrag:ChartDrag|null=null,chartSuppressClickUntil=0;
+function paintChartLoop(start:number,end:number){document.querySelectorAll<HTMLElement>('#custom-beat-grid [data-grid-step]').forEach(cell=>{const index=Number(cell.dataset.gridStep);cell.classList.toggle('loop-selected',index>=Math.min(start,end)&&index<=Math.max(start,end));cell.classList.remove('loop-outside');});}
+async function applyChartLoop(start:number,end:number){
+ stopPreview();stopExercisePreview();const resume=playing;if(playing)await stop();
+ input('loop-enabled').checked=true;select('loop-start').value=String(Math.min(start,end));select('loop-end').value=String(Math.max(start,end));update();
+ el('chart-loop-status').textContent=`Loop selected: chords ${Math.min(start,end)+1}–${Math.max(start,end)+1}. Press Play to hear the loop.`;
+ if(resume)await toggle();
+}
+el('custom-beat-grid').addEventListener('pointerdown',event=>{const button=(event.target as Element).closest<HTMLElement>('[data-grid-step]');if(!button||event.button!==0||!event.isPrimary||event.pointerType==='touch')return;chartDrag={pointer:event.pointerId,start:Number(button.dataset.gridStep),end:Number(button.dataset.gridStep),x:event.clientX,y:event.clientY,moved:false};});
+window.addEventListener('pointermove',event=>{
+ if(!chartDrag||chartDrag.pointer!==event.pointerId)return;
+ if(!chartDrag.moved&&Math.hypot(event.clientX-chartDrag.x,event.clientY-chartDrag.y)<6)return;
+ chartDrag.moved=true;stopPreview();const cell=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>('#custom-beat-grid [data-grid-step]');if(cell)chartDrag.end=Number(cell.dataset.gridStep);paintChartLoop(chartDrag.start,chartDrag.end);event.preventDefault();
+});
+window.addEventListener('pointerup',event=>{if(!chartDrag||chartDrag.pointer!==event.pointerId)return;const drag=chartDrag;chartDrag=null;if(!drag.moved)return;chartSuppressClickUntil=performance.now()+350;void applyChartLoop(drag.start,drag.end);});
+function cancelChartDrag(){if(!chartDrag)return;const moved=chartDrag.moved;chartDrag=null;stopPreview();if(moved){chartSuppressClickUntil=performance.now()+350;renderCustomBeatGrid();}}
+window.addEventListener('pointercancel',cancelChartDrag);window.addEventListener('blur',cancelChartDrag);
+window.addEventListener('keydown',event=>{if(event.key==='Escape')cancelChartDrag();});
+el('custom-beat-grid').addEventListener('click',event=>{if(event.detail&&performance.now()<chartSuppressClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
+el('chart-loop-clear').addEventListener('click',()=>{input('loop-enabled').checked=false;update();el('chart-loop-status').textContent='Loop cleared. Playback uses the full progression.';});
 el('custom-beat-grid').addEventListener('click',async event=>{const button=(event.target as Element).closest<HTMLElement>('[data-grid-step]');if(button){if(stopping)return;const beat=button.dataset.gridBeat,chosen=Number(button.dataset.gridStep);stopPreview();stopExercisePreview();if(playing)await stop();if(settings.template!=='custom')el('customize-progression').click();customStepIndex=chosen;if(!playing)step=customStepIndex;renderCustomBuilder();renderMusic();document.querySelector<HTMLElement>(`[data-grid-beat="${beat}"]`)?.focus({preventScroll:true});}});
 function renderCustomBuilder(){
   const active=settings.progression&&settings.template==='custom';
@@ -761,7 +781,7 @@ function updateSpace() {
   if (wet && context) wet.gain.setTargetAtTime((input('mute-space').checked?0:Number(input('space').value) / 100 * .65), context.currentTime, .08);
 }
 function update() {
-  if (previewGripShape || activeComparison) stopPreview();
+  if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd].join('|');
   const previous = [settings.key, settings.mode, settings.chord, settings.template].join('|');
   settings.beats = Number(select('beats').value);
@@ -882,7 +902,6 @@ function update() {
   if (!playing) renderBeats();
 }
 function tempo(value: number) {
-  if (activeComparison) stopPreview();
   settings.bpm = Math.max(30, Math.min(240, Math.round(value) || 90));
   input('tempo').style.setProperty('--tempo-fill',`${(settings.bpm-30)/210*100}%`);
   currentBpm = settings.bpm;
@@ -908,7 +927,6 @@ function reflectPlayback() {
   if (!playing) { renderBeats(); el('play-status').textContent = 'Take a breath. Start again when you’re ready.'; }
   if (!playing) currentBpm = settings.bpm;
   syncMiniTransport();
-  reflectComparison();
   syncTrainerStatus();
   reflectPresetButtons();
 }
@@ -942,8 +960,6 @@ function stopPreview() {
   previewHold = null;
   previewing = false;
   previewGripShape = null;
-  activeComparison = null;
-  reflectComparison();
   reflectChordPreviews();
   el('grip-preview-status').hidden = true;
   el('preview-status').hidden = true;
@@ -1759,37 +1775,6 @@ el('position-path').addEventListener('click',event=>{
   step=Number(button.dataset.positionStep);
   renderMusic();
 });
-function reflectComparison() {
-  for(const slot of ['a','b'] as const){
-    const captured=comparisons[slot];
-    el('compare-name-'+slot).textContent=captured?.name || 'No chord captured';
-    const button=el<HTMLButtonElement>('compare-play-'+slot);
-    button.disabled=!captured || playing || busy || stopping;
-    button.setAttribute('aria-pressed',String(activeComparison===slot));
-    button.textContent=activeComparison===slot?`Stop ${slot.toUpperCase()}`:`Listen to ${slot.toUpperCase()}`;
-  }
-  el<HTMLButtonElement>('compare-swap').disabled=!comparisons.a || !comparisons.b || playing || busy || stopping;
-  el('compare-status').textContent=activeComparison?`Listening to ${activeComparison.toUpperCase()} · ${comparisons[activeComparison]!.name}`:'Capture two chords to compare.';
-}
-for(const slot of ['a','b'] as const){
-  el('compare-'+slot).addEventListener('click',()=>{
-    if(activeComparison)stopPreview();
-    const info=chordInfo(step);comparisons[slot]={settings:{...settings},step,name:info.name+info.suffix};reflectComparison();
-  });
-  el('compare-play-'+slot).addEventListener('click',()=>void previewComparison(slot));
-}
-async function previewComparison(slot:'a'|'b') {
-  const captured=comparisons[slot];if(!captured || playing || busy || stopping)return;
-  if(activeComparison===slot){stopPreview();return;}
-  stopPreview();const generation=previewGeneration;activeComparison=slot;reflectComparison();
-  try{
-    previewPreparation ??= prepareAudio().finally(()=>{previewPreparation=undefined;});await previewPreparation;
-    if(generation!==previewGeneration || document.hidden)return;
-    previewing=true;
-    node!.port.postMessage({type:'audition',settings:{...captured.settings,harmony:settings.harmony,mutedChannels:settings.mutedChannels},step:captured.step});
-  }catch(error){stopPreview();el('error').textContent=error instanceof Error?error.message:'Could not compare chords.';el('error').hidden=false;}
-}
-el('compare-swap').addEventListener('click',()=>void previewComparison(activeComparison==='a'?'b':'a'));
 fillChords();
 renderScaleExplorer();
 update();
@@ -1827,7 +1812,6 @@ function reflectPresetButtons() {
   el<HTMLButtonElement>('preset-export').disabled = !presets.length || busy || stopping;
   for (const id of ['preset-load','preset-update','preset-delete']) el<HTMLButtonElement>(id).disabled = !selected || busy || stopping;
   syncMiniTransport();
-  reflectComparison();
 }
 function snapshotPreset(id: string = crypto.randomUUID()) {
   const name = input('preset-name').value.trim().slice(0,60);

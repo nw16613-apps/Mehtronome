@@ -24,12 +24,9 @@ header { height:auto; min-height:94px; padding-block:16px; }
 .tempo-training .practice-help { color:var(--muted,#b4c2af); }
 summary { cursor:pointer; font-size:12px; font-weight:600; padding:12px 0; color:var(--ink,var(--practice-ink,#365d49)); }
 summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:4px; border-radius:4px; }
-.learn-more,.compare-panel,.mixer-details { border-top:1px solid var(--line,#899b8350); margin-top:18px; }
+.learn-more,.mixer-details { border-top:1px solid var(--line,#899b8350); margin-top:18px; }
 .learn-more p { line-height:1.8; }
 .guitar-guide.learn-more { padding-bottom:12px; }
-.compare-slots { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
-.compare-slots>div { display:grid; gap:8px; align-content:start; }
-.compare-slots p { margin:4px 0; font-size:12px; color:var(--muted,var(--practice-muted,#64735f)); }
 .mixer-details .field-row { margin-top:8px; }
 .mixer-details .field-row[hidden] { display:none; }
 .mixer-details .field-row label { display:block; }
@@ -103,8 +100,6 @@ summary:focus-visible { outline:2px solid var(--accent,#9670cb); outline-offset:
   .mini-harmony-controls { grid-template-columns:65px minmax(100px,1fr) minmax(100px,1fr); }
   .mini-harmony-controls label:last-child { grid-column:1/-1; }
   .mini-pulse-options { grid-template-columns:1fr 1fr; order:4; }
-  .compare-slots { gap:8px; }
-  .compare-slots .practice-button { padding-inline:7px; font-size:11px; }
   .trainer-fields { gap:8px; }
   .trainer-fields input,.trainer-fields select { padding:7px; }
 }
@@ -675,3 +670,5 @@ button.reference-chord:disabled { cursor:default; opacity:1; }
 .custom-progression-builder [hidden]{display:none!important}
 
 .harmony-learning{margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}.harmony-learning .chord-stage{padding:20px 12px 28px}.harmony-learning .section-heading{margin-bottom:8px}
+
+#custom-beat-grid{user-select:none}.chart-beat.loop-selected{background:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 -4px var(--accent)}.chart-beat.loop-outside:not(.playing){opacity:.5}#loop-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}#loop-controls[hidden]{display:none}#loop-controls details{flex-basis:100%}

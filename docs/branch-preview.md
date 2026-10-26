@@ -7,6 +7,10 @@
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
 
+## Chart loop selection
+
+Drag across chart chords to select a loop. Selection snaps to complete chords, in either drag direction. Reverse dragging chooses the same contiguous range; use **Choose loop with controls** for wrapped end-to-start loops and keyboard editing. The chosen chords stay underlined/highlighted; Clear loop restores the whole progression. Dragging does not create a personal copy or edit a chord. Press Escape while dragging to cancel. Selecting while stopped leaves audio stopped; selecting during playback restarts playback at the selected range with the existing count-in setting. Mouse and pen support drag selection; touch users can use the controls. Presets/journals retain the existing loop settings. Compare two chords has been removed.
+
 ## Try the unified progression chart
 
 1. In **Harmony → Chord progression**, choose any template. Its chords now appear as the same chord chart used by **My progression**.

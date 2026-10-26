@@ -1,12 +1,12 @@
 import {escapeChordText as esc,chordHtml} from './chord-symbol.js';
 /** One cycle, with honest partial final bars; slash beats never add duration. */
-export function chordSheet(chords,durations,beats,{title='My progression',key='',selected=0,limit=128}={}){
+export function chordSheet(chords,durations,beats,{title='My progression',key='',selected=0,limit=128,loopSteps=/** @type {number[]} */ ([])}={}){
  const steps=[];let total=0;durations.forEach((duration,index)=>{steps.push({index,start:total,end:total+duration,chord:chords[index]});total+=duration;});
  const visible=Math.min(total,limit),measures=[];
  for(let start=0;start<visible;start+=beats){
   const count=Math.min(beats,visible-start),last=start+count===total;
   const cells=Array.from({length:count},(_,offset)=>{const beat=start+offset,step=steps.find(s=>beat>=s.start&&beat<s.end),change=beat===step.start||offset===0;
-   return `<button type="button" class="chart-beat ${step.index===selected?'selected':''}" data-grid-step="${step.index}" data-grid-beat="${beat}" aria-label="Bar ${Math.floor(beat/beats)+1}, beat ${offset+1}: ${esc(step.chord)}"><span class="chart-chord">${change?chordHtml(step.chord):''}</span><span class="chart-slash" aria-hidden="true">╱</span></button>`;}).join('');
+   return `<button type="button" class="chart-beat ${step.index===selected?'selected':''} ${loopSteps.length?(loopSteps.includes(step.index)?'loop-selected':'loop-outside'):''}" data-grid-step="${step.index}" data-grid-beat="${beat}" aria-label="Bar ${Math.floor(beat/beats)+1}, beat ${offset+1}: ${esc(step.chord)}"><span class="chart-chord">${change?chordHtml(step.chord):''}</span><span class="chart-slash" aria-hidden="true">╱</span></button>`;}).join('');
   measures.push(`<div class="chart-measure" aria-label="Bar ${start/beats+1}"><span class="chart-bar-number">${start/beats+1}</span><div class="chart-bar ${start===0?'chart-first':''} ${last?'chart-last':''}" style="--bar-beats:${count};--bar-fraction:${count/beats}">${cells}${last?'<span class="chart-repeat" aria-hidden="true">:</span>':''}</div></div>`);
  }
  return `<div class="chord-sheet-scroll"><section class="chord-sheet" style="--measure-min:${Math.max(220,beats*46)}px" aria-label="Chord sheet"><div class="chart-heading"><h4>${esc(title)}</h4><span>${esc(key)} · ${beats}/4</span></div><div class="chart-measures">${measures.join('')}</div><p class="chart-legend">Each slash is one beat. Chord symbols mark changes; a symbol at a new bar continues the held chord. Click a beat to edit its chord.${total%beats?' The final partial bar repeats immediately.':''}${total>limit?` First ${limit} of ${total} beats shown.`:''}</p></section></div>`;

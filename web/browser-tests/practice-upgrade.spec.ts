@@ -123,41 +123,6 @@ test('exported presets import safely and malformed files leave saved setups inta
   await page.reload();await expect(page.locator('#preset-list option')).toHaveCount(2);
 });
 
-test('chord comparison captures independent harmonies and switches or stops their previews',async({page})=>{
-  await page.addInitScript(()=>{
-    const Original=window.AudioWorkletNode;(window as any).__comparisonAuditions=[];
-    window.AudioWorkletNode=class extends Original{
-      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
-        super(context,name,options);const post=this.port.postMessage.bind(this.port);
-        this.port.postMessage=(data:any,transfer?:Transferable[])=>{
-          if(data.type==='audition')(window as any).__comparisonAuditions.push(data);
-          if(transfer)post(data,transfer);else post(data);
-        };
-      }
-    };
-  });
-  await page.goto('/');
-  await page.locator('.compare-panel>summary').click();
-  await page.locator('#compare-a').click();
-  await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('major');
-  await page.locator('#compare-b').click();
-  await page.locator('#compare-play-a').click();
-  await expect(page.locator('#compare-play-a')).toHaveAttribute('aria-pressed','true');
-  await expect.poll(()=>page.evaluate(()=>(window as any).__comparisonAuditions.length)).toBe(1);
-  const auditionA=await page.evaluate(()=>(window as any).__comparisonAuditions.at(-1));
-  expect(harmonyAt(auditionA.settings,auditionA.step).midi).toEqual([57,60,64,67,71,78]);
-  await expect(page.locator('#compare-status')).toContainText('A');
-  await page.locator('#compare-swap').click();
-  await expect(page.locator('#compare-play-a')).toHaveAttribute('aria-pressed','false');
-  await expect(page.locator('#compare-play-b')).toHaveAttribute('aria-pressed','true');
-  await expect.poll(()=>page.evaluate(()=>(window as any).__comparisonAuditions.length)).toBe(2);
-  const auditionB=await page.evaluate(()=>(window as any).__comparisonAuditions.at(-1));
-  expect(harmonyAt(auditionB.settings,auditionB.step).midi).toEqual([48,52,55,59]);
-  await expect(page.locator('#key')).toHaveValue('0');await expect(page.locator('#quality')).toHaveValue('major');
-  await page.locator('#compare-play-b').click();
-  await expect(page.locator('#compare-play-b')).toHaveAttribute('aria-pressed','false');
-});
-
 test('tempo trainer reaches its target on bar boundaries and restarts at the saved starting tempo',async({page})=>{
   await page.addInitScript(()=>{
     const Original=window.AudioWorkletNode;(window as any).__trainerBeats=[];

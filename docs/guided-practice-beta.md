@@ -115,3 +115,10 @@ All Harmony templates now render through the same chord-sheet renderer and conta
 Validation includes template-to-copy selection, template immutability, beat-duration editing/undo, playback highlights, hold/release audition, preset restoration, chord-sheet/export regressions and narrow-screen layout. The separate musical-content review remains deferred.
 
 The current chord hero and complete chord-note list are now combined with the scale/seventh-chord map inside one Harmony panel. The selected chord retains extensions (for example Bm9) while the diatonic cards continue to show seventh chords (Bm7), avoiding loss or conflation of either reference. Both update from the same active harmony.
+
+
+## Chart loop selection
+
+Integrated the existing loop controls into the chord chart. Mouse/pen drag selects a contiguous range of complete chords without cloning templates or opening editors, with a persistent underline/highlight. Reverse drags normalize to the same range; existing keyboard controls retain wrapped-loop support. Escape, pointer cancellation and window blur cancel an unfinished gesture. Single clicks and held audition retain their distinct behaviors. A committed selection leaves stopped audio stopped or restarts active playback at the selected range, retaining count-in. Clear loop restores the full progression. Existing preset/journal loop fields and scheduler are reused. Removed Compare two chords, its handlers, state and styles per request.
+
+Validation covers forward/reverse drag, cancellation, audition/edit separation, loop order at playback start, active-playback reselection, clearing and wrapped manual controls.
