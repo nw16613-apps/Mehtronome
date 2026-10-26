@@ -1,3 +1,4 @@
+import {voiceLeadingTargets} from './voice-leading.js';
 import {APPLICATIONS} from './applications.js';
 import {diagramSvg} from '../guitar/fretboard.js';
 import {MODES} from '../audio/music.js';
@@ -21,6 +22,14 @@ export function learningView(panel:HTMLElement,context:any){
   if(context.guidePaths?.length)details.insertAdjacentHTML('beforeend',`<p><b>Other illustrative third/seventh paths:</b> ${context.guidePaths.map(esc).join(' / ')}. These examples may differ from the displayed path, which fits the selected position.</p>`);
  }
 
+ if(['guidetones','connections'].includes(study)){
+  const targets=voiceLeadingTargets(groups);
+  if(targets.length){
+   const path=document.createElement('section');path.className='exercise-voice-leading';path.setAttribute('aria-label','Voice-leading targets');
+   path.innerHTML=`<h3>Targets between chords</h3><p class="practice-help">The actual written line: last note → next chord’s first note. Click a target to hear it while stopped and find it in the score and fretboard. These are melodic connections, not simultaneous chord grips.</p><ol>${targets.map(edge=>`<li data-voice-slot="${edge.slot}"><div><span>${esc(edge.fromChord)} · ${esc(edge.sourceInterval)}</span><strong>${esc(edge.source.name)}</strong></div><div class="voice-movement"><span aria-hidden="true">→</span><small>${esc(edge.movement)}</small></div><button type="button" class="practice-button voice-leading-target" data-exercise-index="${edge.targetIndex}" aria-label="Hear ${esc(edge.target.name)}, ${esc(edge.targetInterval)} of ${esc(edge.toChord)}"><span>${esc(edge.toChord)} · ${esc(edge.targetInterval)}</span><strong>${esc(edge.target.name)}</strong><small>String ${6-edge.target.string}, fret ${edge.target.fret}</small></button></li>`).join('')}</ol>`;
+   details.after(path);
+  }
+ }
  if(context.adaptive){
   toolbar.insertAdjacentHTML('beforeend',`<label>Inspect chord<select id="exercise-progression-chord">${groups.map((g:any)=>`<option value="${g.slot}">${esc(g.chord)}</option>`).join('')}</select></label>`);
   const timing=panel.querySelector<HTMLElement>('.progression-timing-help');if(timing)timing.textContent='The selected exercise is rebuilt from each chord’s tones or scale guide, using nearby CAGED regions. Complete cells fit inside each chord slot; any remaining time is a rest. Short-cell mode plays one cell for every chord. Increase chord duration or subdivision to explore more material. '+(context.timingWarnings||[]).join(' ');
@@ -46,7 +55,9 @@ export function learningView(panel:HTMLElement,context:any){
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Playback, material and display settings</summary>';for(const selector of ['.exercise-controls','.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);setup.insertAdjacentHTML('beforeend','<p class="practice-help">Pedal studies hold the selected chord. When a progression is selected, accompaniment follows its changes with stable extensions and fixed tempo. The selected ensemble follows the mixer.</p>');
 }
-export function highlightLearningNote(index:number|null,notes:any[]){
+export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
+ document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
+ document.querySelectorAll<SVGElement>('.exercise-note[data-note-index]').forEach(el=>el.classList.toggle('target-preview',markNotation&&Number(el.dataset.noteIndex)===index));
  const selected=index===null?null:notes[index];document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
 }
 

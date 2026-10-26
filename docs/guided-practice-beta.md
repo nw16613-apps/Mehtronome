@@ -122,3 +122,12 @@ The current chord hero and complete chord-note list are now combined with the sc
 Integrated the existing loop controls into the chord chart. Mouse/pen drag selects a contiguous range of complete chords without cloning templates or opening editors, with a persistent underline/highlight. Reverse drags normalize to the same range; existing keyboard controls retain wrapped-loop support. Escape, pointer cancellation and window blur cancel an unfinished gesture. Single clicks and held audition retain their distinct behaviors. A committed selection leaves stopped audio stopped or restarts active playback at the selected range, retaining count-in. Clear loop restores the full progression. Existing preset/journal loop fields and scheduler are reused. Removed Compare two chords, its handlers, state and styles per request.
 
 Validation covers forward/reverse drag, cancellation, audition/edit separation, loop order at playback start, active-playback reselection, clearing and wrapped manual controls.
+
+
+## Checkpoint 9 — explicit targets on the written voice-leading path
+
+Added a compact transition reference to the existing guide-tone and voice-led connection studies. It derives each source from the previous group’s final written note and the target from the next group’s first note, with chord intervals, exact signed pitch movement and target string/fret. Common tones, semitone/whole-tone movement, octave displacement and larger jumps are distinguished without promising that every transition is a small resolution. It does not generate another path or a chord grip. Silent slots have no inferred connection.
+
+Target buttons reuse existing note audition. Selecting one updates the correct chord’s diagram and highlights its actual note in the score; native buttons support keyboard activation. Existing playback and musical generators remain unchanged.
+
+Validation: all-key/five-framework unit checks for actual pitches, indices, intervals and string/fret agreement; explicit common-tone, semitone, octave and silent-slot cases. Browser checks cover linked target audition, keyboard use, source families, short-cell silence, narrow layout and existing timed audio/loop stopping. The broader musical-content/shape review remains deferred.

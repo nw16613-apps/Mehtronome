@@ -3,9 +3,17 @@
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
-- Current preview app update: all Harmony progression templates and My progression use the same editable chord chart. Click a template chord to create/edit a personal copy at that chord.
+- Current preview app checkpoint: Checkpoint 9 adds explicit targets for the existing guide-tone and voice-led connection studies. Drag-to-loop chart selection and the combined harmony reference remain included.
 
 The preview has its own origin and browser storage. Sign in with the owning ChatGPT account if prompted. It does not read or overwrite the live app's browser presets. Export/import presets explicitly if you want to test existing saved setups; keep your backup file.
+
+## Try checkpoint 9
+
+1. Launch **Outline an essential ii–V–I**, or select **Guide-tone voice leading** in Exercises with a progression active.
+2. In **Explore the position**, read **Targets between chords**. It describes the actual written source and next note, their chord intervals, and their movement; it does not invent another path.
+3. While stopped, click a target (or focus it and press Enter) to hear that note and highlight its place in the score and correct chord’s fretboard.
+4. Compare **Voice-led connections**: the source is the arpeggio’s last written note, and the target is the first note of the next chord. The stated movement can be larger than a semitone; the panel reports what is actually written.
+5. Short-cell stages with silent later chords omit connections across the silent slots. These are melodic examples, not simultaneous chord grips or verified fingerings.
 
 ## Chart loop selection
 

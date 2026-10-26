@@ -1244,7 +1244,11 @@ function setNotationFocus(value:boolean) {
 async function auditionExerciseNote(index:number){
   if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
 }
-function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying)return;highlightLearningNote(index,currentExercise);void auditionExerciseNote(index);}
+function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying)return;
+ const group=currentExerciseGroups.find((g:any)=>index>=g.globalStart&&index<g.globalStart+g.notes.length);
+ if(group?.harmony){exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);}
+ highlightLearningNote(index,currentExercise,true);void auditionExerciseNote(index);
+}
 function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,stage:exerciseView.stage,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked,application:exerciseView.application,response:exerciseView.response};}
 function restoreExercise(snapshot:any){if(!snapshot)return;Object.assign(exerciseView,{stage:'full',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
 function moveExercise(direction:number){
