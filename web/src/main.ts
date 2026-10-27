@@ -1,3 +1,4 @@
+import {manualPositionPath} from './guitar/position-path.js';
 import {positionRouteCards} from './practice/position-route.js';
 import {setFretRecallPlaying,selectRecallChord} from './practice/fret-recall-view.js';
 import {applicationStudy} from './practice/applications.js';
@@ -172,8 +173,8 @@ app.innerHTML = `
       <section class="progression-reference compact-reference" aria-label="Guitar progression reference"></section>
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
-        <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="all">Manual selection</option><option value="path">Follow nearest positions</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
-        <div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><p>Nearest CAGED route through this progression</p></div><div id="position-path" class="position-path"></div></div>
+        <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
+        <input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Suggested chord shape</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
@@ -580,22 +581,20 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const showGrip = input('show-grip').checked;
   let requestedFeatured = select('featured-position').value;
   if(!['all','path'].includes(requestedFeatured)){
-    select('featured-position').value='all';
-    requestedFeatured='all';
+    select('featured-position').value='path';
+    requestedFeatured='path';
   }
-  const pathOption=select('featured-position').querySelector<HTMLOptionElement>('option[value="path"]')!;
-  pathOption.disabled=!settings.progression;
-  if(!settings.progression&&requestedFeatured==='path')select('featured-position').value='all';
   const pathRegion=FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS] || FRET_REGIONS.middle;
-  const path=settings.progression?progressionPositionPath(
-    Array.from({length:progressionDefinition(settings).roman.length},(_,index)=>chordInfo(index)),
-    pathRegion,
-  ):[];
+  const harmonies=settings.progression?Array.from({length:progressionDefinition(settings).roman.length},(_,index)=>chordInfo(index)):[];
+  const automatic=settings.progression?progressionPositionPath(harmonies,pathRegion):[];
   const following=settings.progression&&requestedFeatured==='path';
-  const featured=following?path[step]?.numeral||'I':'all';
+  let path=automatic;
+  if(settings.progression&&!following){const manual=manualPositionPath(harmonies,automatic,input('manual-position-route').value);path=manual.path;input('manual-position-route').value=manual.value;}
+  const featured=settings.progression?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!settings.progression;
   select('position-region').parentElement!.hidden=!following;
-  el('position-path-guide').querySelector('p')!.textContent=following?'Nearest CAGED route through this progression':'CAGED positions through this progression';
+  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic CAGED route · choose a region':'Choose a chord card, then its position · other chords stay unchanged';
+  select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
   el('grip-legend').hidden = !showGrip;
   const info = chordInfo(step);
@@ -616,6 +615,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const selectedNumeral = positionOverride?.numeral || (featured === 'all' ? overviewPosition : featured);
   const selectedPosition = displayedPositions.find(position=>position.numeral===selectedNumeral) || displayedPositions[0]!;
   overviewPosition = selectedPosition.numeral || 'I';
+  select('guitar-chord-position').value=overviewPosition;
   const overlay = selectedTheory ? {kind:theoryView.kind as 'pentatonic'|'triads',name:selectedTheory.name,pcs:selectedTheory.pcs,...(selectedTheory.rootPc===undefined?{}:{rootPc:selectedTheory.rootPc}),...(selectedTheory.groups ? {groups:selectedTheory.groups} : {})} : null;
   el('position-overview').innerHTML = displayedPositions.map(position=>{
     const board=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
@@ -642,7 +642,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
   el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   reflectFullFretboard();
-  if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,following?progressionOrder(settings).map((index:number)=>path[index]):undefined);
+  if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);
   el('position-path').innerHTML=settings.progression?positionRouteCards(currentExerciseGroups,progressionOrder(settings),step,playing||exercisePlaying||exercisePreparing,true):'';
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
@@ -1141,13 +1141,19 @@ const fullFretboardPanel = el('full-fretboard-panel');
 const positionNumerals=['I','II','III','IV','V'];
 function chooseOverviewPosition(numeral:string, focus=false) {
   if(!positionNumerals.includes(numeral))return;
+  if(playing||exercisePlaying||exercisePreparing)return;
   overviewPosition=numeral;
-  select('featured-position').value='all';
+  if(settings.progression){
+    const harmonies=Array.from({length:progressionDefinition(settings).roman.length},(_,i)=>chordInfo(i));
+    const region=FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS]||FRET_REGIONS.middle;
+    const manual=manualPositionPath(harmonies,progressionPositionPath(harmonies,region),input('manual-position-route').value,{step,numeral});
+    input('manual-position-route').value=manual.value;select('featured-position').value='all';
+  }
   renderGuitar();
   if(focus)positionOverview.querySelector<HTMLButtonElement>(`[data-overview-position="${numeral}"]`)?.focus({preventScroll:true});
 }
 function moveOverviewPosition(direction:number) {
-  if(select('featured-position').value==='path')return;
+  if(settings.progression&&select('featured-position').value==='path')return;
   const index=positionNumerals.indexOf(overviewPosition);
   chooseOverviewPosition(positionNumerals[(index+direction+positionNumerals.length)%positionNumerals.length]!,true);
 }
@@ -1232,9 +1238,9 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-favourites'&&target.value!==''){restoreExercise(exerciseFavourites()[Number(target.value)]);return;}
   if(target.id==='exercise-position-navigation'){stopExercisePreview();select('featured-position').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position-region'){stopExercisePreview();select('position-region').value=target.value;renderMusic();return;}
+  if(target.id==='exercise-position'){const numeral=target.value;stopExercisePreview();chooseOverviewPosition(numeral);el('exercise-position').focus({preventScroll:true});return;}
   exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;
   stopExercisePreview();
-  if(target.id==='exercise-position'){chooseOverviewPosition(target.value);el('exercise-position').focus({preventScroll:true});return;}
   if(target.id==='exercise-application')exerciseView.application=target.value;
   if(target.id==='exercise-response')exerciseView.response=target.value;
   if(target.id==='exercise-stage'){exerciseView.stage=target.value;exerciseSelectionStart=null;exerciseSelectionEnd=null;}
@@ -1669,7 +1675,8 @@ function syncTrainerStatus() {
 function syncMiniTransport() {
   setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
-  for(const id of ['exercise-position-navigation','exercise-position-region','featured-position','position-region']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
+  for(const id of ['exercise-position-navigation','exercise-position-region','featured-position','position-region','guitar-chord-position']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
+  const positionControl=document.getElementById('exercise-position') as HTMLSelectElement|null;if(positionControl)positionControl.disabled=playing||exercisePlaying||exercisePreparing||(settings.progression&&select('featured-position').value==='path');
   const mini = el('mini-transport');
   mini.hidden = false;
   if (document.activeElement !== input('mini-bpm')) input('mini-bpm').value = String(exercisePlaying?exerciseView.tempo:playing ? currentBpm : settings.bpm);
@@ -1885,6 +1892,8 @@ function restoreControl(id: string, value: unknown) {
   const control = el<HTMLInputElement | HTMLSelectElement>(id);
   if (control instanceof HTMLSelectElement) {
     if (typeof value === 'string' && Array.from(control.options).some(option => option.value === value && !option.disabled)) control.value = value;
+  } else if(id==='manual-position-route'){
+    if(typeof value==='string'&&(value===''||/^v1:[a-z0-9]+:[0-4]{1,32}$/.test(value)))control.value=value;
   } else if(id==='pulse-accents'){
     if(typeof value==='string'&&/^[012]{0,12}$/.test(value))control.value=value;
   } else if (control.type === 'checkbox') {
@@ -1903,7 +1912,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'all','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
@@ -1966,7 +1975,7 @@ document.addEventListener('click',event=>{
  const focus=event.target.closest('[data-learning-focus]');if(focus){setFocusView(true);document.querySelector('.featured-position')?.scrollIntoView({block:'start'});return;}
  const view=event.target.closest<HTMLElement>('[data-grip-display]');if(view){gripOnly=view.dataset.gripDisplay==='grip';renderGuitar();return;}
  const nav=event.target.closest<HTMLElement>('[data-learning-nav]');if(nav){if(focusView)setFocusView(false);showWorkspace(nav.dataset.learningNav!,learningTargets[nav.dataset.learningNav!]);return;}
- const grip=event.target.closest<HTMLElement>('[data-practise-grip]');if(grip){stopPreview();overviewPosition=grip.dataset.practiseGrip!;select('featured-position').value='all';exerciseView.study='grip';exerciseView.stage='cell';exerciseView.fretboard=true;exerciseView.recall=false;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}
+ const grip=event.target.closest<HTMLElement>('[data-practise-grip]');if(grip){stopPreview();overviewPosition=grip.dataset.practiseGrip!;if(settings.progression)chooseOverviewPosition(overviewPosition);exerciseView.study='grip';exerciseView.stage='cell';exerciseView.fretboard=true;exerciseView.recall=false;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}
 });
 select('practice-goal').addEventListener('input',()=>{const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;el('goal-description').textContent=goal.tip+' Keeps your selected tonic. Configures tools without starting audio.';});
 el('dismiss-guided-session').addEventListener('click',()=>{el('guided-session').hidden=true;activeGoal='';});
@@ -1974,7 +1983,7 @@ el('start-guided-goal').addEventListener('click',()=>void startGuidedGoal());
 async function startGuidedGoal(){
  if(playing)await stop();stopPreview();
  const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;activeGoal=goal.id;
- settings.progression=Boolean(goal.template);gripOnly=goal.id==='shape';step=0;overviewPosition='I';select('featured-position').value='all';select('quality').value=goal.mode;select('template').value=goal.template||'parallel1';settings.template=select('template').value;fillChords();select('chord').value=goal.chord;
+ settings.progression=Boolean(goal.template);gripOnly=goal.id==='shape';step=0;overviewPosition='I';input('manual-position-route').value='';select('featured-position').value='path';select('quality').value=goal.mode;select('template').value=goal.template||'parallel1';settings.template=select('template').value;fillChords();select('chord').value=goal.chord;
  for(const id of ['pedal','progression']){const chosen=id===(settings.progression?'progression':'pedal');el(id).classList.toggle('selected',chosen);el(id).setAttribute('aria-pressed',String(chosen));}
  for(const id of ['sequence','drums','bass','comping','trainer-enabled','gap-enabled','loop-enabled','extension-morph'])input(id).checked=false;
  for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=false;soloChannels.clear();
@@ -1995,6 +2004,7 @@ async function startGuidedGoal(){
 const guitarSetup=document.createElement('details');guitarSetup.className='guitar-setup';guitarSetup.innerHTML='<summary>Diagram and chord-shape settings</summary>';
 const guitarOverview=document.querySelector('.guitar-overview')!;
 const guitarRouteControls=document.createElement('div');guitarRouteControls.className='position-path-controls';const guitarRouteHeading=el('position-path-guide').querySelector('.position-path-heading')!;guitarRouteHeading.prepend(guitarRouteControls);guitarRouteControls.append(select('featured-position').closest('label')!,select('position-region').closest('label')!);
+guitarRouteControls.append(select('guitar-chord-position').closest('label')!);select('guitar-chord-position').addEventListener('input',()=>{chooseOverviewPosition(select('guitar-chord-position').value);select('guitar-chord-position').focus({preventScroll:true});});
 for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);

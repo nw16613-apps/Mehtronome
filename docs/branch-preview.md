@@ -157,3 +157,9 @@ The chosen position anchors a nearby CAGED route. The compact fretboard is above
 Short-cell mode now gives one cell per chord for these adaptive studies. Dedicated guide-line studies retain their separate short-cell behavior. Pedal mode remains a held-chord study. Existing presets and journal formats are unchanged.
 
 The pedal-chord Exercises view now places CAGED position directly above its fretboard. Change it there to rebuild the linked notation and diagram together. Progression studies retain their grouped route controls.
+
+## Automatic routes and independent manual positions
+
+Progression practice now defaults to **Automatic route** in Guitar and Exercises. Choose a fretboard region to calculate nearby positions for the whole progression.
+
+For a custom route, choose **Choose positions yourself**, select a chord card, then change **Selected chord position**. Only that card changes. The other chords keep their positions; Guitar and Exercises share the same route and notation follows it. Switching temporarily to Automatic route does not discard the manual route. Presets and journal snapshots retain these choices. A different/reordered harmonic progression seeds a fresh route rather than attaching old choices to unrelated chords. Old presets without a navigation choice now use Automatic route; explicit older manual choices are retained.

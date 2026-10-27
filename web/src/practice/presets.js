@@ -10,7 +10,7 @@ export const PRESET_CONTROLS = [
   'sequence-swing','sequence-volume','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-movement-amount','comping-hook-length','drums-volume','bass-volume','comping-volume',
   'fret-labels','highlight-mode','show-grip',
   'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end',
-  'trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','position-region',
+  'trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','position-region','manual-position-route',
   'theory-view','theory-choice',
   // Retained so older exported presets can migrate their Position I choice to
   // the shared Explore control when imported.

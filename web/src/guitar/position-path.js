@@ -53,3 +53,19 @@ export function progressionPositionPath(harmonies,region=FRET_REGIONS.middle) {
   }
   return result;
 }
+
+// Compact optional preset control. The context fingerprint prevents a route
+// from silently attaching to a different/reordered harmonic progression.
+function routeContext(harmonies){
+  const text=JSON.stringify(harmonies.map(h=>[h.name,h.chordId,h.mode,h.scalePcs]));
+  let hash=2166136261;for(const char of text)hash=Math.imul(hash^char.charCodeAt(0),16777619);
+  return (hash>>>0).toString(36);
+}
+export function manualPositionPath(harmonies,automatic,stored='',edit=/** @type {any} */ (null)){
+  const prefix=`v1:${routeContext(harmonies)}:`,digits=String(stored).startsWith(prefix)?String(stored).slice(prefix.length):'';
+  const valid=digits.length===harmonies.length&&/^[0-4]+$/.test(digits);
+  const choices=valid?[...digits].map(n=>POSITIONS[Number(n)].numeral):automatic.map(p=>p.numeral);
+  if(edit&&Number.isInteger(edit.step)&&edit.step>=0&&edit.step<choices.length&&POSITIONS.some(p=>p.numeral===edit.numeral))choices[edit.step]=edit.numeral;
+  const path=harmonies.map((h,i)=>candidates(h).find(p=>p.numeral===choices[i]));
+  return {path,value:prefix+choices.map(n=>POSITIONS.findIndex(p=>p.numeral===n)).join('')};
+}
