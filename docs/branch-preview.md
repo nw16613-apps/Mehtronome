@@ -1,5 +1,12 @@
 # Interactive branch preview
 
+## Current simplification
+
+Shell/drop workshops, ear training, microphone recording/A–B comparison and the practice journal have been removed from the active app. Their launchers, exercise choices and guided goal are removed. Existing CAGED chord-shape references, connected exercises, presets, learning path, repertoire and remaining teaching guidance are retained. Old workshop favourites fall back to the harmonized study. Stored journal/audio data is left untouched; it is not loaded by the app. Earlier checkpoint instructions below are historical and may describe removed tools.
+
+Future chord-shape learning should be integrated with the existing CAGED diagrams rather than separate workshops.
+
+
 - Branch: `feature/guided-practice-beta`
 - Independent private preview: https://mehtronome-guided-practice-preview.wintrycandy7.chatgpt.site
 - GitHub Pages live app remains on `main`: https://nw16613-apps.github.io/Mehtronome/
