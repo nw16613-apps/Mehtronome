@@ -1,3 +1,4 @@
+import {organizeExercisePanel} from './exercise-layout.js';
 import {positionRouteCards} from './position-route.js';
 import {FRET_REGIONS} from '../guitar/position-path.js';
 import {voiceLeadingTargets} from './voice-leading.js';
@@ -9,7 +10,7 @@ const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 export function learningView(panel:HTMLElement,context:any){
  const {board,info,position,groups,notes,study,source,stage,fretboard}=context;
  const lesson=exerciseLesson(study,groups,info,source,{progression:context.progression}),grip=recommendedGrip(info,board),facts=gripFacts(grip,info);
- const toolbar=document.createElement('div');toolbar.className='exercise-learning-toolbar';toolbar.innerHTML=`<label>${context.progression?'Selected chord position':'Position'}<select id="exercise-position">${['I','II','III','IV','V'].map(n=>`<option ${n===position.numeral?'selected':''}>${n}</option>`).join('')}</select></label><label>Stage<select id="exercise-stage"><option value="cell" ${stage==='cell'?'selected':''}>Learn the idea · short cell</option><option value="full" ${stage==='full'?'selected':''}>Explore the position</option></select></label><button type="button" class="practice-button" data-learning-study="grip" ${!grip?'disabled':''}>Exact grip</button><button type="button" class="practice-button" data-learning-study="positional">Full positional arpeggio</button><button type="button" class="practice-button" data-learning-study="enclosures">Add an enclosure</button>`;
+ const toolbar=document.createElement('div');toolbar.className='exercise-learning-toolbar';toolbar.innerHTML=`<label>${context.progression?'Selected chord position':'Position'}<select id="exercise-position">${['I','II','III','IV','V'].map(n=>`<option ${n===position.numeral?'selected':''}>${n}</option>`).join('')}</select></label><label>Stage<select id="exercise-stage"><option value="cell" ${stage==='cell'?'selected':''}>Learn the idea · short cell</option><option value="full" ${stage==='full'?'selected':''}>Explore the position</option></select></label>`;
  const oldStudy=panel.querySelector('#exercise-study')?.closest('label');if(oldStudy)toolbar.prepend(oldStudy);
  const focusButton=panel.querySelector('#exercise-focus');if(focusButton)toolbar.append(focusButton);const previewButton=panel.querySelector('#exercise-preview');if(previewButton)toolbar.append(previewButton);
  panel.querySelector('.exercise-heading')!.after(toolbar);
@@ -67,6 +68,7 @@ export function learningView(panel:HTMLElement,context:any){
  const exerciseControls=panel.querySelector('.exercise-controls');if(exerciseControls)toolbar.after(exerciseControls);
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Tempo, playback and display settings</summary>';for(const selector of ['.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);setup.insertAdjacentHTML('beforeend','<p class="practice-help">Pedal studies hold the selected chord. When a progression is selected, accompaniment follows its changes with stable extensions and fixed tempo. The selected ensemble follows the mixer.</p>');
+ organizeExercisePanel(panel);
 }
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
  document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
@@ -92,6 +94,6 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  });
  panel.querySelector('.exercise-map-heading strong')!.textContent=group.fixedRegion?`${group.chord} · frets ${board.start}–${board.end}`:`${group.chord} · Position ${position.numeral} · ${position.shape} framework`;
  panel.querySelector('.exercise-diagram-reference p')!.textContent=`Frets ${board.start}–${board.end}. ${harmony.scaleNames[0]} ${MODES[harmony.mode as keyof typeof MODES].name}. Labels follow this chord’s ${['grip','positional'].includes(study)?'chord intervals':'scale guide'}; dashed rings mark resolution targets.`;
- const details=panel.querySelector('#exercise-map-body details.exercise-grip-information');if(details)details.innerHTML=facts?`<summary>${esc(group.chord)} · grip and chord information</summary><p><b>Formula:</b> ${esc(facts.formula)}<br><b>Voiced low to high:</b> ${esc(facts.voiced)}<br><b>Bass:</b> ${esc(facts.bass)}<br><b>Omitted:</b> ${esc(facts.omitted)}<br><b>Frets:</b> ${esc(facts.strings)}</p>`:'<summary>Grip information</summary><p>No suggested grip in this region.</p>';
+ const details=panel.querySelector('.exercise-grip-information');if(details)details.innerHTML=facts?`<summary>${esc(group.chord)} · grip and chord information</summary><p><b>Formula:</b> ${esc(facts.formula)}<br><b>Voiced low to high:</b> ${esc(facts.voiced)}<br><b>Bass:</b> ${esc(facts.bass)}<br><b>Omitted:</b> ${esc(facts.omitted)}<br><b>Frets:</b> ${esc(facts.strings)}</p>`:'<summary>Grip information</summary><p>No suggested grip in this region.</p>';
  const positionSelect=panel.querySelector<HTMLSelectElement>('#exercise-position');if(positionSelect)positionSelect.value=position.numeral;
 }

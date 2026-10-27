@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+Exercises is now organized by purpose: Exercise (type/material/direction/rhythm/scope), Playback (play, BPM/speed, loop/accompaniment, tempo trainer, passage controls), Chord & position, View (display/size/diagram/focus), the shared practice material, one Reference & guidance disclosure, and Save & export. Duplicate exercise-changing shortcut buttons are removed; their choices remain in the Exercise menu. Tempo trainer and display settings are separate.
+
+
 Diagram and notation share one practice surface, with a wider 37.5% diagram column and references below the fretboard. Material, Direction, Rhythm, Loop and Use accompaniment are visible beside the exercise workflow; the lower disclosure now contains tempo/playback/display controls only.
 
 
