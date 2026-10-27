@@ -2,7 +2,6 @@ import {installRepertoire} from './practice/repertoire-view.js';
 import {rehearsalSections} from './practice/repertoire.js';
 import {manualPositionPath} from './guitar/position-path.js';
 import {positionRouteCards} from './practice/position-route.js';
-import {setFretRecallPlaying,selectRecallChord} from './practice/fret-recall-view.js';
 import {applicationStudy} from './practice/applications.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
 import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
@@ -112,7 +111,7 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
         <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button></div></div>
-        <p id="chart-loop-status" class="practice-help" role="status">Drag across beats to loop them. Click a chord to edit; hold to hear it. Selection includes both endpoint beats.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><details><summary>Choose loop with controls</summary><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></details></div>
+        <p id="chart-loop-status" class="practice-help" role="status">Drag across beats to loop them. Click a chord to edit; hold to hear it. Selection includes both endpoint beats.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><div hidden data-loop-state><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></div></div>
 <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor"><label>Chart title<input id="custom-name" maxlength="60"></label><label>Start a section at this chord<input id="custom-section" maxlength="32" placeholder="e.g. A, Bridge, Solo"></label>
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
@@ -1238,16 +1237,26 @@ el('full-fretboard-expand').addEventListener('click',async()=>{
 document.addEventListener('fullscreenchange',()=>{el('full-fretboard-expand').textContent=document.fullscreenElement?'Exit fullscreen':'Fullscreen';applyStudioIcons(document.querySelector('.guitar')!);});
 el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
-el('caged-exercise').addEventListener('exercise-inspect-chord',event=>{
- if(playing||exercisePlaying||exercisePreparing)return;
- const chosen=Number((event as CustomEvent).detail?.slot);if(!Number.isInteger(chosen))return;
- const group=currentExerciseGroups[chosen];if(!group?.harmony)return;
+function syncExerciseRouteCards(){
+ el('caged-exercise').querySelectorAll<HTMLButtonElement>('.exercise-position-route [data-inspect-slot]').forEach(button=>{
+  const current=Number(button.dataset.inspectSlot)===exerciseMapSlot;
+  button.classList.toggle('current',current);button.setAttribute('aria-pressed',String(current));
+  if(current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
+  button.disabled=playing||exercisePlaying||exercisePreparing;
+ });
+}
+function inspectExerciseChord(slot:number){
+ if(playing||exercisePlaying||exercisePreparing||!Number.isInteger(slot))return;
+ const group=currentExerciseGroups[slot];if(!group?.harmony)return;
  stopExercisePreview();showExerciseGroup(group);
+}
+el('caged-exercise').addEventListener('click',event=>{
+ const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('.exercise-position-route [data-inspect-slot]'):null;
+ if(button&&!button.disabled)inspectExerciseChord(Number(button.dataset.inspectSlot));
 });
 function handleExerciseControl(event:Event){
   const target=event.target;
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
-  if(target.id==='fret-recall-tone')return;
   const deferredNumber=target instanceof HTMLInputElement&&target.type==='number'&&['exercise-tempo','exercise-auto-increment','exercise-auto-target'].includes(target.id);
   // Rebuilding the panel on each keystroke dismisses mobile number keyboards and
   // makes multi-digit values effectively impossible to enter. Commit those fields
@@ -1296,7 +1305,7 @@ async function auditionExerciseNote(index:number){
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;
  if(settings.progression){const actualStep=progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;renderMusic(true,group.position);renderProgressionReference(step);}
- exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);
+ exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);syncExerciseRouteCards();
 }
 function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying||exercisePreparing)return;
  const group=currentExerciseGroups.find((g:any)=>index>=g.globalStart&&index<g.globalStart+g.notes.length);
@@ -1701,7 +1710,7 @@ function syncTrainerStatus() {
 }
 function syncMiniTransport() {
   document.dispatchEvent(new Event('mehtronome-playback-state'));
-  setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
+  syncExerciseRouteCards();
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
   for(const id of ['exercise-position-navigation','exercise-position-region','featured-position','position-region','guitar-chord-position']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
   const positionControl=document.getElementById('exercise-position') as HTMLSelectElement|null;if(positionControl)positionControl.disabled=playing||exercisePlaying||exercisePreparing||(settings.progression&&select('featured-position').value==='path');
@@ -1840,7 +1849,8 @@ select('position-region').addEventListener('input',renderGuitar);
 el('position-path').addEventListener('click',event=>{
   const button=event.target instanceof HTMLElement?event.target.closest<HTMLButtonElement>('button[data-inspect-slot]'):null;
   if(!button||button.disabled)return;
-  selectRecallChord(el('caged-exercise'),Number(button.dataset.inspectSlot));
+  inspectExerciseChord(Number(button.dataset.inspectSlot));
+  el('position-path').querySelector<HTMLButtonElement>(`[data-inspect-slot="${button.dataset.inspectSlot}"]`)?.focus({preventScroll:true});
 });
 fillChords();
 renderScaleExplorer();
@@ -2032,11 +2042,14 @@ async function startGuidedGoal(){
 }
 
 // Move the existing setup and context map below the principal practice material.
-const guitarSetup=document.createElement('details');guitarSetup.className='guitar-setup';guitarSetup.innerHTML='<summary>Diagram and chord-shape settings</summary>';
+const guitarSetup=document.createElement('details');guitarSetup.className='guitar-setup';guitarSetup.innerHTML='<summary>Diagram display settings</summary>';
 const guitarOverview=document.querySelector('.guitar-overview')!;
 const guitarRouteControls=document.createElement('div');guitarRouteControls.className='position-path-controls';const guitarRouteHeading=el('position-path-guide').querySelector('.position-path-heading')!;guitarRouteHeading.prepend(guitarRouteControls);guitarRouteControls.append(select('featured-position').closest('label')!,select('position-region').closest('label')!);
 guitarRouteControls.append(select('guitar-chord-position').closest('label')!);select('guitar-chord-position').addEventListener('input',()=>{chooseOverviewPosition(select('guitar-chord-position').value);select('guitar-chord-position').focus({preventScroll:true});});
-for(const selector of ['.guitar-controls','.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
+const guitarShapeControls=document.createElement('div');guitarShapeControls.className='guitar-shape-controls';guitarShapeControls.setAttribute('aria-label','Chord shapes and position exploration');
+for(const selector of ['.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description']){const element=guitarOverview.querySelector(selector);if(element)guitarShapeControls.append(element);}
+guitarOverview.append(guitarShapeControls);
+for(const selector of ['.guitar-controls','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
 

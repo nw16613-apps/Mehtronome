@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+The manual “Choose loop with controls” disclosure and “Find a chord tone” self-check are removed. Select loops directly on the chord chart. Highlight chord shapes and Explore all positions now sit visibly above Guitar diagrams, outside Diagram display settings. Progression-card navigation remains independent of quizzes.
+
+
 Shell/drop workshops, ear training, microphone recording/A–B comparison and the practice journal have been removed from the active app. Their launchers, exercise choices and guided goal are removed. Existing CAGED chord-shape references, connected exercises, presets, learning path, repertoire and remaining teaching guidance are retained. Old workshop favourites fall back to the harmonized study. Stored journal/audio data is left untouched; it is not loaded by the app. Earlier checkpoint instructions below are historical and may describe removed tools.
 
 Future chord-shape learning should be integrated with the existing CAGED diagrams rather than separate workshops.

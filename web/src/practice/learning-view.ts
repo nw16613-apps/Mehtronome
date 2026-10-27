@@ -1,5 +1,4 @@
 import {positionRouteCards} from './position-route.js';
-import {installFretRecall,updateFretRecall} from './fret-recall-view.js';
 import {FRET_REGIONS} from '../guitar/position-path.js';
 import {voiceLeadingTargets} from './voice-leading.js';
 import {APPLICATIONS} from './applications.js';
@@ -65,7 +64,7 @@ export function learningView(panel:HTMLElement,context:any){
  diagram.querySelector('svg')!.setAttribute('role','group');
  const targets=new Set(groups.flatMap((g:any)=>(g.targetIndices|| (g.targetIndex===undefined?[]:[g.targetIndex])).map((i:number)=>`${g.notes[i]?.string}:${g.notes[i]?.fret}`)));
  diagram.querySelectorAll<SVGGElement>('.fret-note').forEach(el=>{const string=Number(el.dataset.string),fret=Number(el.dataset.fret),noteIndex=notes.findIndex((n:any)=>n.string===string&&n.fret===fret);el.classList.toggle('exercise-target',targets.has(`${string}:${fret}`));if(noteIndex<0)return;el.dataset.exerciseIndex=String(noteIndex);el.setAttribute('tabindex','0');el.setAttribute('role','button');el.setAttribute('aria-label',`${notes[noteIndex].name}, string ${6-string}, fret ${fret}`);const circle=el.querySelector('circle')!;const square=document.createElementNS('http://www.w3.org/2000/svg','rect');square.setAttribute('x',String(Number(circle.getAttribute('cx'))-15));square.setAttribute('y',String(Number(circle.getAttribute('cy'))-15));square.setAttribute('width','30');square.setAttribute('height','30');square.setAttribute('rx','2');square.setAttribute('class','exercise-current-box');el.append(square);});
- const score=document.createElement('div');score.className='exercise-score';score.append(chordHelp,notation);material.append(diagram,score);installFretRecall(panel,augmented,info);material.classList.toggle('map-hidden',!fretboard);
+ const score=document.createElement('div');score.className='exercise-score';score.append(chordHelp,notation);material.append(diagram,score);material.classList.toggle('map-hidden',!fretboard);
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Playback, material and display settings</summary>';for(const selector of ['.exercise-controls','.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);setup.insertAdjacentHTML('beforeend','<p class="practice-help">Pedal studies hold the selected chord. When a progression is selected, accompaniment follows its changes with stable extensions and fixed tempo. The selected ensemble follows the mixer.</p>');
 }
@@ -82,7 +81,6 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  const augmented={...board,notes:[...board.notes]};
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
  if(['grip','positional'].includes(study))augmented.notes=augmented.notes.map((n:any)=>{const index=harmony.chordPcs.indexOf(n.pc);return index<0?n:{...n,scaleIndex:-1,chromaticDegree:harmony.intervals[index]};});
- updateFretRecall(panel,augmented,harmony,group.slot);
  const grip=recommendedGrip(harmony,board),facts=gripFacts(grip,harmony);
  diagram.innerHTML=diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
  diagram.querySelector('svg')?.setAttribute('role','group');

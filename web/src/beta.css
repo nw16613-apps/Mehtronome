@@ -48,3 +48,8 @@ html:root[data-palette][data-theme] .exercise-linked-fretboard .fret-note{opacit
 .context-check{padding:10px 14px;border-left:3px solid var(--accent);background:var(--field);color:var(--muted);font-size:13px;line-height:1.6}
 .workshop-reference>summary{cursor:pointer;font-weight:700;padding:12px 0;color:var(--ink)}.workshop-reference[open]>summary{margin-bottom:12px;border-bottom:1px solid var(--line)}.shell-controls{display:grid;grid-template-columns:repeat(3,minmax(170px,1fr));gap:12px;width:100%}.shell-controls label{min-width:0}.shell-controls select{width:100%;box-sizing:border-box}.take-waveform{margin:18px 0;max-width:960px}.take-waveform canvas{display:block;width:100%;height:130px;border:1px solid var(--line);border-radius:7px;cursor:crosshair}.take-waveform p{margin-top:6px}#record-level{width:100%;height:18px}#record-level-label{font-size:11px;font-variant-numeric:tabular-nums}@media(max-width:650px){.shell-controls{grid-template-columns:minmax(0,1fr)}.training-controls button{min-height:44px}.ear-answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{.workshop-reference>summary{display:none}}
 #record-level::-webkit-meter-bar{background:var(--field);border:1px solid var(--line);border-radius:5px}#record-level::-webkit-meter-optimum-value{background:var(--accent)}#record-level::-moz-meter-bar{background:var(--accent)}
+
+/* Keep frequent shape/exploration controls visible beside the CAGED material. */
+.guitar-shape-controls{margin-block:1rem;padding:1rem;border:1px solid var(--line);border-radius:10px}
+.guitar-shape-controls .shared-theory-controls{margin-top:.75rem}
+.guitar-shape-controls #grip-toggle-help{margin-block:.5rem}
