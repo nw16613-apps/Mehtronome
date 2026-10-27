@@ -203,3 +203,10 @@ See [the extended-practice track](extended-practice.md) for this delivered incre
 - In a custom C-major-seventh chord, choose C Dorian as its scale guide. The editor, Guitar and Exercises explain that E and B are outside that guide. **Use compatible scale guide** selects a matching guide; Undo restores the deliberate choice. Chord dots remain visible either way.
 - Ear-training answer buttons stay disabled until the complete example finishes. Interrupt the first listening with the main transport, stop it, and listen again; no attempt is scored by the interruption.
 - Draft some recording review notes or trim edits, then change A/B selections: the draft remains. Delete a loaded take and confirm the native player no longer retains its audio source.
+
+### Exercise inspection synchronization
+
+1. Set an essential ii–V–I, open Exercises and choose a scale/connection study. Click a note head from the second chord. Current/next references, the main chord, route selection, linked diagram and Guitar now inspect that chord together.
+2. Focus a note in the score and press Enter; its chord context updates without rebuilding the notation or losing focus.
+3. Select a beat loop that begins in the second chord, inspect its later chord, then start the exercise with count-in. The diagram/reference immediately return to the first chord of that selected loop.
+4. Drag a passage in a drop/shell study, stop it, then change voices, strings or phrase. The old range clears instead of referring to the previous notes.

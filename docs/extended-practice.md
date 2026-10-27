@@ -80,3 +80,13 @@ Ear answers now unlock only when the scheduled audio sources finish, rather than
 Changing recording A/B selections no longer clears unsaved review text or trim edits. Deleting the take loaded in the audio player removes its source and revokes its object URL, so native controls cannot replay a deleted take. Cancelled comparison loads do not overwrite the newer status with stale errors.
 
 Validation: all 49 unit-test files passed, including all chord recommendations in every key and deliberate outside-guide cases. Focused browser checks cover compatibility explanations across workspaces, correction/Undo, off-scale chord dots, CAGED manual-route sharing/persistence/playback locks, ear completion/interruption, restricted parts, recording draft retention and active-take deletion. Physical audio hardware remains outside the synthetic-device browser checks.
+
+## Polish pass — exercise inspection and selected passages
+
+A note clicked in a later chord now updates the same musical context as a chord card: current/next harmony references, main chord display, Guitar context/route and the linked exercise diagram. Keyboard note inspection follows the same path and retains score focus; the notation is not rebuilt. The group slot is mapped back to its original progression index, including selected beat loops that omit earlier chords.
+
+Starting progression exercise playback restores the first selected loop chord during count-in, rather than leaving a previously inspected later chord on screen. Note inspection is ignored while exercise audio is preparing. Normal playback, card inspection and shell/drop strum inspection share the same context update helper.
+
+Changing shell/drop strings, part, phrase or register clears an existing passage selection so old note indices cannot leave an empty active range. Rhythm/application changes and favourite restoration also clear outdated passage selections. Context refresh does not replace the notation.
+
+Validation: four new browser cases cover mouse/keyboard note inspection, preserved score DOM/focus, original chord indices in a clipped loop, count-in context, restricted workshop settings and stale selection clearing. Existing adaptive-study, beat-loop and progression timing/count-in/engine-completion checks passed. Progression exercise/timing and extended-tool unit files also passed; production builds include TypeScript validation.

@@ -312,7 +312,7 @@ function updateExerciseCursor(){
     const index=position.event?.index??null;
     if(exerciseResponseActive!==Boolean(position.slot.response)){exerciseResponseActive=Boolean(position.slot.response);syncMiniTransport();}
     document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',index!==null&&Number(note.dataset.noteIndex)===index&&position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
-    if(position.slot.slot!==exerciseMapSlot&&currentExerciseGroups[position.slot.slot]?.harmony){exerciseMapSlot=position.slot.slot;const group=currentExerciseGroups[exerciseMapSlot];step=position.slot.step;renderMusic(true,group.position);updateProgressionMap(el('caged-exercise'),group,exerciseView.study);}
+    if(position.slot.slot!==exerciseMapSlot&&currentExerciseGroups[position.slot.slot]?.harmony){showExerciseGroup(currentExerciseGroups[position.slot.slot]);}
     highlightLearningNote(index,currentExercise);
     if(status)status.textContent=`${position.slot.chord} · ${position.slot.response?'Your turn · play over the backing':index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
     if(progress)progress.style.width=`${position.beat/exercisePlan.duration*100}%`;
@@ -469,7 +469,7 @@ async function toggleExercisePreview() {
   stopPreview();
   const generation=++exercisePrepareGeneration;exercisePreparing=true;el('exercise-preview').textContent='Loading… click to cancel';el('exercise-preview').setAttribute('aria-busy','true');syncMiniTransport();
   try{
-    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;syncMiniTransport();refreshBackingSymbols();
+    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.08:undefined;
     if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
@@ -1138,7 +1138,7 @@ async function previewGrip(shape: string) {
   const replacing = previewing || previewGripShape !== null;
   stopPreview();
   const generation = previewGeneration;
-  if((shape.startsWith('shell:')||shape.startsWith('drop:'))&&settings.progression){const slot=Number(shape.split(':')[1]),group=currentExerciseGroups[slot];step=progressionOrder(settings)[slot];renderMusic(true,group.position);exerciseMapSlot=slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);}
+  if((shape.startsWith('shell:')||shape.startsWith('drop:'))&&settings.progression){const slot=Number(shape.split(':')[1]),group=currentExerciseGroups[slot];showExerciseGroup(group);}
   previewGripShape = shape;
   reflectChordPreviews();
   el('error').hidden = true;
@@ -1257,7 +1257,7 @@ el('caged-exercise').addEventListener('exercise-inspect-chord',event=>{
  if(playing||exercisePlaying||exercisePreparing)return;
  const chosen=Number((event as CustomEvent).detail?.slot);if(!Number.isInteger(chosen))return;
  const group=currentExerciseGroups[chosen];if(!group?.harmony)return;
- stopExercisePreview();step=progressionOrder(settings)[chosen];renderMusic(true,group.position);exerciseMapSlot=chosen;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);
+ stopExercisePreview();showExerciseGroup(group);
 });
 function handleExerciseControl(event:Event){
   const target=event.target;
@@ -1287,7 +1287,7 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-response')exerciseView.response=target.value;
   if(target.id==='exercise-stage'){exerciseView.stage=target.value;exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-auto-target')exerciseView.ceiling=Math.max(30,Math.min(240,Number(target.value)||160));
-  if(['exercise-material','exercise-study','exercise-motion','exercise-source','exercise-pattern'].includes(target.id)){exerciseSelectionStart=null;exerciseSelectionEnd=null;}
+  if(target.id.startsWith('exercise-drop-')||target.id.startsWith('exercise-shell-')||['exercise-rhythm','exercise-application','exercise-response','exercise-material','exercise-study','exercise-motion','exercise-source','exercise-pattern'].includes(target.id)){exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-material')exerciseView.material=target.value;
   if(target.id==='exercise-study'){exerciseView.study=target.value;if(['alternating','chordtonesalternating'].includes(target.value)&&['up-down','down-up'].includes(exerciseView.motion))exerciseView.motion='ascending';}
   if(target.id==='exercise-motion')exerciseView.motion=target.value;
@@ -1316,13 +1316,18 @@ function setNotationFocus(value:boolean) {
 async function auditionExerciseNote(index:number){stopEarTraining();stopTakePlayback();
   if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
 }
-function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying)return;
+function showExerciseGroup(group:any){
+ if(!group?.harmony)return;
+ if(settings.progression){const actualStep=progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;renderMusic(true,group.position);renderProgressionReference(step);}
+ exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);
+}
+function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying||exercisePreparing)return;
  const group=currentExerciseGroups.find((g:any)=>index>=g.globalStart&&index<g.globalStart+g.notes.length);
- if(group?.harmony){exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);}
+ if(group?.harmony)showExerciseGroup(group);
  highlightLearningNote(index,currentExercise,true);void auditionExerciseNote(index);
 }
 function exerciseSnapshot(){return {dropPart:exerciseView.dropPart,dropPhrase:exerciseView.dropPhrase,dropType:exerciseView.dropType,dropStrings:exerciseView.dropStrings,dropRegion:exerciseView.dropRegion,shellStrings:exerciseView.shellStrings,shellPhrase:exerciseView.shellPhrase,shellRegion:exerciseView.shellRegion,study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,stage:exerciseView.stage,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked,application:exerciseView.application,response:exerciseView.response};}
-function restoreExercise(snapshot:any){if(!snapshot)return;Object.assign(exerciseView,{dropPart:'all',dropPhrase:'arpeggio',dropType:'drop2',dropStrings:'auto',dropRegion:'lowerMiddle',shellStrings:'auto',shellPhrase:'motif',shellRegion:'lowerMiddle',stage:'full',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
+function restoreExercise(snapshot:any){if(!snapshot)return;exerciseSelectionStart=null;exerciseSelectionEnd=null;Object.assign(exerciseView,{dropPart:'all',dropPhrase:'arpeggio',dropType:'drop2',dropStrings:'auto',dropRegion:'lowerMiddle',shellStrings:'auto',shellPhrase:'motif',shellRegion:'lowerMiddle',stage:'full',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
 function moveExercise(direction:number){
   const options=Array.from(select('exercise-study').options),index=options.findIndex(option=>option.value===exerciseView.study),next=options[index+direction];if(!next)return;
   stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseView.study=next.value;
