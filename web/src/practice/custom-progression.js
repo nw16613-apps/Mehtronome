@@ -66,7 +66,7 @@ export function normalizeCustomProgression(value){
     const beats=Number(raw.beats);
     if(raw.beats!==undefined&&(!Number.isInteger(beats)||beats<1||beats>32))throw new Error('Chord durations must be 1–32 beats.');
     const bass=raw.bass===null||raw.bass===''||raw.bass===undefined?null:Math.max(0,Math.min(11,Math.floor(Number(raw.bass)||0)));
-    return {root,letter:Number.isInteger(raw.letter)&&raw.letter>=0&&raw.letter<7?raw.letter:LETTERS[root],chord,mode,...(raw.beats!==undefined?{beats}:{bars}),bass,bassLetter:bass===null?null:Number.isInteger(raw.bassLetter)&&raw.bassLetter>=0&&raw.bassLetter<7?raw.bassLetter:LETTERS[bass]};
+    return {...(typeof raw.section==='string'&&raw.section.trim()?{section:raw.section.trim().slice(0,32)}:{}),root,letter:Number.isInteger(raw.letter)&&raw.letter>=0&&raw.letter<7?raw.letter:LETTERS[root],chord,mode,...(raw.beats!==undefined?{beats}:{bars}),bass,bassLetter:bass===null?null:Number.isInteger(raw.bassLetter)&&raw.bassLetter>=0&&raw.bassLetter<7?raw.bassLetter:LETTERS[bass]};
   });
   if(!steps.length)steps.push({root:0,letter:0,chord:'min7',mode:'dorian',bars:1,bass:null,bassLetter:null});
   return {version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
@@ -77,7 +77,7 @@ export function progressionText(progression,chordSymbol=id=>id){
   return clean.steps.map((step,index)=>{
     const degree=romanForStep({...step,chord:'major'});
     const bass=step.bass===null?'':`/${romanForStep({root:step.bass,letter:step.bassLetter,chord:'major'})}`;
-    return `${clean.roman[index]} [${degree} ${chordSymbol(step.chord)}${bass}; ${step.mode}; ${step.beats!==undefined?step.beats+' beat'+(step.beats===1?'':'s'):step.bars+' bar'+(step.bars===1?'':'s')}]`;
+    return `${step.section?'['+step.section+'] ':''}${clean.roman[index]} [${degree} ${chordSymbol(step.chord)}${bass}; ${step.mode}; ${step.beats!==undefined?step.beats+' beat'+(step.beats===1?'':'s'):step.bars+' bar'+(step.bars===1?'':'s')}]`;
   }).join(' | ');
 }
 
@@ -89,7 +89,7 @@ export function cloneTemplate(template,fallbackChord='min7',fallbackMode='dorian
       const relative=h.scalePcs.map(pc=>(pc-h.chordPcs[0]+12)%12).sort((a,b)=>a-b);
       const mode=Object.keys(MODES).find(id=>MODES[id].intervals.every((value,i)=>value===relative[i]))||h.mode;
       const source=template.steps?.[index];
-      return {root,letter:(letters.indexOf(h.name[0])-letters.indexOf(tonicName[0])+7)%7,chord:h.chordId,mode,...(source?.beats!==undefined?{beats:source.beats}:{bars:source?.bars||template.bars||1}),bass:source?.bass??null,bassLetter:source?.bassLetter};
+      return {...(typeof source?.section==='string'&&source.section.trim()?{section:source.section.trim().slice(0,32)}:{}),root,letter:(letters.indexOf(h.name[0])-letters.indexOf(tonicName[0])+7)%7,chord:h.chordId,mode,...(source?.beats!==undefined?{beats:source.beats}:{bars:source?.bars||template.bars||1}),bass:source?.bass??null,bassLetter:source?.bassLetter};
     });
     return normalizeCustomProgression({name:`Custom ${template.name||'progression'}`,steps});
   }

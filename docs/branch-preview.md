@@ -181,3 +181,11 @@ See [the extended-practice track](extended-practice.md) for this delivered incre
 3. Compare Drop 2/Drop 3, register and fixed/automatic string sets. Cards give the real bass, notes, omissions and mutes.
 4. **Strum chord** hears the exact grip and selects its linked diagram. **Hear jazz guitar** plays its four-note arpeggio in time with the progression. Read the movement breakdown to follow each low-to-high voice.
 5. Save a favourite or journal entry and resume it to retain the workshop settings. Unsupported four-tone shapes and chord slots below two beats remain rests.
+
+### Personal repertoire charts and section practice
+
+1. In **Harmony**, open **Repertoire · personal charts & original studies**. Load a blues or A/B original study in the current key.
+2. Read its rehearsal marks on the chord sheet. Click a chord to edit it; use **Chart title** and **Start a section at this chord** to change the form. Marks apply until the next marked chord.
+3. Choose **Loop section** below the chart, or in the harmony references in **Guitar** and **Exercises**. The selected beat range is shared. **Full chart** restores the whole form. Section controls lock during playback.
+4. Give the form a name under **Save chart as** and choose **Save new chart**. Reload it from **My charts**, or update a selected saved chart from the current progression.
+5. Export/import a backup; importing creates new copies. Charts retain harmony, key, metre and marks. For a complete exercise/session setup use the existing journal.
