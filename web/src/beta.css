@@ -61,3 +61,13 @@ html:root[data-palette][data-theme] .exercise-linked-fretboard .fret-note{opacit
 @media(min-width:1051px){.exercise-material-layout{grid-template-columns:minmax(260px,3fr) minmax(0,7fr)}.exercise-linked-fretboard{position:sticky;top:var(--practice-sticky-top,90px);max-height:calc(100dvh - var(--practice-sticky-top,90px) - 16px);overflow:auto}.exercise-material-layout.map-hidden{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:650px){.exercise-navigation .position-path-controls label{flex:1 1 160px}.exercise-navigation #exercise-map-toggle{margin-left:0}.exercise-navigation .position-path button{flex:0 0 150px}}
 @media print{.exercise-navigation,.notation-chord-help{display:none!important}}
+
+/* One practice surface connects the shape reference to its written exercise. */
+.exercise-material-layout{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--pulse);gap:18px}
+html:root[data-palette][data-theme] .exercise-material-layout .exercise-linked-fretboard{border:0;background:transparent;box-shadow:none;padding:4px 8px 8px 0;border-radius:0}
+.exercise-material-layout .exercise-linked-fretboard .exercise-map-heading{padding:0 0 6px}.exercise-material-layout .exercise-map-diagram{margin:0 auto 8px}.exercise-material-layout .exercise-map-diagram .fretboard{max-height:300px}html:root[data-palette][data-theme] .exercise-material-layout .exercise-score .notation-scroll{border:0;box-shadow:none;padding:0;background:transparent}
+.caged-exercise>.exercise-controls{padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--pulse);grid-template-columns:repeat(3,minmax(140px,1fr)) auto auto;gap:12px;align-items:center}.caged-exercise>.exercise-controls .check{white-space:nowrap}.caged-exercise>.exercise-controls label{font-size:12px}
+@media(min-width:1051px){.exercise-material-layout{grid-template-columns:minmax(300px,3fr) minmax(0,5fr)}.exercise-material-layout.map-hidden{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1050px){.caged-exercise>.exercise-controls{grid-template-columns:repeat(3,minmax(0,1fr))}.exercise-material-layout{padding:12px}}
+@media(max-width:650px){.caged-exercise>.exercise-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.caged-exercise>.exercise-controls .check{white-space:normal}}
+@media print{.exercise-material-layout{border:0;padding:0;background:transparent}}

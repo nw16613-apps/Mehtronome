@@ -41,3 +41,11 @@ test('compact sidebar stays visible while reading and can give the score full wi
  await page.locator('#caged-exercise').screenshot({path:'/workspace/compact-exercises.png'});
  const before=await page.locator('.exercise-score').evaluate(e=>e.getBoundingClientRect().width);await page.locator('#exercise-map-toggle').click();await expect(page.locator('.exercise-linked-fretboard')).toBeHidden();expect(await page.locator('.exercise-score').evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThan(before);await page.locator('#exercise-map-toggle').click();await expect(page.locator('.exercise-linked-fretboard')).toBeVisible();
 });
+
+test('exercise-shaping controls are visible above a shared practice panel',async({page})=>{
+ await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
+ for(const id of ['exercise-material','exercise-motion','exercise-rhythm','exercise-loop','exercise-backing']){await expect(page.locator(`.caged-exercise>.exercise-controls #${id}`)).toBeVisible();await expect(page.locator(`.exercise-setup #${id}`)).toHaveCount(0);}
+ await page.locator('#exercise-motion').selectOption('descending');await page.locator('#exercise-rhythm').selectOption('triplets');await expect(page.locator('#exercise-motion')).toHaveValue('descending');await expect(page.locator('#exercise-rhythm')).toHaveValue('triplets');
+ const result=await page.evaluate(()=>{const diagram=document.querySelector('.exercise-linked-fretboard')!,map=document.querySelector('.exercise-map-diagram')!,key=document.querySelector('.exercise-diagram-reference')!,panel=document.querySelector('.exercise-material-layout')!;return {border:getComputedStyle(diagram).borderTopWidth,shared:panel.contains(diagram)&&panel.contains(document.querySelector('.exercise-score')),below:!!(map.compareDocumentPosition(key)&Node.DOCUMENT_POSITION_FOLLOWING)};});expect(result).toEqual({border:'0px',shared:true,below:true});
+ await page.locator('#caged-exercise').screenshot({path:'/workspace/shared-practice-panel.png'});await page.setViewportSize({width:390,height:844});await expect(page.locator('#exercise-rhythm')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
