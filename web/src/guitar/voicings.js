@@ -43,7 +43,7 @@ function closedPositions(pcs) {
   return pcs.map((_, inversion) => pcs.slice(inversion).concat(pcs.slice(0,inversion).map(pc => pc+12)));
 }
 
-export function guitarVoicings(harmony, type = 'drop2', stringSet = STRING_SETS[type][0].id) {
+export function guitarVoicings(harmony, type = 'drop2', stringSet = STRING_SETS[type][0].id, allCandidates = false) {
   const indices = voicingTones(harmony);
   const root = harmony.midi[0] % 12;
   const pcs = [...new Set(indices.map(i => (harmony.midi[i] - root + 120) % 12))].sort((a,b) => a-b);
@@ -76,7 +76,7 @@ export function guitarVoicings(harmony, type = 'drop2', stringSet = STRING_SETS[
   }
   candidates.sort((a,b)=>a.score-b.score || a.start-b.start);
   const selected = bassPcs.map((_, inversion) => candidates.find(board => board.inversion === inversion)).filter(Boolean);
-  return {voicings:selected,indices,stringSet:set.id,omitted:harmony.tones.filter((_,i)=>!indices.includes(i)),
+  return {voicings:allCandidates?candidates:selected,indices,stringSet:set.id,omitted:harmony.tones.filter((_,i)=>!indices.includes(i)),
     doubled:pcs.length<4,fifths};
 }
 

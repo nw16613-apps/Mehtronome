@@ -173,3 +173,11 @@ For a custom route, choose **Choose positions yourself**, select a chord card, t
 5. Save a journal entry or favourite and restore it to retain the string set, register and phrase choice. The authored phrases currently need 4/4 and four or more beats per chord; unsupported cases explain their rests.
 
 See [the extended-practice track](extended-practice.md) for this delivered increment and the selected next directions. Alternative tunings and left-handed views are excluded.
+
+### Drop voicing workshop
+
+1. Set a seventh-chord progression in Harmony (or use **Connect shell voicings** to set up a ii–V–I).
+2. Open **Guitar → Drop voicing workshop**, or select **Drop 2 / drop 3 voicing arpeggios** in Exercises.
+3. Compare Drop 2/Drop 3, register and fixed/automatic string sets. Cards give the real bass, notes, omissions and mutes.
+4. **Strum chord** hears the exact grip and selects its linked diagram. **Hear jazz guitar** plays its four-note arpeggio in time with the progression. Read the movement breakdown to follow each low-to-high voice.
+5. Save a favourite or journal entry and resume it to retain the workshop settings. Unsupported four-tone shapes and chord slots below two beats remain rests.
