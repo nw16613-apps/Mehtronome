@@ -2,7 +2,6 @@ import {installRepertoire} from './practice/repertoire-view.js';
 import {rehearsalSections} from './practice/repertoire.js';
 import {manualPositionPath} from './guitar/position-path.js';
 import {positionRouteCards} from './practice/position-route.js';
-import {applicationStudy} from './practice/applications.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
 import {reserveChordBands,updateBackingSymbols} from './practice/notation-backing.js';
 import {chordSheet} from './practice/chord-sheet.js';
@@ -229,7 +228,7 @@ try { fullFretboardCollapsed=localStorage.getItem('mehtronome-full-fretboard-col
 const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
 let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
-const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',application:'cell-space',response:'demo',fretboard:true,recall:false,setupOpen:false};
+const exerciseView={study:'harmonized',material:'seventh',motion:'ascending',rhythm:'eighths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',fretboard:true,setupOpen:false};
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let studyHarmony:any,studyBoard:any,studyPosition:any;
 let exerciseBackingStep=0;
@@ -252,7 +251,6 @@ let exerciseNextStart:number|undefined;
 let exerciseTimelineStart:number|undefined;
 let exerciseAnimationFrame=0;
 let exerciseRepetitions=0;
-let exerciseResponseActive=false;
 let exerciseSymbolCycle=-1;
 let exerciseSelectionStart:number|null=null,exerciseSelectionEnd:number|null=null;
 let exerciseDragPointer:number|null=null,exerciseDragMoved=false,suppressExerciseNoteClick=false;
@@ -269,7 +267,7 @@ function stopExercisePreview() {
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
   clearTimeout(exerciseTimer);exerciseTimer=undefined;
   for(const source of exerciseSources){try{source.stop();}catch{}}
-  exerciseSources=[];exerciseResponseActive=false;exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
+  exerciseSources=[];exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
   if(stopBacking){node?.port.postMessage({type:'stop'});renderProgressionReference();}
   const button=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(button){button.textContent='▶ Hear jazz guitar';button.setAttribute('aria-pressed','false');button.removeAttribute('aria-busy');}
@@ -301,11 +299,10 @@ function updateExerciseCursor(){
     const elapsedBeats=Math.max(0,elapsed-countIn)*exerciseView.tempo/60;
     const position=planPosition({...exercisePlan,events:selectedPlanEvents()},elapsedBeats);
     const index=position.event?.index??null;
-    if(exerciseResponseActive!==Boolean(position.slot.response)){exerciseResponseActive=Boolean(position.slot.response);syncMiniTransport();}
     document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',index!==null&&Number(note.dataset.noteIndex)===index&&position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
     if(position.slot.slot!==exerciseMapSlot&&currentExerciseGroups[position.slot.slot]?.harmony){showExerciseGroup(currentExerciseGroups[position.slot.slot]);}
     highlightLearningNote(index,currentExercise);
-    if(status)status.textContent=`${position.slot.chord} · ${position.slot.response?'Your turn · play over the backing':index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
+    if(status)status.textContent=`${position.slot.chord} · ${index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
     if(progress)progress.style.width=`${position.beat/exercisePlan.duration*100}%`;
   }
   else if(sequence.length){
@@ -329,6 +326,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   noteAuditionGeneration++;
   const oldReference=el('caged-exercise').querySelector<HTMLDetailsElement>('.progression-reference details');if(oldReference)exerciseReferenceExpanded=oldReference.open;
   if(['shells','shellphrases','drops'].includes(exerciseView.study))exerciseView.study='harmonized';
+  if(!['cell','full'].includes(exerciseView.stage))exerciseView.stage='full';
   studyHarmony=info;studyBoard=board;studyPosition=position;
   if(exerciseView.tempoLinked)exerciseView.tempo=settings.bpm;
   if(!settings.progression&&['guidetones','connections'].includes(exerciseView.study))exerciseView.study='harmonized';
@@ -349,14 +347,10 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else if(settings.progression){
-    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionPlaybackBeatDurations(settings)[index]),board,{...exerciseView,rhythm:exerciseView.stage==='apply'&&settings.beats===4?'sixteenths':exerciseView.rhythm,source:sourceChoice?.id||'',positionPath});
+    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionPlaybackBeatDurations(settings)[index]),board,{...exerciseView,rhythm:exerciseView.rhythm,source:sourceChoice?.id||'',positionPath});
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else{exercisePlan=null;if(exerciseView.stage==='cell')currentExerciseGroups=shortCell(currentExerciseGroups);}
-  if(exerciseView.stage==='apply'&&settings.beats===4){
-    if(!exercisePlan){const source=currentExerciseGroups[0];currentExerciseGroups=[{...source,chord:info.name+info.suffix,slot:0,notes:source?.notes||[],harmony:info,board,position,globalStart:0,cellLengths:[source?.notes.length||0]}];exercisePlan=progressionStudyPlan(currentExerciseGroups,[0],[1],4,exerciseView.study,exerciseView.rhythm);}
-    const application=applicationStudy(currentExerciseGroups,exercisePlan,exerciseView.application,exerciseView.response);currentExerciseGroups=application.groups;exercisePlan=application.plan;exerciseView.autoTempo=false;
-  }
   if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
@@ -394,7 +388,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,application:exercisePlan?.application,response:exerciseView.response,applicationSupported:settings.beats===4,fretboard:exerciseView.fretboard,recall:exerciseView.recall,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
   exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
@@ -1269,11 +1263,9 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-position'){const numeral=target.value;stopExercisePreview();chooseOverviewPosition(numeral);el('exercise-position').focus({preventScroll:true});return;}
   exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;
   stopExercisePreview();
-  if(target.id==='exercise-application')exerciseView.application=target.value;
-  if(target.id==='exercise-response')exerciseView.response=target.value;
   if(target.id==='exercise-stage'){exerciseView.stage=target.value;exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-auto-target')exerciseView.ceiling=Math.max(30,Math.min(240,Number(target.value)||160));
-  if(['exercise-rhythm','exercise-application','exercise-response','exercise-material','exercise-study','exercise-motion','exercise-source','exercise-pattern'].includes(target.id)){exerciseSelectionStart=null;exerciseSelectionEnd=null;}
+  if(['exercise-rhythm','exercise-material','exercise-study','exercise-motion','exercise-source','exercise-pattern'].includes(target.id)){exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-material')exerciseView.material=target.value;
   if(target.id==='exercise-study'){exerciseView.study=target.value;if(['alternating','chordtonesalternating'].includes(target.value)&&['up-down','down-up'].includes(exerciseView.motion))exerciseView.motion='ascending';}
   if(target.id==='exercise-motion')exerciseView.motion=target.value;
@@ -1312,7 +1304,7 @@ function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying|
  if(group?.harmony)showExerciseGroup(group);
  highlightLearningNote(index,currentExercise,true);void auditionExerciseNote(index);
 }
-function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,stage:exerciseView.stage,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked,application:exerciseView.application,response:exerciseView.response};}
+function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,stage:exerciseView.stage,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked};}
 function restoreExercise(snapshot:any){if(!snapshot)return;exerciseSelectionStart=null;exerciseSelectionEnd=null;Object.assign(exerciseView,{stage:'full',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
 function moveExercise(direction:number){
   const options=Array.from(select('exercise-study').options),index=options.findIndex(option=>option.value===exerciseView.study),next=options[index+direction];if(!next)return;
@@ -1362,7 +1354,7 @@ el('caged-exercise').addEventListener('pointercancel',event=>{
   exerciseDragPointer=null;exerciseSelectionStart=null;exerciseSelectionEnd=null;reflectExerciseSelection();
 });
 el('caged-exercise').addEventListener('click',event=>{
-  if(event.target instanceof Element){exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;const button=event.target.closest<HTMLElement>('[data-learning-study]');if(button){stopExercisePreview();exerciseView.study=button.dataset.learningStudy!;exerciseView.backing=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();return;}if(event.target.closest('#exercise-map-toggle')){exerciseView.fretboard=!exerciseView.fretboard;el('exercise-map-body').hidden=!exerciseView.fretboard;el('exercise-map-toggle').textContent=exerciseView.fretboard?'Hide fretboard':'Show fretboard';el('exercise-map-toggle').setAttribute('aria-expanded',String(exerciseView.fretboard));document.querySelector('.exercise-material-layout')!.classList.toggle('map-hidden',!exerciseView.fretboard);return;}if(event.target.closest('#exercise-recall')){exerciseView.recall=!exerciseView.recall;document.querySelector<HTMLElement>('.exercise-map-diagram')!.hidden=exerciseView.recall;el('exercise-recall-prompt').hidden=!exerciseView.recall;el('exercise-recall').textContent=exerciseView.recall?'Reveal diagram':'Try without diagram';el('exercise-recall').setAttribute('aria-pressed',String(exerciseView.recall));return;}const linked=event.target.closest<SVGElement>('[data-exercise-index]');if(linked){chooseOrAuditionExerciseNote(Number(linked.dataset.exerciseIndex));return;}}
+  if(event.target instanceof Element){exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;const button=event.target.closest<HTMLElement>('[data-learning-study]');if(button){stopExercisePreview();exerciseView.study=button.dataset.learningStudy!;exerciseView.backing=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();return;}if(event.target.closest('#exercise-map-toggle')){exerciseView.fretboard=!exerciseView.fretboard;el('exercise-map-body').hidden=!exerciseView.fretboard;el('exercise-map-toggle').textContent=exerciseView.fretboard?'Hide fretboard':'Show fretboard';el('exercise-map-toggle').setAttribute('aria-expanded',String(exerciseView.fretboard));document.querySelector('.exercise-material-layout')!.classList.toggle('map-hidden',!exerciseView.fretboard);return;}const linked=event.target.closest<SVGElement>('[data-exercise-index]');if(linked){chooseOrAuditionExerciseNote(Number(linked.dataset.exerciseIndex));return;}}
   if(!(event.target instanceof Element))return;
   if(event.target.closest('#exercise-play-range')){void toggleExercisePreview();return;}
   if(event.target.closest('#exercise-clear-range')){if(exercisePlaying)stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;reflectExerciseSelection();return;}
@@ -1735,7 +1727,7 @@ function syncMiniTransport() {
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
   el('mini-mode').title=`Tonic ${active.tonic} · next ${active.nextChord}`;
   el('mini-chord').textContent = info.name+info.suffix;
-  el('mini-mode').textContent = `${exercisePlaying?(exercisePlan?.application?(exerciseResponseActive?'Your turn · ':'Listen · '):'Study · '):''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
+  el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
   el('mini-root-purpose').textContent=settings.progression?'Tonic':'Root';
   select('mini-key').value=select('key').value;
   select('mini-mode-select').value=select('quality').value;
@@ -2016,7 +2008,7 @@ document.addEventListener('click',event=>{
  const view=event.target.closest<HTMLElement>('[data-grip-display]');if(view){gripOnly=view.dataset.gripDisplay==='grip';renderGuitar();return;}
  const nav=event.target.closest<HTMLElement>('[data-learning-nav]');if(nav){if(focusView)setFocusView(false);showWorkspace(nav.dataset.learningNav!,learningTargets[nav.dataset.learningNav!]);return;}
  const sectionButton=event.target.closest<HTMLElement>('[data-section-start],[data-section-full]');if(sectionButton){if(playing||exercisePlaying||exercisePreparing||stopping)return;stopPreview();if(sectionButton.hasAttribute('data-section-full')){input('loop-enabled').checked=false;step=0;update();}else{step=customProgression.steps.findIndex((_:any,i:number)=>progressionBeatDurations(settings).slice(0,i).reduce((a:number,b:number)=>a+b,0)===Number(sectionButton.dataset.sectionStart));void applyChartLoop(Number(sectionButton.dataset.sectionStart),Number(sectionButton.dataset.sectionEnd));}return;}
- const grip=event.target.closest<HTMLElement>('[data-practise-grip]');if(grip){stopPreview();overviewPosition=grip.dataset.practiseGrip!;if(settings.progression)chooseOverviewPosition(overviewPosition);exerciseView.study='grip';exerciseView.stage='cell';exerciseView.fretboard=true;exerciseView.recall=false;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}
+ const grip=event.target.closest<HTMLElement>('[data-practise-grip]');if(grip){stopPreview();overviewPosition=grip.dataset.practiseGrip!;if(settings.progression)chooseOverviewPosition(overviewPosition);exerciseView.study='grip';exerciseView.stage='cell';exerciseView.fretboard=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}
 });
 select('practice-goal').addEventListener('input',()=>{const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;el('goal-description').textContent=goal.tip+' Keeps your selected tonic. Configures tools without starting audio.';});
 el('dismiss-guided-session').addEventListener('click',()=>{el('guided-session').hidden=true;activeGoal='';});
@@ -2034,7 +2026,7 @@ async function startGuidedGoal(){
  if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';
- Object.assign(exerciseView,{study:goal.study,application:'cell-space',response:'demo',stage:goal.id==='jazz'?'full':'cell',fretboard:true,recall:false,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
+ Object.assign(exerciseView,{study:goal.study,stage:goal.id==='jazz'?'full':'cell',fretboard:true,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
  fillLoopOptions(true);tempo(80);update();
  if(goal.id==='pentatonic'){const choices=theoryOptions(chordInfo(0)).pentatonics;exerciseView.source=choices[0]?.id||'';renderGuitar();}
  el('guided-session-title').textContent=goal.name;el('guided-session-tip').textContent=goal.tip+(goal.id==='jazz'?' Guide tones follow the chord durations. Choose Explore the position to hear every chord; a short cell leaves the other chord slots silent.':accompaniment==='modal'?' Modal exploration has evolving extensions enabled.':' Stable harmony is selected unless the setup states otherwise.');el('guided-session').hidden=false;input('preset-name').value=goal.name;

@@ -3,7 +3,7 @@ test('removed tools stay absent while CAGED, charts, guidance and progress remai
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
  for(const target of ['guitar-title','caged-exercise','progress-title','harmony-title']){
   await page.locator(`[data-workspace-target="${target}"]`).click();
-  await expect(page.locator('[data-open-shells],[data-open-drops],[data-open-ear],[data-open-recording],#ear-title,#recording-title,.practice-journal,.fret-recall')).toHaveCount(0);
+  await expect(page.locator('[data-open-shells],[data-open-drops],[data-open-ear],[data-open-recording],#ear-title,#recording-title,.practice-journal,.fret-recall,#exercise-recall,#exercise-recall-prompt,#exercise-application,#exercise-response,#exercise-stage option[value="apply"]')).toHaveCount(0);
  }
  await page.locator('#repertoire-study').selectOption('minorjazz');await page.locator('#repertoire-practise').click();
  await expect(page.locator('#exercise-study')).toHaveValue('harmonized');
@@ -20,4 +20,16 @@ test('shape exploration is visible without opening settings and manual loop UI i
  await expect(page.locator('.guitar-shape-controls #theory-view')).toBeVisible();await page.locator('#theory-view').selectOption('pentatonic');await expect(page.locator('#theory-choice')).toBeVisible();
  await page.setViewportSize({width:390,height:844});await expect(page.locator('#show-grip')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  await page.locator('[data-workspace-target=harmony-title]').click();await expect(page.getByText('Choose loop with controls',{exact:true})).toHaveCount(0);await expect(page.locator('#loop-start')).toBeHidden();
+});
+
+test('older application favourites open as ordinary full-position studies',async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-exercise-favourites',JSON.stringify([{study:'thirds',material:'seventh',motion:'ascending',rhythm:'eighths',stage:'apply',application:'cell-space',response:'respond',recall:true}])));
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('.exercise-setup summary').click();await page.locator('#exercise-favourites').selectOption('0');
+ await expect(page.locator('#exercise-stage')).toHaveValue('full');await expect(page.locator('.exercise-map-diagram')).toBeVisible();await expect(page.locator('#exercise-response,#exercise-recall')).toHaveCount(0);await expect(page.locator('.exercise-note')).not.toHaveCount(0);
+});
+
+test('exercise diagram and score share a row on desktop and stack on mobile',async({page})=>{
+ await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
+ const diagram=await page.locator('.exercise-linked-fretboard').boundingBox(),score=await page.locator('.exercise-score').boundingBox();expect(score!.x).toBeGreaterThanOrEqual(diagram!.x+diagram!.width);expect(Math.abs(score!.y-diagram!.y)).toBeLessThan(2);
+ await page.setViewportSize({width:390,height:844});const mobileDiagram=await page.locator('.exercise-linked-fretboard').boundingBox(),mobileScore=await page.locator('.exercise-score').boundingBox();expect(mobileScore!.y).toBeGreaterThanOrEqual(mobileDiagram!.y+mobileDiagram!.height);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });

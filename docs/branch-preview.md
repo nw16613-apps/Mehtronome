@@ -2,6 +2,12 @@
 
 ## Current simplification
 
+Exercises show the CAGED diagram beside notation on desktop, stacking on narrower screens.
+
+
+Written application rhythms, demonstrate/response flow and the diagram recall challenge are removed. Exercises retain short-cell and full-position stages, ordinary rhythms/playback, and an optional fretboard visibility toggle for layout. Older Apply favourites open as full-position studies.
+
+
 The manual “Choose loop with controls” disclosure and “Find a chord tone” self-check are removed. Select loops directly on the chord chart. Highlight chord shapes and Explore all positions now sit visibly above Guitar diagrams, outside Diagram display settings. Progression-card navigation remains independent of quizzes.
 
 
