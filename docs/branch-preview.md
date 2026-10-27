@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+The Exercises practice area now uses compact navigation, a shallow horizontally scrollable chord strip, a 30/70 desktop diagram/notation split and a sticky diagram below the workspace tabs. The chord/position heading stays with the diagram. Diagram key and chord-symbol explanations are optional disclosures. Hide fretboard expands notation to full width; mobile remains stacked.
+
+
 Exercises show the CAGED diagram beside notation on desktop, stacking on narrower screens.
 
 
