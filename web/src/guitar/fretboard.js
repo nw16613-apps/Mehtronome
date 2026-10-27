@@ -164,7 +164,7 @@ export function pentatonicShapeFor(board,theory){
   return {keys,board:{...board,start:Math.min(board.start,...frets),end:Math.max(board.end,...frets),notes:[...board.notes,...additions].sort((a,b)=>a.string-b.string||a.fret-b.fret)}};
 }
 /**
- * @param {{notes:Array<{string:number,fret:number,finger:number}>,muted:number[]} | null} [grip]
+ * @param {{notes:Array<{string:number,fret:number,finger?:number}>,muted:number[]} | null} [grip]
  * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],rootPc?:number,groups?:Array<{name:string,rootPc?:number,pcs:number[]}>} | null} [theory]
  */
 export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
@@ -194,7 +194,7 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   for (const note of board.notes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
     const colour = !theory && highlight && note.characteristic;
-    const finger = shownGrip?.notes.find(n=>n.string===note.string && n.fret===note.fret)?.finger;
+    const finger = shownGrip?.notes.some(n=>n.string===note.string && n.fret===note.fret);
     const selected = theory?.kind==='pentatonic' ? pentatonicShape?.keys.has(`${note.string}:${note.fret}`) : theory?.pcs.includes(note.pc);
     const pentatonicRoot = selected && theory?.kind === 'pentatonic' && note.pc === theory.rootPc;
     const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;

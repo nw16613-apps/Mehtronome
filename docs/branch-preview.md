@@ -163,3 +163,13 @@ The pedal-chord Exercises view now places CAGED position directly above its fret
 Progression practice now defaults to **Automatic route** in Guitar and Exercises. Choose a fretboard region to calculate nearby positions for the whole progression.
 
 For a custom route, choose **Choose positions yourself**, select a chord card, then change **Selected chord position**. Only that card changes. The other chords keep their positions; Guitar and Exercises share the same route and notation follows it. Switching temporarily to Automatic route does not discard the manual route. Presets and journal snapshots retain these choices. A different/reordered harmonic progression seeds a fresh route rather than attaching old choices to unrelated chords. Old presets without a navigation choice now use Automatic route; explicit older manual choices are retained.
+
+## Try shell voicings and written guide-tone phrases
+
+1. In Metronome & Mixer, choose **Connect shell voicings**, then **Set up this session**. Alternatively, open **Shell voicing workshop** from Guitar for your current chord/progression.
+2. Compare the three-note shell cards and their omitted tones. **Strum chord** sounds exactly the displayed notes; click again to stop. Read **What moves between these grips?** for each D/G-string voice.
+3. Set **Shell strings** to 6–4–3, 5–4–3 or either bass, and choose **Shell register**. Hear jazz guitar plays the notated single-note shell study with accompaniment.
+4. Choose **Apply as a guide-tone phrase**, then compare **Guide-tone motif** and **Chromatic resolution**. Holds, rests and resolution targets are written and played. The phrase uses strings 4 and 3; its final chord resolves rather than leaving an approach hanging.
+5. Save a journal entry or favourite and restore it to retain the string set, register and phrase choice. The authored phrases currently need 4/4 and four or more beats per chord; unsupported cases explain their rests.
+
+See [the extended-practice track](extended-practice.md) for this delivered increment and the selected next directions. Alternative tunings and left-handed views are excluded.
