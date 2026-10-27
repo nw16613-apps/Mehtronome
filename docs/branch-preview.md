@@ -197,3 +197,9 @@ See [the extended-practice track](extended-practice.md) for this delivered incre
 3. Use **Record & compare →** (or Progress → Record & compare). Press Record to request microphone access; no access is requested automatically. Stop saves locally. Record a second take.
 4. Choose A/B, play A then switch to B while playing. Comparison retains elapsed position after each take's lead-in/latency trim. Adjust trim by ear against a recorded count-in/first attack; this is manual alignment, not measured device calibration.
 5. Edit notes/name, reload to verify persistence, and export original audio as a backup. The recording contains microphone/interface input, without a digitally mixed backing track. Hardware/browser/device latency needs hands-on checking; automated browser recording tests use synthetic input.
+
+### Harmony/audio polish checks
+
+- In a custom C-major-seventh chord, choose C Dorian as its scale guide. The editor, Guitar and Exercises explain that E and B are outside that guide. **Use compatible scale guide** selects a matching guide; Undo restores the deliberate choice. Chord dots remain visible either way.
+- Ear-training answer buttons stay disabled until the complete example finishes. Interrupt the first listening with the main transport, stop it, and listen again; no attempt is scored by the interruption.
+- Draft some recording review notes or trim edits, then change A/B selections: the draft remains. Delete a loaded take and confirm the native player no longer retains its audio source.

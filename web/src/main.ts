@@ -16,7 +16,7 @@ import {progressionNotationSvg} from './practice/progression-notation.js';
 import {installJournal} from './practice/journal-view.js';
 import {GOALS,gripStudy,positionalArpeggio,gripFacts,shortCell,overlayPurpose,guideToneExamples} from './practice/learning.js';
 import {learningView,highlightLearningNote,updateProgressionMap} from './practice/learning-view.js';
-import {musicalContext,spellingHelp} from './practice/context.js';
+import {musicalContext,spellingHelp,scaleCompatibility} from './practice/context.js';
 import './beta.css';
 import {harmonizedSevenths} from './practice/harmonized-sevenths.js';
 import {MIX_CHANNELS} from './practice/mixer.js';
@@ -126,7 +126,7 @@ app.innerHTML = `
           <label>Duration unit<select id="custom-duration-unit"><option value="bars">Bars</option><option value="beats">Beats</option></select></label><label id="custom-bars-label">Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
           <label id="custom-beats-label" hidden>Duration<select id="custom-beats">${Array.from({length:32},(_,i)=>`<option value="${i+1}">${i+1} beat${i?'s':''}</option>`).join('')}</select></label><label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
         </div>
-        <div class="custom-actions"><button id="custom-left" type="button" class="practice-button" aria-label="Move chord left">← Move</button><button id="custom-right" type="button" class="practice-button" aria-label="Move chord right">Move →</button><button id="custom-duplicate" type="button" class="practice-button">Duplicate</button><button id="custom-delete" type="button" class="practice-button">Delete</button></div>
+        <p id="custom-scale-check" class="context-check" hidden></p><button id="custom-compatible-mode" type="button" class="practice-button" hidden>Use compatible scale guide</button><div class="custom-actions"><button id="custom-left" type="button" class="practice-button" aria-label="Move chord left">← Move</button><button id="custom-right" type="button" class="practice-button" aria-label="Move chord right">Move →</button><button id="custom-duplicate" type="button" class="practice-button">Duplicate</button><button id="custom-delete" type="button" class="practice-button">Delete</button></div>
         <details class="custom-share"><summary>Share or copy progression</summary><textarea id="custom-text" rows="3" aria-label="Custom progression text" readonly></textarea><button id="custom-copy" type="button" class="practice-button">Copy progression</button></details>
         <p id="custom-status" class="practice-help" role="status">Changes save automatically in this browser and transpose with the tonic key.</p>
       </section>
@@ -178,7 +178,7 @@ app.innerHTML = `
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><button class="practice-button" data-open-drops>Drop voicing workshop</button><button class="practice-button" data-open-shells>Shell voicing workshop</button><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
       <section class="progression-reference compact-reference" aria-label="Guitar progression reference"></section>
       <div class="guitar-guide guitar-overview">
-        <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p>
+        <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
@@ -496,6 +496,7 @@ function renderProgressionReference(activeStep=step) {
     const referenceExpanded=element.querySelector<HTMLDetailsElement>('details')?.open??(element.getAttribute('aria-label')==='Exercise progression reference'?exerciseReferenceExpanded:false);
     if(exercisePlaying&&exerciseView.backing&&!settings.progression&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'||settings.loopUnit==='beats'?order.reduce((sum:number,index:number)=>sum+progressionPlaybackBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
+    const compatibility=scaleCompatibility(info);if(compatibility&&element.getAttribute('aria-label')!=='Guitar progression reference')element.insertAdjacentHTML('beforeend',`<p class="context-check">${escapeHtml(compatibility)}</p>`);
     const context=musicalContext(settings,activeStep);
     if(element.classList.contains('compact-reference')){const list=element.querySelector('ol')!;const help=element.querySelector('.reference-preview-help')!;const details=document.createElement('details');details.open=referenceExpanded;details.innerHTML='<summary>Full progression · hold a chord to hear it</summary>';details.append(list,help);element.append(details);element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
     if(settings.progression&&settings.template==='custom')element.insertAdjacentHTML('beforeend',sectionControls());
@@ -529,7 +530,7 @@ function renderMusic(skipExercise=false,positionOverride:any=null) {
     return `<button type="button" data-step="${i}" aria-pressed="${i === step}" ${playing ? 'disabled' : ''} class="${i === step ? 'current' : ''} ${settings.loopEnabled && !order.includes(i) ? 'outside-loop' : ''}">${c.name}${c.suffix === 'maj' ? '' : c.suffix}<small>${c.roman}</small>${jazz || modal || custom ? `<small>${durationLabel(i)}</small>` : ''}</button>`;
   }).join('');
   if (focusedStep !== undefined) el('progression-strip').querySelector<HTMLButtonElement>(`[data-step="${focusedStep}"]`)?.focus({preventScroll: true});
-  el('harmony-explanation').textContent = spellingHelp(info)+' '+(modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip);
+  el('harmony-explanation').textContent = [scaleCompatibility(info),spellingHelp(info)].filter(Boolean).join(' ')+' '+(modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip);
   el('backing-description').textContent = custom ? 'Your progression follows the chord, duration, bass-note and scale-guide choices in the builder.' : modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic seventh chords, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const colour = characteristicNotes(info);
@@ -667,6 +668,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   el('guitar-parent').hidden = !parentMajor;
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
   el('guitar-context').textContent = chord;
+  el('guitar-scale-check').textContent=scaleCompatibility(info);el('guitar-scale-check').hidden=!scaleCompatibility(info);
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
   renderPracticeRoadmap(info);
   select('fret-view').value = select('exercise').value;
@@ -761,6 +763,7 @@ el('custom-beat-grid').addEventListener('click',async event=>{const button=(even
 function renderCustomBuilder(){
   const active=settings.progression&&settings.template==='custom';
   el('custom-progression-builder').hidden=!settings.progression;
+  el('custom-scale-check').hidden=true;el('custom-compatible-mode').hidden=true;
   el('customize-progression').hidden=!settings.progression||active;
   el('custom-timeline').hidden=true;
   el('custom-progression-builder').querySelector<HTMLElement>('.custom-editor')!.hidden=!active;
@@ -785,6 +788,7 @@ function renderCustomBuilder(){
     const bass=item.bass===null?'':`/${actualCustomName(item.bass,item.bassLetter)}`;
     return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root,item.letter)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.beats!==undefined?item.beats+' beat'+(item.beats===1?'':'s'):item.bars+' bar'+(item.bars===1?'':'s')}</small></button>`;
   }).join('');
+  const guideCheck=scaleCompatibility(harmonyAt({...settings,template:'custom',customProgression},customStepIndex));el('custom-scale-check').textContent=guideCheck;el('custom-scale-check').hidden=!guideCheck;el('custom-compatible-mode').hidden=!guideCheck;
   input('custom-name').value=customProgression.name;input('custom-section').value=current.section||'';
   select('custom-root').value=String(current.root);
   select('custom-chord').value=current.chord;
@@ -983,7 +987,7 @@ async function stop() {
   await new Promise(resolve => setTimeout(resolve, 250));
   await context?.suspend();
   stopping = false;
-  reflectPresetButtons();
+  reflectPresetButtons();syncMiniTransport();
 }
 function reflectChordPreviews() {
   document.querySelectorAll<HTMLButtonElement>('button[data-grip]').forEach(button => {
@@ -1455,7 +1459,7 @@ async function toggle() {
   if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
   busy = true;
-  reflectPresetButtons();
+  reflectPresetButtons();syncMiniTransport();
   el<HTMLButtonElement>('play').disabled = true;
   el('error').hidden = true;
   try {
@@ -1479,7 +1483,7 @@ async function toggle() {
     await context?.close().catch(() => {});
     context = undefined;
     node = undefined;
-  } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; reflectPresetButtons(); }
+  } finally { busy = false; el<HTMLButtonElement>('play').disabled = false; reflectPresetButtons();syncMiniTransport(); }
 }
 
 select('fret-labels').addEventListener('input', () => { guitarDegrees = select('fret-labels').value === 'degrees'; renderGuitar(); });
@@ -1654,6 +1658,7 @@ el('custom-timeline').addEventListener('drop',event=>{
   saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
 });
 for(const id of ['custom-root','custom-mode','custom-bars','custom-beats','custom-duration-unit','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(false));
+el('custom-compatible-mode').addEventListener('click',()=>{stopPreview();stopExercisePreview();select('custom-mode').value=recommendedMode(customProgression.steps[customStepIndex].chord);commitCustomEdit(false);});
 el('custom-chord').addEventListener('input',()=>commitCustomEdit(true));
 for(const id of ['custom-name','custom-section'])el(id).addEventListener('change',()=>{const value=input(id).value.trim(),previous=id==='custom-name'?customProgression.name:customProgression.steps[customStepIndex].section||'';if((id==='custom-name'?value||'My progression':value)!==previous)commitCustomEdit(false);});
 el('custom-undo').addEventListener('click',()=>restoreCustomEdit(true));
@@ -1713,6 +1718,7 @@ function syncTrainerStatus() {
   el('trainer-status').textContent = !settings.trainerEnabled ? 'Starts at your selected tempo.' : playing ? `${currentBpm} BPM · ${currentBpm >= Math.max(settings.bpm,settings.trainerTarget) ? 'Target reached' : `towards ${settings.trainerTarget} BPM`}. Starting tempo: ${settings.bpm} BPM.` : `Start at ${settings.bpm} BPM; add ${settings.trainerIncrement} every ${settings.trainerBars} bars, up to ${Math.max(settings.bpm,settings.trainerTarget)} BPM.`;
 }
 function syncMiniTransport() {
+  document.dispatchEvent(new Event('mehtronome-playback-state'));
   setFretRecallPlaying(el('caged-exercise'),playing||exercisePlaying||exercisePreparing);
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
   for(const id of ['exercise-drop-part','exercise-drop-phrase','exercise-drop-type','exercise-drop-strings','exercise-drop-region','exercise-shell-strings','exercise-shell-phrase','exercise-shell-region','exercise-position-navigation','exercise-position-region','featured-position','position-region','guitar-chord-position']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
@@ -2073,7 +2079,7 @@ installRepertoire({
 
 stopEarTraining=installEarTraining({
  available:()=>!playing&&!exercisePlaying&&!exercisePreparing&&!busy&&!stopping,
- hear:async(events:any[])=>{stopPreview();stopTakePlayback();await prepareAudio();if(playing||exercisePlaying||exercisePreparing)throw new Error('Stop playback before listening.');const sources:AudioBufferSourceNode[]=[];const gain=context!.createGain();gain.gain.value=.22;gain.connect(master!);const start=context!.currentTime+.05;for(const event of events){const samples=renderJazzGuitarNote(context!.sampleRate,event.midi,event.duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource();source.buffer=buffer;source.connect(gain);source.start(start+event.start);source.stop(start+event.start+event.duration);sources.push(source);}return ()=>{sources.forEach(source=>{try{source.stop();source.disconnect();}catch{}});gain.disconnect();};}
+ hear:async(events:any[])=>{stopPreview();stopTakePlayback();await prepareAudio();if(playing||exercisePlaying||exercisePreparing)throw new Error('Stop playback before listening.');const sources:AudioBufferSourceNode[]=[];const gain=context!.createGain();gain.gain.value=.22;gain.connect(master!);const start=context!.currentTime+.05;for(const event of events){const samples=renderJazzGuitarNote(context!.sampleRate,event.midi,event.duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource();source.buffer=buffer;source.connect(gain);source.start(start+event.start);source.stop(start+event.start+event.duration);sources.push(source);}const finished=Promise.all(sources.map(source=>new Promise<void>(resolve=>source.onended=()=>resolve())));return Object.assign(()=>{sources.forEach(source=>{try{source.stop();source.disconnect();}catch{}});gain.disconnect();},{finished});}
 });
 stopTakePlayback=installRecording({
  capture:()=>({bpm:settings.bpm,beats:settings.beats,key:names[settings.key],chart:settings.progression?progressionDefinition(settings).name:'Pedal chord',study:exerciseView.study,transportRunning:playing,exerciseRunning:exercisePlaying,countIn:input('count-in').checked}),

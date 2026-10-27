@@ -7,3 +7,9 @@ export function spellingHelp(harmony){
  const aliases=harmony.chordPcs.flatMap((pc,i)=>{const j=harmony.scalePcs.indexOf(pc);return j>=0&&harmony.tones[i]!==harmony.scaleNames[j]?[`${harmony.tones[i]} = ${harmony.scaleNames[j]}`]:[];});
  return `Chord labels describe the harmony; scale labels describe its guide. 2/9, 4/11 and 6/13 name the same pitch classes in different registers.${aliases.length?' Enharmonic equivalents here: '+aliases.join(', ')+'.':''} Scale guides are contextual choices, not rules for every use of a chord.`;
 }
+
+/** Report pitch-class differences without forbidding deliberate outside harmony. */
+export function scaleCompatibility(harmony){
+ const missing=harmony.chordPcs.flatMap((pc,i)=>harmony.scalePcs.includes(pc)?[]:[`${harmony.tones[i]} (${harmony.intervals[i]})`]);
+ return missing.length?`${harmony.scaleNames[0]} ${MODES[harmony.mode].name} omits ${missing.join(', ')} from ${harmony.name}${harmony.suffix}. Chord-tone exercises retain these notes; scale-based exercises follow the selected guide.`:'';
+}
