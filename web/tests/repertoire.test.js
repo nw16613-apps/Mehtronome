@@ -2,9 +2,9 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {REPERTOIRE_STUDIES,rehearsalSections,normalizeRepertoire} from '../src/practice/repertoire.js';import {normalizeCustomProgression,cloneTemplate} from '../src/practice/custom-progression.js';import {chordSheet} from '../src/practice/chord-sheet.js';import {harmonyAt,progressionBeatDurations,progressionOrder} from '../src/audio/music.js';import {readPresets} from '../src/practice/presets.js';
 test('original forms retain full beat lengths, section boundaries and valid harmony in every key',()=>{
  for(const [index,study]of REPERTOIRE_STUDIES.entries()){
-  const sections=rehearsalSections(study.progression,4);assert.deepEqual(sections.map(s=>[s.start,s.end]),index===0?[[0,16],[16,32],[32,48]]:[[0,32],[32,64]]);
+  const sections=rehearsalSections(study.progression,4);assert.deepEqual(sections.map(s=>[s.start,s.end]),({blues:[[0,16],[16,32],[32,48]],ab:[[0,32],[32,64]],minorjazz:[[0,8],[8,16],[16,32]],dorianform:[[0,16],[16,32],[32,48],[48,64]]})[study.id]);
   for(let key=0;key<12;key++){
-   const settings={key,beats:4,progression:true,template:'custom',customProgression:study.progression};assert.equal(progressionBeatDurations(settings).reduce((a,b)=>a+b),index===0?48:64);
+   const settings={key,beats:4,progression:true,template:'custom',customProgression:study.progression};assert.equal(progressionBeatDurations(settings).reduce((a,b)=>a+b),({blues:48,ab:64,minorjazz:32,dorianform:64})[study.id]);
    for(const section of sections){const selected={...settings,loopEnabled:true,loopUnit:'beats',loopBeatStart:section.start,loopBeatEnd:section.end-1};assert.equal(progressionOrder(selected)[0],section.step);}
    for(let i=0;i<study.progression.steps.length;i++){const h=harmonyAt(settings,i);assert.equal(h.chordPcs[0],(key+study.progression.steps[i].root)%12);}
    assert.deepEqual(cloneTemplate(study.progression,'min7','dorian',settings).steps.map(s=>s.section),study.progression.steps.map(s=>s.section));

@@ -90,3 +90,7 @@ Starting progression exercise playback restores the first selected loop chord du
 Changing shell/drop strings, part, phrase or register clears an existing passage selection so old note indices cannot leave an empty active range. Rhythm/application changes and favourite restoration also clear outdated passage selections. Context refresh does not replace the notation.
 
 Validation: four new browser cases cover mouse/keyboard note inspection, preserved score DOM/focus, original chord indices in a clipped loop, count-in context, restricted workshop settings and stale selection clearing. Existing adaptive-study, beat-loop and progression timing/count-in/engine-completion checks passed. Progression exercise/timing and extended-tool unit files also passed; production builds include TypeScript validation.
+
+## Options 1–4 review and refinement
+
+See [musical-review.md](musical-review.md) for the musical decisions, audit coverage and implementation limits. This pass corrects requested slash bass handling and altered chord-interval data, groups workshop references with a persistent folding preference, adds minor ii–V–i/Dorian studies and offbeat/two-bar phrase forms, and adds input metering, palette-aware waveform trimming and graded/persisted ear-training activities. Live release preparation remains outside this pass.

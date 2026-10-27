@@ -7,6 +7,7 @@ export const SHELL_STRINGS={auto:'Either bass · 6–4–3 / 5–4–3',root6:'S
 export const SHELL_PHRASES={motif:'Guide-tone motif',approach:'Chromatic resolution'};
 const FORMS={root6:{strings:[0,2,3],offsets:(third,seventh)=>[0,seventh-10,third-3]},root5:{strings:[1,2,3],offsets:(third,seventh)=>[0,third-5,seventh-10]}};
 export function shellCandidates(harmony,stringSet='auto'){
+ if(harmony.bassMidi!=null&&harmony.bassMidi%12!==harmony.chordPcs[0])return [];
  const third=harmony.intervals.findIndex(i=>['3','♭3'].includes(i));
  const seventh=harmony.intervals.findIndex(i=>['7','♭7','♭♭7'].includes(i));
  const colour=seventh>=0?seventh:harmony.intervals.indexOf('6');
@@ -62,7 +63,8 @@ export function shellStudy(harmonies,steps,durations,beats,options={}){
  const route=shellRoute(harmonies,stringSet,FRET_REGIONS[region]||FRET_REGIONS.lowerMiddle);let globalStart=0;
  const groups=harmonies.map((harmony,slot)=>{
   const shell=route[slot],next=route[(slot+1)%route.length],duration=durations[slot];let timing=[],warning='';
-  if(!shell)warning=`${harmony.name}${harmony.suffix}: this starter requires a third and a seventh (or sixth). No shell was substituted.`;
+  if(!shell&&harmony.bassMidi!=null)warning=`${harmony.name}${harmony.suffix}: these root-bass shell templates cannot honour the requested slash bass. No shell was substituted.`;
+  else if(!shell)warning=`${harmony.name}${harmony.suffix}: this starter requires a third and a seventh (or sixth). No shell was substituted.`;
   else if(phrase&&(beats!==4||duration<4))warning=`${harmony.name}${harmony.suffix}: the written shell phrases need 4/4 and at least four beats per chord. This slot is a rest.`;
   else if(!phrase&&duration<1.5)warning=`${harmony.name}${harmony.suffix}: the complete three-note shell needs at least 1½ beats. This slot is a rest.`;
   else if(!phrase)timing=shell.notes.map((note,i)=>({note,start:i*.5,duration:.5,target:i>0}));

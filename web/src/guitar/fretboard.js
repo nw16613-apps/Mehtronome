@@ -103,7 +103,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
       if (chordOnly ? chordIndex < 0 : scaleIndex < 0 && chordIndex < 0) continue;
       notes.push({ string, fret, midi, pc, root: pc === rootPc, chord: chordIndex >= 0, scale: scaleIndex >= 0,
         name: chordIndex >= 0 ? harmony.tones[chordIndex] : harmony.scaleNames[scaleIndex],
-        characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
+        characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: chordIndex>=0?harmony.intervals[chordIndex]:CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
   }
   return { ...position, rootPc, anchorPc, anchorName, parentMajor, positionIdentity:positionIdentities(rootPc,anchorPc,intervals,parentMajor?.family)[shape], notes };
@@ -119,7 +119,7 @@ export function fullFretboardFor(harmony, start = 1, end = 17, chordOnly = false
     if(chordOnly?chordIndex<0:scaleIndex<0&&chordIndex<0)continue;
     notes.push({string,fret,midi,pc,root:pc===rootPc,chord:chordIndex>=0,scale:scaleIndex>=0,
       name:chordIndex>=0?harmony.tones[chordIndex]:harmony.scaleNames[scaleIndex],characteristic:colourPcs.includes(pc),
-      scaleIndex,chromaticDegree:CHROMATIC_DEGREES[(pc-harmony.scalePcs[0]+12)%12]});
+      scaleIndex,chromaticDegree:chordIndex>=0?harmony.intervals[chordIndex]:CHROMATIC_DEGREES[(pc-harmony.scalePcs[0]+12)%12]});
   }
   return {start,end,rootPc,notes};
 }

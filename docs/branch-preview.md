@@ -210,3 +210,11 @@ See [the extended-practice track](extended-practice.md) for this delivered incre
 2. Focus a note in the score and press Enter; its chord context updates without rebuilding the notation or losing focus.
 3. Select a beat loop that begins in the second chord, inspect its later chord, then start the exercise with count-in. The diagram/reference immediately return to the first chord of that selected loop.
 4. Drag a passage in a drop/shell study, stop it, then change voices, strings or phrase. The old range clears instead of referring to the previous notes.
+
+### Options 1–4 updates
+
+1. In Harmony's repertoire library, choose **Minor ii–V–i** or **Dorian conversation**. Read the brief and choose **Load & practise study**. The correct phrase/strings are configured without starting audio. Edit or transpose the chart normally.
+2. In either voicing workshop, fold **Source chords, omissions & voice movement** away. That preference stays when switching studies or reloading. Mobile controls stack into a single column.
+3. Test a slash chord: shells explain unsupported inverted basses; drop grips either use the actual requested bass or leave an explicit gap. Chord-tone interval labels preserve altered spellings.
+4. In Ear training choose **Extended** for seven chord qualities, larger movements or all-six-string pitch finding. Activity/level results survive reload; reveals count once.
+5. In Record & compare, watch the input peak meter during capture. Select a take to see its waveform, click/tap to set the starting trim, then Save take details. The numeric field provides the same control. The waveform follows all four palettes; original export and manual A/B alignment remain available.

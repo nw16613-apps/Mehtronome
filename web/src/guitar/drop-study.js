@@ -9,7 +9,7 @@ export function dropCandidates(harmony,type='drop2',stringSet='auto'){
   const result=guitarVoicings(harmony,type,set.id,true);
   // This workshop teaches four distinct voices, rather than doubled triads or power chords.
   if(result.doubled)return [];
-  return result.voicings.filter(v=>Math.max(...v.notes.map(n=>n.fret))<=17&&!v.wide).map(v=>{
+  return result.voicings.filter(v=>(harmony.bassMidi==null||v.notes[0].pc===harmony.bassMidi%12)&&Math.max(...v.notes.map(n=>n.fret))<=17&&!v.wide).map(v=>{
    const notes=v.notes.map(n=>({...n,chromaticDegree:harmony.intervals[harmony.chordPcs.indexOf(n.pc)],scale:harmony.scalePcs.includes(n.pc),scaleIndex:harmony.scalePcs.indexOf(n.pc)}));
    return {...v,notes,start:Math.min(...notes.map(n=>n.fret)),end:Math.max(...notes.map(n=>n.fret)),stringSet:set.id,omitted:result.omitted,muted:[0,1,2,3,4,5].filter(s=>!set.strings.includes(s))};
   });
@@ -41,7 +41,7 @@ export function dropMovements(groups){
 export function dropStudy(harmonies,steps,durations,beats,options={}){
  const {type='drop2',stringSet='auto',region='lowerMiddle',positions=[],part='all',phrase='arpeggio'}=options,effectiveSet=part!=='all'&&stringSet==='auto'?STRING_SETS[type][0].id:stringSet,route=dropRoute(harmonies,type,effectiveSet,FRET_REGIONS[region]||FRET_REGIONS.lowerMiddle);let globalStart=0;
  const groups=harmonies.map((harmony,slot)=>{
-  const drop=route[slot],warning=!drop?`${harmony.name}${harmony.suffix}: no four-distinct-tone ${type==='drop3'?'drop 3':'drop 2'} grip fits this string set within frets 1–17 and a four-fret span. No substitute was used.`:'';
+  const drop=route[slot],warning=!drop?`${harmony.name}${harmony.suffix}: no four-distinct-tone ${type==='drop3'?'drop 3':'drop 2'} grip fits this string set within frets 1–17 and a four-fret span${harmony.bassMidi!=null?' with the requested slash bass':''}. No substitute was used.`:'';
   const written=voicingPhrase(drop,route[slot+1],harmony,{part,phrase,duration:durations[slot],beats,last:slot===harmonies.length-1}),timing=written.timing,notes=timing.map(e=>e.note);
   const phraseWarning=warning||written.warning;
   const board=fullFretboardFor(harmony,drop?Math.max(1,Math.min(drop.start,...notes.map(n=>n.fret))-1):1,drop?Math.min(17,Math.max(drop.start+4,drop.end,...notes.map(n=>n.fret))):5);

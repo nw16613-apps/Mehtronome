@@ -7,7 +7,7 @@ export function validateTake(take,existing=[]){
  if(take.blob.size>MAX_TAKE_BYTES)throw new Error('This take exceeds 25 MB. Export it before making another.');
  const others=existing.filter(t=>t.id!==take.id);if(others.length>=MAX_TAKES)throw new Error('Ten takes are stored. Export/delete a take to make room.');
  if(others.reduce((n,t)=>n+t.blob.size,0)+take.blob.size>MAX_TOTAL_BYTES)throw new Error('The local take library exceeds 100 MB. Export/delete takes to make room.');
- return {...take,name:String(take.name||'Untitled take').slice(0,60),notes:String(take.notes||'').slice(0,1500),trimMs:Math.max(0,Math.min(10000,Number(take.trimMs)||0))};
+ return {...take,name:String(take.name||'Untitled take').slice(0,60),notes:String(take.notes||'').slice(0,1500),trimMs:Math.max(0,Math.min(180000,Number(take.trimMs)||0))};
 }
 export function openTakeStore(indexedDB=globalThis.indexedDB){
  if(!indexedDB)return Promise.reject(new Error('Local audio storage is unavailable.'));return new Promise((resolve,reject)=>{const req=indexedDB.open(TAKE_DB,1);req.onupgradeneeded=()=>req.result.createObjectStore('takes',{keyPath:'id'});req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
