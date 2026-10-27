@@ -189,3 +189,11 @@ See [the extended-practice track](extended-practice.md) for this delivered incre
 3. Choose **Loop section** below the chart, or in the harmony references in **Guitar** and **Exercises**. The selected beat range is shared. **Full chart** restores the whole form. Section controls lock during playback.
 4. Give the form a name under **Save chart as** and choose **Save new chart**. Reload it from **My charts**, or update a selected saved chart from the current progression.
 5. Export/import a backup; importing creates new copies. Charts retain harmony, key, metre and marks. For a complete exercise/session setup use the existing journal.
+
+### Written phrases, ear training and recording
+
+1. Open the **Drop voicing workshop**. Choose **Exercise voices → Top voice** and **Written phrase → Late chromatic resolution**. It fixes the string set; the score/TAB now uses one string and approaches the next chord. Compare upper/inner two-voice parts and Held note and answer. Favourites/journal retain these choices.
+2. In **Exercises**, use **Ear training ↓**. Hear a question, choose an answer, replay or reveal, and advance. Try chord quality, voice movement and matching a heard pitch to a fretboard location. Only first answers count; Reveal skips scoring.
+3. Use **Record & compare →** (or Progress → Record & compare). Press Record to request microphone access; no access is requested automatically. Stop saves locally. Record a second take.
+4. Choose A/B, play A then switch to B while playing. Comparison retains elapsed position after each take's lead-in/latency trim. Adjust trim by ear against a recorded count-in/first attack; this is manual alignment, not measured device calibration.
+5. Edit notes/name, reload to verify persistence, and export original audio as a backup. The recording contains microphone/interface input, without a digitally mixed backing track. Hardware/browser/device latency needs hands-on checking; automated browser recording tests use synthetic input.

@@ -1,3 +1,4 @@
+import {voicingPhrase,VOICING_PHRASES} from './voicing-phrases.js';
 import {guitarVoicings,STRING_SETS} from './voicings.js';
 import {fullFretboardFor} from './fretboard.js';
 import {FRET_REGIONS} from './position-path.js';
@@ -38,12 +39,13 @@ export function dropMovements(groups){
  }));
 }
 export function dropStudy(harmonies,steps,durations,beats,options={}){
- const {type='drop2',stringSet='auto',region='lowerMiddle',positions=[]}=options,route=dropRoute(harmonies,type,stringSet,FRET_REGIONS[region]||FRET_REGIONS.lowerMiddle);let globalStart=0;
+ const {type='drop2',stringSet='auto',region='lowerMiddle',positions=[],part='all',phrase='arpeggio'}=options,effectiveSet=part!=='all'&&stringSet==='auto'?STRING_SETS[type][0].id:stringSet,route=dropRoute(harmonies,type,effectiveSet,FRET_REGIONS[region]||FRET_REGIONS.lowerMiddle);let globalStart=0;
  const groups=harmonies.map((harmony,slot)=>{
-  const drop=route[slot],warning=!drop?`${harmony.name}${harmony.suffix}: no four-distinct-tone ${type==='drop3'?'drop 3':'drop 2'} grip fits this string set within frets 1–17 and a four-fret span. No substitute was used.`:durations[slot]<2?'The four-note arpeggio needs at least two beats. This slot is a rest.':'';
-  const notes=warning?[]:drop.notes,timing=notes.map((note,i)=>({note,start:i*.5,duration:.5,target:i===3}));
-  const board=fullFretboardFor(harmony,drop?Math.max(1,drop.start-1):1,drop?Math.min(17,Math.max(drop.start+4,drop.end)):5);
-  const group={slot,harmony,drop,position:positions[slot]||{numeral:'I',shape:'E'},fixedRegion:true,chord:harmony.name+harmony.suffix,rootName:harmony.name,notes,board,globalStart,timing,targetIndices:notes.length?[3]:[],cellLengths:[notes.length],materialCells:[harmony.name+harmony.suffix+' '+type],warning,annotation:'Four voices · low to high'};globalStart+=notes.length;return group;
+  const drop=route[slot],warning=!drop?`${harmony.name}${harmony.suffix}: no four-distinct-tone ${type==='drop3'?'drop 3':'drop 2'} grip fits this string set within frets 1–17 and a four-fret span. No substitute was used.`:'';
+  const written=voicingPhrase(drop,route[slot+1],harmony,{part,phrase,duration:durations[slot],beats,last:slot===harmonies.length-1}),timing=written.timing,notes=timing.map(e=>e.note);
+  const phraseWarning=warning||written.warning;
+  const board=fullFretboardFor(harmony,drop?Math.max(1,Math.min(drop.start,...notes.map(n=>n.fret))-1):1,drop?Math.min(17,Math.max(drop.start+4,drop.end,...notes.map(n=>n.fret))):5);
+  const group={slot,harmony,drop,position:positions[slot]||{numeral:'I',shape:'E'},fixedRegion:true,chord:harmony.name+harmony.suffix,rootName:harmony.name,notes,board,globalStart,timing,targetIndices:timing.flatMap((e,i)=>e.target?[i]:[]),cellLengths:[notes.length],materialCells:[harmony.name+harmony.suffix+' '+type],warning:phraseWarning,annotation:VOICING_PHRASES[phrase]||'Grip notes'};globalStart+=notes.length;return group;
  });
  const bars=[];steps.forEach((step,i)=>bars[step]=durations[i]/beats);
  const plan=progressionStudyPlan(groups,steps,bars,beats,'drops','eighths');

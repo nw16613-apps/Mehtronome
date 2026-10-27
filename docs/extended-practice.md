@@ -14,14 +14,14 @@ The route selects transpositions of these templates near the chosen register whi
 
 These use the existing notation/TAB, note selection, linked fretboard/self-check, guitar synthesis, transport, accompaniment, count-in, loop and export systems. The score is a single-note exercise; card audition plays the simultaneous shell. Shell strings, register and phrase choice are retained in favourites and journal snapshots. CAGED navigation continues to describe actual CAGED positions, while this workshop has its own explicit shell register/string choices.
 
-## Next increments
+## Selected development scope
 
 1. **Repertoire-oriented practice:** section-aware personal charts, rehearsal marks and reusable passage practice; preserve beat durations and loop/count-in alignment. Start with original practice studies rather than a preloaded copyrighted song catalogue.
 2. **Broader phrases and restricted-string studies:** develop the shell material into reviewed comping/melodic examples, then offer single-string and selected-set drills only where the pitch-to-string paths are valid. Extend styles with deliberately authored material, not generic transposition alone.
 3. **Interactive ear training:** begin with heard guide-tone movement and chord-quality identification using selectable answers and fretboard responses. Reuse audition and recall; do not imply microphone analysis.
 4. **Recording and comparison:** user-initiated microphone capture, take playback and A/B comparison, local audio storage/export, visible input selection and latency calibration. No permission prompt on page load and no automatic accuracy grading. Timeline alignment and device/browser support need explicit validation.
 
-The shell/drop workshops and first repertoire increment are implemented here. Broader authored phrases, ear training and recording remain authorised directions, not completed features or placeholder controls. Existing historical browser-test migration remains separate maintenance debt; this increment uses focused current-workflow regression checks.
+The shell/drop workshops, repertoire, written/restricted phrases, ear training and recording now have first implementations. Recording alignment is manual; no automatic latency measurement or performance grading is claimed. Existing historical browser-test migration remains separate maintenance debt; this increment uses focused current-workflow regression checks.
 
 Validation for increment 1: all 46 unit-test files passed, including all-key/chord shell contents, exact string/fret pitches, omitted-tone facts, the C-major guide paths, phrase timing/approach resolutions and unsupported/short-slot behaviour. Focused browser checks cover exact acoustic-note messages, restricted strings, notation/targets/rests, shared backing and completion, journal/favourite recall, mobile overflow and existing guided/manual-route/workspace flows. Rendered workshop and notation inspected. Device audio fidelity and anatomical fingering are not claimed tested.
 
@@ -46,3 +46,27 @@ In the chord editor, **Chart title** renames the active form and **Start a secti
 **Loop section** buttons appear below the Harmony chart and in both Guitar/Exercises harmony references. They select the existing exact beat range; **Full chart** clears the range. Controls lock during playback/preparation. Shared count-in, backing and exercise-following behavior remain in use. Rehearsal labels appear on the chord sheet; sections also survive preset/journal snapshots and repertoire backups. Existing chart limit: first 128 beats rendered, although saved forms and section ranges retain all chords (up to 32).
 
 Validation: all 48 unit-test files passed before the final focused checks; repertoire/custom-chart/chord-sheet tests passed again after final rendering changes. Tests cover all-key starter harmony, section boundaries under mixed beat/bar durations, transfer validation, preservation through presets, shared workspace loops, saved-chart import/export and reload, mobile overflow, undo/redo and playback locking. Drop-workshop regression checks also passed. Device-specific audio remains for hands-on review.
+
+## Remaining selected additions — first implementations
+
+All six selected directions now have working implementations on this branch. Alternative tunings, left-handed layouts and spaced recall remain excluded as requested. Historical browser-test migration is separate maintenance work.
+
+### Written drop phrases and restricted strings
+
+In **Guitar → Drop voicing workshop** (or Exercises → Drop 2 / drop 3), choose **Exercise voices**: all four, upper two, inner two, or top voice on one string. Restricted parts select a fixed supported string set so their physical strings remain consistent across chords. **Grip notes** picks the selected voices low to high on eighths. **Held note and answer** holds the top selected voice for a dotted quarter, rests an eighth, answers from below, then holds the top again. **Late chromatic resolution** plays a short opening, leaves beat 3 silent, then approaches the next chord's lowest selected voice by semitone on that voice's string. The final chord ends on its own voice; no resolution is fabricated across an unsupported chord.
+
+The two written phrases need 4/4 and at least four beats per chord, and use only the first bar of longer slots. Unsupported slots remain rests. Chord-card audition still strums all four source voices; the score and exercise audio play the selected part only. Approach notes can fall outside the current scale and are explicitly chromatic. Their fretboard extent includes the actual approach location. Phrase/part choices persist in favourites and journal entries.
+
+### Interactive ear training
+
+**Exercises → Ear training** (shortcut above the exercise heading): identify major/minor/dominant/half-diminished seventh qualities; distinguish a held pitch or a one/two-semitone movement; or match a heard pitch on your guitar and choose its location on strings 4/3, frets 5–9. The heard guitar samples match the answer's pitches. Answers enable after listening. Replay is allowed, only the first answer counts, Reveal does not add an attempt, and Next creates a new question. Scores are per session. This is answer-based ear practice, not microphone pitch recognition. Main transport, exercise and chord audition stop ear audio to avoid overlaps.
+
+### Recording and comparison
+
+**Progress → Record & compare**, with an Exercises shortcut. Press **Record microphone** to request permission. Input selection is available; Refresh inputs enumerates devices without asking for recording access. Capture uses MediaRecorder, disables browser voice processing where supported, and saves the original microphone/interface signal. App backing is not digitally mixed into the take. Mic tracks stop when capture ends, on input loss and on page exit. No microphone request occurs on page load. Permission errors leave the interface usable.
+
+Up to ten takes are stored in IndexedDB, each capped at three minutes/25 MB, with a 100 MB library cap. Takes retain name, timestamp, input label, tempo/metre/chart/exercise context, review notes and trim. Local-storage failure retains nonempty audio for session-only export with an explicit status; empty captures are not saved. Export downloads the original audio in the browser's recording format (WebM/Opus, MP4 or Ogg). Browser storage is origin-specific and can be cleared; export backups before moving devices.
+
+Choose two takes as A and B. Switching while playing keeps the elapsed comparison point after each take's trim. A shorter take reports when it ends before that point instead of jumping to an unrelated ending. Native audio controls also stop app transport before playback. **Lead-in / latency trim** is saved per take for manual alignment to a recorded count-in/first attack. This is not automated device-latency measurement or timing/pitch grading. Real interface/phone/Bluetooth round-trip behavior needs hands-on validation. The browser checks use a synthetic audio-input device and exercise the real permission/MediaRecorder/IndexedDB/playback APIs.
+
+Validation: all 49 unit-test files passed, including all-key/type/part phrase timing, physical strings/pitches, semitone resolutions, ear answer/audio consistency and take alignment/limits. Focused browser checks cover new controls, persistence, ear scoring, recording consent/denial/release, two distinct takes, reload/export/deletion, playback, mobile width and existing shell/drop/repertoire regressions. Synthetic-device success is not a claim of testing the user's physical audio hardware.
