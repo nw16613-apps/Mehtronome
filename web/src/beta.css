@@ -53,3 +53,5 @@ html:root[data-palette][data-theme] .exercise-linked-fretboard .fret-note{opacit
 .guitar-shape-controls{margin-block:1rem;padding:1rem;border:1px solid var(--line);border-radius:10px}
 .guitar-shape-controls .shared-theory-controls{margin-top:.75rem}
 .guitar-shape-controls #grip-toggle-help{margin-block:.5rem}
+
+.exercise-navigation{padding:12px;margin-bottom:16px;border:1px solid var(--line);border-radius:6px;background:var(--pulse);min-width:0}.exercise-navigation .exercise-map-heading{padding-bottom:12px}.exercise-navigation .position-path-guide{margin-bottom:0}

@@ -49,6 +49,9 @@ export function learningView(panel:HTMLElement,context:any){
   const controls=document.createElement('div');controls.className='position-path-controls exercise-diagram-position';
   const positionLabel=toolbar.querySelector('#exercise-position')!.closest('label')!;positionLabel.firstChild!.textContent='CAGED position ';controls.append(positionLabel);diagram.querySelector('.exercise-map-heading')!.after(controls);
  }
+ const navigation=document.createElement('section');navigation.className='exercise-navigation';navigation.setAttribute('aria-label','Exercise chord and position navigation');
+ for(const selector of ['.exercise-map-heading','.exercise-position-route','.exercise-diagram-position']){const control=diagram.querySelector(selector);if(control)navigation.append(control);}
+ material.before(navigation);
  const augmented={...board,notes:[...board.notes]};for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===info.chordPcs[0],chord:info.chordPcs.includes(note.pc),scaleIndex:info.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree||['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'][(note.pc-info.scalePcs[0]+12)%12]});
  if(study==='grip'||study==='positional')augmented.notes=augmented.notes.map((n:any)=>{const i=info.chordPcs.indexOf(n.pc);return i<0?n:{...n,scaleIndex:-1,chromaticDegree:info.intervals[i]};});
  diagram.querySelector('.exercise-map-diagram')!.innerHTML=diagramSvg(augmented,true,MODES[info.mode as keyof typeof MODES].degrees,'Exercise fretboard',true,grip);
