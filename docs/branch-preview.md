@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+The note-counter/progress/legend row is removed from Exercises. Clear selection sits beside the main playback button and appears only when a passage is selected.
+
+
 Playback now follows notation. One Play button plays the full exercise or the selected passage and uses the same Loop option. Dragging selects without starting playback; the button and selection summary identify the active scope. Clear selection restores full-exercise playback. The duplicate Play selection button is removed.
 
 

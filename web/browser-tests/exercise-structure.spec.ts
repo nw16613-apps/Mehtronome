@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 test('exercise, playback, position, view and saving have separate control groups',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
  for(const id of ['exercise-study','exercise-material','exercise-motion','exercise-rhythm','exercise-stage'])await expect(page.locator(`.exercise-definition #${id}`)).toBeVisible();
- for(const id of ['exercise-preview','exercise-tempo','exercise-loop','exercise-backing','exercise-clear-range'])await expect(page.locator(`.exercise-playback-panel #${id}`)).toBeVisible();
+ for(const id of ['exercise-preview','exercise-tempo','exercise-loop','exercise-backing'])await expect(page.locator(`.exercise-playback-panel #${id}`)).toBeVisible();
  for(const id of ['exercise-display','exercise-zoom','exercise-map-toggle','exercise-focus'])await expect(page.locator(`.exercise-viewbar #${id}`)).toBeVisible();
  for(const id of ['exercise-favourites','exercise-favourite','exercise-export','exercise-print'])await expect(page.locator(`.exercise-footer #${id}`)).toBeVisible();
  await expect(page.locator('[data-learning-study],.exercise-practice-bar,.exercise-tempo #exercise-display')).toHaveCount(0);

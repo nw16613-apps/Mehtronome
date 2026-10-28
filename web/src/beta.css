@@ -97,3 +97,5 @@ html:root[data-palette][data-theme] .caged-exercise>.exercise-linked-fretboard{d
 .caged-exercise>.exercise-linked-fretboard .exercise-map-heading{justify-content:center;padding:0 0 8px;text-align:center}.caged-exercise>.exercise-linked-fretboard .exercise-map-diagram{max-width:680px;margin:0 auto}.caged-exercise>.exercise-linked-fretboard .fretboard{max-height:250px;display:block;margin:0 auto}.caged-exercise>.exercise-linked-fretboard[hidden]{display:none!important}
 
 html:root[data-palette][data-theme] :is(.guitar-progression-panel,.exercise-navigation) .progression-reference{border:0;box-shadow:none;background:transparent;padding:0;margin:0 0 12px}.guitar-progression-panel .position-path-guide{border:0}.guitar-progression-panel .reference-current{margin-top:0}
+
+#exercise-clear-range[hidden]{display:none!important}.exercise-playback-panel .exercise-range-controls{margin-top:10px;font-size:11px}

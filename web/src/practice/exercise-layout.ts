@@ -9,14 +9,14 @@ export function organizeExercisePanel(panel:HTMLElement){
  for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?'Short cell':'Full position';
  definition.append(controls);heading.after(definition);
  const playback=section('exercise-playback-panel','Playback'),playControls=document.createElement('div');playControls.className='exercise-playback-controls';
- playControls.append(find('#exercise-preview'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));playback.append(playControls);
+ playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));playback.append(playControls);
  const trainer=find('.exercise-setup'),practiceBar=find('.exercise-practice-bar');
  const trainerLabels=['exercise-auto-tempo','exercise-auto-every','exercise-auto-increment','exercise-auto-target'].map(label);
  trainer.before(practiceBar);
  const trainerGrid=document.createElement('div');trainerGrid.className='exercise-trainer-controls';trainerGrid.append(...trainerLabels);
  trainer.replaceChildren(Object.assign(document.createElement('summary'),{textContent:'Tempo trainer'}),trainerGrid);
  if(find('#exercise-auto-tempo').hasAttribute('disabled')){const note=document.createElement('p');note.textContent='Tempo trainer is unavailable for chord-aligned studies. Playback stays at the exercise tempo.';trainer.append(note);}
- playback.append(trainer,find('.exercise-status-row'),find('.exercise-range-controls'));definition.after(playback);
+ playback.append(trainer,find('.exercise-range-controls'));definition.after(playback);
  const navigation=find('.exercise-navigation');navigation.prepend(Object.assign(document.createElement('h4'),{textContent:'Chord & position'}));definition.after(navigation);navigation.querySelector('h4')!.after(find('.progression-reference'));
  const view=section('exercise-viewbar','View');view.append(label('exercise-display'),label('exercise-zoom'),find('#exercise-map-toggle'),find('#exercise-focus'));const diagram=find('.exercise-linked-fretboard');navigation.after(diagram);diagram.after(view);
  const material=find('.exercise-material-layout');view.after(material);
