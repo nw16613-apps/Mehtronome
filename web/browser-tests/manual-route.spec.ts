@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 const tab=async(page:any,name:string)=>page.locator(`[data-workspace-target="${name}"]`).click();
 const route=async(page:any)=>page.locator('.exercise-position-route [data-inspect-slot]').evaluateAll(nodes=>nodes.map(n=>(n as HTMLElement).dataset.position));
-async function progression(page:any){await page.goto('/');await tab(page,'harmony-title');await page.locator('#template').selectOption('major251essential');await tab(page,'caged-exercise');}
+async function progression(page:any){await page.goto('/');await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('major251essential');await tab(page,'caged-exercise');}
 test('automatic is the default; manual edits only the selected chord and both workspaces share it',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await progression(page);await expect(page.locator('#exercise-position-navigation')).toHaveValue('path');await expect(page.locator('#exercise-position-region')).toBeVisible();await expect(page.locator('#exercise-position')).toBeHidden();
  const original=await route(page);await page.locator('#exercise-position-navigation').selectOption('all');await expect(page.locator('#exercise-position')).toBeVisible();await page.locator('.exercise-position-route [data-inspect-slot="1"]').click();await expect(page.locator('#exercise-position')).toHaveValue(original[1]!);

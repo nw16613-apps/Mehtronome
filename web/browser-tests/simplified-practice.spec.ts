@@ -5,7 +5,7 @@ test('removed tools stay absent while CAGED, charts, guidance and progress remai
   await page.locator(`[data-workspace-target="${target}"]`).click();
   await expect(page.locator('[data-open-shells],[data-open-drops],[data-open-ear],[data-open-recording],#ear-title,#recording-title,.practice-journal,.fret-recall,#exercise-recall,#exercise-recall-prompt,#exercise-application,#exercise-response,#exercise-stage option[value="apply"]')).toHaveCount(0);
  }
- await page.locator('#repertoire-study').selectOption('minorjazz');await page.locator('#repertoire-practise').click();
+ await page.locator('#progression-choice').selectOption('study:minorjazz');await page.locator('[data-workspace-target=caged-exercise]').click();
  await expect(page.locator('#exercise-study')).toHaveValue('harmonized');
  await expect(page.locator('#exercise-study option[value="shells"],#exercise-study option[value="shellphrases"],#exercise-study option[value="drops"]')).toHaveCount(0);
  await expect(page.locator('.exercise-map-diagram')).toBeVisible();await expect(page.locator('.exercise-lesson')).toBeVisible();
