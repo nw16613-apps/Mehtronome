@@ -477,11 +477,21 @@ function renderProgressionReference(activeStep=step) {
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'||settings.loopUnit==='beats'?order.reduce((sum:number,index:number)=>sum+progressionPlaybackBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
     const compatibility=scaleCompatibility(info);if(compatibility&&element.getAttribute('aria-label')!=='Guitar progression reference')element.insertAdjacentHTML('beforeend',`<p class="context-check">${escapeHtml(compatibility)}</p>`);
     const context=musicalContext(settings,activeStep);
-    if(element.classList.contains('compact-reference')){const list=element.querySelector('ol')!;const help=element.querySelector('.reference-preview-help')!;const details=document.createElement('details');details.open=referenceExpanded;details.innerHTML='<summary>Full progression · hold a chord to hear it</summary>';details.append(list,help);element.append(details);element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
+    if(element.classList.contains('compact-reference')){element.querySelector('ol')?.remove();element.querySelector('.reference-preview-help')?.remove();element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
     if(settings.progression&&settings.template==='custom')element.insertAdjacentHTML('beforeend',sectionControls());
     applyStudioIcons(element);
   });
 }
+function enrichProgressionCards(){
+ document.querySelectorAll<HTMLButtonElement>('#position-path [data-route-step],.exercise-position-route [data-route-step]').forEach(button=>{
+  const index=Number(button.dataset.routeStep),chord=chordInfo(index);
+  const beats=progressionPlaybackBeatDurations(settings)[index],duration=`${beats} beat${beats===1?'':'s'}`;
+  button.querySelector('.route-harmony')?.remove();
+  button.insertAdjacentHTML('beforeend',`<small class="route-harmony">${escapeHtml(chord.roman)} · ${escapeHtml(duration)}<br>${escapeHtml(chord.scaleNames[0]+' '+MODES[chord.mode as keyof typeof MODES].name)}</small>`);
+  button.title='Click to inspect; hold to hear. Space also auditions the chord.';
+ });
+}
+
 function renderMusic(skipExercise=false,positionOverride:any=null) {
   const referenceFocus=(document.activeElement as HTMLElement)?.closest<HTMLButtonElement>('button[data-reference-step]');
   const focusedReference=referenceFocus?.closest('.progression-reference')?.getAttribute('aria-label');
@@ -642,7 +652,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   reflectFullFretboard();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);
   const guitarRouteGroups=progressionOrder(settings).map((i:number)=>({chord:harmonies[i]?.name+harmonies[i]?.suffix,position:path[i],board:harmonies[i]?fretboardFor(harmonies[i],path[i].geometryShape):null}));
-  el('position-path').innerHTML=settings.progression?positionRouteCards(guitarRouteGroups,progressionOrder(settings),step,playing||exercisePlaying||exercisePreparing,true):'';
+  el('position-path').innerHTML=settings.progression?positionRouteCards(guitarRouteGroups,progressionOrder(settings),step,playing||exercisePlaying||exercisePreparing,true):'';enrichProgressionCards();
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
   el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
@@ -1080,14 +1090,14 @@ async function initialiseAudio() {
   reverb.connect(wet!);
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
-async function previewChord(index: number, hold: string) {
+async function previewChord(index: number, hold: string, retainExercise=false) {
 
   if (playing || exercisePlaying || busy || stopping) return;
   stopPreview();
   const generation = previewGeneration;
   previewHold = hold;
   step = index;
-  renderMusic();
+  renderMusic(retainExercise);
   el('error').hidden = true;
   try {
     previewPreparation ??= prepareAudio().finally(() => { previewPreparation = undefined; });
@@ -1408,6 +1418,25 @@ diagrams.addEventListener('keydown',event=>{
   if (gripButton(event.target) && event.repeat && ['Space','Enter'].includes(event.code)) event.preventDefault();
 });
 }
+function auditionRouteCard(button:HTMLButtonElement,hold:string){
+ const slot=Number(button.dataset.inspectSlot),index=Number(button.dataset.routeStep),restoreFocus=document.activeElement===button,guitar=!!button.closest('#position-path');inspectExerciseChord(slot);
+ void previewChord(index,hold,true);
+ if(restoreFocus)(guitar?el('position-path'):el('caged-exercise')).querySelector<HTMLButtonElement>(`[data-route-step="${index}"]`)?.focus({preventScroll:true});
+}
+let routeHoldTimer:ReturnType<typeof setTimeout>|undefined;
+let routeHoldOrigin:{x:number,y:number}|undefined;
+document.addEventListener('pointerdown',event=>{
+ const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('[data-route-step]'):null;
+ if(!button||button.disabled||event.button!==0||!event.isPrimary)return;
+ routeHoldOrigin={x:event.clientX,y:event.clientY};routeHoldTimer=setTimeout(()=>{auditionRouteCard(button,`pointer:${event.pointerId}`);},180);
+});
+window.addEventListener('pointermove',event=>{if(routeHoldOrigin&&Math.hypot(event.clientX-routeHoldOrigin.x,event.clientY-routeHoldOrigin.y)>8){clearTimeout(routeHoldTimer);routeHoldTimer=undefined;}});
+for(const type of ['pointerup','pointercancel'] as const)window.addEventListener(type,()=>{clearTimeout(routeHoldTimer);routeHoldTimer=undefined;routeHoldOrigin=undefined;});
+window.addEventListener('blur',()=>{clearTimeout(routeHoldTimer);routeHoldTimer=undefined;});
+document.addEventListener('keydown',event=>{
+ const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('[data-route-step]'):null;
+ if(button&&!button.disabled&&event.code==='Space'){event.preventDefault();if(!event.repeat)auditionRouteCard(button,'key:Space');}
+});
 // Delegate on the stable document: selecting a chord redraws both reference panels.
 const chordButton=(target:EventTarget|null)=>target instanceof HTMLElement?target.closest<HTMLButtonElement>('#progression-strip button[data-step], #custom-beat-grid button[data-grid-step], .progression-reference button[data-reference-step]'):null;
 const chordIndex=(button:HTMLButtonElement)=>Number(button.dataset.referenceStep??button.dataset.gridStep??button.dataset.step);
@@ -2041,6 +2070,9 @@ async function startGuidedGoal(){
  showWorkspace(goal.workspace,learningTargets[goal.workspace]);
 }
 
+const guitarProgressionReference=document.querySelector<HTMLElement>('.guitar .progression-reference')!;
+const guitarProgressionPanel=document.createElement('section');guitarProgressionPanel.className='guitar-progression-panel';guitarProgressionPanel.setAttribute('aria-label','Chord progression and positions');
+guitarProgressionReference.before(guitarProgressionPanel);guitarProgressionPanel.append(guitarProgressionReference,el('position-path-guide'));
 // Move the existing setup and context map below the principal practice material.
 const guitarSetup=document.createElement('details');guitarSetup.className='guitar-setup';guitarSetup.innerHTML='<summary>Diagram display settings</summary>';
 const guitarOverview=document.querySelector('.guitar-overview')!;

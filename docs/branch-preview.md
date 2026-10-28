@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+Guitar and Exercises each have one combined progression/position selector: current context, navigation controls and cards containing chord, duration, scale guide and CAGED location. The redundant Full progression list is removed. Cards retain click/Enter inspection and held pointer/Space audition. Exercises places the centered-title CAGED diagram after these selectors and before View; View now controls the notation below.
+
+
 The CAGED reference now sits above full-width notation, with its chord/position heading beside the compact diagram on desktop and above it on mobile. The former sticky sidebar is removed. Show/Hide fretboard remains in View; notation retains full width in either state.
 
 
