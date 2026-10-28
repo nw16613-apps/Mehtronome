@@ -18,11 +18,11 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const training=group('Training','metronome-training');move(training,query('.tempo-training'),query('.gap-training'));move(tools,session,training);pulseGrid.remove();
  const goals=get('guided-goals');tools.after(goals);goals.querySelector('h2')!.textContent='Guided session setup';
  // Harmony: choose the source, set tonality, work on the chart, then consult references.
- const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!,source=group('Backing','harmony-source');move(source,harmony.querySelector('.segmented'));harmony.querySelector('.mode-label')?.remove();heading.after(source);
- const tonality=group('Key, mode & chord','harmony-tonality'),tonalityFields=document.createElement('div');tonalityFields.className='workspace-fields';
+ const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!,source=group('Start a chart','harmony-source');move(source,get('single-chord-chart'));harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();heading.after(source);
+ const tonality=group('Chart key & template settings','harmony-tonality'),tonalityFields=document.createElement('div');tonalityFields.className='workspace-fields';
  move(tonalityFields,label('key'),label('quality'),label('chord'));tonality.append(tonalityFields);source.after(tonality);
  for(const row of Array.from(harmony.querySelectorAll(':scope>.field-row')))if(!row.children.length)row.remove();
- const progression=group('Progression','harmony-progression');move(progression,get('mode-template'),label('template'),get('custom-progression-builder'));tonality.after(progression);
+ const progression=group('Chord chart','harmony-progression');move(progression,get('mode-template'),label('template'),get('custom-progression-builder'));tonality.after(progression);
  const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));progression.after(movement);
  const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';movement.after(map);
  const library=query('.repertoire-library');map.after(library);

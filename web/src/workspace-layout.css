@@ -16,3 +16,4 @@
 html:root[data-palette][data-theme] :is(.workspace-group,.guitar-shape-controls)>h3{font-family:var(--title-font,ui-sans-serif,system-ui,sans-serif);font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:0 0 12px}
 html:root[data-palette][data-theme] .guitar-viewbar .guitar-controls{border:0;background:transparent;box-shadow:none;padding:0;margin:0}
 html:root[data-palette][data-theme] .sound-settings .instrument-sequence{border:0;border-top:1px solid var(--line);box-shadow:none;background:transparent;border-radius:0;padding:16px 0}
+.harmony>.segmented[hidden]{display:none!important}

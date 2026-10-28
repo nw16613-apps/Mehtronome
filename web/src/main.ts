@@ -48,7 +48,8 @@ import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefin
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 let customProgression:any;
-try{customProgression=normalizeCustomProgression(JSON.parse(localStorage.getItem(CUSTOM_PROGRESSION_KEY)||'null'));}
+let hasStoredChart=false;
+try{const stored=localStorage.getItem(CUSTOM_PROGRESSION_KEY);customProgression=normalizeCustomProgression(JSON.parse(stored||'null'));hasStoredChart=Boolean(stored);}
 catch{customProgression=normalizeCustomProgression(null);}
 (PROGRESSIONS as any).custom=customProgression;
 function modeOptions() {
@@ -107,7 +108,8 @@ app.innerHTML = `
 
       <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox" checked>Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Slowly add and release extensions from the current scale. The root and progression stay in place; this shapes the sustained harmony.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
       <p id="mode-tip" class="mode-tip"></p>
-      <div class="mode-label">BACKING</div><div class="segmented" role="group" aria-label="Harmony backing"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
+      <div class="mode-label">BACKING</div><div class="segmented" hidden aria-hidden="true"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
+      <button id="single-chord-chart" type="button" class="practice-button">New single-chord chart</button>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
@@ -193,7 +195,7 @@ app.innerHTML = `
   <p id="error" class="error" role="alert" hidden></p>
   <footer><span><span class="footer-dot">●</span> Made for listening, not rushing.</span><span><a class="theme-preview-link" href="./themes.html?v=studio-icons-20261025">Compare themes</a> · Headphones on. Distractions off.</span></footer>
 </main>
-<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><section id="floating-mixer" class="floating-mixer panel" aria-labelledby="floating-mixer-title" hidden><div class="floating-mixer-heading"><h2 id="floating-mixer-title">Your mix</h2><button id="floating-mixer-close" type="button" class="practice-button" aria-label="Close mixer">Close</button></div><div id="floating-mixer-content"></div></section><button id="mini-play" class="practice-button" aria-pressed="false">Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-mixer" type="button" class="practice-button" aria-expanded="false" aria-controls="floating-mixer">Mixer</button><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label><span id="mini-root-purpose">Root</span><select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">Pedal chord</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
+<div id="mini-transport" class="mini-transport" aria-label="Practice controls" hidden><section id="floating-mixer" class="floating-mixer panel" aria-labelledby="floating-mixer-title" hidden><div class="floating-mixer-heading"><h2 id="floating-mixer-title">Your mix</h2><button id="floating-mixer-close" type="button" class="practice-button" aria-label="Close mixer">Close</button></div><div id="floating-mixer-content"></div></section><button id="mini-play" class="practice-button" aria-pressed="false">Play</button><label><span id="mini-tempo-label">BPM</span><input id="mini-bpm" type="number" min="30" max="240" value="90" aria-label="Practice tempo"></label><div class="mini-harmony"><strong id="mini-chord">Am13</strong><span id="mini-mode">A Dorian</span></div><button id="mini-mixer" type="button" class="practice-button" aria-expanded="false" aria-controls="floating-mixer">Mixer</button><button id="mini-more" type="button" class="practice-button mini-more" aria-expanded="false" aria-controls="mini-detail-controls">Controls</button><div id="mini-detail-controls" class="mini-detail-controls"><div class="mini-harmony-controls"><label><span id="mini-root-purpose">Root</span><select id="mini-key" aria-label="Root note">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label><label>Mode<select id="mini-mode-select" aria-label="Mode">${modeOptions()}</select></label><label>Chord<select id="mini-chord-select" aria-label="Chord type"></select></label><label>Progression<select id="mini-progression" aria-label="Progression"><option value="off">New single-chord chart</option>${Object.entries(PROGRESSIONS).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</select></label></div><div class="mini-pulse-options"><label class="check"><input id="mini-count-in" type="checkbox">One-bar count-in</label><label class="check"><input id="mini-accent" type="checkbox">Accent beat one</label></div></div><span id="mini-beat" aria-hidden="true">●</span><button id="exit-focus" class="practice-button" hidden>Exit focus</button></div>`;
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const input = (id: string) => el<HTMLInputElement>(id);
@@ -765,6 +767,7 @@ function renderCustomBuilder(){
   customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
   el<HTMLButtonElement>('custom-undo').disabled=!customUndo.length;el<HTMLButtonElement>('custom-redo').disabled=!customRedo.length;
   const current=customProgression.steps[customStepIndex];
+  el('mode-template').textContent=`Try ${MODES[current.mode as keyof typeof MODES].name} progression`;
   el('custom-progression-title').textContent=customProgression.name;
   for(const id of ['custom-root','custom-bass']){
     const control=select(id);
@@ -821,6 +824,12 @@ function update() {
   settings.mode = select('quality').value;
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
+  if(!settings.progression){
+    customProgression=normalizeCustomProgression({name:'Single-chord chart',steps:[{root:0,chord:settings.chord,mode:settings.mode,bars:1,bass:null}]});
+    settings.progression=true;select('template').value='custom';customStepIndex=0;step=0;
+    settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;
+    input('loop-enabled').checked=false;customUndo.length=0;customRedo.length=0;
+  }
   settings.sound = select('sound').value;
   settings.padMovement = select('pad-movement').value;
   settings.extensionMorph=input('extension-morph').checked;
@@ -1639,6 +1648,9 @@ function fillChords(preserve = false) {
 
 }
 el('mode-template').addEventListener('click',()=>{
+  if(settings.template==='custom'){
+    const current=chordInfo(step);select('quality').value=current.mode;select('key').value=String(current.chordPcs[0]);
+  }
   stopPreview();settings.progression=true;step=0;
   select('template').value=`modal_${select('quality').value}`;
   for(const id of ['pedal','progression']){const selected=id==='progression';el(id).classList.toggle('selected',selected);el(id).setAttribute('aria-pressed',String(selected));}
@@ -1651,6 +1663,16 @@ select('quality').addEventListener('input', () => {
 select('template').addEventListener('input', () => {
   const template = progressionDefinition({...settings,template:select('template').value,customProgression});
   if (template.kind === 'modal' && 'mode' in template) { select('quality').value = String(template.mode); fillChords(); update(); }
+});
+el('single-chord-chart').addEventListener('click',async()=>{
+  if(busy||stopping)return;
+  const current=chordInfo(step);
+  stopPreview();stopExercisePreview();if(playing)await stop();
+  if(settings.template!=='custom')customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
+  rememberCustomEdit();
+  customProgression=normalizeCustomProgression({name:'Single-chord chart',steps:[{root:(current.chordPcs[0]-settings.key+12)%12,chord:current.chordId,mode:current.mode,bars:1,bass:null}]});
+  customStepIndex=0;step=0;settings.progression=true;select('template').value='custom';input('loop-enabled').checked=false;
+  saveCustomProgression('Single-chord chart ready. Edit its chord or duration, or add another chord.');fillChords(true);fillLoopOptions(true);update();
 });
 el('customize-progression').addEventListener('click',()=>{
   stopPreview();
@@ -1758,7 +1780,7 @@ function syncMiniTransport() {
   const transportStep=exercisePlaying?exerciseBackingStep:step;
   const info = harmonyAt(transportSettings,transportStep);
   const active=musicalContext(transportSettings,transportStep);
-  el('active-musical-context').innerHTML=`<div><small>${transportSettings.progression?'Progression tonic / key':'Study / pedal root'}</small><strong>${escapeHtml(active.tonic)}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div><p>${exercisePlaying?'Exercise audition is shown here; the main transport setup below is retained. ':''}${transportSettings.progression?'Functional progressions use contextual scale choices; follow the chord resolution.':'Static modal study: listen to each scale note over this held chord.'} ${transportSettings.extensionMorph?'Extensions are evolving; switch them off for a stable listening reference.':''}</p>`;
+  el('active-musical-context').innerHTML=`<div><small>Chart tonic / key</small><strong>${escapeHtml(active.tonic)}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div><p>${exercisePlaying?'Exercise audition is shown here; the main transport setup below is retained. ':''}${progressionOrder(transportSettings).length===1?'Single-chord chart: explore the scale guide over the repeating chord.':'Scale guides follow the chords in the chart.'} ${transportSettings.extensionMorph?'Extensions are evolving; switch them off for a stable listening reference.':''}</p>`;
   select('mini-key').setAttribute('aria-label',settings.progression?'Progression tonic':'Pedal root');
   select('mini-mode-select').parentElement!.hidden=select('quality').parentElement!.hidden;
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
@@ -1819,7 +1841,7 @@ input('mini-accent').addEventListener('input',()=>{input('accent').checked=input
 select('mini-progression').addEventListener('input',()=>{
   const value=select('mini-progression').value;
   if(value==='off'){
-    if(settings.progression)el<HTMLButtonElement>('pedal').click();
+    el<HTMLButtonElement>('single-chord-chart').click();
     return;
   }
   select('template').value=value;
@@ -1882,6 +1904,7 @@ el('position-path').addEventListener('click',event=>{
   el('position-path').querySelector<HTMLButtonElement>(`[data-inspect-slot="${button.dataset.inspectSlot}"]`)?.focus({preventScroll:true});
 });
 fillChords();
+if(hasStoredChart){settings.progression=true;select('template').value='custom';}
 renderScaleExplorer();
 update();
 
