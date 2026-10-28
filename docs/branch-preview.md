@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+The CAGED reference now sits above full-width notation, with its chord/position heading beside the compact diagram on desktop and above it on mobile. The former sticky sidebar is removed. Show/Hide fretboard remains in View; notation retains full width in either state.
+
+
 Exercises is now organized by purpose: Exercise (type/material/direction/rhythm/scope), Playback (play, BPM/speed, loop/accompaniment, tempo trainer, passage controls), Chord & position, View (display/size/diagram/focus), the shared practice material, one Reference & guidance disclosure, and Save & export. Duplicate exercise-changing shortcut buttons are removed; their choices remain in the Exercise menu. Tempo trainer and display settings are separate.
 
 
