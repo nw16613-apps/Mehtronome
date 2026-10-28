@@ -17,14 +17,14 @@ export function organizeExercisePanel(panel:HTMLElement){
  trainer.replaceChildren(Object.assign(document.createElement('summary'),{textContent:'Tempo trainer'}),trainerGrid);
  if(find('#exercise-auto-tempo').hasAttribute('disabled')){const note=document.createElement('p');note.textContent='Tempo trainer is unavailable for chord-aligned studies. Playback stays at the exercise tempo.';trainer.append(note);}
  playback.append(trainer,find('.exercise-status-row'),find('.exercise-range-controls'));definition.after(playback);
- const navigation=find('.exercise-navigation');navigation.prepend(Object.assign(document.createElement('h4'),{textContent:'Chord & position'}));playback.after(navigation);navigation.querySelector('h4')!.after(find('.progression-reference'));
+ const navigation=find('.exercise-navigation');navigation.prepend(Object.assign(document.createElement('h4'),{textContent:'Chord & position'}));definition.after(navigation);navigation.querySelector('h4')!.after(find('.progression-reference'));
  const view=section('exercise-viewbar','View');view.append(label('exercise-display'),label('exercise-zoom'),find('#exercise-map-toggle'),find('#exercise-focus'));const diagram=find('.exercise-linked-fretboard');navigation.after(diagram);diagram.after(view);
  const material=find('.exercise-material-layout');view.after(material);
  const reference=find('.exercise-lesson');reference.querySelector('summary')!.textContent='Reference & guidance';
  for(const selector of ['.progression-timing-help','.exercise-voice-leading','.notation-chord-help','.exercise-diagram-reference','.exercise-grip-information','.exercise-footer>p']){
   for(const node of Array.from(panel.querySelectorAll(selector)))reference.append(node);
  }
- material.after(reference);
+ material.after(playback);playback.after(reference);
  const footer=find('.exercise-footer');footer.prepend(Object.assign(document.createElement('h4'),{textContent:'Save & export'}));footer.insertBefore(label('exercise-favourites'),footer.querySelector('.exercise-actions'));reference.after(footer);
  // Back/forward browse the same exercise menu, so keep them beside its choices.
  const browse=document.createElement('div');browse.className='exercise-browse';browse.append(find('#exercise-history-back'),find('#exercise-history-forward'));definition.append(browse);

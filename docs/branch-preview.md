@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+Playback now follows notation. One Play button plays the full exercise or the selected passage and uses the same Loop option. Dragging selects without starting playback; the button and selection summary identify the active scope. Clear selection restores full-exercise playback. The duplicate Play selection button is removed.
+
+
 Guitar and Exercises each have one combined progression/position selector: current context, navigation controls and cards containing chord, duration, scale guide and CAGED location. The redundant Full progression list is removed. Cards retain click/Enter inspection and held pointer/Space audition. Exercises places the centered-title CAGED diagram after these selectors and before View; View now controls the notation below.
 
 
