@@ -29,3 +29,14 @@ Regression coverage: `range-turns.test.js` checks long repeated traversals,
 intact opposite forms, alternating phase, the reported minor-third progression,
 core starting tones and short-cell scope. The wider pattern matrix accepts both
 proper directional forms and checks bar-independent sequence continuation.
+
+### Turn reference correction
+
+Ordinary continuation still compares cell starting anchors. On reversal only,
+the reference is now the outgoing cell's upper extent (ascending traversal) or
+lower extent (descending traversal). This prevents comparing an ascending cell's
+low root to a descending cell's high starting note. The structural extent is
+independent of alternating stroke phase. This applies both within a chord slot
+and when a changed harmony/position forces a turn. Exact-note regression tests
+cover E–G–B–D → C–A–F♯–D and A–F♯–D–B → C–E–G–B in A Dorian,
+including a turn across a bar boundary.

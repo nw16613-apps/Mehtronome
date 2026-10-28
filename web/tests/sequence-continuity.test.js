@@ -34,16 +34,16 @@ test('every directional family selects the nearest forward cell through jazz, mo
   const setup={key,mode:'dorian',chord:'min13',template,progression:true,beats:4},hs=progressionDefinition(setup).roman.map((_,i)=>harmonyAt(setup,i)),positionPath=pathFor(hs,shapes);
   let direction=motion==='ascending'?1:-1;
   for(const study of ordinary){
-   const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],shapes[0]),{study,motion,positionPath});let previous=null;direction=motion==='ascending'?1:-1;
+   const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],shapes[0]),{study,motion,positionPath});let previous=null,edge=null;direction=motion==='ascending'?1:-1;
    for(const g of gs){
     let source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).filter(c=>c.notes?.length&&Number.isFinite(c.sequenceAnchor));
     if(previous!==null&&g.sequenceAnchors.length){
      const forward=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
-     if(!forward.length){direction=-direction;source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'});}
+     if(!forward.length){previous=edge;direction=-direction;source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'});}
      const next=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
      assert.equal(g.sequenceAnchors[0],next[0]??source[0]?.sequenceAnchor,`${template} ${key} ${motion} ${study} ${g.slot}`);
     }
-    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);}
+    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);const ns=g.notes.slice(-g.cellLengths.at(-1));edge=direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));}
    }
   }
  }

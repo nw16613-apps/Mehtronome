@@ -12,7 +12,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  let globalStart=0,previousContext='',cellIndex=0,noteOffset=0;
- let lastAnchor=null,lastMidi=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
+ let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
  const alternating=study==='alternating'||study==='chordtonesalternating'||study==='pentatonic'&&pattern.startsWith('alternating');
  const approachEnds=[];let emittedCells=0,triadReference=60;
@@ -38,7 +38,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     noteOffset=next.offset;
    }else if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
     let next=continuationCell(cells,lastAnchor,travel);
-    if(next.reset&&directional){travel=-travel;cells=makeCells();next=continuationCell(cells,lastAnchor,travel);}
+    if(next.reset&&directional){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
     cellIndex=next.index;
    }
   }
@@ -53,7 +53,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     if(!cells.length)break;
     cellIndex=0;noteOffset=0;
     if(study==='positional'&&lastMidi!==null)noteOffset=continuationNote(cells[0].notes,lastMidi,travel).offset;
-    else if(lastAnchor!==null)cellIndex=continuationCell(cells,lastAnchor,travel).index;
+    else if(lastAnchor!==null)cellIndex=continuationCell(cells,lastRangeEdge??lastAnchor,travel).index;
    }
    const cell=cells[cellIndex];
    // A continuous positional run can cross a bar boundary. Pattern cells
@@ -81,6 +81,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    const start=notes.length;notes.push(...cellNotes);used.push(cell.chord);cellLengths.push(cellNotes.length);
    if(Number.isFinite(cell.sequenceAnchor)){lastAnchor=cell.sequenceAnchor;sequenceAnchors.push(lastAnchor);sequenceDirections.push(travel);}
+   // Opposite legs anchor different ends of a cell. At a turn, compare
+   // against the outgoing extent, not the previous leg's starting anchor.
+   // Use the structural extent so an alternating stroke cannot move the turn.
+   lastRangeEdge=travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
    lastMidi=cellNotes.at(-1).midi;
    if(cell.targetIndex!==undefined)targetIndices.push(start+cell.targetIndex);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';

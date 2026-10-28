@@ -38,3 +38,35 @@ test('chord-tone starting roots use core seventh tones; short-cell scope remains
  const gs=progressionExerciseGroups([h,h],[16,16],board,{study:'alternating',stage:'cell',positionPath:path([h,h])});
  assert.ok(gs.every(g=>g.notes.length===4));
 });
+
+test('turnaround golden notes use the outgoing end, in both directions and across a bar',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min13'}),board=fretboardFor(h,'C'),hs=Array(8).fill(h);
+ for(const [motion,expected] of [
+  ['ascending',[64,67,71,74,72,69,66,62]],
+  ['descending',[57,54,50,47,48,52,55,59]]
+ ]){
+  const gs=progressionExerciseGroups(hs,hs.map(()=>4),board,{study:'harmonized',motion,positionPath:path(hs)});
+  assert.deepEqual(gs[5].notes.map(n=>n.midi),expected);
+  const split=progressionExerciseGroups([h,h],[22,4],board,{study:'harmonized',motion,positionPath:path([h,h])});
+  assert.deepEqual([...split[0].notes.slice(-4),...split[1].notes.slice(0,4)].map(n=>n.midi),expected);
+ }
+});
+
+test('a chord-change turn chooses the nearest opposite anchor to the outgoing extent',()=>{
+ const hs=[9,9,0,0,3,3,6,6].map(key=>harmonyAt({key,mode:'dorian',chord:'min13'}));
+ let turns=0;
+ for(const study of ['harmonized','alternating','chordtones','chordtonesalternating','groups4','upperstructure'])for(const motion of ['ascending','descending']){
+  const gs=progressionExerciseGroups(hs,hs.map(()=>8),fretboardFor(hs[0],'C'),{study,motion,positionPath:path(hs)});
+  for(let i=1;i<gs.length;i++){
+   const previous=gs[i-1],g=gs[i],direction=previous.sequenceDirections.at(-1);
+   if(!g.notes.length||g.sequenceDirections[0]===direction)continue;
+   const same=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending');
+   if(same.some(c=>(c.sequenceAnchor-previous.sequenceAnchors.at(-1))*direction>0))continue;
+   const ns=previous.notes.slice(-previous.cellLengths.at(-1)),edge=direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));
+   const opposite=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'descending':'ascending');
+   const candidates=opposite.filter(c=>(c.sequenceAnchor-edge)*direction<0).sort((a,b)=>(b.sequenceAnchor-a.sequenceAnchor)*direction);
+   assert.equal(g.sequenceAnchors[0],candidates[0]?.sequenceAnchor??opposite[0]?.sequenceAnchor,`${study} ${motion} slot ${i}`);turns++;
+  }
+ }
+ assert.ok(turns>0,'exercise the changed-harmony turn path');
+});
