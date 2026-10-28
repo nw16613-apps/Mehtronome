@@ -18,7 +18,7 @@ test('CAGED root anchors stay correct in fully fretted positions in every key',(
 test('C major C form moves up an octave with the same notes and root pattern',()=>{
   const harmony=harmonyAt({key:0,mode:'major',chord:'maj7'});
   const board=fretboardFor(harmony,'C');
-  const expected=[[12,13,15],[12,14,15],[12,14,15],[12,14,16],[12,13,15],[12,13,15]];
+  const expected=[[12,13,15],[12,14,15],[12,14,15],[12,14],[12,13,15],[12,13,15]];
   for(let string=0;string<6;string++)assert.deepEqual(board.notes.filter(n=>n.string===string).map(n=>n.fret),expected[string]);
   assert.deepEqual(board.notes.filter(n=>n.root).map(n=>[n.string,n.fret]),[[1,15],[4,13]]);
   assert.equal(board.notes.find(n=>n.string===0&&n.fret===12).name,'E');
@@ -46,6 +46,17 @@ test('all modes, keys and positions show only real scale/chord notes with correc
     assert.ok(arpeggio.notes.some(note=>note.root));
     assert.ok(arpeggio.notes.length<=board.notes.length);
   }
+});
+
+test('C-form parent fingering omits the upper G-string duplicate in every mode and key',()=>{
+  for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++)for(const chordOnly of [false,true]){
+    const board=fretboardFor(harmonyAt({key,mode,chord:definition.chord}),'C',chordOnly);
+    assert.ok(!board.notes.some(note=>note.string===3&&note.fret===board.end),`${key} ${mode}`);
+  }
+  const board=fretboardFor(harmonyAt({key:7,mode:'lydian',chord:'maj7'}),'C');
+  assert.equal(board.positionIdentity,'E');
+  assert.deepEqual(board.notes.filter(note=>note.string===3).map(note=>note.fret),[2,4]);
+  assert.ok(board.notes.some(note=>note.string===4&&note.fret===2&&note.name==='C♯'));
 });
 
 test('chord tones outside the chosen scale remain visible and diagrams follow jazz and diatonic harmony',()=>{

@@ -94,7 +94,9 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
   for (let string = 0; string < TUNING.length; string++) {
     const window = position.windows?.[string];
     const from = window ? position.rootFret + window[0] : position.start;
-    const to = window ? position.rootFret + window[1] : position.end;
+    // The C-form parent fingering ends one fret earlier on G. Its upper
+    // edge is an alternate-string duplicate, outside this position's grip.
+    const to = window ? position.rootFret + window[1] : position.end - (shape === 'C' && string === 3 ? 1 : 0);
     for (let fret = from; fret <= to; fret++) {
       const midi = TUNING[string] + fret;
       const pc = midi % 12;
