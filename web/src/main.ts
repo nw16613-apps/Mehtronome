@@ -48,8 +48,7 @@ import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefin
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 let customProgression:any;
-let hasStoredChart=false;
-try{const stored=localStorage.getItem(CUSTOM_PROGRESSION_KEY);customProgression=normalizeCustomProgression(JSON.parse(stored||'null'));hasStoredChart=Boolean(stored);}
+try{const stored=localStorage.getItem(CUSTOM_PROGRESSION_KEY);customProgression=normalizeCustomProgression(JSON.parse(stored||'null'));}
 catch{customProgression=normalizeCustomProgression(null);}
 (PROGRESSIONS as any).custom=customProgression;
 function modeOptions() {
@@ -111,7 +110,7 @@ app.innerHTML = `
       <div class="mode-label">BACKING</div><div class="segmented" hidden aria-hidden="true"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <button id="single-chord-chart" type="button" class="practice-button">New single-chord chart</button>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
-      <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?template.kind==='custom':group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?['custom','single'].includes(template.kind):group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','single','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
         <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button><button id="custom-delete" type="button" class="practice-button">Delete chord</button></div></div>
         <p id="chart-loop-status" class="practice-help" role="status">Drag across beats to loop them. Click a chord to edit; hold to hear it. Selection includes both endpoint beats.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><div hidden data-loop-state><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></div></div>
@@ -758,10 +757,12 @@ function renderCustomBuilder(){
   el('custom-progression-builder').hidden=!settings.progression;
   el('custom-scale-check').hidden=true;el('custom-compatible-mode').hidden=true;
   el('customize-progression').hidden=!settings.progression||active;
+  el('customize-progression').textContent=settings.template==='single'?'Edit a copy':'Create from this progression';
   el('custom-timeline').hidden=true;
   el('custom-progression-builder').querySelector<HTMLElement>('.custom-editor')!.hidden=!active;
   el('custom-progression-builder').querySelector<HTMLElement>('.custom-actions')!.hidden=!active;
-  el('custom-progression-builder').querySelector<HTMLElement>('.custom-history-actions')!.hidden=!active;
+  el('custom-progression-builder').querySelector<HTMLElement>('.custom-history-actions')!.hidden=!active&&settings.template!=='single';
+  if(!active){el<HTMLButtonElement>('custom-delete').disabled=true;el<HTMLButtonElement>('custom-undo').disabled=true;el<HTMLButtonElement>('custom-redo').disabled=true;}
   el('custom-status').hidden=!active;el('custom-progression-builder').querySelector<HTMLElement>('.custom-share')!.hidden=!active;
   if(!active){if(settings.progression){el('custom-progression-title').textContent=progressionDefinition(settings).name;renderCustomBeatGrid();el('custom-grid-help').textContent+=' Select any chord to edit a personal copy; the original template stays available.';}return;}
   customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
@@ -824,12 +825,8 @@ function update() {
   settings.mode = select('quality').value;
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
-  if(!settings.progression){
-    customProgression=normalizeCustomProgression({name:'Single-chord chart',steps:[{root:0,chord:settings.chord,mode:settings.mode,bars:1,bass:null}]});
-    settings.progression=true;select('template').value='custom';customStepIndex=0;step=0;
-    settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;
-    input('loop-enabled').checked=false;customUndo.length=0;customRedo.length=0;
-  }
+  // Legacy static setups use the same four-bar tonic chart.
+  if(!settings.progression){settings.progression=true;select('template').value='single';step=0;input('loop-enabled').checked=false;}
   settings.sound = select('sound').value;
   settings.padMovement = select('pad-movement').value;
   settings.extensionMorph=input('extension-morph').checked;
@@ -913,7 +910,7 @@ function update() {
   const selectedTemplate = progressionDefinition(settings);
   const jazz = settings.progression && selectedTemplate.kind === 'jazz';
   const modal = settings.progression && selectedTemplate.kind === 'modal';
-  const custom = settings.progression && selectedTemplate.kind === 'custom';
+  const custom = settings.progression && settings.template === 'custom';
   select('quality').parentElement!.hidden = jazz || custom;
   select('chord').parentElement!.hidden = jazz || diatonic || modal || custom;
   el('mode-tip').hidden = jazz || custom;
@@ -1668,11 +1665,8 @@ el('single-chord-chart').addEventListener('click',async()=>{
   if(busy||stopping)return;
   const current=chordInfo(step);
   stopPreview();stopExercisePreview();if(playing)await stop();
-  if(settings.template!=='custom')customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
-  rememberCustomEdit();
-  customProgression=normalizeCustomProgression({name:'Single-chord chart',steps:[{root:(current.chordPcs[0]-settings.key+12)%12,chord:current.chordId,mode:current.mode,bars:1,bass:null}]});
-  customStepIndex=0;step=0;settings.progression=true;select('template').value='custom';input('loop-enabled').checked=false;
-  saveCustomProgression('Single-chord chart ready. Edit its chord or duration, or add another chord.');fillChords(true);fillLoopOptions(true);update();
+  select('quality').value=current.mode;settings.progression=true;fillChords(true);select('chord').value=current.chordId;
+  select('template').value='single';step=0;input('loop-enabled').checked=false;fillLoopOptions(true);update();
 });
 el('customize-progression').addEventListener('click',()=>{
   stopPreview();
@@ -1707,9 +1701,10 @@ for(const id of ['custom-name','custom-section'])el(id).addEventListener('change
 el('custom-undo').addEventListener('click',()=>restoreCustomEdit(true));
 el('custom-redo').addEventListener('click',()=>restoreCustomEdit(false));
 el('custom-add').addEventListener('click',()=>{
+  if(settings.template==='single')el('customize-progression').click();
   rememberCustomEdit();
   const previous=customProgression.steps.at(customStepIndex)||customProgression.steps.at(-1);
-  customProgression.steps.splice(customStepIndex+1,0,{...previous,section:'',root:(previous.root+5)%12,letter:(previous.letter+3)%7,bass:null,bassLetter:null,mode:previous.mode});
+  customProgression.steps.splice(customStepIndex+1,0,{...previous,section:''});
   customStepIndex++;if(!playing)step=customStepIndex;saveCustomProgression('Chord added.');fillLoopOptions(true);update();
 });
 el('custom-duplicate').addEventListener('click',()=>{
@@ -1904,7 +1899,7 @@ el('position-path').addEventListener('click',event=>{
   el('position-path').querySelector<HTMLButtonElement>(`[data-inspect-slot="${button.dataset.inspectSlot}"]`)?.focus({preventScroll:true});
 });
 fillChords();
-if(hasStoredChart){settings.progression=true;select('template').value='custom';}
+settings.progression=true;select('template').value='single';
 renderScaleExplorer();
 update();
 

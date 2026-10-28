@@ -177,6 +177,7 @@ export const MODAL_PROGRESSIONS = Object.fromEntries(Object.entries(MODAL_PLANS)
 }));
 
 export const PROGRESSIONS = {
+  single: {name:'Single-chord chart · 4 bars',kind:'single',bars:4,roman:['I'],roots:[0],letters:[0]},
   custom: { name: 'Custom progression', bars: 1, kind: 'custom', roman: ['i13','IV13'], steps: [
     { root: 0, letter: 0, chord: 'min13', mode: 'dorian', bars: 1, bass: null },
     { root: 5, letter: 3, chord: 'dom13', mode: 'mixolydian', bars: 1, bass: null },
@@ -224,6 +225,7 @@ export const PROGRESSIONS = {
   ...MODAL_PROGRESSIONS,
 };
 export function progressionDefinition(settings) {
+  if(settings.template==='single')return {...PROGRESSIONS.single,kind:'custom',steps:[{root:0,letter:0,chord:settings.chord||MODES[modeId(settings)].chord,mode:modeId(settings),bars:4,bass:null}]};
   if(settings.template==='custom'&&settings.customProgression?.steps?.length)return settings.customProgression;
   if(settings.template==='diatonic'){
     const mode=modeId(settings),degrees=[0,5,3,4];

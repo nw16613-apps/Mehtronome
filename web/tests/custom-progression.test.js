@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeCustomProgression,progressionText,recommendedMode,romanForStep} from '../src/practice/custom-progression.js';
-import {harmonyAt,progressionDurations,progressionStep} from '../src/audio/music.js';
+import {MODES,harmonyAt,progressionDurations,progressionStep} from '../src/audio/music.js';
 import {Engine} from '../src/audio/engine.js';
 
 const custom=normalizeCustomProgression({name:'Changes',steps:[
@@ -51,4 +51,12 @@ test('old added fourths repair stale letters without changing pitches or valid s
  assert.deepEqual(normalizeCustomProgression(progression),progression);
  const valid=normalizeCustomProgression({steps:[{root:0,letter:0},{root:5,letter:3},{root:10,letter:6}]});
  assert.deepEqual(valid.steps.map(step=>step.letter),[0,3,6]);
+});
+
+test('single-chord chart stays at the tonic for four bars in every mode and key',()=>{
+ for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++){
+  const setup={...settings,template:'single',key,mode,chord:definition.chord};
+  assert.deepEqual(progressionDurations(setup),[4]);
+  for(let bar=0;bar<9;bar++){const index=progressionStep(setup,bar);assert.equal(index,0);const chord=harmonyAt(setup,index);assert.equal(chord.chordPcs[0],key);assert.equal(chord.mode,mode);}
+ }
 });
