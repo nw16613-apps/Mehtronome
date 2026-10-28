@@ -489,8 +489,12 @@ function enrichProgressionCards(){
  document.querySelectorAll<HTMLButtonElement>('#position-path [data-route-step],.exercise-position-route [data-route-step]').forEach(button=>{
   const index=Number(button.dataset.routeStep),chord=chordInfo(index);
   const beats=progressionPlaybackBeatDurations(settings)[index],duration=`${beats} beat${beats===1?'':'s'}`;
+  const segment=progressionTimeline(settings).find((item:any)=>item.step===index),start=segment?.start??0;
+  const firstBar=Math.floor(start/settings.beats)+1,lastBar=Math.floor((start+beats-1)/settings.beats)+1;
+  const barLabel=firstBar===lastBar?`Bar ${firstBar}`:`Bars ${firstBar}–${lastBar}`;
+  button.setAttribute('aria-label',`${barLabel}: inspect ${chord.name}${chord.suffix}, Position ${button.dataset.position}`);
   button.querySelector('.route-harmony')?.remove();
-  button.insertAdjacentHTML('beforeend',`<small class="route-harmony">${escapeHtml(chord.roman)} · ${escapeHtml(duration)}<br>${escapeHtml(chord.scaleNames[0]+' '+MODES[chord.mode as keyof typeof MODES].name)}</small>`);
+  button.insertAdjacentHTML('beforeend',`<small class="route-harmony">${escapeHtml(barLabel)} · ${escapeHtml(chord.roman)} · ${escapeHtml(duration)}<br>${escapeHtml(chord.scaleNames[0]+' '+MODES[chord.mode as keyof typeof MODES].name)}</small>`);
   button.title='Click to inspect; hold to hear. Space also auditions the chord.';
  });
 }
@@ -825,7 +829,7 @@ function update() {
   settings.mode = select('quality').value;
   settings.minor = settings.mode === 'minor';
   settings.chord = select('chord').value;
-  // Legacy static setups use the same four-bar tonic chart.
+  // Legacy static setups use the same two-bar tonic chart.
   if(!settings.progression){settings.progression=true;select('template').value='single';step=0;input('loop-enabled').checked=false;}
   settings.sound = select('sound').value;
   settings.padMovement = select('pad-movement').value;

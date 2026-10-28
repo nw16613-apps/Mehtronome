@@ -53,10 +53,10 @@ test('old added fourths repair stale letters without changing pitches or valid s
  assert.deepEqual(valid.steps.map(step=>step.letter),[0,3,6]);
 });
 
-test('single-chord chart stays at the tonic for four bars in every mode and key',()=>{
+test('single-chord chart stays at the tonic for two separate bars in every mode and key',()=>{
  for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++){
   const setup={...settings,template:'single',key,mode,chord:definition.chord};
-  assert.deepEqual(progressionDurations(setup),[4]);
-  for(let bar=0;bar<9;bar++){const index=progressionStep(setup,bar);assert.equal(index,0);const chord=harmonyAt(setup,index);assert.equal(chord.chordPcs[0],key);assert.equal(chord.mode,mode);}
+  assert.deepEqual(progressionDurations(setup),[1,1]);
+  for(let bar=0;bar<9;bar++){const index=progressionStep(setup,bar);assert.equal(index,bar%2);const chord=harmonyAt(setup,index);assert.equal(chord.chordPcs[0],key);assert.equal(chord.mode,mode);}
  }
 });
