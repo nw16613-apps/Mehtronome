@@ -15,7 +15,7 @@ test('removed tools stay absent while CAGED, charts, guidance and progress remai
 
 test('shape exploration is visible without opening settings and manual loop UI is absent',async({page})=>{
  await page.goto('/');await page.locator('[data-workspace-target=guitar-title]').click();
- await expect(page.locator('.guitar-setup')).not.toHaveAttribute('open','');
+ await expect(page.locator('.guitar-viewbar #fret-labels')).toBeVisible();
  await expect(page.locator('.guitar-shape-controls #show-grip')).toBeVisible();await page.locator('#show-grip').check();
  await expect(page.locator('.guitar-shape-controls #theory-view')).toBeVisible();await page.locator('#theory-view').selectOption('pentatonic');await expect(page.locator('#theory-choice')).toBeVisible();
  await page.setViewportSize({width:390,height:844});await expect(page.locator('#show-grip')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

@@ -2,6 +2,9 @@
 
 ## Current simplification
 
+The other five workspaces now follow purpose-based control groups. See [workspace-layout-review.md](workspace-layout-review.md) for the audit, final structure and validation scope.
+
+
 The note-counter/progress/legend row is removed from Exercises. Clear selection sits beside the main playback button and appears only when a passage is selected.
 
 

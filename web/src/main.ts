@@ -1,3 +1,4 @@
+import {organizeWorkspaces} from './practice/workspace-layout.js';
 import {installRepertoire} from './practice/repertoire-view.js';
 import {rehearsalSections} from './practice/repertoire.js';
 import {manualPositionPath} from './guitar/position-path.js';
@@ -28,6 +29,7 @@ import './interface.css';
 import './console.css';
 import './studio.css';
 import './icons.css';
+import './workspace-layout.css';
 import {applyStudioIcons} from './practice/icons.js';
 import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, parentMajorFor } from './guitar/fretboard.js';
@@ -258,7 +260,7 @@ const EXERCISE_FAVOURITES_KEY='mehtronome-exercise-favourites';
 let previewGeneration = 0;
 let currentBpm = settings.bpm;
 let focusView = false;
-let mixerDrums = false, mixerBass = false, mixerComping = false, mixerSequence = false;
+let mixerSequence = false;
 
 function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
 
@@ -1603,7 +1605,7 @@ input('bpm').addEventListener('change', () => tempo(Number(input('bpm').value)))
 input('tempo').addEventListener('input', () => tempo(Number(input('tempo').value)));
 el('slower').addEventListener('click', () => tempo(settings.bpm - 1));
 el('faster').addEventListener('click', () => tempo(settings.bpm + 1));
-for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input',()=>{if(el('mix-sections').contains(el(id)))updateMixerLevels();else update();});
+for (const id of ['extension-morph','extension-bars','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max','trainer-enabled','trainer-bars','trainer-increment','trainer-target','show-grip','highlight-mode','gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-hook-length','comping-movement-amount','drums-volume','bass-volume','comping-volume','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density','sequence-swing','sequence-volume','key', 'sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness', 'chord', 'template', 'subdivision', 'accent', 'beats', 'count-in', 'exercise', 'click', 'harmony']) el(id).addEventListener('input',()=>{if(el('mix-sections').contains(el(id))||['drums','bass','comping','sequence'].includes(id))updateMixerLevels();else update();});
 for (const mode of ['pedal', 'progression']) {
   el(mode).addEventListener('click', () => {
     settings.progression = mode === 'progression';
@@ -1728,9 +1730,8 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pageshow',()=>void resumeBackgroundAudio());
 function syncMixerDetails() {
-  if ((settings.drums && !mixerDrums) || (settings.bass && !mixerBass) || (settings.comping && !mixerComping)) el<HTMLDetailsElement>('rhythm-details').open = true;
   if (settings.sequence && !mixerSequence) el<HTMLDetailsElement>('sequence-details').open = true;
-  mixerDrums = settings.drums; mixerBass = settings.bass; mixerComping = settings.comping; mixerSequence = settings.sequence;
+  mixerSequence = settings.sequence;
 }
 function syncTrainerStatus() {
   el('bpm-caption').textContent=settings.trainerEnabled?'STARTING BPM':'BEATS PER MINUTE';
@@ -2088,3 +2089,5 @@ installRepertoire({
  capture:()=>{if(!settings.progression)throw new Error('Choose a chord progression before saving a chart.');return {key:settings.key,beats:settings.beats,progression:settings.template==='custom'?normalizeCustomProgression(customProgression):cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings)};},
  load:async(chart:any)=>{if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined)select('key').value=String(chart.key);select('beats').value=String(chart.beats??4);select('template').value='custom';input('loop-enabled').checked=false;input('extension-morph').checked=false;saveCustomProgression('Chart loaded as an editable progression.');fillChords(true);fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
 });
+
+organizeWorkspaces(showWorkspace);

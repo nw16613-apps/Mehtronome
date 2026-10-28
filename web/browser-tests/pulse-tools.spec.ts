@@ -30,7 +30,7 @@ for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivi
   await page.locator('#pulse-swing').fill('100');await page.locator('#pulse-swing').dispatchEvent('input');
   await page.locator('#click').fill('32');await page.locator('#click').dispatchEvent('input');
   await expect(page.locator('#click')).toHaveValue('32');
-  await page.getByText('Practice timer',{exact:true}).click();
+
   await page.locator('#pulse-minutes').fill('10');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
@@ -69,7 +69,7 @@ test('timer completes on the audio clock and large display follows playback',asy
   await page.goto('/');
   await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');
   await page.locator('#beats').selectOption('4');
-  await page.getByText('Practice timer',{exact:true}).click();
+
   await page.locator('#pulse-minutes').fill('1');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#pulse-large-open').click();
@@ -83,7 +83,7 @@ test('timer completes on the audio clock and large display follows playback',asy
 
 for(const width of [1440,390])test(`pulse tools fit at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/');
-  for(const summary of ['Swing','Practice timer','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
+  for(const summary of ['Swing','Polyrhythm'])await page.locator('.pulse-tool summary').filter({hasText:summary}).click();
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();
   const geometry=await page.evaluate(()=>{
     const pulse=document.querySelector('.transport')!.getBoundingClientRect(),mix=document.querySelector('#mix-panel')!.getBoundingClientRect(),tools=document.querySelector('.studio-tools')!.getBoundingClientRect();
@@ -96,20 +96,10 @@ test('Guitar and Exercises show the selected loop, chord scales and current play
   await page.goto('/');
   await page.locator('[data-workspace-target="harmony-title"]').click();
   await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
-  await page.locator('#loop-enabled').check();await page.locator('#loop-start').selectOption('1');await page.locator('#loop-end').selectOption('2');
-  await page.locator('[data-workspace-target="guitar-title"]').click();
-  const guitar=page.locator('.workspace-guitar .progression-reference');
-  await expect(guitar.locator('.reference-chord')).toHaveCount(2);
-  await expect(guitar).toContainText('Selected loop');await expect(guitar).toContainText('Scale guide:');await expect(guitar).toContainText('Next:');
-  const summary=await guitar.textContent();
-  await page.locator('[data-workspace-target="caged-exercise"]').click();
-  const exercise=page.locator('#caged-exercise .progression-reference');
-  await expect(exercise).toHaveText(summary!);
-  await page.locator('[data-workspace-target="pulse-title"]').click();
-  await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');await page.locator('#play').click();
-  await page.locator('[data-workspace-target="caged-exercise"]').click();
-  const first=await exercise.locator('[aria-current="step"]').getAttribute('data-reference-step');
-  await expect.poll(()=>exercise.locator('[aria-current="step"]').getAttribute('data-reference-step'),{timeout:6000}).not.toBe(first);
+  await page.locator('[data-grid-beat="4"]').scrollIntoViewIfNeeded();const [a,b]=await page.evaluate(()=>[4,15].map(i=>{const r=document.querySelector(`[data-grid-beat="${i}"]`)!.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};}));await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:10});await page.mouse.up();
+  await page.locator('[data-workspace-target="guitar-title"]').click();await expect(page.locator('#position-path [data-route-step]')).toHaveCount(2);const guitar=page.locator('.workspace-guitar .progression-reference');await expect(guitar).toContainText('Scale guide:');await expect(guitar).toContainText('Next:');const summary=await guitar.textContent();
+  await page.locator('[data-workspace-target="caged-exercise"]').click();const exercise=page.locator('#caged-exercise .progression-reference');await expect(exercise).toHaveText(summary!);await expect(page.locator('.exercise-position-route [data-route-step]')).toHaveCount(2);
+  await page.locator('[data-workspace-target="pulse-title"]').click();await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');await page.locator('#play').click();await page.locator('[data-workspace-target="caged-exercise"]').click();const active=page.locator('.exercise-position-route [data-route-step][aria-pressed="true"]');const first=await active.getAttribute('data-route-step');await expect.poll(()=>active.getAttribute('data-route-step'),{timeout:6000}).not.toBe(first);
   await page.locator('#mini-play').click();
 });
 
@@ -118,7 +108,7 @@ test('older presets reset new pulse tools to their original behavior',async({pag
   await page.goto('/');
   await page.locator('[data-workspace-target="sound-settings-title"]').click();await page.locator('#pulse-sound').selectOption('rim');
   await page.locator('[data-workspace-target="pulse-title"]').click();
-  await page.getByText('Practice timer',{exact:true}).click();await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
+  await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();
   await page.locator('[data-workspace-target="progress-title"]').click();
