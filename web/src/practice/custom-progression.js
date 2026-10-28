@@ -69,6 +69,13 @@ export function normalizeCustomProgression(value){
     return {...(typeof raw.section==='string'&&raw.section.trim()?{section:raw.section.trim().slice(0,32)}:{}),root,letter:Number.isInteger(raw.letter)&&raw.letter>=0&&raw.letter<7?raw.letter:LETTERS[root],chord,mode,...(raw.beats!==undefined?{beats}:{bars}),bass,bassLetter:bass===null?null:Number.isInteger(raw.bassLetter)&&raw.bassLetter>=0&&raw.bassLetter<7?raw.bassLetter:LETTERS[bass]};
   });
   if(!steps.length)steps.push({root:0,letter:0,chord:'min7',mode:'dorian',bars:1,bass:null,bassLetter:null});
+  // Older Add chord copied the previous letter while moving the pitch a
+  // fourth. Repair those stale spellings when reopening an existing chart.
+  for(let index=1;index<steps.length;index++){
+    const previous=steps[index-1],current=steps[index];
+    const originalPrevious=source[index-1];
+    if(current.letter===originalPrevious?.letter&&(current.root-previous.root+12)%12===5)current.letter=(previous.letter+3)%7;
+  }
   return {version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
 }
 

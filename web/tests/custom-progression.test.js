@@ -43,3 +43,12 @@ test('custom changes reach the audio engine and slash bass replaces the pad foun
   engine.configure({...settings,customProgression:edited});
   assert.notEqual(engine.chordSignature,before);
 });
+
+test('old added fourths repair stale letters without changing pitches or valid spellings',()=>{
+ const progression=normalizeCustomProgression({steps:[0,5,10].map(root=>({root,letter:0,chord:'maj9sharp11',mode:'lydian',bars:1}))});
+ assert.deepEqual(progression.steps.map(step=>step.letter),[0,3,6]);
+ assert.deepEqual(progression.steps.map((_,index)=>harmonyAt({...settings,customProgression:progression},index).name),['A','D','G']);
+ assert.deepEqual(normalizeCustomProgression(progression),progression);
+ const valid=normalizeCustomProgression({steps:[{root:0,letter:0},{root:5,letter:3},{root:10,letter:6}]});
+ assert.deepEqual(valid.steps.map(step=>step.letter),[0,3,6]);
+});
