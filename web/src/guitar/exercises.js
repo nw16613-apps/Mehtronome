@@ -1,6 +1,7 @@
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
 import {theoryOptions} from './superimposition.js';
+import {continuationCell} from '../practice/sequence-continuity.js';
 
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
@@ -86,7 +87,7 @@ function noteAtMidi(board,midi,harmony) {
 
 function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
   const descending=motion==='descending'||motion==='down-up';
-  const targets=[...board.notes].filter(note=>harmony.chordPcs.includes(note.pc)).sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const targets=[...new Map(board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
   const patterns={
     abovebelow:{ascending:[2,-1,0],descending:[-2,1,0],annotation:'diatonic above · chromatic below · target'},
     belowabove:{ascending:[-1,2,0],descending:[1,-2,0],annotation:'chromatic below · diatonic above · target'},
@@ -109,7 +110,7 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
       offsets[index]=direction*distance;
     }
     const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
-    if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:offsets.map(offset=>offset===0?'target':`${Math.abs(offset)} semitone${Math.abs(offset)>1?'s':''} ${offset>0?'above':'below'}`).join(' · '),targetIndex:notes.length-1});
+    if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:offsets.map(offset=>offset===0?'target':`${Math.abs(offset)} semitone${Math.abs(offset)>1?'s':''} ${offset>0?'above':'below'}`).join(' · '),targetIndex:notes.length-1,sequenceAnchor:target.midi,sequenceDirection:descending?-1:1});
   }
   return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant)]:groups;
 }
@@ -141,7 +142,7 @@ function chromaticTargetCells(board,harmony,motion,kind) {
   const definition=definitions[kind],groups=[];
   for(const target of targets){
     const notes=definition.offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony));
-    if(notes.every(Boolean))groups.push({chord:`Resolve to ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:definition.annotation,targetIndex:notes.length-1});
+    if(notes.every(Boolean))groups.push({chord:`Resolve to ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:definition.annotation,targetIndex:notes.length-1,sequenceAnchor:target.midi,sequenceDirection:descending?-1:1});
   }
   if(motion==='up-down')return [...groups,...chromaticTargetCells(board,harmony,'descending',kind)];
   if(motion==='down-up')return [...groups,...chromaticTargetCells(board,harmony,'ascending',kind)];
@@ -159,7 +160,7 @@ function chromaticPassingTones(board,harmony,motion) {
     const next=scale[index+1];if(next&&Math.abs(next.midi-note.midi)===2){const passing=noteAtMidi(board,note.midi+(descending?-1:1),harmony);if(passing)line.push(passing);}
   }
   const groups=[];
-  for(let index=0;index<line.length;index+=4){const notes=line.slice(index,index+4);if(notes.length>1)groups.push({chord:'Chromatic scale connection',rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:'diatonic line · chromatic passing tones'});}
+  for(let index=0;index<line.length;index+=4){const notes=line.slice(index,index+4);if(notes.length>1)groups.push({chord:'Chromatic scale connection',rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:'diatonic line · chromatic passing tones',sequenceAnchor:notes[0].midi,sequenceDirection:descending?-1:1});}
   return groups;
 }
 
@@ -267,13 +268,14 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4') {
   const offsets=definitions[pattern]||definitions.groups4,alternating=pattern.startsWith('alternating'),stringCascade=pattern.startsWith('lesson'),groups=[];
   for(let index=0;index+Math.max(...offsets)<available.length;index+=stringCascade?2:1){
     let notes=offsets.map(offset=>available[index+offset]).map(note=>({...note,name:noteNameForPc(harmony,note.pc)}));
+    const sequenceAnchor=notes[0].midi;
     if(alternating&&index%2===1)notes.reverse();
-    groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes});
+    groups.push({chord:choice.name,rootName:notes[0].name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,sequenceAnchor,sequenceDirection:descending?-1:1});
   }
   return groups;
 }
 
-function overlayExercise(board,harmony,kind,motion,choiceId,pattern) {
+function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=60) {
   const options=theoryOptions(harmony);
   const choices=kind==='pentatonic'?options.pentatonics:options.triadPairs;
   const choice=choices.find(option=>option.id===choiceId)||choices[0];
@@ -281,7 +283,7 @@ function overlayExercise(board,harmony,kind,motion,choiceId,pattern) {
   const descending=motion==='descending'||motion==='down-up';
   if(kind==='pentatonic')return pentatonicExercise(board,harmony,choice,motion,pattern);
   const groups=choice.groups.map((triad,index)=>{
-    const path=pathForPcs(board,triad.pcs,triad.names,index%2===0?!descending:descending,60);
+    const path=pathForPcs(board,triad.pcs,triad.names,index%2===0?!descending:descending,targetMidi);
     return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
   }).filter(group=>group.notes?.length===3);
   if(groups.length!==choice.groups.length)return [];
@@ -311,7 +313,7 @@ export function cagedProgressionExercise(board,harmony,material='seventh',motion
     if(!anchor)break;
     const path=pathForPcs(board,pcs,names,ascending,anchor.midi,anchor.midi);
     if(!path||path.length!==size)break;
-    groups.push({degree:index+1,chord:`${rootName}${chordSuffix(pcs[0],pcs)}`,rootName,names,pcs,notes:contour(path,motion)});
+    groups.push({degree:index+1,chord:`${rootName}${chordSuffix(pcs[0],pcs)}`,rootName,names,pcs,notes:contour(path,motion),sequenceAnchor:anchor.midi,sequenceDirection:ascending?1:-1});
     previousAnchor=anchor.midi;
   }
   return groups;
@@ -345,7 +347,7 @@ function scalePatternExercise(board,harmony,motion,offsets,label) {
       notes.push({...found,name:harmony.scaleNames[scaleIndex]});
     }
     if(!notes.length)break;
-    groups.push({degree:index+1,chord:`${harmony.scaleNames[degree]} · ${label}`,rootName:harmony.scaleNames[degree],names:notes.map(note=>note.name),pcs:notes.map(note=>note.pc),notes:contour(notes,motion)});
+    groups.push({degree:index+1,chord:`${harmony.scaleNames[degree]} · ${label}`,rootName:harmony.scaleNames[degree],names:notes.map(note=>note.name),pcs:notes.map(note=>note.pc),notes:contour(notes,motion),sequenceAnchor:notes[0].midi,sequenceDirection:ascending?1:-1});
     previousAnchor=anchor.midi;
   }
   return groups;
@@ -384,7 +386,7 @@ function chordToneStacks(board,harmony,size,motion) {
   if(motion==='descending'||motion==='down-up')groups.reverse();
   return groups.map(group=>{
     const path=motion==='descending'||motion==='down-up'?[...group.notes].reverse():group.notes;
-    return {...group,notes:contour(path,motion)};
+    return {...group,notes:contour(path,motion),sequenceAnchor:path[0].midi,sequenceDirection:motion==='descending'||motion==='down-up'?-1:1};
   });
 }
 
@@ -418,7 +420,7 @@ function inversionExercise(board,harmony,material,motion) {
     const rotatedNames=[...names.slice(inversion),...names.slice(0,inversion)];
     const inversionName=['root','1st inv.','2nd inv.','3rd inv.','4th inv.'][inversion] || `${inversion}th inv.`;
     const path=pathForPcs(board,rotatedPcs,rotatedNames,ascending,edge.midi,sequenceIndex===0?edge.midi:null);
-    return {degree:sequenceIndex+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:contour(path,motion)};
+    return {degree:sequenceIndex+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:contour(path,motion),sequenceAnchor:path?.[0]?.midi,sequenceDirection:ascending?1:-1};
   }).filter(group=>group.notes.length);
 }
 
@@ -465,7 +467,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='upperstructure')return upperStructureExercise(board,harmony,motion);
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion,context.progression);
-  if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source);
+  if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source,undefined,context.anchorMidi??60);
   if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source,context.pattern);
   return cagedProgressionExercise(board,harmony,material,motion);
 }
@@ -572,6 +574,7 @@ export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercis
  * the pitch path, never the chord order. Empty slots retain harmonic time. */
 export function alignedProgressionGroups(board,progression,study,material='seventh',motion='ascending',boards=/** @type {any[]} */ ([])) {
   const descending=motion==='descending'||motion==='down-up';
+  let cellAnchor=null;
   let previous=descending?Math.max(...(boards[0]||board).notes.map(n=>n.midi)):Math.min(...(boards[0]||board).notes.map(n=>n.midi));
   return progression.map((current,slot)=>{
     const activeBoard=boards[slot]||board;
@@ -585,10 +588,15 @@ export function alignedProgressionGroups(board,progression,study,material='seven
     }else{
       const size=MATERIAL_SIZES[material]||4,pcs=current.chordPcs.slice(0,size),names=current.tones.slice(0,pcs.length),candidates=[];
       for(let inversion=0;inversion<pcs.length;inversion++){
-        const path=pathForPcs(activeBoard,[...pcs.slice(inversion),...pcs.slice(0,inversion)],[...names.slice(inversion),...names.slice(0,inversion)],!descending,previous);
-        if(path?.length===pcs.length)candidates.push(path);
+        const rotated=[...pcs.slice(inversion),...pcs.slice(0,inversion)],first=descending?rotated.at(-1):rotated[0];
+        for(const anchor of activeBoard.notes.filter(note=>note.pc===first)){
+          const path=pathForPcs(activeBoard,rotated,[...names.slice(inversion),...names.slice(0,inversion)],!descending,anchor.midi,anchor.midi);
+          if(path?.length===pcs.length)candidates.push({notes:path,sequenceAnchor:path[0].midi,sequenceDirection:descending?-1:1});
+        }
       }
-      notes=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0]||[];
+      candidates.sort((a,b)=>(a.sequenceAnchor-b.sequenceAnchor)*(descending?-1:1));
+      const index=cellAnchor===null?0:continuationCell(candidates,cellAnchor,descending?-1:1).index;
+      notes=candidates[index]?.notes||[];if(notes.length)cellAnchor=notes[0].midi;
     }
     notes=notes.map(note=>({...note,name:current.tones[current.chordPcs.indexOf(note.pc)]||note.name,chromaticDegree:current.intervals[current.chordPcs.indexOf(note.pc)]||note.chromaticDegree}));
     if(notes.length)previous=notes.at(-1).midi;

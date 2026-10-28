@@ -1,0 +1,13 @@
+import {test,expect} from '@playwright/test';
+const tab=async(page:any,target:string)=>page.locator(`[data-workspace-target=${target}]`).click();
+const names=async(page:any,slot:number)=>page.locator(`.exercise-note[data-group-index="${slot}"]`).evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label')!.split(',')[0]));
+test('descending harmonized cells carry through the reported Am7 to Bm7 change in notation and playback',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'continuity',name:'Am7 to Bm7',key:9,beats:4,progression:{version:2,name:'Am7 to Bm7',steps:[0,0,2,2].map(root=>({root,chord:'min7',mode:'dorian',bars:1,bass:null}))}}]})));
+ await page.goto('/');await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('saved:continuity');await tab(page,'caged-exercise');await page.locator('#exercise-study').selectOption('harmonized');await page.locator('#exercise-material').selectOption('seventh');await page.locator('#exercise-stage').selectOption('full');await page.locator('#exercise-motion').selectOption('descending');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption('II');}
+ expect(await names(page,0)).toEqual(['D','B','G','E','C','A','F♯','D']);expect(await names(page,1)).toEqual(['B','G','E','C','A','F♯','D','B']);expect(await names(page,2)).toEqual(['G♯','E','C♯','A','F♯','D','B','G♯']);expect(await names(page,3)).toEqual(['E','C♯','A','F♯','D','B','G♯','E']);
+ await page.locator('#mini-bpm').fill('240');await page.locator('#mini-bpm').dispatchEvent('change');await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="2"]').first()).toBeVisible({timeout:5000});await expect(page.locator('#mini-chord')).toHaveText('Bm7');await page.locator('#exercise-preview').click();
+ await page.locator('#exercise-motion').selectOption('ascending');expect(await names(page,2)).toEqual(['F♯','A','C♯','E','G♯','B','D','F♯']);
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
+});

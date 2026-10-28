@@ -2,7 +2,7 @@
 
 Harmony uses a chord sheet for single-chord and multi-chord practice. The app always starts with the Single-chord chart template: two separate one-bar entries of Am13 at the A Dorian tonal centre. The key, mode and chord controls change this tonic vamp; it never introduces other roots. The saved personal progression is preserved separately and can be selected from the template menu.
 
-Each bar is a distinct position slot even though the harmony is identical. Guitar and Exercises label their selectors by bar; choosing positions yourself lets Bar 1 and Bar 2 use different CAGED positions. Changing one bar rebuilds its exercise notes without changing the other bar, and playback follows the corresponding diagram. Longer chart entries show their bar range.
+Each bar is a distinct position slot even though the harmony is identical. Guitar and Exercises label their selectors by bar; choosing positions yourself lets Bar 1 and Bar 2 use different CAGED positions. Position assignments remain independent; exercise cells continue through those positions in the selected direction, and playback follows the corresponding diagram. Longer chart entries show their bar range.
 
 “New single-chord chart” uses the current chord quality and scale guide at the chart's tonal centre, over two separate one-bar entries. It is also available in the floating chart selector. “Edit a copy”, clicking a chord or Add chord opens an editable personal progression, titled My progression. Add chord copies the previous chord's root, spelling, quality, scale guide, duration and bass, without inventing a harmonic change. Delete chord is beside Add chord; the last remaining chord cannot be deleted. Undo restores deletions and edits.
 

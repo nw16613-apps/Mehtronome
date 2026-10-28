@@ -4,7 +4,7 @@
 
 The progression adapter rotated every generated sequence to a cell whose first note matched the backing root. This overrode the family's starting edge and reordered already alternating cells. Each chord slot also discarded its unused cells, so repeated harmony restarted short fragments.
 
-The adapter now preserves the family's cell order, direction and register. Adjacent slots with the same harmony, scale/source and fingering continue through the sequence. A changed context starts at its own valid edge. Completed finite patterns restart on the next slot. Full positional runs can continue note by note across bars; discrete pattern cells stay complete, with unused slot time rendered as rests. Short-cell scope plays the next cell per slot.
+The adapter now preserves the family's cell order, direction and register. Adjacent slots with the same harmony, scale/source and fingering continue through the sequence. A changed context now chooses the nearest valid continuing cell; see `exercise-sequence-continuity.md`. Completed finite patterns restart on the next slot. Full positional runs can continue note by note across bars; discrete pattern cells stay complete, with unused slot time rendered as rests. Short-cell scope plays the next cell per slot.
 
 ## Additional corrections
 
@@ -18,7 +18,7 @@ The adapter now preserves the family's cell order, direction and register. Adjac
 
 ## Validation
 
-53 focused unit tests and 10 browser tests passed, plus TypeScript/Vite builds. The new integrity matrix exercises all 30 ordinary families and both aligned voice-leading families. Cases include essential ii–V–I, altered ii–V–I, Dorian modal movement and the twelve-root fourths cycle, in C, F-sharp and A, with fixed and changing frameworks and all four direction choices. Additional checks cover every mode, five frameworks and all three materials for alternating cells; compound ninths; enclosure neighbours; unavailable paths; chromatic resolution into real chord changes; repeated contexts and position changes.
+53 focused unit tests and 10 browser tests passed, plus TypeScript/Vite builds. The new integrity matrix exercises all 30 ordinary families and both aligned voice-leading families. Cases include essential ii–V–I, altered ii–V–I, Dorian modal movement and the twelve-root fourths cycle, in C, F-sharp and A, with fixed and changing frameworks and all four direction choices. Additional checks cover every mode, five frameworks and all three materials for alternating cells; compound ninths; enclosure neighbours; unavailable paths; chromatic resolution into real chord changes; repeated contexts and position changes. The later continuity pass supersedes the original edge-reset expectation across changed contexts.
 
 Browser checks compare the reported up/down and down/up note sequences, continued second-bar notation, restart after a manual position change, playback highlighting, rendering across moving progressions, inspection, count-in, selected passages and loops. A browser fixture initially expected the wrong underlying geometry for Position II in A Dorian; it was corrected to the actual position-edge sequence. A historical root-first unit expectation was replaced because it encoded the defect.
 
