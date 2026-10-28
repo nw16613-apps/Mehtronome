@@ -43,7 +43,8 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  guitarHelp.querySelector('summary')!.textContent='Diagram reference & guidance';
  move(guitarHelp,get('guitar-context'),get('guitar-scale'),get('guitar-parent'),get('grip-toggle-help'),query('.guitar-legend'));
  const guitarProgression=query('.guitar-progression-panel');guitarProgression.classList.add('workspace-group');guitarProgression.prepend(Object.assign(document.createElement('h3'),{textContent:'Chord & position'}));guitarProgression.append(get('guitar-scale-check'));
- const shapes=query('.guitar-shape-controls');shapes.prepend(Object.assign(document.createElement('h3'),{textContent:'Shapes & overlays'}));
+ const shapes=query('.guitar-shape-controls'),diagramControls=query('#position-path-guide .position-path-controls');
+ diagramControls.classList.add('caged-diagram-controls');diagramControls.setAttribute('aria-label','CAGED diagram choices');diagramControls.append(shapes);
  const guitarView=group('View','guitar-viewbar');move(guitarView,query('.guitar-controls'),guitar.querySelector('[data-learning-focus]'));overview.append(guitarView);
  const oldSetup=query('.guitar-setup');oldSetup.remove();
  // Saved setups: loading and saving should not share an ambiguous row.
