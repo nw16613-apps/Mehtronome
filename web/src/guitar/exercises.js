@@ -369,7 +369,7 @@ function combinedAlternatingDiatonic(board,harmony,material,descendingFirst=fals
 }
 
 function chordToneStacks(board,harmony,size,motion) {
-  const chordPcs=new Set(harmony.chordPcs);
+  const chordPcs=new Set(harmony.chordPcs.slice(0,4));
   const anchors=[...new Map(board.notes.filter(note=>chordPcs.has(note.pc)).sort((a,b)=>a.midi-b.midi).map(note=>[note.midi,note])).values()];
   const groups=[];
   for(const anchor of anchors){

@@ -11,3 +11,21 @@ For the reported four bars (Am7, Am7, Bm7, Bm7), with Dorian guides and the same
 Validation: 61 focused unit tests and 11 browser tests pass. The integrity/continuity matrix covers directional families in essential ii–V–I, altered ii–V–I, modal Dorian and twelve-root fourths progressions, multiple keys and fixed/changing CAGED geometries. Independent checks verify nearest forward anchors, boundary resets/turns, alternate phase, positional-note continuation, motif phase and inversion connections. Browser tests verify the exact reported notation, ascending counterpart, playback cursor/chord context, manual route changes, inspection, passage loops and mobile width. An initial playback fixture used main tempo without refreshing the exercise tempo; it now explicitly sets exercise tempo.
 
 No storage format or saved position-route schema changes. The full-position/time-budget scope discussion remains separate from sequence continuity.
+
+## Continuous range turns
+
+Ascending/descending now specify the initial traversal leg. After the last
+complete cell in that leg, progression exercises generate the opposite-direction
+pattern, select its nearest continuing anchor and keep filling the slot. This
+continues across repeated bars and changed scales/positions; alternating strokes
+retain phase through each turn. Only an incomplete remaining beat budget causes
+a rest. Short-cell scope still deliberately emits just one cell per slot.
+Positional runs turn at their outer notes without duplicating that endpoint.
+Exact grips and triad-pair motifs retain their existing fixed/motif behavior.
+Chord-tone stack exercises use core root/third/fifth/seventh starting tones,
+independently of extensions in the backing chord.
+
+Regression coverage: `range-turns.test.js` checks long repeated traversals,
+intact opposite forms, alternating phase, the reported minor-third progression,
+core starting tones and short-cell scope. The wider pattern matrix accepts both
+proper directional forms and checks bar-independent sequence continuation.

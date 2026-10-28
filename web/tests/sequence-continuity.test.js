@@ -31,16 +31,19 @@ test('the reported Am7 to Bm7 descending tetrads continue from A69 to G-sharp68,
 
 test('every directional family selects the nearest forward cell through jazz, modal, altered and fourths changes',()=>{
  for(const template of ['major251essential','major251altered','modal_dorian','fourths1'])for(const key of [0,6,9])for(const shapes of [['C'],['C','G','D']])for(const motion of ['ascending','descending']){
-  const setup={key,mode:'dorian',chord:'min13',template,progression:true,beats:4},hs=progressionDefinition(setup).roman.map((_,i)=>harmonyAt(setup,i)),positionPath=pathFor(hs,shapes),direction=motion==='ascending'?1:-1;
+  const setup={key,mode:'dorian',chord:'min13',template,progression:true,beats:4},hs=progressionDefinition(setup).roman.map((_,i)=>harmonyAt(setup,i)),positionPath=pathFor(hs,shapes);
+  let direction=motion==='ascending'?1:-1;
   for(const study of ordinary){
-   const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],shapes[0]),{study,motion,positionPath});let previous=null;
+   const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],shapes[0]),{study,motion,positionPath});let previous=null;direction=motion==='ascending'?1:-1;
    for(const g of gs){
-    const source=cagedStudy(g.board,g.harmony,study,'seventh',motion,{pattern:'groups3'}).filter(c=>c.notes?.length&&Number.isFinite(c.sequenceAnchor));
+    let source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).filter(c=>c.notes?.length&&Number.isFinite(c.sequenceAnchor));
     if(previous!==null&&g.sequenceAnchors.length){
      const forward=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
-     assert.equal(g.sequenceAnchors[0],forward[0]??source[0].sequenceAnchor,`${template} ${key} ${motion} ${study} ${g.slot}`);
+     if(!forward.length){direction=-direction;source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'});}
+     const next=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
+     assert.equal(g.sequenceAnchors[0],next[0]??source[0]?.sequenceAnchor,`${template} ${key} ${motion} ${study} ${g.slot}`);
     }
-    if(g.sequenceAnchors.length)previous=g.sequenceAnchors.at(-1);
+    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);}
    }
   }
  }
@@ -49,7 +52,7 @@ test('every directional family selects the nearest forward cell through jazz, mo
 test('alternating strokes retain their phase when the nearest new-scale cell has different library parity',()=>{
  const hs=[9,11,2,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
  for(const study of ['alternating','chordtonesalternating'])for(const motion of ['ascending','descending']){
-  const direction=motion==='ascending'?1:-1,gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],'C'),{study,motion,positionPath:pathFor(hs,['C'])});let next=direction>0,previous=null;
+  let direction=motion==='ascending'?1:-1;const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],'C'),{study,motion,positionPath:pathFor(hs,['C'])});let next=direction>0,previous=null;
   for(const g of gs){
    const source=cagedStudy(g.board,g.harmony,study,'seventh',motion);
    if(previous!==null&&!source.some(c=>(c.sequenceAnchor-previous)*direction>0))next=direction>0;
@@ -62,10 +65,11 @@ test('alternating strokes retain their phase when the nearest new-scale cell has
 test('positional arpeggios choose the nearest continuing chord tone instead of returning to an edge',()=>{
  const hs=[9,11,2,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
  for(const motion of ['ascending','descending']){
-  const direction=motion==='ascending'?1:-1,gs=progressionExerciseGroups(hs,hs.map(()=>2),fretboardFor(hs[0],'C'),{study:'positional',motion,positionPath:pathFor(hs,['C'])});let previous=null;
+  let direction=motion==='ascending'?1:-1;const gs=progressionExerciseGroups(hs,hs.map(()=>2),fretboardFor(hs[0],'C'),{study:'positional',motion,positionPath:pathFor(hs,['C'])});let previous=null;
   for(const g of gs){if(!g.notes.length)continue;const source=positionalArpeggio(g.board,g.harmony,motion)[0].notes;
-   if(previous!==null){const forward=source.filter(n=>(n.midi-previous)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction);assert.equal(g.notes[0].midi,forward[0]?.midi??source[0].midi);}
-   previous=g.notes.at(-1).midi;
+   if(previous!==null){const forward=source.filter(n=>(n.midi-previous)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction);if(!forward.length)direction=-direction;
+    const next=source.filter(n=>(n.midi-previous)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction);assert.equal(g.notes[0].midi,next[0]?.midi??source[0].midi);}
+   direction=Math.sign(g.notes.at(-1).midi-g.notes.at(-2).midi)||direction;previous=g.notes.at(-1).midi;
   }
  }
 });

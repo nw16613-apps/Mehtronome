@@ -11,3 +11,14 @@ test('descending harmonized cells carry through the reported Am7 to Bm7 change i
  await page.locator('#exercise-motion').selectOption('ascending');expect(await names(page,2)).toEqual(['F♯','A','C♯','E','G♯','B','D','F♯']);
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
+
+test('range turns fill every bar of the reported minor-third chart on mobile',async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'turns',name:'Range turns',key:9,beats:4,progression:{version:2,name:'Range turns',steps:[0,0,3,3,6,6,9,9].map(root=>({root,chord:'min13',mode:'dorian',bars:1,bass:null}))}}]})));
+ await page.goto('/');await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('saved:turns');await tab(page,'caged-exercise');
+ await page.locator('#exercise-material').selectOption('seventh');await page.locator('#exercise-stage').selectOption('full');await page.locator('#exercise-rhythm').selectOption('sixteenths');
+ for(const study of ['alternating','chordtones']){
+  await page.locator('#exercise-study').selectOption(study);
+  for(let slot=0;slot<8;slot++)await expect(page.locator(`.exercise-note[data-group-index="${slot}"]`)).toHaveCount(16);
+ }
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
