@@ -26,6 +26,7 @@ const CHROMATIC_DEGREES = ['1','♭2','2','♭3','3','4','♭5','5','♭6','6','
 const MODE_ROTATIONS = {
   major:0,dorian:1,phrygian:2,lydian:3,mixolydian:4,minor:5,locrian:6,
   melodic_minor:0,dorian_b2:1,lydian_augmented:2,lydian_dominant:3,mixolydian_b6:4,locrian_natural2:5,altered:6,
+  harmonic_major:0,dorian_b5:1,phrygian_b4:2,lydian_b3:3,mixolydian_b2:4,lydian_augmented_sharp2:5,locrian_bb7:6,
   harmonic_minor:0,locrian_natural6:1,ionian_sharp5:2,dorian_sharp4:3,phrygian_dominant:4,lydian_sharp2:5,ultralocrian:6,
 };
 export function parentMajorFor(harmony) {
@@ -41,7 +42,7 @@ export function positionFor(rootPc, shape, intervals = [0,2,4,5,7,9,11], family 
   const melodicMinor = family === 'Melodic minor';
   // Boundaries follow degrees rather than fixed frets: a flattened seventh
   // moves to the next string just as the natural seventh does in Ionian.
-  const windows = shape === 'A'
+  const windows = intervals.length!==7?null:shape === 'A'
     ? [[0,seventh-8],[seventh-12,melodicMinor?third:third-1],[melodicMinor?Math.max(third-5,-1):third-5,sixth-6],[sixth-10,second+1],[0,4],[0,4]]
     : shape === 'G'
       ? [[-3,1],[-3,1],[-3,seventh-11],[seventh-15,melodicMinor?Math.max(third-4,0):third-4],[-3,1],[-3,1]]
@@ -96,7 +97,7 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
     const from = window ? position.rootFret + window[0] : position.start;
     // The C-form parent fingering ends one fret earlier on G. Its upper
     // edge is an alternate-string duplicate, outside this position's grip.
-    const to = window ? position.rootFret + window[1] : position.end - (shape === 'C' && string === 3 ? 1 : 0);
+    const to = window ? position.rootFret + window[1] : position.end - (intervals.length===7 && shape === 'C' && string === 3 ? 1 : 0);
     for (let fret = from; fret <= to; fret++) {
       const midi = TUNING[string] + fret;
       const pc = midi % 12;

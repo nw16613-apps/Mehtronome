@@ -1,4 +1,4 @@
-import {CHORDS,MODES} from '../audio/music.js';
+import {CHORDS,MODES,MODE_FAMILIES} from '../audio/music.js';
 
 const pcSet=intervals=>new Set(intervals.map(interval=>(interval%12+12)%12));
 const DEGREE_NAMES={0:'1',1:'♭9',2:'9',3:'♯9',4:'3',5:'11',6:'♯11/♭5',7:'5',8:'♭13/♯5',9:'13',10:'♭7',11:'7'};
@@ -26,7 +26,7 @@ export function scaleChoicesForChord(chordId){
 // (e.g. reinterpreting 7 as 7alt) require changing the written chord first.
 export function compatibleScaleGroups(chordId){
  const choices=scaleChoicesForChord(chordId).filter(choice=>choice.strict);
- return ['Major scale','Melodic minor','Harmonic minor'].map(family=>({family,choices:choices.filter(choice=>choice.family===family)})).filter(group=>group.choices.length);
+ return MODE_FAMILIES.map(family=>({family,choices:choices.filter(choice=>choice.family===family)})).filter(group=>group.choices.length);
 }
 export function compatibleModeForChord(chordId,preferred,fallback){
  const choices=compatibleScaleGroups(chordId).flatMap(group=>group.choices);

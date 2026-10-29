@@ -14,7 +14,7 @@ const QUALITIES={
  */
 export function harmonizedSevenths(harmony){
   return harmony.scalePcs.map((root,degree)=>{
-    const indices=[0,2,4,6].map(offset=>(degree+offset)%7);
+    const indices=[0,2,4,6].map(offset=>(degree+offset)%harmony.scalePcs.length);
     const pcs=indices.map(index=>harmony.scalePcs[index]);
     const intervals=pcs.map(pc=>(pc-root+12)%12);
     const quality=QUALITIES[intervals.join(',')];

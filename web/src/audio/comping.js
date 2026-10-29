@@ -27,7 +27,7 @@ export function compingHook(harmony,nextHarmony,movement='modal',length=3){
   const count=Math.max(2,Math.min(4,Number(length)||3));
   const colourPc=harmony.characteristicPcs?.[0]??harmony.scalePcs[3];
   const colourIndex=Math.max(0,harmony.scalePcs.indexOf(colourPc));
-  const below=harmony.scalePcs[(colourIndex+6)%7],above=harmony.scalePcs[(colourIndex+1)%7];
+  const below=harmony.scalePcs[(colourIndex+harmony.scalePcs.length-1)%harmony.scalePcs.length],above=harmony.scalePcs[(colourIndex+1)%harmony.scalePcs.length];
   const guidePcs=harmony.chordPcs.filter(pc=>pc!==harmony.scalePcs[0]);
   const guide=closestPc(guidePcs.length?guidePcs:harmony.chordPcs,colourPc);
   const resolution=movement==='voiceLead'

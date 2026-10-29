@@ -57,7 +57,7 @@ function uniqueChoices(candidates, limit=3) {
 }
 function fiveNoteCombinations(items) {
   const result=[];
-  for(let a=0;a<3;a++)for(let b=a+1;b<4;b++)for(let c=b+1;c<5;c++)for(let d=c+1;d<6;d++)for(let e=d+1;e<7;e++)result.push([items[a],items[b],items[c],items[d],items[e]]);
+  for(let a=0;a<items.length-4;a++)for(let b=a+1;b<items.length-3;b++)for(let c=b+1;c<items.length-2;c++)for(let d=c+1;d<items.length-1;d++)for(let e=d+1;e<items.length;e++)result.push([items[a],items[b],items[c],items[d],items[e]]);
   return result;
 }
 /** The tonic-centred five-note set used by both the diagrams and backing melody. */
@@ -69,8 +69,8 @@ export function modalPentatonicPcs(harmony) {
     if(fits(pcs,harmony.scalePcs))parentMinorKeys.add(pitchKey(pcs));
   }
   const colours=characteristicNotes(harmony).map(note=>note.pc);
-  const degreePreference=[0,2,4,6,1,3,5];
-  const indices=fiveNoteCombinations([0,1,2,3,4,5,6]).filter(candidate=>!parentMinorKeys.has(pitchKey(candidate.map(index=>harmony.scalePcs[index])))).sort((a,b)=>{
+  const degreePreference=[0,2,4,6,1,3,5,...(harmony.scalePcs.length>7?[7]:[])];
+  const indices=fiveNoteCombinations(harmony.scalePcs.map((_,i)=>i)).filter(candidate=>!parentMinorKeys.has(pitchKey(candidate.map(index=>harmony.scalePcs[index])))).sort((a,b)=>{
     const score=candidate=>candidate.reduce((total,index)=>total+(index===0?30:0)+(colours.includes(harmony.scalePcs[index])?50:0)+(7-degreePreference.indexOf(index)),0);
     return score(b)-score(a)||a.join('').localeCompare(b.join(''));
   })[0];
@@ -80,7 +80,7 @@ function pentatonicsFor(harmony) {
   const mode=MODES[harmony.mode],tonic=harmony.scalePcs[0],tonicName=harmony.scaleNames[0];
   const minor=PENTATONIC_FORMS.minor;
   const parentMinors=[];
-  for(let degree=0;degree<7;degree++){
+  for(let degree=0;degree<harmony.scalePcs.length;degree++){
     const root=harmony.scalePcs[degree],relative=(root-tonic+12)%12;
     const pcs=minor.intervals.map(interval=>(root+interval)%12);
     if(!fits(pcs,harmony.scalePcs))continue;
@@ -105,7 +105,7 @@ function spelledTone(rootName,letterSteps,pc) {
 }
 function triadsFor(harmony) {
   const result=[],tonic=harmony.scalePcs[0];
-  for(const [quality,intervals] of Object.entries(TRIAD_FORMS))for(let degree=0;degree<7;degree++){
+  for(const [quality,intervals] of Object.entries(TRIAD_FORMS))for(let degree=0;degree<harmony.scalePcs.length;degree++){
     const root=harmony.scalePcs[degree],pcs=intervals.map(interval=>(root+interval)%12);
     if(!fits(pcs,harmony.scalePcs))continue;
     const rootName=harmony.scaleNames[degree];

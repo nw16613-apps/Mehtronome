@@ -39,7 +39,19 @@ export const MODES = {
     ['lydian_sharp2', 'Lydian ♯2', 'maj7sharp9sharp11', 'Raised 9 and ♯11 make both altered modal degrees audible above major harmony.'],
     ['ultralocrian', 'Ultralocrian (super Locrian ♭♭7)', 'dim7', 'The diminished 7th is spelled ♭♭7; let its tension ring.'],
   ]),
+  ...familyModes([0,2,4,5,7,8,11], 'Harmonic major', [
+    ['harmonic_major','Harmonic major (Ionian ♭6)','maj9','Major harmony with a lowered sixth.'],
+    ['dorian_b5','Dorian ♭5','halfDim13','Half-diminished harmony with natural 9 and 13.'],
+    ['phrygian_b4','Phrygian ♭4','dom7b9b13','The lowered fourth sounds as the dominant third; the minor third adds sharp-nine colour.'],
+    ['lydian_b3','Lydian ♭3','minMaj9','Minor-major harmony with a raised fourth.'],
+    ['mixolydian_b2','Mixolydian ♭2','dom13b9','Dominant flat-nine harmony with a natural thirteenth.'],
+    ['lydian_augmented_sharp2','Lydian augmented ♯2','augMaj7','Augmented major harmony with raised second and fourth.'],
+    ['locrian_bb7','Locrian ♭♭7','dim7','Diminished seventh harmony with a natural fourth.'],
+  ]),
+  diminished_half_whole:{name:'Half–whole diminished',family:'Diminished',intervals:[0,1,3,4,6,7,9,10],degrees:['1','♭2','♭3','3','♯4','5','6','♭7'],chord:'dom13b9',tip:'Eight alternating half and whole steps: dominant 7 with flat 9, sharp 9, sharp 11 and natural 13.'},
+  diminished_whole_half:{name:'Whole–half diminished',family:'Diminished',intervals:[0,2,3,5,6,8,9,11],degrees:['1','2','♭3','4','♭5','♭6','♭♭7','7'],chord:'dim7',tip:'Eight alternating whole and half steps surround a diminished seventh arpeggio.'},
 };
+export const MODE_FAMILIES=['Major scale','Melodic minor','Harmonic minor','Harmonic major','Diminished'];
 export const CHORDS = {
   major: { name: 'Major', symbol: 'maj', intervals: [0,4,7] },
   maj7: { name: 'Major 7', symbol: 'maj7', intervals: [0,4,7,11] },
@@ -103,6 +115,10 @@ export const CHORDS = {
   thirteenSus: { name: '13 suspended 4', symbol: '13sus4', intervals: [0,5,7,10,14,21] },
   sevenSusB9: { name: '7 suspended 4 ♭9', symbol: '7sus4♭9', intervals: [0,5,7,10,13] },
   diminished: { name: 'Diminished triad', symbol: 'dim', intervals: [0,3,6] },
+  dom7sharp9: { name:'Dominant 7 ♯9',symbol:'7♯9',intervals:[0,4,7,10,15] },
+  dom13b9: { name:'Dominant 13 ♭9 (no natural 9)',symbol:'13♭9',intervals:[0,4,7,10,13,21] },
+  dom7b9sharp11: { name:'Dominant 7 ♭9 ♯11',symbol:'7♭9♯11',intervals:[0,4,7,10,13,18] },
+  dimMaj7: { name:'Diminished major 7',symbol:'dim(maj7)',intervals:[0,3,6,11] },
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {
@@ -132,7 +148,8 @@ export function modeNotes(key, mode, rootName = null) {
   const roots = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
   const start = letters.indexOf((rootName || roots[key])[0]);
   return MODES[mode].intervals.map((interval, i) => {
-    const letter = (start + i) % 7;
+    const degree=Number(MODES[mode].degrees[i].match(/[1-7]/)[0])-1;
+    const letter = (start + degree) % 7;
     const delta = ((key + interval - naturals[letter] + 18) % 12) - 6;
     return letters[letter] + (delta > 0 ? '♯'.repeat(delta) : '♭'.repeat(-delta));
   });
@@ -288,6 +305,9 @@ export const CHARACTERISTIC_DEGREES = {
   melodic_minor:['6','7'], dorian_b2:['♭2','6'], lydian_augmented:['♯4','♯5'], lydian_dominant:['♯4','♭7'],
   mixolydian_b6:['♭6','♭7'], locrian_natural2:['2','♭5'], altered:['♭2','♭3','♭5','♭6'],
   harmonic_minor:['♭6','7'], locrian_natural6:['♭5','6'], ionian_sharp5:['♯5','7'], dorian_sharp4:['♯4','6'],
+  harmonic_major:['♭6','7'],dorian_b5:['♭5','6'],phrygian_b4:['♭2','♭4'],lydian_b3:['♭3','♯4'],
+  mixolydian_b2:['♭2','6'],lydian_augmented_sharp2:['♯2','♯5'],locrian_bb7:['♭5','♭♭7'],
+  diminished_half_whole:['♭2','♯4','6'],diminished_whole_half:['♭5','♭♭7','7'],
   phrygian_dominant:['♭2','3','♭6'], lydian_sharp2:['♯2','♯4'], ultralocrian:['♭5','♭♭7'],
 };
 export function characteristicNotes(harmony) {

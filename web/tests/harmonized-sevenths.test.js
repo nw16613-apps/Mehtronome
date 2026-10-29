@@ -18,12 +18,12 @@ test('major and harmonic minor include correctly identified seventh qualities',(
   assert.deepEqual(harmonizedSevenths(mode(9,'harmonic_minor')).map(chord=>chord.symbol),['Am(maj7)','Bm7♭5','Cmaj7♯5','Dm7','E7','Fmaj7','G♯°7']);
 });
 
-test('all 21 modes in every tonic stack alternate degrees and preserve enharmonic spelling',()=>{
+test('all supported modes in every tonic stack alternate degrees and preserve enharmonic spelling',()=>{
   for(let key=0;key<12;key++)for(const id of Object.keys(MODES)){
     const harmony=mode(key,id),chords=harmonizedSevenths(harmony);
-    assert.equal(chords.length,7);
+    assert.equal(chords.length,harmony.scalePcs.length);
     chords.forEach((chord,degree)=>{
-      const indices=[0,2,4,6].map(offset=>(degree+offset)%7);
+      const indices=[0,2,4,6].map(offset=>(degree+offset)%harmony.scalePcs.length);
       assert.equal(chord.degree,degree+1);assert.equal(chord.root,harmony.scalePcs[degree]);
       assert.deepEqual(chord.notes,indices.map(index=>harmony.scaleNames[index]));
       assert.deepEqual(chord.pcs,indices.map(index=>harmony.scalePcs[index]));

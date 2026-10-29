@@ -207,6 +207,7 @@ function contourGroups(groups,motion){
 }
 
 function connectedArpeggios(board,harmony,material,motion,progression=[]) {
+  const count=harmony.scalePcs.length;
   if(progression.length){
     const size=MATERIAL_SIZES[material]||4,descending=motion==='descending'||motion==='down-up',groups=[];
     let previous=descending?Math.max(...board.notes.map(note=>note.midi)):Math.min(...board.notes.map(note=>note.midi));
@@ -226,9 +227,9 @@ function connectedArpeggios(board,harmony,material,motion,progression=[]) {
   }
   const size=MATERIAL_SIZES[material]||4,descending=motion==='descending'||motion==='down-up',groups=[];
   let previous=descending?Math.max(...board.notes.map(note=>note.midi)):Math.min(...board.notes.map(note=>note.midi));
-  for(let degree=0;degree<7;degree++){
-    const rootIndex=descending?(7-degree)%7:degree;
-    const indexes=Array.from({length:size},(_,offset)=>(rootIndex+offset*2)%7);
+  for(let degree=0;degree<count;degree++){
+    const rootIndex=descending?(count-degree)%count:degree;
+    const indexes=Array.from({length:size},(_,offset)=>(rootIndex+offset*2)%count);
     const pcs=indexes.map(index=>harmony.scalePcs[index]),names=indexes.map(index=>harmony.scaleNames[index]);
     const candidates=[true,false].map(ascending=>pathForPcs(board,pcs,names,ascending,previous)).filter(path=>path?.length===size);
     const path=candidates.toSorted((a,b)=>Math.abs(a[0].midi-previous)-Math.abs(b[0].midi-previous))[0];if(!path)continue;
@@ -291,6 +292,7 @@ function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=6
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {
+  const count=harmony.scalePcs.length;
   const size=MATERIAL_SIZES[material] || 4;
   const ascending=motion==='ascending'||motion==='up-down';
   const edge=board.notes.filter(note=>harmony.scalePcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
@@ -298,12 +300,12 @@ export function cagedProgressionExercise(board,harmony,material='seventh',motion
   const edgeScaleIndex=harmony.scalePcs.indexOf(edge.pc);
   // Ascending tetrads begin on their root. Descending tetrads begin on their
   // seventh (or highest extension), exactly as a written arpeggio study does.
-  const rootStart=ascending?edgeScaleIndex:(edgeScaleIndex-2*(size-1)+70)%7;
+  const rootStart=ascending?edgeScaleIndex:(edgeScaleIndex-2*(size-1)+count*10)%count;
   const groups=[];
   let previousAnchor=edge.midi;
   for(let index=0;index<16;index++){
-    const degree=(rootStart+(ascending?index:-index)+70)%7;
-    const chordIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%7);
+    const degree=(rootStart+(ascending?index:-index)+count*10)%count;
+    const chordIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%count);
     const pcs=chordIndexes.map(scaleIndex=>harmony.scalePcs[scaleIndex]);
     const names=chordIndexes.map(scaleIndex=>harmony.scaleNames[scaleIndex]);
     const rootName=harmony.scaleNames[degree];
@@ -326,21 +328,22 @@ function directionalPath(board,pcs,names,motion,target,index) {
 }
 
 function scalePatternExercise(board,harmony,motion,offsets,label) {
+  const count=harmony.scalePcs.length;
   const ascending=motion==='ascending'||motion==='up-down';
   const edge=board.notes.filter(note=>harmony.scalePcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
   if(!edge)return [];
   const startDegree=harmony.scalePcs.indexOf(edge.pc),groups=[];
   let previousAnchor=edge.midi;
   for(let index=0;index<18;index++){
-    const degree=(startDegree+(ascending?index:-index)+70)%7;
+    const degree=(startDegree+(ascending?index:-index)+count*10)%count;
     const anchors=board.notes.filter(note=>note.pc===harmony.scalePcs[degree]&&(index===0?note.midi===edge.midi:ascending?note.midi>previousAnchor:note.midi<previousAnchor)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
     const anchor=anchors[0];if(!anchor)break;
     const signedOffsets=offsets.map(offset=>ascending?offset:-offset);
     const notes=[];
     for(const offset of signedOffsets){
-      const scaleIndex=((degree+offset)%7+7)%7;
+      const scaleIndex=((degree+offset)%count+count)%count;
       const tonic=harmony.scalePcs[0],interval=index=>(harmony.scalePcs[index]-tonic+12)%12;
-      const delta=interval(scaleIndex)+12*Math.floor((degree+offset)/7)-interval(degree);
+      const delta=interval(scaleIndex)+12*Math.floor((degree+offset)/count)-interval(degree);
       const midi=anchor.midi+delta;
       const found=board.notes.find(note=>note.midi===midi&&note.pc===harmony.scalePcs[scaleIndex]);
       if(!found){notes.length=0;break;}
@@ -369,13 +372,14 @@ function combinedAlternatingDiatonic(board,harmony,material,descendingFirst=fals
 }
 
 function chordToneStacks(board,harmony,size,motion) {
+  const count=harmony.scalePcs.length;
   const chordPcs=new Set(harmony.chordPcs.slice(0,4));
   const anchors=[...new Map(board.notes.filter(note=>chordPcs.has(note.pc)).sort((a,b)=>a.midi-b.midi).map(note=>[note.midi,note])).values()];
   const groups=[];
   for(const anchor of anchors){
     const degree=harmony.scalePcs.indexOf(anchor.pc);
     if(degree<0)continue;
-    const scaleIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%7);
+    const scaleIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%count);
     const pcs=scaleIndexes.map(index=>harmony.scalePcs[index]),names=scaleIndexes.map(index=>harmony.scaleNames[index]);
     const path=pathForPcs(board,pcs,names,true,anchor.midi,anchor.midi);
     if(!path||path.length!==size)continue;
