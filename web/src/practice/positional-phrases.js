@@ -2,7 +2,6 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
 
-const SPAN_SIZE=9;
 const cycleFor=(span,descending)=>{
  const ordered=descending?span.toReversed():span;
  return [...ordered,...ordered.slice(1,-1).toReversed()];
@@ -12,12 +11,12 @@ const cycleFor=(span,descending)=>{
  * chooses among complete windows; it never advances or resets the phrase phase. */
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
- const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
+ const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,spanSize=rhythm==='triplets'?7:9;
  let cursor=0,globalStart=0,previousContext='',span=[],lastMidi=null;
  return harmonies.map((harmony,slot)=>{
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape),available=positionalArpeggio(board,harmony,'ascending')[0]?.notes||[];
   const context=JSON.stringify(available.map(n=>[n.midi,n.string,n.fret,n.name]));
-  const size=Math.min(SPAN_SIZE,available.length),windows=Array.from({length:Math.max(0,available.length-size+1)},(_,i)=>available.slice(i,i+size)).filter(ns=>ns.length);
+  const size=Math.min(spanSize,available.length),windows=Array.from({length:Math.max(0,available.length-size+1)},(_,i)=>available.slice(i,i+size)).filter(ns=>ns.length);
   if(context!==previousContext){
    span=descending?windows.at(-1)||[]:windows[0]||[];
    if(lastMidi!==null&&windows.length>1){
@@ -45,8 +44,8 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
    const up=(phase<leg)!==descending;cellLengths.push(length);materialCells.push(`${harmony.name}${harmony.suffix} · ${up?'ascending':'descending'} half`);offset+=length;
   }
   cursor+=notes.length;lastMidi=notes.at(-1)?.midi??lastMidi;
-  const warning=!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:span.length<SPAN_SIZE?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'';
-  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
+  const warning=!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'';
+  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:spanSize,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
   globalStart+=notes.length;return group;
  });
 }

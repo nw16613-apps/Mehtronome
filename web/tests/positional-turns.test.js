@@ -47,7 +47,7 @@ test('the mirrored high-boundary turn retains the downward-first two-beat halves
 });
 test('shared-boundary entry is independent of subdivision and slots keep their time',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h),positionPath=pathFor(hs,['C','C','A','A']);
- for(const [rhythm,division]of [['eighths',2],['triplets',3],['sixteenths',4]]){
+ for(const [rhythm,division]of [['eighths',2],['sixteenths',4]]){
   const groups=progressionExerciseGroups(hs,[8,8,8,8],fretboardFor(h,'C'),{study:'positional',rhythm,positionPath});
   const plan=progressionStudyPlan(groups,[0,1,2,3],[2,2,2,2],4,'positional',rhythm);
   assert.equal(groups[2].notes[0].midi,52);assert.equal(groups[2].notes[8].midi,76);
@@ -59,4 +59,30 @@ test('arpeggios with fewer available pitches stay inside the diagram and disclos
  const h=harmonyAt({key:9,mode:'dorian',chord:'minor'}),[g]=run([h],['C'],[4]);
  assert.ok(g.positionalSpan.length<9);assert.ok(g.warning.includes('shorter phrase'));
  assert.ok(g.notes.every(n=>g.board.notes.some(p=>p.midi===n.midi&&p.string===n.string&&p.fret===n.fret)));
+});
+
+test('triplets use seven pitches and two-beat halves in every Am7 position and key',()=>{
+ for(let key=0;key<12;key++)for(const shape of shapes)for(const motion of ['ascending','descending']){
+  const h=harmonyAt({key,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h);
+  const gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,shape),{study:'positional',motion,rhythm:'triplets',positionPath:pathFor(hs,Array(4).fill(shape))});
+  const available=[...new Set(gs[0].board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);
+  const span=motion==='ascending'?available.slice(0,7):available.slice(-7),ordered=motion==='ascending'?span:span.toReversed(),expected=[...ordered,...ordered.slice(1,-1).toReversed()];
+  for(const g of gs){assert.deepEqual(g.positionalSpan.map(n=>n.midi),span);assert.deepEqual(g.notes.map(n=>n.midi),expected);assert.deepEqual(g.cellLengths,[6,6]);assert.equal(g.phraseCycleLength,12);assert.equal(g.phraseSpanSize,7);assert.equal(g.warning,'');}
+  const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positional','triplets');
+  assert.equal(plan.duration,16);assert.equal(plan.events[6].start,2);assert.equal(plan.events[12].start,4);
+ }
+});
+test('triplet chord and position changes preserve phase and actual notes, including partial-bar changes',()=>{
+ for(const chord of Object.keys(CHORDS))for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
+  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode:recommendedMode(chord),chord})];
+  const gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positional',motion,rhythm:'triplets',positionPath:pathFor(hs,[from,to])});
+  let cursor=0;
+  for(const g of gs){
+   const available=[...new Set(g.board.notes.filter(n=>g.harmony.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),span=g.positionalSpan.map(n=>n.midi),size=Math.min(7,available.length),cycleLength=Math.max(1,2*(size-1));
+   assert.equal(span.length,size);assert.deepEqual(span,available.slice(available.indexOf(span[0]),available.indexOf(span[0])+size));assert.equal(g.phrasePhase,cursor%cycleLength);
+   for(let i=0;i<g.notes.length;i++){const phase=(cursor+i)%cycleLength,index=phase<size?phase:cycleLength-phase;assert.equal(g.notes[i].midi,span[motion==='ascending'?index:size-1-index]);assert.ok(g.board.notes.some(n=>n.midi===g.notes[i].midi&&n.string===g.notes[i].string&&n.fret===g.notes[i].fret));}
+   if(size<7)assert.match(g.warning,/shorter phrase/);else assert.equal(g.warning,'');
+   cursor+=g.notes.length;
+  }
+ }
 });

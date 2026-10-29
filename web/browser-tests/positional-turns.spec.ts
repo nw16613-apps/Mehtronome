@@ -22,3 +22,18 @@ test('all five Am7 positions use the same nine-note phrase and show the selected
 test('a shorter triad span is disclosed without leaving the chosen position',async({page})=>{
  await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#custom-chord').selectOption('minor');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('.exercise-position-route [data-inspect-slot="0"]').click();await expect(page.locator('#exercise-span-status')).toContainText('fewer than nine pitches available');await expect(page.locator('.exercise-note[data-group-index="0"]').first()).toBeVisible();
 });
+
+test('triplets show seven-note phrases with two-beat halves across positions and rhythm changes',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const position of ['I','II','III','IV','V'])for(const motion of ['ascending','descending']){
+  await page.locator('.exercise-position-route [data-inspect-slot="0"]').click();await page.locator('#exercise-position').selectOption(position);await page.locator('#exercise-motion').selectOption(motion);
+  const notes=await page.locator('.exercise-note[data-group-index="0"]').evaluateAll(nodes=>nodes.map(n=>{const m=n.getAttribute('aria-label')!.match(/^(.+), string (\d), fret (\d+)/)!;return [0,64,59,55,50,45,40][Number(m[2])]+Number(m[3]);}));
+  expect(notes).toHaveLength(12);expect(new Set(notes).size).toBe(7);
+  expect(notes.slice(0,7).every((n,i)=>!i||(n-notes[i-1])*(motion==='ascending'?1:-1)>0)).toBe(true);
+  expect(notes.slice(6).every((n,i,ns)=>!i||(n-ns[i-1])*(motion==='ascending'?-1:1)>0)).toBe(true);
+  await expect(page.locator('#exercise-span-status')).toContainText('7-note span');await expect(page.locator('#exercise-span-status')).toContainText('2 beats each way');await expect(page.locator('#exercise-span-status')).not.toContainText('fewer');
+  expect(Number(await page.locator('.exercise-note[data-note-index="6"]').getAttribute('data-start-beat'))).toBeCloseTo(2,10);expect(Number(await page.locator('.exercise-note[data-note-index="12"]').getAttribute('data-start-beat'))).toBeCloseTo(4,10);
+ }
+ await page.locator('#exercise-rhythm').selectOption('eighths');await expect(page.locator('#exercise-span-status')).toContainText('9-note span');await expect(page.locator('#exercise-span-status')).toContainText('4 beats each way');
+ await page.locator('#exercise-rhythm').selectOption('sixteenths');await expect(page.locator('#exercise-span-status')).toContainText('9-note span');await expect(page.locator('#exercise-span-status')).toContainText('2 beats each way');
+});
