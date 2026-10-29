@@ -34,7 +34,14 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;noteOffset=0;
    if(study==='positional'&&lastMidi!==null&&cells[0]){
     let next=continuationNote(cells[0].notes,lastMidi,travel);
-    if(!cells[0].notes.some(n=>(n.midi-lastMidi)*travel>0)){travel=-travel;cells=makeCells();next=cells[0]?continuationNote(cells[0].notes,lastMidi,travel):{offset:0};}
+    if(!cells[0].notes.some(n=>(n.midi-lastMidi)*travel>0)){
+     travel=-travel;cells=makeCells();
+     // A changed region may begin exactly on the last sounded pitch. That
+     // boundary has not yet been played in the new region: rearticulate it
+     // in the new region instead of skipping a note of the returning leg.
+     // Ordinary turns within one region still exclude the repeated endpoint.
+     next=cells[0]?.notes[0]?.midi===lastMidi?{offset:0}:cells[0]?continuationNote(cells[0].notes,lastMidi,travel):{offset:0};
+    }
     noteOffset=next.offset;
    }else if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
     let next=continuationCell(cells,lastAnchor,travel);
@@ -93,7 +100,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   }
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:'';
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,sequenceAnchors,sequenceDirections,globalStart,warning,
-   annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
+   annotation:missing?'Rest · no complete cell fits':study==='positional'?`${MODES[harmony.mode].name} · continuous arpeggio`:`${MODES[harmony.mode].name} · ${used.length} ${used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });
  if(study==='approach'){
