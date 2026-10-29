@@ -25,3 +25,16 @@ The menu calls the exercise Positional arpeggio, avoiding the claim that every o
 Exact-note tests retain the original example and downward-first mirror. All twelve roots and five Am7 positions repeat nine-pitch, sixteen-note cycles for sixteenths and seven-pitch, twelve-note cycles for triplets in both directions. Every chord type at three roots is checked through every position-to-position transition, including partial-bar entry, with an independent triangular-wave phase oracle. Triplet transitions also cover changing chord types and roots. Smaller spans, complete slot durations, all subdivisions, bar-independent continuation and the existing scale/arpeggio matrices remain covered. Browser checks compare the exact low-string entry, top-note time, TAB, all five positions and directions, span labels/faded markers, diagram context, playback, looping and guitar volume.
 
 Validation result: the production build and eight focused unit files passed. Fifteen browser scenarios were validated across the phrase, scale-family, chart and playback suites; the three positional scenarios were rerun after strengthening the outside-span marker styling.
+
+
+## Full position with turnaround (triplets)
+
+The Phrase selector offers Balanced phrase and Full position with turnaround for positional arpeggios at eighth-note triplets. Balanced remains the default; the choice is included in saved exercise options and remembered while changing rhythms, but only affects triplets.
+
+Full position uses every distinct available chord-tone pitch. Let N be the number of pitches: a complete sweep contains 2(N−1) notes, without doubled endpoints. For the usual nine- or ten-pitch seventh-chord positions, append a smaller sweep from the initial edge to reach 24 notes (eight beats, two bars of 4/4). Nine pitches give 16+8; ten give 18+6. Mirror both sweeps for downward-first.
+
+The ending uses the first R/2+1 pitches from the starting edge, where R is the number of remaining notes. Its outgoing and returning legs also omit doubled endpoints. The next phrase begins at the original edge. Smaller ranges can repeat legal sweeps until the block is full; a range requiring more than 24 notes uses the next complete 24-note block. No pitches are invented or taken outside the selected position.
+
+The global note cursor continues through chord and position changes, including changes in the shorter sweep. Each new context rebuilds its own full-range phrase at that same ordinal phase; it does not restart at the chord boundary. This prioritizes complete range and formula alignment over choosing a different register window. One-run scope plays only the initial leg through its turning note, then rests as before.
+
+Tests cover exact sweeps in all twelve Am7 keys, all positions and both directions, changing chords/positions at one-, two- and four-beat boundaries, and every chord type's available range. Browser tests compare both consecutive two-bar phrases, the selected full range, rhythm switching, and mobile overflow.

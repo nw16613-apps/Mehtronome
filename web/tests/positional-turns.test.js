@@ -86,3 +86,32 @@ test('triplet chord and position changes preserve phase and actual notes, includ
   }
  }
 });
+
+test('full-position triplets use a complete sweep and smaller turnaround in all positions',()=>{
+ for(let key=0;key<12;key++)for(const shape of shapes)for(const motion of ['ascending','descending']){
+  const h=harmonyAt({key,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h);
+  const gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,shape),{study:'positional',rhythm:'triplets',phrase:'turnaround',motion,positionPath:pathFor(hs,Array(4).fill(shape))});
+  const available=[...new Set(gs[0].board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),ordered=motion==='ascending'?available:available.toReversed();
+  const sweep=[...ordered,...ordered.slice(1,-1).toReversed()],small=ordered.slice(0,(24-sweep.length)/2+1),expected=[...sweep,...small,...small.slice(1,-1).toReversed()];
+  assert.equal(expected.length,24);assert.deepEqual(gs.flatMap(g=>g.notes.map(n=>n.midi)),[...expected,...expected]);
+  for(const g of gs){assert.deepEqual(g.positionalSpan.map(n=>n.midi),available);assert.equal(g.phraseCycleLength,24);assert.equal(g.warning,'');}
+  const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positional','triplets');assert.equal(plan.events[24].start,8);assert.equal(plan.duration,16);
+ }
+});
+test('turnarounds keep their 24-note phase through changing chords, ranges and positions',()=>{
+ for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
+  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode:'dorian',chord:'min7'})];
+  const gs=progressionExerciseGroups(hs,[duration,8],fretboardFor(hs[0],from),{study:'positional',rhythm:'triplets',phrase:'turnaround',motion,positionPath:pathFor(hs,[from,to])});let cursor=0;
+  for(const g of gs){
+   const ordered=motion==='ascending'?g.positionalSpan:g.positionalSpan.toReversed(),full=[...ordered,...ordered.slice(1,-1).toReversed()],small=ordered.slice(0,(24-full.length)/2+1),expected=[...full,...small,...small.slice(1,-1).toReversed()];
+   assert.equal(g.phrasePhase,cursor%24);assert.deepEqual(g.notes.map(n=>n.midi),Array.from({length:g.notes.length},(_,i)=>expected[(cursor+i)%24].midi));assert.ok(g.notes.every(n=>g.board.notes.some(p=>p.midi===n.midi&&p.string===n.string&&p.fret===n.fret)));cursor+=g.notes.length;
+  }
+ }
+});
+test('full-position turnaround handles all chord types without leaving the available range',()=>{
+ for(const chord of Object.keys(CHORDS))for(const shape of shapes){
+  const h=harmonyAt({key:9,mode:recommendedMode(chord),chord}),[g]=progressionExerciseGroups([h],[16],fretboardFor(h,shape),{study:'positional',rhythm:'triplets',phrase:'turnaround',positionPath:pathFor([h],[shape])});
+  const available=[...new Set(g.board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);
+  assert.deepEqual(g.positionalSpan.map(n=>n.midi),available);assert.ok(g.notes.every(n=>available.includes(n.midi)));if(available.length>1)assert.equal(g.phraseCycleLength%24,0);
+ }
+});

@@ -37,3 +37,20 @@ test('triplets show seven-note phrases with two-beat halves across positions and
  await page.locator('#exercise-rhythm').selectOption('eighths');await expect(page.locator('#exercise-span-status')).toContainText('9-note span');await expect(page.locator('#exercise-span-status')).toContainText('4 beats each way');
  await page.locator('#exercise-rhythm').selectOption('sixteenths');await expect(page.locator('#exercise-span-status')).toContainText('9-note span');await expect(page.locator('#exercise-span-status')).toContainText('2 beats each way');
 });
+test('full-position triplets cover the diagram and complete a two-bar sweep plus turnaround',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-phrase').selectOption('turnaround');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const position of ['I','II','III','IV','V'])for(const motion of ['ascending','descending']){
+  for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(position);}
+  await page.locator('#exercise-motion').selectOption(motion);
+  const notes=await page.locator('.exercise-note').evaluateAll(nodes=>nodes.map(n=>{const m=n.getAttribute('aria-label')!.match(/^(.+), string (\d), fret (\d+)/)!;return [0,64,59,55,50,45,40][Number(m[2])]+Number(m[3]);}));
+  expect(notes).toHaveLength(48);expect(notes.slice(0,24)).toEqual(notes.slice(24));
+  const span=[...new Set(notes)].sort((a,b)=>a-b),ordered=motion==='ascending'?span:span.toReversed(),sweep=[...ordered,...ordered.slice(1,-1).toReversed()],small=ordered.slice(0,(24-sweep.length)/2+1);
+  expect(notes.slice(0,24)).toEqual([...sweep,...small,...small.slice(1,-1).toReversed()]);
+  await expect(page.locator('#exercise-span-status')).toContainText('Full position');await expect(page.locator('#exercise-span-status')).toContainText('8 beats per phrase');expect(await page.locator('.exercise-map-diagram .exercise-outside-span').count()).toBe(0);
+ }
+ await page.locator('#exercise-rhythm').selectOption('eighths');await expect(page.locator('#exercise-phrase')).toHaveCount(0);await expect(page.locator('#exercise-span-status')).toContainText('9-note span');
+ await page.locator('#exercise-rhythm').selectOption('triplets');await expect(page.locator('#exercise-phrase')).toHaveValue('turnaround');
+ await page.locator('#exercise-phrase').selectOption('balanced');await expect(page.locator('#exercise-span-status')).toContainText('7-note span');
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
+});
