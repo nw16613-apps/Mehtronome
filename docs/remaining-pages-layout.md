@@ -11,3 +11,5 @@ The review follows the Harmony, Metronome & Mixer and Fretboard restructuring. E
 ## Verification
 
 Production TypeScript/Vite build, targeted browser workflows and responsive checks cover the revised controls, saved setup updates, exercise option recall, real automatic tempo increases, shared mixer states and retained playback/selection workflows. Existing unrelated fretboard geometry failures are outside this layout change.
+
+Exercise guitar playback now has a 0–100% level control in Playback. It feeds a shared gain before dry and reverb paths, so changes affect current and scheduled notes without restarting playback or modifying the backing mix. Exercise note auditions share the same level. The default preserves the previous loudness; the browser remembers the value independently of saved exercise material. A browser audio test measures audible output, silence at zero, restored output, uninterrupted looping, unchanged harmony level and persistence through rerender/reload.

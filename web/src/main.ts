@@ -252,6 +252,16 @@ let currentExerciseGroups:any[]=[];
 let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
 let exerciseSources:AudioScheduledSourceNode[]=[];
+let exerciseGuitarVolume=100;
+try{const saved=localStorage.getItem('mehtronome-exercise-guitar-volume');if(saved!==null&&Number.isFinite(Number(saved)))exerciseGuitarVolume=Math.max(0,Math.min(100,Number(saved)));}catch{}
+let exerciseGuitarGain:GainNode|undefined;
+function exerciseGuitarOutput(){
+  if(!exerciseGuitarGain||exerciseGuitarGain.context!==context){
+    exerciseGuitarGain=context!.createGain();exerciseGuitarGain.gain.value=exerciseGuitarVolume/100;
+    exerciseGuitarGain.connect(master!);if(reverb)exerciseGuitarGain.connect(reverb);
+  }
+  return exerciseGuitarGain;
+}
 let exercisePlaying=false;
 let exercisePreparing=false,exercisePrepareGeneration=0;
 let noteAuditionGeneration=0;
@@ -406,7 +416,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan&&isAlignedStudy(),adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{guitarVolume:exerciseGuitarVolume,locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan&&isAlignedStudy(),adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
   exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
@@ -437,8 +447,7 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
     const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
     filter.type='lowpass';filter.frequency.value=3100;filter.Q.value=.45;
     gain.gain.setValueAtTime(accent ? .42 : .3,at);gain.gain.setValueAtTime(accent ? .42 : .3,at+duration-release);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-    source.connect(filter).connect(gain).connect(master!);
-    if(reverb)gain.connect(reverb);
+    source.connect(filter).connect(gain).connect(exerciseGuitarOutput());
     source.start(at);source.stop(at+duration);exerciseSources.push(source);
     source.onended=()=>{const sourceIndex=exerciseSources.indexOf(source);if(sourceIndex>=0)exerciseSources.splice(sourceIndex,1);};
   });
@@ -1320,6 +1329,13 @@ el('caged-exercise').addEventListener('click',event=>{
 function handleExerciseControl(event:Event){
   const target=event.target;
   if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement))return;
+  if(target.id==='exercise-guitar-volume'){
+    exerciseGuitarVolume=Math.max(0,Math.min(100,Number(target.value)||0));
+    el('exercise-guitar-volume-value').textContent=exerciseGuitarVolume+'%';
+    if(exerciseGuitarGain&&exerciseGuitarGain.context===context)exerciseGuitarGain.gain.setTargetAtTime(exerciseGuitarVolume/100,context!.currentTime,.015);
+    try{localStorage.setItem('mehtronome-exercise-guitar-volume',String(exerciseGuitarVolume));}catch{}
+    return;
+  }
   const deferredNumber=target instanceof HTMLInputElement&&target.type==='number'&&['exercise-tempo','exercise-auto-increment','exercise-auto-target'].includes(target.id);
   // Rebuilding the panel on each keystroke dismisses mobile number keyboards and
   // makes multi-digit values effectively impossible to enter. Commit those fields
@@ -1361,7 +1377,7 @@ function setNotationFocus(value:boolean) {
   if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));applyStudioIcons(el('caged-exercise'));}
 }
 async function auditionExerciseNote(index:number){
-  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(master!);if(reverb)gain.connect(reverb);source.start();source.stop(context!.currentTime+duration);
+  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(exerciseGuitarOutput());source.start();source.stop(context!.currentTime+duration);
 }
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;

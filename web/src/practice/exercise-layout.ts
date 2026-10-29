@@ -1,5 +1,5 @@
 /** Group existing controls by purpose without duplicating state or event handlers. */
-export function organizeExercisePanel(panel:HTMLElement){
+export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  const find=(selector:string)=>panel.querySelector<HTMLElement>(selector)!;
  const section=(className:string,title:string)=>{const node=document.createElement('section');node.className=className;node.setAttribute('aria-label',title);const heading=document.createElement('h4');heading.textContent=title;node.append(heading);return node;};
  const label=(id:string)=>find('#'+id).closest('label')!;
@@ -10,7 +10,7 @@ export function organizeExercisePanel(panel:HTMLElement){
  for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?singleScope:'Continuous pattern';
  definition.append(controls);heading.after(definition);
  const playback=section('exercise-playback-panel','Playback'),playControls=document.createElement('div');playControls.className='exercise-playback-controls';
- playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));playback.append(playControls);
+ playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));const volume=document.createElement('label');volume.className='exercise-guitar-volume';volume.htmlFor='exercise-guitar-volume';volume.innerHTML=`<span>Guitar volume <output id="exercise-guitar-volume-value" for="exercise-guitar-volume">${guitarVolume}%</output></span><input id="exercise-guitar-volume" type="range" min="0" max="100" value="${guitarVolume}">`;playControls.append(volume);playback.append(playControls);
  const trainer=find('.exercise-setup'),practiceBar=find('.exercise-practice-bar');
  const trainerLabels=['exercise-auto-tempo','exercise-auto-every','exercise-auto-increment','exercise-auto-target'].map(label);
  trainer.before(practiceBar);

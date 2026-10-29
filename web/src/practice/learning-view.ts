@@ -68,7 +68,7 @@ export function learningView(panel:HTMLElement,context:any){
  const exerciseControls=panel.querySelector('.exercise-controls');if(exerciseControls)toolbar.after(exerciseControls);
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Tempo, playback and display settings</summary>';for(const selector of ['.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);setup.insertAdjacentHTML('beforeend','<p class="practice-help">Pedal studies hold the selected chord. When a progression is selected, accompaniment follows its changes with stable extensions and fixed tempo. The selected ensemble follows the mixer.</p>');
- organizeExercisePanel(panel);
+ organizeExercisePanel(panel,context.guitarVolume);
 }
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
  document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
