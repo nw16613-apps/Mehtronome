@@ -43,7 +43,7 @@ import { DEFAULTS } from './audio/engine.js';
 import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
-import { scaleChoicesForChord } from './practice/scale-explorer.js';
+import { compatibleScaleGroups,compatibleModeForChord } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionPlaybackBeatDurations, progressionTimeline, progressionPositionAtBeat, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
@@ -103,7 +103,7 @@ app.innerHTML = `
       <div class="section-heading"><h2 id="harmony-title">The harmony</h2><span class="small-label">YOUR MUSICAL CONTEXT</span></div>
       <div id="active-musical-context" class="active-musical-context"></div><div class="field-row"><label><span id="root-label">Root note</span><select id="key">${names.map((n, i) => `<option value="${i}" ${i === 9 ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label>Mode<select id="quality">${modeOptions()}</select></label></div>
       <div class="field-row sound-row"><label><span id="chord-label">Pedal chord</span><select id="chord"></select></label></div>
-      <details class="chord-scale-explorer"><summary>Choose a chord first · find scales and modes</summary><div class="field-row chord-scale-controls"><label>Chord root<select id="scale-explorer-root">${names.map((name,index)=>`<option value="${index}" ${index===9?'selected':''}>${name}</option>`).join('')}</select></label><label>Chord quality<select id="scale-explorer-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}" ${id==='dom7'?'selected':''}>${chord.name}</option>`).join('')}</select></label></div><div class="scale-explorer-key"><span><i class="strict"></i>Contains every written chord tone</span><span><i class="contextual"></i>Contextual reinterpretation</span></div><div id="scale-explorer-results" class="scale-explorer-results"></div></details>
+
 
 
       <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox" checked>Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Slowly add and release extensions from the current scale. The root and progression stay in place; this shapes the sustained harmony.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
@@ -119,7 +119,7 @@ app.innerHTML = `
         <div class="custom-editor"><label>Chart title<input id="custom-name" maxlength="60"></label><label>Start a section at this chord<input id="custom-section" maxlength="32" placeholder="e.g. A, Bridge, Solo"></label>
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
           <label>Chord type<select id="custom-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}">${chord.name}</option>`).join('')}</select></label>
-          <label>Scale guide<select id="custom-mode">${modeOptions()}</select></label>
+          <label>Scale guide<select id="custom-mode" aria-describedby="custom-mode-help">${modeOptions()}</select></label><p id="custom-mode-help" class="practice-help"></p>
           <label>Duration unit<select id="custom-duration-unit"><option value="bars">Bars</option><option value="beats">Beats</option></select></label><label id="custom-bars-label">Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
           <label id="custom-beats-label" hidden>Duration<select id="custom-beats">${Array.from({length:32},(_,i)=>`<option value="${i+1}">${i+1} beat${i?'s':''}</option>`).join('')}</select></label><label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
         </div>
@@ -584,10 +584,15 @@ function renderPracticeRoadmap(info:any){
   applyStudioIcons(document.querySelector('.practice-roadmap')!);
 }
 
-function renderScaleExplorer(){
-  const root=names[Number(select('scale-explorer-root').value)],chordId=select('scale-explorer-chord').value,chord=CHORDS[chordId as keyof typeof CHORDS];
-  const choices=scaleChoicesForChord(chordId);
-  el('scale-explorer-results').innerHTML=choices.length?choices.map((choice:any)=>`<article class="scale-choice ${choice.strict?'strict':'contextual'}"><div><span>${choice.category}</span><h4>${escapeHtml(root)} ${escapeHtml(choice.name)}</h4><small>${escapeHtml(choice.family)} · over ${escapeHtml(root)}${escapeHtml(chord.symbol)}</small></div><p>${escapeHtml(choice.explanation)}</p><button type="button" class="practice-button" data-scale-choice="${choice.id}" data-scale-chord="${choice.targetChord}">${choice.strict?'Use this mode':'Use as altered dominant'}</button></article>`).join(''):'<p class="practice-help">No mode in the current library contains every written chord tone.</p>';
+function fillChordScaleOptions(chordId:string,currentMode:string){
+  const groups=compatibleScaleGroups(chordId),choices=groups.flatMap((g:any)=>g.choices);
+  const known=MODES[currentMode as keyof typeof MODES];
+  // Imported charts retain their sounding guide until the user edits it.
+  // An incompatible stored value is shown disabled, never offered as a choice.
+  const legacy=known&&!choices.some((choice:any)=>choice.id===currentMode)?`<option value="${currentMode}" disabled>${known.name} · incompatible saved guide</option>`:'';
+  select('custom-mode').innerHTML=legacy+groups.map((group:any)=>`<optgroup label="${group.family}">${group.choices.map((choice:any)=>`<option value="${choice.id}">${choice.name}</option>`).join('')}</optgroup>`).join('');
+  select('custom-mode').value=currentMode;
+  el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`These modes contain every written chord tone. ${choices.length} compatible ${choices.length===1?'mode':'modes'}; grouped by parent scale.`;
 }
 
 function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
@@ -801,7 +806,7 @@ function renderCustomBuilder(){
   input('custom-name').value=customProgression.name;input('custom-section').value=current.section||'';
   select('custom-root').value=String(current.root);
   select('custom-chord').value=current.chord;
-  select('custom-mode').value=current.mode;
+  fillChordScaleOptions(current.chord,current.mode);
   select('custom-bars').value=String(current.bars||1);
   select('custom-duration-unit').value=current.beats!==undefined?'beats':'bars';
   select('custom-beats').value=String(current.beats??Math.min(32,(current.bars||1)*settings.beats));
@@ -819,8 +824,8 @@ function commitCustomEdit(autoMode=false){
   customProgression.name=input('custom-name').value.trim()||'My progression';item.section=input('custom-section').value.trim();
   const nextRoot=Number(select('custom-root').value);if(item.root!==nextRoot)delete item.letter;item.root=nextRoot;
   item.chord=select('custom-chord').value;
-  if(autoMode)select('custom-mode').value=recommendedMode(item.chord);
-  item.mode=select('custom-mode').value;
+  const chosenMode=select('custom-mode').value;
+  item.mode=autoMode||chosenMode!==item.mode?compatibleModeForChord(item.chord,chosenMode,recommendedMode(item.chord)):item.mode;
   if(select('custom-duration-unit').value==='beats'){item.beats=Number(select('custom-beats').value);delete item.bars;}else{item.bars=Number(select('custom-bars').value);delete item.beats;}
   const nextBass=select('custom-bass').value===''?null:Number(select('custom-bass').value);if(item.bass!==nextBass)delete item.bassLetter;item.bass=nextBass;
   saveCustomProgression();fillLoopOptions(true);step=Math.min(step,customProgression.steps.length-1);update();
@@ -1231,19 +1236,6 @@ select('practice-roadmap-duration').addEventListener('input',()=>renderPracticeR
 el('practice-roadmap-reset').addEventListener('click',()=>{
   const info=chordInfo(step),key=curriculumKey(practiceContext(info));
   delete practiceProgress[key];savePracticeProgress();renderPracticeRoadmap(info);
-});
-for(const id of ['scale-explorer-root','scale-explorer-chord'])select(id).addEventListener('input',renderScaleExplorer);
-el('scale-explorer-results').addEventListener('click',event=>{
-  const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('[data-scale-choice]'):null;
-  if(!button)return;
-  stopPreview();settings.progression=false;step=0;
-  select('key').value=select('scale-explorer-root').value;
-  select('quality').value=button.dataset.scaleChoice||'major';
-  for(const id of ['pedal','progression']){const selected=id==='pedal';el(id).classList.toggle('selected',selected);el(id).setAttribute('aria-pressed',String(selected));}
-  fillChords();
-  const target=button.dataset.scaleChord||'';
-  if(Array.from(select('chord').options).some(option=>option.value===target))select('chord').value=target;
-  update();
 });
 function selectFullFretboardRegion(target:EventTarget|null){
   const region=target instanceof Element?target.closest<SVGGElement>('[data-full-position]'):null;
@@ -1918,7 +1910,7 @@ el('position-path').addEventListener('click',event=>{
 });
 fillChords();
 settings.progression=true;select('template').value='single';
-renderScaleExplorer();
+
 update();
 
 function reflectTheme() {

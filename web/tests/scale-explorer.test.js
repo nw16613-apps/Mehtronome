@@ -17,3 +17,24 @@ test('altered is contextual for plain dominant seven and strict for altered domi
   assert.equal(scaleChoicesForChord('dom7alt').find(choice=>choice.id==='altered').strict,true);
   assert.equal(scaleChoicesForChord('maj7').some(choice=>choice.id==='altered'&&!choice.strict),false);
 });
+
+import {compatibleScaleGroups,compatibleModeForChord} from '../src/practice/scale-explorer.js';
+import {recommendedMode} from '../src/practice/custom-progression.js';
+test('selected-chord menus include all strict matches once, grouped by their parent scale',()=>{
+ for(const chord of Object.keys(CHORDS)){
+  const groups=compatibleScaleGroups(chord),choices=groups.flatMap(g=>g.choices);
+  assert.ok(choices.length,chord);
+  assert.deepEqual(choices.map(c=>c.id).sort(),scaleChoicesForChord(chord).filter(c=>c.strict).map(c=>c.id).sort());
+  for(const group of groups)assert.ok(group.choices.every(c=>c.family===group.family));
+  const selected=compatibleModeForChord(chord,'phrygian_dominant',recommendedMode(chord));
+  assert.ok(choices.some(c=>c.id===selected));
+ }
+ const minor=compatibleScaleGroups('min7').flatMap(g=>g.choices.map(c=>c.id));
+ assert.ok(minor.includes('dorian')&&minor.includes('phrygian')&&minor.includes('minor'));
+ assert.ok(!minor.includes('phrygian_dominant'));
+ assert.equal(compatibleModeForChord('min7','phrygian','dorian'),'phrygian');
+ assert.equal(compatibleModeForChord('dom7','dorian','mixolydian'),'mixolydian');
+ assert.ok(!compatibleScaleGroups('dom7').flatMap(g=>g.choices).some(c=>c.id==='altered'));
+ assert.ok(compatibleScaleGroups('dom7alt').flatMap(g=>g.choices).some(c=>c.id==='altered'));
+ assert.ok(!compatibleScaleGroups('min13').flatMap(g=>g.choices).some(c=>c.id==='minor'));
+});

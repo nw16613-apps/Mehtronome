@@ -21,3 +21,14 @@ export function scaleChoicesForChord(chordId){
     explanation:'Resolution choice only: reinterpret 7 as 7alt. The altered scale omits the natural 5 and adds ♭9, ♯9, ♭5 and ♯5.',score:5});
   return choices.sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
 }
+
+// Only strict matches belong in a chord's guide menu. Contextual choices
+// (e.g. reinterpreting 7 as 7alt) require changing the written chord first.
+export function compatibleScaleGroups(chordId){
+ const choices=scaleChoicesForChord(chordId).filter(choice=>choice.strict);
+ return ['Major scale','Melodic minor','Harmonic minor'].map(family=>({family,choices:choices.filter(choice=>choice.family===family)})).filter(group=>group.choices.length);
+}
+export function compatibleModeForChord(chordId,preferred,fallback){
+ const choices=compatibleScaleGroups(chordId).flatMap(group=>group.choices);
+ return choices.find(c=>c.id===preferred)?.id||choices.find(c=>c.id===fallback)?.id||choices[0]?.id||'';
+}

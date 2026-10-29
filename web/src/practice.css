@@ -673,3 +673,4 @@ button.reference-chord:disabled { cursor:default; opacity:1; }
 
 #custom-beat-grid{user-select:none}.chart-beat.loop-outside:not(.playing){opacity:.5}#loop-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}#loop-controls[hidden]{display:none}#loop-controls details{flex-basis:100%}
 .exercise-controls label[hidden] { display:none; }
+.chart-chord-group #custom-mode-help,.chart-chord-group #custom-scale-check { grid-column:1/-1; }
