@@ -137,3 +137,5 @@ html:root[data-palette][data-theme] body .studio-tools>.section-heading,html:roo
 .studio-tools .session-length{padding-top:0}.studio-tools .metronome-training{margin-top:24px;padding-top:0}.session-length .pulse-tool-fields{margin-top:0}
 
 .exercise-playback-controls .exercise-guitar-volume{display:grid;gap:5px;flex:0 1 190px;min-width:140px;font-size:12px}.exercise-guitar-volume>span{display:flex;justify-content:space-between;gap:12px}.exercise-guitar-volume output{color:var(--muted);font-variant-numeric:tabular-nums}.exercise-guitar-volume input{width:100%;margin:0;accent-color:var(--accent)}
+
+.exercise-span-status{font-size:12px;color:var(--muted);text-align:center;margin:8px 0}#caged-exercise .exercise-map-diagram .fret-note.exercise-outside-span{opacity:.25}

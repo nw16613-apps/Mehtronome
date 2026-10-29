@@ -8,3 +8,17 @@ test('II to III keeps the reported two-beat halves in notation, TAB and playback
  const captions=await page.locator('.exercise-score .exercise-degree').allTextContents();expect(captions).toEqual(['Arpeggio','Arpeggio','Arpeggio','Arpeggio']);
  await page.locator('#exercise-backing').uncheck();await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="2"]').first()).toBeVisible({timeout:8000});await expect(page.locator('.exercise-map-heading')).toContainText('Position III');await page.locator('#exercise-preview').click();await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
+test('all five Am7 positions use the same nine-note phrase and show the selected span',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const position of ['I','II','III','IV','V'])for(const motion of ['ascending','descending']){
+  await page.locator('.exercise-position-route [data-inspect-slot="0"]').click();await page.locator('#exercise-position').selectOption(position);await page.locator('#exercise-motion').selectOption(motion);
+  const notes=await page.locator('.exercise-note[data-group-index="0"]').evaluateAll(nodes=>nodes.map(n=>{const text=n.getAttribute('aria-label')!,match=text.match(/^(.+), string (\d), fret (\d+)/)!;const tuning=[0,64,59,55,50,45,40];return {midi:tuning[Number(match[2])]+Number(match[3]),name:match[1]};}));
+  expect(notes).toHaveLength(16);expect(new Set(notes.map(n=>n.midi)).size).toBe(9);const first=notes.slice(0,9).map(n=>n.midi),second=notes.slice(8).map(n=>n.midi);expect(first.every((n,i)=>!i||(n-first[i-1])*(motion==='ascending'?1:-1)>0)).toBe(true);expect(second.every((n,i)=>!i||(n-second[i-1])*(motion==='ascending'?-1:1)>0)).toBe(true);
+  await expect(page.locator('#exercise-span-status')).toContainText('9-note span');await expect(page.locator('#exercise-span-status')).toContainText('2 beats each way');
+  if(['I','IV','V'].includes(position))await expect(page.locator('.exercise-map-diagram .exercise-outside-span').first()).toHaveCSS('opacity','0.25');
+ }
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+test('a shorter triad span is disclosed without leaving the chosen position',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#custom-chord').selectOption('minor');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('.exercise-position-route [data-inspect-slot="0"]').click();await expect(page.locator('#exercise-span-status')).toContainText('fewer than nine pitches available');await expect(page.locator('.exercise-note[data-group-index="0"]').first()).toBeVisible();
+});

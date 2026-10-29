@@ -17,25 +17,26 @@ test('reported II, II, III, III phrase starts bar 3 on low E and keeps the two-b
  assert.equal(plan.events.find(e=>e.start===8).note.midi,52);assert.equal(plan.events.find(e=>e.start===10).note.midi,76);
  assert.ok(groups.every(g=>g.notes.length===16));
 });
-test('all positions retain every arpeggio pitch and ordinary turns never duplicate an endpoint',()=>{
+test('all five positions use exactly nine consecutive pitches and repeat the two-beat halves',()=>{
  for(let key=0;key<12;key++)for(const shape of shapes)for(const motion of ['ascending','descending']){
-  const h=harmonyAt({key,mode:'dorian',chord:'min7'}),gs=run([h,h],[shape,shape],[16,16],motion),notes=gs.flatMap(g=>g.notes),available=[...new Set(gs[0].board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);
-  assert.deepEqual([...new Set(notes.map(n=>n.midi))].sort((a,b)=>a-b),available);
-  for(let i=1;i<notes.length;i++)assert.notEqual(notes[i].midi,notes[i-1].midi,`${key} ${shape} ${motion} ${i}`);
+  const h=harmonyAt({key,mode:'dorian',chord:'min7'}),gs=run(Array(4).fill(h),Array(4).fill(shape),[4,4,4,4],motion);
+  const available=[...new Set(gs[0].board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),span=motion==='ascending'?available.slice(0,9):available.slice(-9);
+  const forward=motion==='ascending'?span:span.toReversed(),expected=[...forward,...forward.slice(1,-1).toReversed()];
+  for(const group of gs){assert.equal(group.positionalSpan.length,9);assert.deepEqual(group.notes.map(n=>n.midi),expected);assert.equal(group.phraseCycleLength,16);assert.deepEqual(group.cellLengths,[8,8]);}
  }
 });
-test('all position transitions rearticulate a shared boundary only when forced to reverse',()=>{
- let sharedBottom=0,sharedTop=0;
+test('every position/chord transition retains phrase phase rather than skipping to a new note index',()=>{
  for(const chord of Object.keys(CHORDS))for(const key of [0,6,9])for(const from of shapes)for(const to of shapes)if(from!==to)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
-  const h=harmonyAt({key,mode:recommendedMode(chord),chord}),[before,after]=run([h,h],[from,to],[duration,4],motion),last=before.notes.at(-1).midi,direction=Math.sign(last-before.notes.at(-2).midi),available=[...new Set(after.board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>(a-b)*direction);
-  const forward=available.filter(midi=>(midi-last)*direction>0);
-  if(!forward.length&&available.includes(last)){
-   assert.equal(after.notes[0].midi,last,`${key} ${from}->${to} ${motion} ${duration}`);
-   assert.equal(Math.sign(after.notes[1].midi-after.notes[0].midi),-direction);
-   if(direction<0)sharedBottom++;else sharedTop++;
-  }else if(forward.length)assert.equal(after.notes[0].midi,forward[0]);
+  const h=harmonyAt({key,mode:recommendedMode(chord),chord}),gs=run([h,h],[from,to],[duration,4],motion);let cursor=0;
+  for(const group of gs){
+   const available=[...new Set(group.board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),span=group.positionalSpan.map(n=>n.midi),size=Math.min(9,available.length);
+   assert.equal(span.length,size);assert.deepEqual(span,available.slice(available.indexOf(span[0]),available.indexOf(span[0])+size));
+   const cycleLength=Math.max(1,2*(size-1));assert.equal(group.phrasePhase,cursor%cycleLength);
+   for(let i=0;i<group.notes.length;i++){const phase=(cursor+i)%cycleLength,upIndex=phase<size?phase:cycleLength-phase,index=motion==='ascending'?upIndex:size-1-upIndex;assert.equal(group.notes[i].midi,span[index]);}
+   if(size<9)assert.ok(group.warning.includes('shorter phrase'));
+   cursor+=group.notes.length;
+  }
  }
- assert.ok(sharedBottom>0&&sharedTop>0,'exercise both shared-edge reversals');
 });
 
 test('the mirrored high-boundary turn retains the downward-first two-beat halves',()=>{
@@ -52,4 +53,10 @@ test('shared-boundary entry is independent of subdivision and slots keep their t
   assert.equal(groups[2].notes[0].midi,52);assert.equal(groups[2].notes[8].midi,76);
   assert.ok(groups.every(g=>g.notes.length===8*division));assert.equal(plan.duration,32);assert.equal(plan.events.find(e=>e.slot===2).start,16);
  }
+});
+
+test('arpeggios with fewer available pitches stay inside the diagram and disclose their shorter span',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'minor'}),[g]=run([h],['C'],[4]);
+ assert.ok(g.positionalSpan.length<9);assert.ok(g.warning.includes('shorter phrase'));
+ assert.ok(g.notes.every(n=>g.board.notes.some(p=>p.midi===n.midi&&p.string===n.string&&p.fret===n.fret)));
 });

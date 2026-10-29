@@ -15,7 +15,7 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Groups of four | Steps 1–2–3–4 | First note |
 | Diatonic 1–3–2–4 | Steps 1–3–2–4 | First note |
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
-| Full positional arpeggio | Every distinct written chord-tone pitch available in the diagram, including written extensions | Last played pitch; runs can cross bars |
+| Positional arpeggio | Up to nine consecutive written chord-tone pitches; nine pitches form an eight-up/eight-down cycle | Phrase ordinal phase; nearest fitting window at a context change |
 | Harmonized scale | Alternate scale notes: 1–3–5, 1–3–5–7 or 1–3–5–7–9 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
 | Arpeggios from core chord tones | Same scale stacks, restricted to roots among the first four written chord tones (all tones if shorter) | First note of the directed stack |
@@ -34,9 +34,9 @@ The 3-to-9 choice overlaps harmonized tetrads under its present interpretation. 
 - Start from the first complete cell available at the requested edge. Never fabricate notes to fill a gap in the diagram.
 - Missing interior pitches exclude only the affected complete cells. Later valid cells remain available, with exact theoretical intervals intact.
 - Repeated harmony, scale and geometry retain the sequence cursor; bar boundaries do not restart it.
-- At a changed harmony or position, select the nearest complete cell ahead of the previous structural anchor in the current travel direction. Alternating contour phase follows emitted cells, including across changes.
+- For cell-based families, at a changed harmony or position, select the nearest complete cell ahead of the previous structural anchor in the current travel direction. Alternating contour phase follows emitted cells, including across changes.
 - At the usable range limit, generate the opposite-direction form and continue from the nearest valid anchor to the outgoing upper/lower extent. A cell's final played note is not a general-purpose traversal anchor.
-- Pattern cells stay complete within each chord slot. Only an insufficient remaining time budget produces a rest. One-cell scope deliberately leaves the rest of the slot silent. Continuous positional arpeggios may continue note by note across bars.
+- Pattern cells stay complete within each chord slot. Only an insufficient remaining time budget produces a rest. One-cell scope deliberately leaves the rest of the slot silent. Positional arpeggios retain their sixteen-note phrase phase across bars and context changes; see `positional-phrase-boundaries.md`.
 - Notation, TAB, note audition and exercise playback consume the same generated notes. Written chord-tone spelling is used for positional arpeggios; scale sequences retain the scale guide's spelling.
 
 ## Findings and fixes
@@ -56,6 +56,6 @@ The new independent oracle constructs theoretical pitches across MIDI octaves be
 
 Fresh sessions now open four separately selectable one-bar Am7 slots in A Dorian (16 beats in 4/4). The single-chord template also creates four tonic slots using the current selected chord and scale. The mode’s suggested chord remains available as before; saved charts and the remembered working draft are not rewritten. Each repeated bar retains an independent manual CAGED position and corresponding exercise notation.
 
-The initial exercise is Full positional arpeggio, Sixteenth notes, Continuous pattern, Upward first. Saved exercise options remain explicit user choices and are not rewritten.
+The initial exercise is Positional arpeggio (nine-note span), Sixteenth notes, Continuous pattern, Upward first. Saved exercise options remain explicit user choices and are not rewritten.
 
 Validation result: production TypeScript/Vite build and 11 focused unit files passed. Twenty-three targeted browser scenarios were validated, with the continuity fixture rerun after explicitly selecting its material-based study under the new positional default. The full historical suite is not claimed: older adaptive-exercise fixtures still target the retired pedal control and the former location of guided setup. Hosted publication is checked through deployment status; browser validation is local.

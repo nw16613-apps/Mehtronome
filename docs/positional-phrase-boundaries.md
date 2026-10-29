@@ -1,15 +1,27 @@
-# Positional arpeggio boundaries across CAGED changes
+# Nine-note positional arpeggio phrases
 
-The reported Am7 chart uses Position II for bars 1–2 (geometry C), then Position III for bars 3–4 (geometry A). Both regions have nine distinct arpeggio pitches. At sixteenths, eight pitch steps each way produce a sixteen-note cycle, with the upper note beginning beat 3.
+The reported Am7 chart uses Position II for bars 1–2 (geometry C), then Position III for bars 3–4 (geometry A). Both regions contain nine distinct arpeggio pitches. At sixteenths, eight pitch steps each way produce a sixteen-note cycle, with the upper note beginning beat 3.
 
-Before this fix, bar 2 ended on E52 on the A string. On entering Position III, no lower tone was available, so the adapter reversed upward. Its strict next-higher-pitch search then skipped E52 on the low E string and began on G55. This put the top E one sixteenth early and displaced the repeated phrase.
+The original adapter ended bar 2 on E52 on the A string, then skipped E52 when it became the new region's low-string boundary. Starting bar 3 on G55 displaced the phrase. A first correction allowed that boundary to be rearticulated. The subsequent user choice makes a restricted nine-note span, rather than the entire available range, the standard for this exercise across positions.
 
-A changed context that forces reversal now rearticulates the boundary when that boundary equals the last sounded pitch. Ordinary within-position turns retain their strict continuation and do not duplicate endpoints. All other forward entries retain nearest-pitch continuity; there is no bar-wide reset or hard-coded E/fifth rule.
+## Current rule
 
-The corrected third and fourth bars are E52 G55 A57 C60 E64 G67 A69 C72 | E76 C72 A69 G67 E64 C60 A57 G55. Bar 3 starts on string 6, fret 12; its upper E starts at beat 3. The mirrored downward-first transition retains the equivalent high-boundary entry.
+- Use nine consecutive available chord-tone pitches, retaining their actual physical coordinates, spelling and written intervals. The complete pitch library remains unchanged for the diagram and other generators.
+- Upward-first starts with the lowest available nine-note window; downward-first starts with the highest. Repeated contexts retain their chosen window.
+- A nine-note span produces the ordinal cycle 0 1 2 3 4 5 6 7 | 8 7 6 5 4 3 2 1 (mirrored for downward-first). There are no duplicated turning notes.
+- Preserve the phrase cursor across bars and changes of position or harmony. Choose among fitting windows by continuing pitch direction where possible, then nearest register. Choosing a window never skips ahead in the phrase or changes its ordinal phase.
+- At sixteenths, each eight-note half lasts two beats. Other subdivisions retain the same pitch pattern: eighths make four beats per half; triplets make eight notes per half. This change does not alter subdivision semantics or force unrelated exercise families into a sixteen-note template.
+- A region with fewer than nine available chord pitches uses its full shorter span and explicitly reports the shorter phrase. It does not invent pitches, leave the selected diagram or silently pad repeated notes.
+- Continuous scope repeats the cycle. One-run scope includes its turning note, then rests for the remaining slot time. Notation, TAB and playback use the same emitted notes and timing.
 
-Positional notation captions now say Arpeggio rather than counting implementation fragments as “2 cells” or “3 cells”. A run carried through a bar boundary is one continuous exercise regardless of how its pieces are scheduled.
+The corrected third and fourth bars are E52 G55 A57 C60 E64 G67 A69 C72 | E76 C72 A69 G67 E64 C60 A57 G55. Bar 3 starts on string 6, fret 12; its upper E starts at beat 3. The downward-first mirror has the same timing.
 
-Validation covers all five positions in both directions, every root for full-range coverage and non-duplicating ordinary turns, every chord type at three roots for position-to-position shared-boundary entries, all three subdivisions, exact event times, and the mirrored high-boundary example. Five browser tests and seven focused unit files passed, alongside the production build. The browser checks compare the exact low-string entry, top-note time, TAB, phrase repetition, diagram context, playback, looping and guitar volume.
+## Presentation
 
-Full positional arpeggio still uses every available chord-tone pitch. Regions with ten pitches naturally have a different cycle length from nine-pitch regions. Fixing all legs to two beats would require a separate restricted-span phrasing decision; this change does not remove pitches or force a nine-note window.
+The menu calls the exercise Positional arpeggio, avoiding the claim that every outer pitch is played. The linked diagram reports the selected span, register and half-phrase length; chord-tone markers outside that span are faded. Positional score captions say Arpeggio rather than counting scheduling fragments as “2 cells” or “3 cells”.
+
+## Verification
+
+Exact-note tests retain the original example and downward-first mirror. All twelve roots and five Am7 positions repeat nine-pitch, sixteen-note cycles in both directions. Every chord type at three roots is checked through every position-to-position transition, including partial-bar entry, with an independent triangular-wave phase oracle. Smaller spans, complete slot durations, all subdivisions, bar-independent continuation and the existing scale/arpeggio matrices remain covered. Browser checks compare the exact low-string entry, top-note time, TAB, all five positions and directions, span labels/faded markers, diagram context, playback, looping and guitar volume.
+
+Validation result: the production build and eight focused unit files passed. Fifteen browser scenarios were validated across the phrase, scale-family, chart and playback suites; the three positional scenarios were rerun after strengthening the outside-span marker styling.

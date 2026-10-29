@@ -1,17 +1,19 @@
+import {positionalProgressionGroups} from './positional-phrases.js';
 import {cagedStudy,approachNoteFor} from '../guitar/exercises.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {progressionPositionPath} from '../guitar/position-path.js';
 import {theoryOptions} from '../guitar/superimposition.js';
-import {gripStudy,positionalArpeggio} from './learning.js';
+import {gripStudy} from './learning.js';
 import {MODES} from '../audio/music.js';
-import {continuationCell,continuationNote} from './sequence-continuity.js';
+import {continuationCell} from './sequence-continuity.js';
 /** Rebuild the same study for each harmony; never transpose the starting cell
  * blindly through chord qualities. Only complete phrase cells enter a slot. */
 export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const {study,material='seventh',motion='ascending',rhythm='eighths',stage='full',source='',pattern='groups3'}=options;
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
- let globalStart=0,previousContext='',cellIndex=0,noteOffset=0;
+ if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
+ let globalStart=0,previousContext='',cellIndex=0;
  let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
  const alternating=study==='alternating'||study==='chordtonesalternating'||study==='pentatonic'&&pattern.startsWith('alternating');
@@ -24,26 +26,15 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext)triadReference=lastMidi??60;
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):study==='positional'?positionalArpeggio(board,harmony,leg):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
   // changed contexts choose the nearest valid cell in the ongoing direction.
   if(context!==previousContext){
-   cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;noteOffset=0;
-   if(study==='positional'&&lastMidi!==null&&cells[0]){
-    let next=continuationNote(cells[0].notes,lastMidi,travel);
-    if(!cells[0].notes.some(n=>(n.midi-lastMidi)*travel>0)){
-     travel=-travel;cells=makeCells();
-     // A changed region may begin exactly on the last sounded pitch. That
-     // boundary has not yet been played in the new region: rearticulate it
-     // in the new region instead of skipping a note of the returning leg.
-     // Ordinary turns within one region still exclude the repeated endpoint.
-     next=cells[0]?.notes[0]?.midi===lastMidi?{offset:0}:cells[0]?continuationNote(cells[0].notes,lastMidi,travel):{offset:0};
-    }
-    noteOffset=next.offset;
-   }else if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
+   cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;
+   if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
     let next=continuationCell(cells,lastAnchor,travel);
     if(next.reset&&directional){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
     cellIndex=next.index;
@@ -58,22 +49,11 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     if(!directional)break;
     travel=-travel;cells=makeCells();
     if(!cells.length)break;
-    cellIndex=0;noteOffset=0;
-    if(study==='positional'&&lastMidi!==null)noteOffset=continuationNote(cells[0].notes,lastMidi,travel).offset;
-    else if(lastAnchor!==null)cellIndex=continuationCell(cells,lastRangeEdge??lastAnchor,travel).index;
+    cellIndex=0;
+    if(lastAnchor!==null)cellIndex=continuationCell(cells,lastRangeEdge??lastAnchor,travel).index;
    }
    const cell=cells[cellIndex];
-   // A continuous positional run can cross a bar boundary. Pattern cells
-   // (enclosures, interval groups, arpeggios, etc.) must remain complete.
-   if(study==='positional'){
-    const portion=cell.notes.slice(noteOffset,noteOffset+capacity-notes.length);notes.push(...portion);used.push(cell.chord);cellLengths.push(portion.length);
-    lastMidi=portion.at(-1)?.midi??lastMidi;
-    const following=cell.notes[noteOffset+portion.length];
-    if(following&&lastMidi!==null)travel=Math.sign(following.midi-lastMidi)||travel;
-    noteOffset+=portion.length;if(noteOffset>=cell.notes.length){cellIndex++;noteOffset=0;}
-    if(stage==='cell')break;
-    continue;
-   }
+   // Pattern cells stay complete within the chord slot.
    if(notes.length+cell.notes.length>capacity){
     if(travel!==previousTravel){travel=previousTravel;cells=makeCells();cellIndex=previousIndex;}
     break;
@@ -100,7 +80,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   }
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:'';
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,sequenceAnchors,sequenceDirections,globalStart,warning,
-   annotation:missing?'Rest · no complete cell fits':study==='positional'?`${MODES[harmony.mode].name} · continuous arpeggio`:`${MODES[harmony.mode].name} · ${used.length} ${used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
+   annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });
  if(study==='approach'){

@@ -62,15 +62,12 @@ test('alternating strokes retain their phase when the nearest new-scale cell has
  }
 });
 
-test('positional arpeggios choose the nearest continuing chord tone instead of returning to an edge',()=>{
+test('positional arpeggios preserve nine-note phrase phase through changing chord roots',()=>{
  const hs=[9,11,2,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
  for(const motion of ['ascending','descending']){
-  let direction=motion==='ascending'?1:-1;const gs=progressionExerciseGroups(hs,hs.map(()=>2),fretboardFor(hs[0],'C'),{study:'positional',motion,positionPath:pathFor(hs,['C'])});let previous=null;
-  for(const g of gs){if(!g.notes.length)continue;const source=positionalArpeggio(g.board,g.harmony,motion)[0].notes;
-   if(previous!==null){const forward=source.filter(n=>(n.midi-previous)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction);if(!forward.length)direction=-direction;
-    const next=source.filter(n=>(n.midi-previous)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction);assert.equal(g.notes[0].midi,next[0]?.midi??source[0].midi);}
-   direction=Math.sign(g.notes.at(-1).midi-g.notes.at(-2).midi)||direction;previous=g.notes.at(-1).midi;
-  }
+  const gs=progressionExerciseGroups(hs,hs.map(()=>2),fretboardFor(hs[0],'C'),{study:'positional',motion,positionPath:pathFor(hs,['C'])});
+  assert.deepEqual(gs.map(g=>g.phrasePhase),[0,4,8,12]);
+  for(const g of gs){const span=g.positionalSpan.map(n=>n.midi);assert.equal(span.length,9);for(let i=0;i<g.notes.length;i++){const phase=(g.phrasePhase+i)%16,index=phase<9?phase:16-phase;assert.equal(g.notes[i].midi,span[motion==='ascending'?index:8-index]);}}
  }
 });
 

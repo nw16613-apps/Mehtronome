@@ -71,7 +71,7 @@ test('inversions cover every fitting anchor for every chord type, including susp
  }
 });
 
-test('full positional arpeggios include each written chord pitch once with chord-tone spelling',()=>{
+test('positional pitch libraries include each written chord pitch once with chord-tone spelling',()=>{
  for(const chord of Object.keys(CHORDS))for(const shape of ['C','A','G','E','D'])for(const direction of [1,-1]){
   const h=harmonyAt({key:0,mode:recommendedMode(chord),chord}),board=fretboardFor(h,shape),notes=positionalArpeggio(board,h,direction>0?'ascending':'descending').flatMap(c=>c.notes);
   const expected=[...new Set(board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>(a-b)*direction);
