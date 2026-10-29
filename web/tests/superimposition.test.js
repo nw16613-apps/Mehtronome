@@ -19,13 +19,13 @@ function checkOption(option,info,count){
   assert.ok(option.id && option.name && option.explanation);
 }
 
-test('pentatonics and disjoint true triad pairs fit all 21 modes in all twelve keys',()=>{
+test('pentatonics and disjoint true triad pairs fit all supported scales in all twelve keys',()=>{
   for(const [mode,definition] of Object.entries(MODES))for(let key=0;key<12;key++){
     const info=harmonyAt({key,mode,chord:definition.chord}),before=JSON.stringify(info);
     const options=theoryOptions(info);
     assert.equal(JSON.stringify(info),before);
     for(const [category,choices] of Object.entries(options)){
-      assert.ok(choices.length>=1&&(category==='pentatonics'||choices.length<=3),mode);
+      assert.ok((choices.length>=1||category==='triadPairs'&&info.scalePcs.length<=6)&&(category==='pentatonics'||choices.length<=3),mode);
       assert.equal(new Set(choices.map(c=>[...c.pcs].sort((a,b)=>a-b).join(','))).size,choices.length);
     }
     for(const pent of options.pentatonics){
@@ -55,7 +55,7 @@ test('pentatonics and disjoint true triad pairs fit all 21 modes in all twelve k
     }
     const colour=characteristicNotes(info).map(note=>note.pc);
     assert.ok(options.pentatonics.at(-1).pcs.some(pc=>colour.includes(pc)),`${mode} modal pentatonic should reveal its character`);
-    assert.ok(options.triadPairs[0].pcs.some(pc=>colour.includes(pc)),`${mode} primary triad pair should reveal its character`);
+    if(options.triadPairs.length)assert.ok(options.triadPairs[0].pcs.some(pc=>colour.includes(pc)),`${mode} primary triad pair should reveal its character`);
   }
 });
 

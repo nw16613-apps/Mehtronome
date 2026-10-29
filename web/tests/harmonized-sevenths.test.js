@@ -23,11 +23,11 @@ test('all supported modes in every tonic stack alternate degrees and preserve en
     const harmony=mode(key,id),chords=harmonizedSevenths(harmony);
     assert.equal(chords.length,harmony.scalePcs.length);
     chords.forEach((chord,degree)=>{
-      const indices=[0,2,4,6].map(offset=>(degree+offset)%harmony.scalePcs.length);
+      const indices=(harmony.scalePcs.length<=6?[0,2,4]:[0,2,4,6]).map(offset=>(degree+offset)%harmony.scalePcs.length);
       assert.equal(chord.degree,degree+1);assert.equal(chord.root,harmony.scalePcs[degree]);
       assert.deepEqual(chord.notes,indices.map(index=>harmony.scaleNames[index]));
       assert.deepEqual(chord.pcs,indices.map(index=>harmony.scalePcs[index]));
-      assert.equal(new Set(chord.pcs).size,4);
+      assert.equal(new Set(chord.pcs).size,harmony.scalePcs.length<=6?3:4);
       assert.ok(chord.symbol.startsWith(harmony.scaleNames[degree]));
     });
   }

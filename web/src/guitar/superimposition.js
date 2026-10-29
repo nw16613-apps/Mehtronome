@@ -74,7 +74,7 @@ export function modalPentatonicPcs(harmony) {
     const score=candidate=>candidate.reduce((total,index)=>total+(index===0?30:0)+(colours.includes(harmony.scalePcs[index])?50:0)+(7-degreePreference.indexOf(index)),0);
     return score(b)-score(a)||a.join('').localeCompare(b.join(''));
   })[0];
-  return indices.map(index=>harmony.scalePcs[index]);
+  return indices?indices.map(index=>harmony.scalePcs[index]):[...harmony.scalePcs];
 }
 function pentatonicsFor(harmony) {
   const mode=MODES[harmony.mode],tonic=harmony.scalePcs[0],tonicName=harmony.scaleNames[0];
@@ -91,10 +91,10 @@ function pentatonicsFor(harmony) {
   }
   const pcs=modalPentatonicPcs(harmony);
   const modal={id:'pent-modal',type:'modal',category:'modal',rootPc:tonic,intervals:pcs.map(pc=>(pc-tonic+12)%12),
-    name:`${tonicName} ${mode.name} modal pentatonic`,...details(pcs,harmony),
+    name:harmony.scalePcs.length===5?`${tonicName} ${mode.name}`:`${tonicName} ${mode.name} modal pentatonic`,...details(pcs,harmony),
     explanation:`A five-note selection specific to ${tonicName} ${mode.name}, retaining the tonic and its defining colour notes. Use degrees ${details(pcs,harmony).degrees.join('–')} over the current harmony.${colourDescription(pcs,harmony)}`,
   };
-  return [...parentMinors,modal];
+  return [...parentMinors.filter(choice=>pitchKey(choice.pcs)!==pitchKey(modal.pcs)),modal];
 }
 
 function spelledTone(rootName,letterSteps,pc) {

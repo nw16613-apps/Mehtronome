@@ -19,15 +19,17 @@ export const PENTATONIC_PATTERNS={
 };
 
 function chordSuffix(rootPc,pcs) {
+  if(new Set(pcs).size!==pcs.length)return ` · ${pcs.length}-note alternate-step stack`;
   const signature=pcs.slice(1).map(pc=>(pc-rootPc+12)%12).join(',');
   const suffixes={'4,7':'','3,7':'m','3,6':'dim','4,8':'aug','4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,6,10':'m7♭5','3,6,9':'dim7','4,8,11':'maj7♯5','3,7,11':'m(maj7)'};
   if(Object.hasOwn(suffixes,signature))return suffixes[signature];
   if(pcs.length===5){
     const seventh=chordSuffix(rootPc,pcs.slice(0,4)),ninth=(pcs[4]-rootPc+12)%12;
+    if(seventh.startsWith(' ·'))return ` · ${pcs.length}-note scale-step stack`;
     if(ninth===2)return ({maj7:'maj9',m7:'m9','7':'9','m7♭5':'m9♭5','m(maj7)':'m(maj9)','maj7♯5':'maj9♯5'})[seventh]||`${seventh}(add9)`;
     return `${seventh}(${ninth===1?'♭9':ninth===3?'♯9':`add ${ninth}`})`;
   }
-  return '7';
+  return ` · ${pcs.length}-note scale-step stack`;
 }
 
 function pathForPcs(board,pcs,names,ascending=true,targetMidi=60,anchorMidi=null) {

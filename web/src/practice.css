@@ -676,3 +676,7 @@ button.reference-chord:disabled { cursor:default; opacity:1; }
 .chart-chord-group #custom-mode-help,.chart-chord-group #custom-scale-check { grid-column:1/-1; }
 .mode-harmony-map.octatonic { grid-template-columns:repeat(4,minmax(0,1fr)); }
 @media(max-width:600px) { .mode-harmony-map.octatonic { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.mode-harmony-map.hexatonic { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:600px) { .mode-harmony-map.hexatonic { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.mode-harmony-map.pentatonic { grid-template-columns:repeat(5,minmax(0,1fr)); }
+@media(max-width:600px) { .mode-harmony-map.pentatonic { grid-template-columns:repeat(2,minmax(0,1fr)); } }

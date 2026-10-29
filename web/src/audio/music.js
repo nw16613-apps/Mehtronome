@@ -48,10 +48,16 @@ export const MODES = {
     ['lydian_augmented_sharp2','Lydian augmented ♯2','augMaj7','Augmented major harmony with raised second and fourth.'],
     ['locrian_bb7','Locrian ♭♭7','dim7','Diminished seventh harmony with a natural fourth.'],
   ]),
-  diminished_half_whole:{name:'Half–whole diminished',family:'Diminished',intervals:[0,1,3,4,6,7,9,10],degrees:['1','♭2','♭3','3','♯4','5','6','♭7'],chord:'dom13b9',tip:'Eight alternating half and whole steps: dominant 7 with flat 9, sharp 9, sharp 11 and natural 13.'},
-  diminished_whole_half:{name:'Whole–half diminished',family:'Diminished',intervals:[0,2,3,5,6,8,9,11],degrees:['1','2','♭3','4','♭5','♭6','♭♭7','7'],chord:'dim7',tip:'Eight alternating whole and half steps surround a diminished seventh arpeggio.'},
+  major_pentatonic:{name:'Major pentatonic',family:'Pentatonic scales',intervals:[0,2,4,7,9],degrees:['1','2','3','5','6'],chord:'sixNine',tip:'Five notes: root, second, third, fifth and sixth. No fourth or seventh.'},
+  minor_pentatonic:{name:'Minor pentatonic',family:'Pentatonic scales',intervals:[0,3,5,7,10],degrees:['1','♭3','4','5','♭7'],chord:'min7',tip:'Five notes outlining minor-seven harmony with the fourth.'},
+  major_blues:{name:'Major blues',family:'Blues scales',intervals:[0,2,3,4,7,9],degrees:['1','2','♭3','3','5','6'],chord:'sixNine',tip:'Major pentatonic with an added minor third as a blue note.'},
+  minor_blues:{name:'Minor blues',family:'Blues scales',intervals:[0,3,5,6,7,10],degrees:['1','♭3','4','♭5','5','♭7'],chord:'min7',tip:'Minor pentatonic with an added flat fifth as a blue note. Dominant-chord use is contextual because the major third is absent.'},
+  whole_tone:{name:'Whole tone',family:'Symmetric scales',intervals:[0,2,4,6,8,10],degrees:['1','2','3','♯4','♯5','♭7'],chord:'dom9sharp5',tip:'Six whole steps: dominant third and flat seventh with raised fourth and fifth; no natural fifth.'},
+  augmented_scale:{name:'Augmented (minor third–semitone)',family:'Symmetric scales',intervals:[0,3,4,7,8,11],degrees:['1','♭3','3','5','♭6','7'],chord:'augMaj7',tip:'Six notes alternating minor thirds and semitones, containing two interlocking augmented triads.'},
+  diminished_half_whole:{name:'Half–whole diminished',family:'Symmetric scales',intervals:[0,1,3,4,6,7,9,10],degrees:['1','♭2','♭3','3','♯4','5','6','♭7'],chord:'dom13b9',tip:'Eight alternating half and whole steps: dominant 7 with flat 9, sharp 9, sharp 11 and natural 13.'},
+  diminished_whole_half:{name:'Whole–half diminished',family:'Symmetric scales',intervals:[0,2,3,5,6,8,9,11],degrees:['1','2','♭3','4','♭5','♭6','♭♭7','7'],chord:'dim7',tip:'Eight alternating whole and half steps surround a diminished seventh arpeggio.'},
 };
-export const MODE_FAMILIES=['Major scale','Melodic minor','Harmonic minor','Harmonic major','Diminished'];
+export const MODE_FAMILIES=['Major scale','Melodic minor','Harmonic minor','Harmonic major','Pentatonic scales','Blues scales','Symmetric scales'];
 export const CHORDS = {
   major: { name: 'Major', symbol: 'maj', intervals: [0,4,7] },
   maj7: { name: 'Major 7', symbol: 'maj7', intervals: [0,4,7,11] },
@@ -307,6 +313,8 @@ export const CHARACTERISTIC_DEGREES = {
   harmonic_minor:['♭6','7'], locrian_natural6:['♭5','6'], ionian_sharp5:['♯5','7'], dorian_sharp4:['♯4','6'],
   harmonic_major:['♭6','7'],dorian_b5:['♭5','6'],phrygian_b4:['♭2','♭4'],lydian_b3:['♭3','♯4'],
   mixolydian_b2:['♭2','6'],lydian_augmented_sharp2:['♯2','♯5'],locrian_bb7:['♭5','♭♭7'],
+  major_pentatonic:['3','6'],minor_pentatonic:['♭3','♭7'],major_blues:['♭3','3'],minor_blues:['♭3','♭5'],
+  whole_tone:['♯4','♯5','♭7'],augmented_scale:['♭3','♭6','7'],
   diminished_half_whole:['♭2','♯4','6'],diminished_whole_half:['♭5','♭♭7','7'],
   phrygian_dominant:['♭2','3','♭6'], lydian_sharp2:['♯2','♯4'], ultralocrian:['♭5','♭♭7'],
 };

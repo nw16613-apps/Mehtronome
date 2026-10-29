@@ -109,7 +109,12 @@ export function fretboardFor(harmony, shape = 'C', chordOnly = false) {
         characteristic: colourPcs.includes(pc), scaleIndex, chromaticDegree: chordIndex>=0?harmony.intervals[chordIndex]:CHROMATIC_DEGREES[(pc - harmony.scalePcs[0] + 12) % 12] });
     }
   }
-  return { ...position, rootPc, anchorPc, anchorName, parentMajor, positionIdentity:positionIdentities(rootPc,anchorPc,intervals,parentMajor?.family)[shape], notes };
+  const board={ ...position, rootPc, anchorPc, anchorName, parentMajor, positionIdentity:positionIdentities(rootPc,anchorPc,intervals,parentMajor?.family)[shape], notes };
+  if(harmony.scalePcs.length===5){
+    const box=pentatonicShapeFor(board,{kind:'pentatonic',pcs:harmony.scalePcs,primaryGuide:true});
+    if(box)return {...box.board,notes:box.board.notes.filter(note=>box.keys.has(`${note.string}:${note.fret}`))};
+  }
+  return board;
 }
 
 export function fullFretboardFor(harmony, start = 1, end = 17, chordOnly = false) {
@@ -153,7 +158,7 @@ export function pentatonicShapeFor(board,theory){
     }
     if(chosen.length!==6)continue;
     const frets=chosen.flat(),outside=frets.filter(fret=>fret<board.start||fret>board.end).length;
-    const score=width*100+Math.abs((start+end)/2-centre)*10+outside*2+chosen.reduce((sum,pair)=>sum+pair[1]-pair[0],0)*.1;
+    const score=width*(theory.primaryGuide?10:100)+Math.abs((start+end)/2-centre)*(theory.primaryGuide?100:10)+outside*2+chosen.reduce((sum,pair)=>sum+pair[1]-pair[0],0)*.1;
     if(!best||score<best.score)best={chosen,score};
   }
   const selected=(best?.chosen||[]).flatMap((pair,string)=>pair.map(fret=>({string,fret,pc:(TUNING[string]+fret)%12})));
