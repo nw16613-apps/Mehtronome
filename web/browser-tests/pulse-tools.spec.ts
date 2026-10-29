@@ -31,7 +31,7 @@ for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivi
   await page.locator('#click').fill('32');await page.locator('#click').dispatchEvent('input');
   await expect(page.locator('#click')).toHaveValue('32');
 
-  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
+  await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('10');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
@@ -71,7 +71,7 @@ test('timer completes on the audio clock and large display follows playback',asy
   await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');
   await page.locator('#beats').selectOption('4');
 
-  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
+  await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('1');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#pulse-large-open').click();
@@ -110,7 +110,7 @@ test('older presets reset new pulse tools to their original behavior',async({pag
   await page.goto('/');
   await page.locator('[data-workspace-target="sound-settings-title"]').click();await page.locator('#pulse-sound').selectOption('rim');
   await page.locator('[data-workspace-target="pulse-title"]').click();
-  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
+  await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();

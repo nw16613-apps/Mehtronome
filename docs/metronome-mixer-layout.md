@@ -9,3 +9,5 @@ Session & training contains an optional timer with explicit Unlimited/Fixed dura
 Compatibility fix: chart redraws preserve the shared loop controls even when section buttons are absent (older single-chord presets). Removing them during a redraw otherwise broke later preset and guided setup operations.
 
 Validation includes tap/shortcuts/accents, audio-clock timer completion, large beat display, preset round trips, audible backing mute behaviour, desktop fader gain taper, mobile pointer input, floating mixer persistence, guided setup, selected harmony, shared loops and desktop/tablet/mobile layouts across palettes. Production build and pulse/mixer/preset unit tests are checked.
+
+Follow-up: session timer controls are permanently visible, with internal Session & training divider rules removed. The mixer scale and rail endpoints now follow the fader indicator centre, accounting for half the cap height, so maximum travel aligns with 0 dB and minimum travel aligns with −∞. Gain taper and keyboard behavior are unchanged. Browser checks cover endpoint geometry and clicking the unity mark in both mixer layouts at 900px and 1440px.
