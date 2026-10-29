@@ -608,7 +608,7 @@ function fillChordScaleOptions(chordId:string,currentMode:string){
   const legacy=known&&!choices.some((choice:any)=>choice.id===currentMode)?`<option value="${currentMode}" disabled>${known.name} · incompatible saved guide</option>`:'';
   select('custom-mode').innerHTML=legacy+groups.map((group:any)=>`<optgroup label="${group.family}">${group.choices.map((choice:any)=>`<option value="${choice.id}">${choice.name}</option>`).join('')}</optgroup>`).join('');
   select('custom-mode').value=currentMode;
-  el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`These modes contain every written chord tone. ${choices.length} compatible ${choices.length===1?'mode':'modes'}; grouped by parent scale.`;
+  el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`Scale guides may omit chord tones. Choices are filtered for conflicting thirds, sevenths and written extensions; blues notes are passing colours. ${choices.length} compatible ${choices.length===1?'mode':'modes'}; grouped by parent scale.`;
 }
 
 function renderGuitar(skipExercise:any=false,positionOverride:any=null) {

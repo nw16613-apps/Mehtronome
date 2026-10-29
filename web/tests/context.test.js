@@ -8,3 +8,10 @@ test('compatibility checks compare real pitches and preserve intentional outside
  assert.match(scaleCompatibility(harmonyAt({key:0,chord:'maj7',mode:'dorian'})),/omits E \(3\), B \(7\)/);
  for(const template of ['diatonic','modal_dorian','major251essential'])for(let i=0;i<4;i++)assert.equal(scaleCompatibility(harmonyAt({key:9,mode:'major',progression:true,template},i)),'');
 });
+
+test('melodic colours are accepted across keys without a repair warning',async()=>{
+ const {scaleCompatibility}=await import('../src/practice/context.js'),{harmonyAt}=await import('../src/audio/music.js');
+ for(let key=0;key<12;key++)for(const [chord,mode] of [['dom13','major_pentatonic'],['dom13','major_blues'],['dom13','minor_blues'],['dom7','whole_tone'],['dom7','altered']]){
+  assert.equal(scaleCompatibility(harmonyAt({key,chord,mode})), '',`${key} ${chord} ${mode}`);
+ }
+});

@@ -1,3 +1,4 @@
+import {scaleChoicesForChord} from './scale-explorer.js';
 import {MODES,ROOT_NAMES,harmonyAt,progressionOrder,progressionDefinition} from '../audio/music.js';
 export function musicalContext(settings,step=0){
  const order=settings.progression?progressionOrder(settings):[0],active=order.includes(step)?step:order[0],current=harmonyAt(settings,active),next=settings.progression?harmonyAt(settings,order[(order.indexOf(active)+1)%order.length]):null;
@@ -10,6 +11,7 @@ export function spellingHelp(harmony){
 
 /** Report pitch-class differences without forbidding deliberate outside harmony. */
 export function scaleCompatibility(harmony){
+ if(scaleChoicesForChord(harmony.chordId).some(choice=>choice.id===harmony.mode&&choice.compatible&&!choice.strict))return '';
  const missing=harmony.chordPcs.flatMap((pc,i)=>harmony.scalePcs.includes(pc)?[]:[`${harmony.tones[i]} (${harmony.intervals[i]})`]);
  return missing.length?`${harmony.scaleNames[0]} ${MODES[harmony.mode].name} omits ${missing.join(', ')} from ${harmony.name}${harmony.suffix}. Chord-tone exercises retain these notes; scale-based exercises follow the selected guide.`:'';
 }

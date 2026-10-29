@@ -8,7 +8,7 @@ test('whole tone, augmented, pentatonic and blues guides use grouped compatible 
   if(mode.includes('pentatonic'))await expect(page.locator('#exercise-study option[value=triadpairs]')).toHaveJSProperty('disabled',true);
   await tab(page,'harmony-title');
  }
- await page.locator('#custom-chord').selectOption('dom7');await expect(page.locator('#custom-mode option[value=whole_tone]')).toHaveCount(0);await expect(page.locator('#custom-mode option[value=minor_blues]')).toHaveCount(0);
+ await page.locator('#custom-chord').selectOption('dom7');await expect(page.locator('#custom-mode option[value=whole_tone]')).toHaveCount(1);await expect(page.locator('#custom-mode option[value=minor_blues]')).toHaveCount(1);
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
 test('mixed five/six-note charts preserve notation, playback and saved guides',async({page})=>{
