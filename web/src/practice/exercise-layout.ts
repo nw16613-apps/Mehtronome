@@ -6,7 +6,8 @@ export function organizeExercisePanel(panel:HTMLElement){
  const heading=find('.exercise-heading'),toolbar=find('.exercise-learning-toolbar'),controls=find('.exercise-controls');
  const definition=section('exercise-definition','Exercise');
  controls.prepend(label('exercise-study'));controls.append(label('exercise-stage'));label('exercise-stage').firstChild!.textContent='Scope ';
- for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?'Short cell':'Full position';
+ const singleScope=(find('#exercise-study') as HTMLSelectElement).value==='positional'?'One run per chord':'One cell per chord';
+ for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?singleScope:'Continuous pattern';
  definition.append(controls);heading.after(definition);
  const playback=section('exercise-playback-panel','Playback'),playControls=document.createElement('div');playControls.className='exercise-playback-controls';
  playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));playback.append(playControls);

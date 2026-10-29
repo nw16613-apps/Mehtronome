@@ -14,7 +14,7 @@ test('pattern families render and audition through jazz, altered, modal and four
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
  for(const template of ['major251essential','major251altered','modal_dorian','fourths1']){
   await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption(template);await tab(page,'caged-exercise');
-  for(const study of ['alternating','harmonized','thirds','upperstructure','enclosures','approacheverytone','inversions','pentatonic','connections']){
+  for(const study of ['alternating','harmonized','thirds','upperstructure','enclosures','approacheverytone','inversions','pentatonic','positional']){
    await page.locator('#exercise-study').selectOption(study);await expect(page.locator('.exercise-score svg').first()).toBeVisible();await expect(page.locator('.exercise-position-route [data-inspect-slot]')).toHaveCount(template==='fourths1'?12:template==='modal_dorian'?2:3);
    const notes=page.locator('.exercise-score .exercise-note');expect(await notes.count()).toBeGreaterThan(0);
   }
