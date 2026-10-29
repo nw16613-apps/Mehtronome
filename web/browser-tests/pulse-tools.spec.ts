@@ -31,6 +31,7 @@ for(const subdivision of [5,7])test(`pulse tools and ${subdivision}-note subdivi
   await page.locator('#click').fill('32');await page.locator('#click').dispatchEvent('input');
   await expect(page.locator('#click')).toHaveValue('32');
 
+  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('10');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#gap-enabled').check();await page.locator('#gap-progressive').check();await page.locator('#gap-max').selectOption('4');
@@ -70,6 +71,7 @@ test('timer completes on the audio clock and large display follows playback',asy
   await page.locator('#bpm').fill('240');await page.locator('#bpm').dispatchEvent('change');
   await page.locator('#beats').selectOption('4');
 
+  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('1');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('3/2');
   await page.locator('#pulse-large-open').click();
@@ -95,7 +97,7 @@ for(const width of [1440,390])test(`pulse tools fit at ${width}px`,async({page})
 test('Guitar and Exercises show the selected loop, chord scales and current playback chord',async({page})=>{
   await page.goto('/');
   await page.locator('[data-workspace-target="harmony-title"]').click();
-  await page.locator('#progression').click();await page.locator('#template').selectOption('major251');
+  await page.locator('#progression-choice').selectOption('major251');
   await page.locator('[data-grid-beat="4"]').scrollIntoViewIfNeeded();const [a,b]=await page.evaluate(()=>[4,15].map(i=>{const r=document.querySelector(`[data-grid-beat="${i}"]`)!.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};}));await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:10});await page.mouse.up();
   await page.locator('[data-workspace-target="guitar-title"]').click();await expect(page.locator('#position-path [data-route-step]')).toHaveCount(2);const guitar=page.locator('.workspace-guitar .progression-reference');await expect(guitar).toContainText('Scale guide:');await expect(guitar).toContainText('Next:');const summary=await guitar.textContent();
   await page.locator('[data-workspace-target="caged-exercise"]').click();const exercise=page.locator('#caged-exercise .progression-reference');await expect(exercise).toHaveText(summary!);await expect(page.locator('.exercise-position-route [data-route-step]')).toHaveCount(2);
@@ -108,6 +110,7 @@ test('older presets reset new pulse tools to their original behavior',async({pag
   await page.goto('/');
   await page.locator('[data-workspace-target="sound-settings-title"]').click();await page.locator('#pulse-sound').selectOption('rim');
   await page.locator('[data-workspace-target="pulse-title"]').click();
+  await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');
   await page.locator('#pulse-minutes').fill('5');await page.locator('#pulse-minutes').dispatchEvent('input');
   await page.locator('.pulse-tool summary').filter({hasText:'Polyrhythm'}).click();await page.locator('#pulse-poly').selectOption('5/4');
   await page.locator('[data-pulse-beat="0"]').click();

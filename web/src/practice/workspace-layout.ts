@@ -6,17 +6,27 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const group=(name:string,className='')=>{const node=document.createElement('section');node.className='workspace-group '+className;node.setAttribute('aria-label',name);const title=document.createElement('h3');title.textContent=name;node.append(title);return node;};
  const move=(target:Element,...nodes:(Element|null)[])=>nodes.forEach(node=>{if(node)target.append(node);});
  const link=(text:string,workspace:string,target:string)=>{const button=document.createElement('button');button.type='button';button.className='practice-button';button.textContent=text;button.onclick=()=>navigate(workspace,target);return button;};
- // Metronome: pulse first; rhythm belongs with metre/subdivision, not session training.
+ // Pulse and shared playback, then rhythm; optional session tools stay below.
  const transport=query('.transport'),tools=query('.studio-tools'),pulseGrid=query('.pulse-tool-grid');
- const rhythm=group('Rhythm','metronome-rhythm');move(rhythm,query('.pulse-options'));
- const rhythmTools=document.createElement('div');rhythmTools.className='rhythm-tools';
- move(rhythmTools,label('pulse-swing').closest('details'),label('pulse-poly').closest('details'));rhythm.append(rhythmTools);transport.append(rhythm);
- query('.beat-dots').after(query('.pulse-accent-help'));
- move(transport,query('.pulse-shortcut-row'));
+ get('pulse-title').textContent='Pulse & playback';
+ const tempo=document.createElement('div');tempo.className='pulse-tempo-zone';
+ move(tempo,query('.tempo-controls'),label('tempo'),get('tempo'),query('.range-limits'));
+ const tempoActions=document.createElement('div');tempoActions.className='tempo-actions';move(tempoActions,get('tap-tempo'),get('tap-status'));tempo.append(tempoActions);move(tempo,query('.pulse-shortcut-row'));
+ const playback=document.createElement('div');playback.className='session-playback';
+ const now=document.createElement('div');now.className='session-harmony';now.innerHTML='<span class="small-label">CURRENT HARMONY</span><strong id="session-chord"></strong><span id="session-mode"></span>';
+ move(playback,now,get('play'),label('count-in'),get('play-status'));
+ const scope=document.createElement('p');scope.className='practice-help';scope.textContent='Play starts all unmuted tracks in the mixer.';playback.append(scope);
+ const pulse=document.createElement('div');pulse.className='pulse-main-controls';move(pulse,tempo,playback);transport.querySelector('.section-heading')!.after(pulse);
+ const rhythm=group('Rhythm','metronome-rhythm');move(rhythm,query('.pulse-options'));transport.append(rhythm);
+ const accents=group('Beat accents','beat-accent-group');move(accents,get('beat-dots'),label('accent'),query('.pulse-accent-help'),get('pulse-large-open'));
+ const accentStatus=document.createElement('p');accentStatus.id='beat-accent-status';accentStatus.className='practice-help';accents.append(accentStatus);rhythm.append(accents);
+ const rhythmTools=document.createElement('div');rhythmTools.className='rhythm-tools';move(rhythmTools,label('pulse-swing').closest('details'),label('pulse-poly').closest('details'));rhythm.append(rhythmTools);transport.append(rhythm);query('.pulse-quick-tools').remove();
  get('practice-tools-title').textContent='Session & training';
- const session=group('Session length','session-length');move(session,label('pulse-minutes').closest('details'));session.querySelector('details')!.open=true;
+ const session=group('Session timer','session-length');const timer=label('pulse-minutes').closest('details')!;move(session,timer);timer.open=false;timer.querySelector('summary')!.id='session-timer-summary';
+ const timerMode=document.createElement('label');timerMode.innerHTML='Session duration<select id="pulse-timer-mode"><option value="unlimited">Unlimited</option><option value="timed">Fixed duration</option></select>';timer.querySelector('.pulse-tool-fields')!.prepend(timerMode);timer.querySelector('#pulse-minutes')!.closest('label')!.firstChild!.textContent='Minutes ';
  const training=group('Training','metronome-training');move(training,query('.tempo-training'),query('.gap-training'));move(tools,session,training);pulseGrid.remove();
- const goals=get('guided-goals');tools.after(goals);goals.querySelector('h2')!.textContent='Guided session setup';
+ const goals=get('guided-goals');goals.classList.replace('workspace-practice','workspace-progress');query('.presets').before(goals);goals.querySelector('h2')!.textContent='Guided session setup';
+ const mixHelp=document.createElement('p');mixHelp.className='practice-help mixer-instructions';mixHelp.textContent='Unmute a track to add it. Solo isolates tracks; Ambient space controls the reverb return.';query('.levels-heading').after(mixHelp);
  // Harmony: chart setup, sheet and selected-chord editor, then optional reference.
  const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!;
  harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();

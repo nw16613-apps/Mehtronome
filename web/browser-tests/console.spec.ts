@@ -1,9 +1,9 @@
 import {expect,test} from '@playwright/test';
 test('console faders use a gain taper, preserve percent controls, and reset on double click',async({page})=>{
  await page.goto('/');const fader=page.locator('#click');await expect(page.locator('.console-meter-lane')).toHaveCount(14);
- await fader.click({position:{x:22,y:122}});await expect(fader).toHaveValue('6');await expect(page.locator('#click-value')).toHaveText('6%');await expect(page.locator('#gain-click')).toHaveText('-24.4');
+ const bounds=await fader.boundingBox();await fader.click({position:{x:22,y:bounds!.height/2}});await expect(fader).toHaveValue('6');await expect(page.locator('#click-value')).toHaveText('6%');await expect(page.locator('#gain-click')).toHaveText('-24.4');
  await fader.press('ArrowUp');await expect(fader).toHaveValue('7');await fader.dblclick();await expect(fader).toHaveValue('50');await expect(page.locator('#gain-click')).toHaveText('-6.0');
- await page.getByRole('button',{name:'Enable Drums',exact:true}).click();await expect(page.locator('#drums')).toBeChecked();await expect(page.getByRole('button',{name:'Disable Drums',exact:true})).toHaveAttribute('aria-pressed','true');
+ await page.getByRole('button',{name:'Unmute Drums',exact:true}).click();await expect(page.locator('#drums')).toBeChecked();await expect(page.getByRole('button',{name:'Mute Drums',exact:true})).toHaveAttribute('aria-pressed','false');
  await page.locator('#mini-mixer').click();await expect(page.locator('#floating-mixer #click')).toHaveValue('50');await expect(page.locator('#floating-mixer .console-meter-lane')).toHaveCount(14);
 });
 test('real channel meters are idle before audio, respond to sound, and decay after mute',async({page})=>{

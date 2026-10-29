@@ -31,7 +31,7 @@ export function installConsole(ambient:()=>number[]){
  for(const channel of MIX_CHANNELS){
   const input=control(channel.control);let pointer:number|null=null;
   const move=(event:PointerEvent)=>{const rect=input.getBoundingClientRect();const travel=Math.max(0,Math.min(1,(rect.bottom-event.clientY-13.5)/(rect.height-27)));input.value=String(travel===0?0:Math.round(100*10**((-48+travel*48)/20)));input.dispatchEvent(new Event('input',{bubbles:true}));};
-  input.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();input.focus();pointer=event.pointerId;input.setPointerCapture(pointer);move(event);});
+  input.addEventListener('pointerdown',event=>{if(event.button!==0||matchMedia('(max-width:700px)').matches)return;event.preventDefault();input.focus();pointer=event.pointerId;input.setPointerCapture(pointer);move(event);});
   input.addEventListener('pointermove',event=>{if(pointer===event.pointerId){event.preventDefault();move(event);}});
   input.addEventListener('pointerup',event=>{if(pointer!==event.pointerId)return;pointer=null;if(input.hasPointerCapture(event.pointerId))input.releasePointerCapture(event.pointerId);});
   input.addEventListener('pointercancel',()=>pointer=null);

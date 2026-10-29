@@ -94,8 +94,8 @@ app.innerHTML = `
       <div class="tempo-controls"><button class="round" id="slower" aria-label="Decrease tempo">−</button><div><label class="sr-only" for="bpm">Tempo in beats per minute</label><input id="bpm" type="number" min="30" max="240" value="90"><span id="bpm-caption" class="bpm-label">BEATS PER MINUTE</span></div><button class="round" id="faster" aria-label="Increase tempo">+</button></div>
       <label class="sr-only" for="tempo">Tempo</label><input id="tempo" class="tempo-range" type="range" min="30" max="240" value="90"><div class="range-limits"><span>30 · LARGO</span><span>240 · PRESTISSIMO</span></div>
       <div class="beat-dots" id="beat-dots" role="group" aria-label="Editable beat accents"></div>
-      <p class="play-status" id="play-status" role="status">Your next good practice starts here.</p>
-      <button class="play-button" id="play" aria-pressed="false"><span id="play-icon">▶</span><span id="play-label">Start practicing</span><kbd>SPACE</kbd></button>
+      <p class="play-status" id="play-status" role="status">Ready.</p>
+      <button class="play-button" id="play" aria-pressed="false"><span id="play-icon">▶</span><span id="play-label">Play session</span><kbd>SPACE</kbd></button>
       <div class="pulse-options">
       <div class="transport-options"><label>Beats / bar <select id="beats" aria-label="Beats per bar"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option></select></label><label class="check"><input type="checkbox" id="count-in">One-bar count-in</label></div>
       <div class="transport-options subdivision-options"><label>Subdivision <select id="subdivision"><option value="1" aria-label="Quarter notes" title="Quarter notes">♩</option><option value="2" aria-label="Eighth notes" title="Eighth notes">♪</option><option value="3" aria-label="Eighth-note triplets" title="Eighth-note triplets">♪³</option><option value="4" aria-label="Sixteenth notes" title="Sixteenth notes">♬</option><option value="5" aria-label="Quintuplets: five per beat" title="Quintuplets: five per beat">♬⁵</option><option value="6" aria-label="Sixteenth-note sextuplets" title="Sixteenth-note sextuplets">♬⁶</option><option value="7" aria-label="Septuplets: seven per beat" title="Septuplets: seven per beat">♬⁷</option></select></label><label class="check"><input id="accent" type="checkbox" checked>Accent beat one</label></div>
@@ -694,7 +694,15 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   applyStudioIcons(document.querySelector('.guitar')!);
   applyStudioIcons(el('caged-exercise'));
 }
+function syncPulseToolsUI(){
+ const custom=Boolean(settings.beatAccents?.trim());
+ input('accent').disabled=custom;
+ const accentStatus=document.getElementById('beat-accent-status');if(accentStatus)accentStatus.textContent=custom?'Custom accents active. Reset accents to use the beat-one option.':settings.accent?'Beat one accented; other beats soft.':'All beats soft.';
+ const timer=document.getElementById('pulse-timer-mode') as HTMLSelectElement|null;
+ if(timer){timer.value=settings.sessionSeconds>0?'timed':'unlimited';input('pulse-minutes').closest('label')!.hidden=settings.sessionSeconds===0;input('pulse-finish-bar').closest('label')!.hidden=settings.sessionSeconds===0;el('session-timer-summary').textContent=settings.sessionSeconds>0?`Session timer · ${settings.sessionSeconds/60} min`:'Session timer · Unlimited';}
+}
 function renderBeats(active = -1) {
+  syncPulseToolsUI();
   if(active<0)document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>{cell.classList.remove('playing');cell.removeAttribute('aria-current');});
   const dots=el('beat-dots');
   if(dots.children.length!==settings.beats)dots.innerHTML=Array.from({length:settings.beats},(_,i)=>`<button type="button" class="beat" data-pulse-beat="${i}">${i+1}</button>`).join('');
@@ -762,7 +770,7 @@ function renderCustomBeatGrid(){
  el('chart-loop-status').textContent=settings.loopEnabled?(settings.loopUnit==='beats'?`Loop selected: beats ${settings.loopBeatStart+1}–${settings.loopBeatEnd+1} (included). Drag to change it, or clear the loop.`:`Loop selected: chords ${settings.loopStart+1}–${settings.loopEnd+1}. Drag to select exact beats.`):'Click a chord to edit; hold to hear it. Drag across beats to select an inclusive loop.';
  el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],marks:definition.steps?.map((s:any)=>s.section||'')||[],selected:settings.template==='custom'?customStepIndex:step,loopSteps:settings.loopEnabled&&settings.loopUnit!=='beats'?progressionOrder(settings):[],loopBeats:settings.loopEnabled&&settings.loopUnit==='beats'?progressionTimeline(settings).flatMap((segment:any)=>Array.from({length:segment.duration},(_,i)=>segment.start+i)):[]});
  el('custom-beat-grid').insertAdjacentHTML('beforeend',sectionControls());
- if(el('custom-beat-grid').closest('.chart-sheet-panel'))el('custom-beat-grid').querySelector('.rehearsal-controls')?.append(loopControls);
+ if(el('custom-beat-grid').closest('.chart-sheet-panel'))(el('custom-beat-grid').querySelector('.rehearsal-controls')||el('custom-beat-grid')).append(loopControls);
  el('custom-grid-help').textContent=`${beatLength(total)} in ${settings.beats}/4. ${total%settings.beats?'This cycle repeats immediately, so the next cycle starts partway through a bar.':'The cycle ends on a bar boundary.'} Beat durations stay fixed when the metre changes; bar durations follow the metre.${total>128?' First 128 beats shown.':''}`;
 }
 function highlightCustomBeat(beat:number){const target=progressionPositionAtBeat(settings,beat).chartBeat;document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>{const active=Number(cell.dataset.gridBeat)===target;cell.classList.toggle('playing',active);if(active)cell.setAttribute('aria-current','true');else cell.removeAttribute('aria-current');});}
@@ -970,6 +978,7 @@ function update() {
   el('pulse-swing-value').textContent=settings.clickSwing?`${Math.round(50+settings.clickSwing*100/6)}% offbeat`:'Straight';
   settings.sessionSeconds=Math.max(0,Math.min(180,Number(input('pulse-minutes').value)||0))*60;
   settings.sessionFinishBar=input('pulse-finish-bar').checked;
+  syncPulseToolsUI();
   const [polyBeats,polyBase]=select('pulse-poly').value.split('/').map(Number);
   settings.polyBeats=polyBeats;settings.polyBase=polyBase;
   if(el('pulse-poly-beats').children.length!==polyBeats)el('pulse-poly-beats').innerHTML=Array.from({length:polyBeats},(_,i)=>`<span>${i+1}</span>`).join('');
@@ -1003,7 +1012,7 @@ function reflectPlayback() {
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
   if(exercisePreview)exercisePreview.disabled=playing||!currentExercise.length;
-  el('play-label').textContent = playing ? 'Stop practicing' : 'Start practicing';
+  el('play-label').textContent = playing ? 'Stop session' : 'Play session';
   el('play-icon').textContent = playing ? '■' : '▶';
   el('play').setAttribute('aria-pressed', String(playing));
   el('pulse-large-play').textContent=playing?'Stop practicing':'Start practicing';
@@ -1011,7 +1020,7 @@ function reflectPlayback() {
   if(!playing){el('pulse-large-status').textContent='Ready to practice';el('pulse-poly-beats').querySelectorAll('.active').forEach(beat=>beat.classList.remove('active'));}
   el('live-dot').classList.toggle('on', playing);
   select('beats').disabled = input('count-in').disabled = playing;
-  if (!playing) { renderBeats(); el('play-status').textContent = 'Take a breath. Start again when you’re ready.'; }
+  if (!playing) { renderBeats(); el('play-status').textContent = 'Stopped.'; }
   if (!playing) currentBpm = settings.bpm;
   syncMiniTransport();
   syncTrainerStatus();
@@ -1512,7 +1521,7 @@ document.addEventListener('click',event=>{
 });
 input('space').addEventListener('input', updateSpace);
 async function toggle() {
-
+  if(exercisePlaying||exercisePreparing){stopExercisePreview();return;}
   if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
   busy = true;
@@ -1559,7 +1568,7 @@ function reflectMixerChannels(){
     card.classList.toggle('is-muted',muted);card.classList.remove('is-inactive');
     const button=card.querySelector<HTMLButtonElement>('.channel-mute')!;
     button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',`${muted?'Unmute':'Mute'} ${channel.label}`);
-    button.textContent='M';button.title=`${muted?'Unmute':'Mute'} ${channel.label}`;
+    button.textContent='M';button.dataset.label=muted?'Unmute':'Mute';button.title=`${muted?'Unmute':'Mute'} ${channel.label}`;
     el('mix-state-'+channel.id).textContent=muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
     if(muted)mutedCount++;
   }
@@ -1798,6 +1807,8 @@ function syncMiniTransport() {
   input('mini-bpm').readOnly=exercisePlaying;input('mini-bpm').setAttribute('aria-label',exercisePlaying?'Exercise tempo (change in exercise settings)':'Practice tempo');
   el('mini-play').textContent = playing||exercisePlaying||exercisePreparing ? 'Stop' : 'Play';
   el('mini-play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
+  el('play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
+  el('play-label').textContent=exercisePlaying||exercisePreparing?'Stop exercise':playing?'Stop session':'Play session';
   document.querySelector<HTMLElement>('.mini-harmony-controls')!.hidden=exercisePlaying;
   el<HTMLButtonElement>('mini-play').disabled = busy || stopping;
   const transportSettings=exercisePlaying&&exerciseView.backing?exerciseBackingConfig():settings;
@@ -1810,6 +1821,9 @@ function syncMiniTransport() {
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
   el('mini-mode').title=`Tonic ${active.tonic} · next ${active.nextChord}`;
   el('mini-chord').textContent = info.name+info.suffix;
+  const sessionChord=document.getElementById('session-chord'),sessionMode=document.getElementById('session-mode');
+  if(sessionChord)sessionChord.textContent=info.name+info.suffix;
+  if(sessionMode)sessionMode.textContent=active.scale;
   el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
   el('mini-root-purpose').textContent=settings.progression?'Tonic':'Root';
   select('mini-key').value=select('key').value;
@@ -2155,4 +2169,8 @@ installRepertoire({
 });
 
 organizeWorkspaces(showWorkspace);
+applyStudioIcons();
 renderCustomBuilder();
+
+el('pulse-timer-mode').addEventListener('input',()=>{input('pulse-minutes').value=select('pulse-timer-mode').value==='unlimited'?'0':String(Number(input('pulse-minutes').value)||10);update();});
+syncPulseToolsUI();syncMiniTransport();

@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test';
+test('shared session playback describes its scope and tracks the selected harmony',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await expect(page.locator('.pulse-main-controls #tap-tempo')).toBeVisible();await expect(page.locator('.pulse-main-controls #tempo-save')).toBeVisible();await expect(page.locator('#session-chord')).toHaveText('Am13');await expect(page.locator('#session-mode')).toHaveText('A Dorian');
+ await expect(page.locator('.session-playback')).toContainText('all unmuted tracks');await page.locator('#count-in').uncheck();await page.locator('#play').click();await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await page.locator('#mini-play').click();await expect(page.locator('#play')).toHaveAttribute('aria-pressed','false');
+ await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#key').selectOption('0');await page.locator('[data-workspace-target=pulse-title]').click();await expect(page.locator('#session-chord')).toHaveText('Cm13');
+ await expect(page.locator('#guided-goals')).toBeHidden();await page.locator('[data-workspace-target=progress-title]').click();await expect(page.locator('#guided-goals')).toBeVisible();await page.locator('#start-guided-goal').click();await expect(page.locator('#guided-session')).toBeVisible();expect(errors).toEqual([]);
+});
+test('timer mode and custom accents have explicit states',async({page})=>{
+ await page.goto('/');await expect(page.locator('#session-timer-summary')).toHaveText('Session timer · Unlimited');await expect(page.locator('#pulse-minutes')).toBeHidden();await page.locator('#session-timer-summary').click();await page.locator('#pulse-timer-mode').selectOption('timed');await page.locator('#pulse-minutes').fill('7');await page.locator('#pulse-minutes').dispatchEvent('input');await expect(page.locator('#session-timer-summary')).toHaveText('Session timer · 7 min');await page.locator('#pulse-timer-mode').selectOption('unlimited');await expect(page.locator('#pulse-minutes')).toHaveValue('0');await expect(page.locator('#pulse-minutes')).toBeHidden();
+ await page.locator('[data-pulse-beat="1"]').click();await expect(page.locator('#beat-accent-status')).toContainText('Custom accents active');await expect(page.locator('#accent')).toBeDisabled();await expect(page.locator('#mini-accent')).toBeDisabled();await page.locator('#pulse-accent-reset').click();await expect(page.locator('#accent')).toBeEnabled();await expect(page.locator('#beat-accent-status')).toContainText('Beat one accented');
+});
+test('mobile mixer exposes all tracks and horizontal sliders share floating mixer state',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ for(const channel of ['click','harmony','drums','bass','comping','sequence','space']){
+  const row=page.locator(`[data-mix-channel=${channel}]`),box=await row.boundingBox();expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(390);await expect(row.locator('input[type=range]')).toHaveCSS('writing-mode','horizontal-tb');
+ }
+ const fader=page.locator('#drums-volume'),rect=await fader.boundingBox();await fader.click({position:{x:rect!.width*.8,y:rect!.height/2}});await expect.poll(async()=>Number(await fader.inputValue())).toBeGreaterThan(60);const gain=await fader.inputValue();
+ await page.locator('[data-mute-channel=drums]').click();await expect(page.locator('[data-mix-channel=drums] .console-status')).toHaveText('On');await page.locator('[data-solo-channel=drums]').click();await expect(page.locator('[data-mix-channel=harmony] .mix-channel-state')).toHaveText('Solo muted');
+ await page.locator('#mini-mixer').click();await expect(page.locator('#floating-mixer #drums-volume')).toHaveValue(gain);await page.locator('#mixer-clear-solos').click();await page.locator('[data-mute-channel=drums]').click();await page.locator('#floating-mixer-close').click();await expect(page.locator('#mix-panel #drums-volume')).toHaveValue(gain);await expect(page.locator('[data-mute-channel=drums]')).toHaveAttribute('aria-pressed','true');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});

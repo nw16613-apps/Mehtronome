@@ -37,3 +37,20 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer) {
  .console-status i { background:var(--channel-color) }
  .mix-channel:is(.is-muted,.is-excluded) .console-status i { background:var(--line) }
 }
+
+/* Compact channel rows share the console's original controls and state. */
+@media(min-width:1101px){html:root[data-palette][data-theme] body #mix-panel{
+ .mix-level-grid{min-width:0;grid-template-columns:repeat(7,minmax(78px,1fr))!important}
+ .mix-channel{padding-inline:8px!important}.mix-channel:before{margin-inline:-8px}.console-channel-name{font-size:11px!important}.console-channel-role{font-size:7px}.console-fader-scale{width:20px}.console-fader-bay{height:220px}.console-fader-input{height:204px}.console-meter{right:-3px}.console-gain output{font-size:14px!important}.console-gain small{font-size:8px}.console-strip-footer{flex-wrap:wrap}.console-percent{margin-left:0}
+}}
+@media(max-width:700px){html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
+ .console-level-scroll{overflow:visible}.mix-level-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;min-width:0;gap:6px!important;padding:0;border:0;background:transparent;box-shadow:none}
+ .mix-channel{display:grid!important;grid-template-columns:minmax(0,1fr) 104px;gap:4px 10px!important;min-width:0;padding:10px!important;border:1px solid var(--line)!important;border-left:3px solid var(--channel-color)!important;border-radius:5px!important;background:var(--pulse)}
+ .mix-channel[data-mix-channel=space]{border-left:3px solid var(--channel-color)!important;margin-top:10px}.mix-channel:before,.console-channel-top{display:none}.mix-channel-header{display:contents}.console-channel-name{grid-column:1;grid-row:1;min-height:0!important;align-self:center;font-size:12px!important}
+ .console-channel-role{display:none}.mix-channel[data-mix-channel=space] .console-channel-role{display:block;grid-row:3;grid-column:1;min-height:0;margin:0;font-size:9px}
+ .console-gain{grid-column:2;grid-row:1;padding:3px}.console-gain output{font-size:13px!important}.console-switches{grid-column:2;grid-row:2;margin:0;gap:5px}
+ .console-switches button{min-height:38px!important;font-size:0;letter-spacing:0}.channel-mute:after{content:attr(data-label);font-size:11px}.channel-solo:after{content:'Solo';font-size:11px}
+ .console-fader-bay{grid-column:1;grid-row:2;position:relative;height:38px!important;margin:0;min-width:0}.console-fader-rail,.console-fader-cap,.console-fader-scale,.console-meter{display:none}
+ .console-fader-input,.mix-channel:is(.is-inactive,.is-muted,.is-excluded) .console-fader-input{appearance:auto;writing-mode:horizontal-tb;direction:ltr;position:static;width:100%;height:38px!important;left:auto;right:auto;top:auto;bottom:auto;inset:auto;margin:0;opacity:1!important;cursor:pointer;touch-action:pan-y;accent-color:var(--channel-color)}
+ .console-strip-footer{grid-column:1/-1;grid-row:3;border:0;padding:0;min-height:0;justify-content:space-between}.console-enable{min-height:0!important;padding:0!important;font-size:10px}.console-percent{font-size:10px;margin-left:auto}.mix-channel[data-mix-channel=space] .console-strip-footer{grid-row:4}.console-strip-footer .console-enable{min-height:0}
+}}
