@@ -17,21 +17,42 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const session=group('Session length','session-length');move(session,label('pulse-minutes').closest('details'));session.querySelector('details')!.open=true;
  const training=group('Training','metronome-training');move(training,query('.tempo-training'),query('.gap-training'));move(tools,session,training);pulseGrid.remove();
  const goals=get('guided-goals');tools.after(goals);goals.querySelector('h2')!.textContent='Guided session setup';
- // Harmony: choose the source, set tonality, work on the chart, then consult references.
- const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!,source=group('Start a chart','harmony-source');move(source,get('single-chord-chart'));harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();heading.after(source);
- const tonality=group('Chart key & template settings','harmony-tonality'),tonalityFields=document.createElement('div');tonalityFields.className='workspace-fields';
- move(tonalityFields,label('key'),label('quality'),label('chord'));tonality.append(tonalityFields);source.after(tonality);
+ // Harmony: chart setup, sheet and selected-chord editor, then optional reference.
+ const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!;
+ harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();
+ const progression=group('Chart setup','harmony-progression chart-title-group');
+ const setupFields=document.createElement('div');setupFields.className='chart-setup-fields';
+ const tonality=document.createElement('div');tonality.className='harmony-tonality';
+ move(tonality,label('key'),label('quality'),label('chord'));
+ move(setupFields,query('.progression-chooser'),label('custom-name'),tonality,get('single-chord-chart'));
+ move(progression,setupFields,query('.chart-save-actions'),get('repertoire-status'));
+ const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Edits are kept as a working draft in this browser. Save chart creates a named copy; Update saved chart replaces the selected saved copy.';progression.append(draftHelp);
+ const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart key transposes the whole chart; chord root edits one chord.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
+ const hiddenTemplates=document.createElement('div');hiddenTemplates.hidden=true;move(hiddenTemplates,get('mode-template'),label('template'));progression.append(hiddenTemplates);
+ heading.after(get('active-musical-context'));get('active-musical-context').after(progression);
  for(const row of Array.from(harmony.querySelectorAll(':scope>.field-row')))if(!row.children.length)row.remove();
- const progression=group('Chord chart','harmony-progression');move(progression,query('.progression-chooser'),get('single-chord-chart'),get('mode-template'),label('template'),get('custom-progression-builder'));source.remove();tonality.after(progression);
+ const builder=get('custom-progression-builder');progression.after(builder);
+ const sheet=document.createElement('section');sheet.className='chart-sheet-panel';sheet.setAttribute('aria-label','Chord sheet');
+ move(sheet,query('.custom-builder-heading'),get('chart-loop-status'),get('custom-beat-grid'),get('custom-grid-help'),get('loop-controls'),get('custom-timeline'));
+ sheet.querySelector('.eyebrow')!.textContent='CHORD SHEET';
+ const editor=query('.custom-editor'),chordGroup=group('Selected chord','chart-chord-group'),timeGroup=group('Duration','chart-time-group');
+ chordGroup.querySelector('h3')!.id='selected-chord-heading';editor.setAttribute('aria-labelledby','selected-chord-heading');
+ move(chordGroup,label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-scale-check'),get('custom-compatible-mode'));
+ move(timeGroup,label('custom-duration-unit'),get('custom-bars-label'),get('custom-beats-label'));
+ const mark=document.createElement('details');mark.className='chart-rehearsal-option';mark.innerHTML='<summary>Rehearsal mark</summary>';move(mark,label('custom-section'));timeGroup.append(mark);
+ const actions=query('.custom-actions');actions.setAttribute('role','group');actions.setAttribute('aria-label','Selected chord actions');
+ actions.prepend(sheet.querySelector('#custom-add')!,get('custom-duplicate'),sheet.querySelector('#custom-delete')!);
+ editor.append(chordGroup,timeGroup,actions);
+ const workspace=document.createElement('div');workspace.className='chart-editing-workspace';move(workspace,sheet,editor);builder.prepend(workspace);
+ query('.custom-share summary').textContent='Copy progression as text';
+ get('custom-status').textContent='Working draft ready.';
+ const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';
+ const reference=document.createElement('details');reference.className='harmony-reference';reference.innerHTML='<summary>Chord & scale reference</summary>';builder.after(reference);reference.append(map);
+ const highlightLabel=label('exercise');highlightLabel.firstChild!.textContent='Highlight ';
+ const referenceHighlight=get('exercise') as HTMLSelectElement;referenceHighlight.options[0].textContent='Scale';referenceHighlight.options[1].textContent='Chord tones';
+ const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));reference.append(help);
+ get('preview-controls').hidden=true;
  const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));query('.pad-settings').append(movement);
- const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';progression.after(map);
-
- heading.after(get('active-musical-context'));get('active-musical-context').after(tonality);
- const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));map.after(help);progression.append(get('preview-controls'));
- // Editor keeps title, selected chord and time controls distinct without changing its hidden state.
- const editor=query('.custom-editor');const titleGroup=group('Chart','chart-title-group'),chordGroup=group('Selected chord','chart-chord-group'),timeGroup=group('Duration & rehearsal mark','chart-time-group');
- move(titleGroup,label('custom-name'),query('.chart-save-actions'),get('repertoire-status'));move(chordGroup,label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-scale-check'),get('custom-compatible-mode'));
- move(timeGroup,label('custom-duration-unit'),get('custom-bars-label'),get('custom-beats-label'),label('custom-section'));editor.append(titleGroup,chordGroup,timeGroup);
  // Guitar: musical choices and view controls before diagrams; theory explanations afterward.
  const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!;
  guitarHelp.querySelector('summary')!.textContent='Diagram reference & guidance';

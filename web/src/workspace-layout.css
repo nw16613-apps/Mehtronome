@@ -23,3 +23,41 @@ html:root[data-palette][data-theme] .sound-settings .instrument-sequence{border:
 .harmony-progression #template-field,.harmony-progression #mode-template{display:none!important}.progression-chooser{display:grid;gap:8px;margin:12px 0}.progression-chooser>label{display:grid;gap:5px}.progression-chooser select{width:100%}.progression-chooser p{margin:0}.harmony-progression>#single-chord-chart{margin:0 0 12px}.chart-title-group{grid-template-columns:minmax(180px,1fr) auto;align-items:end}.chart-save-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}@media(max-width:700px){.chart-title-group{grid-template-columns:minmax(0,1fr)}.chart-save-actions{width:100%}.chart-save-actions button{flex:1 1 150px}}
 
 .chart-title-group>.chart-save-actions,.chart-title-group>#repertoire-status{grid-column:1/-1}
+
+/* Harmony follows chart setup -> sheet/editor -> optional reference. */
+.harmony-progression.chart-title-group{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.harmony-progression>h3{margin-bottom:0}
+.chart-setup-fields{display:grid;grid-template-columns:minmax(220px,2fr) minmax(160px,2fr) minmax(130px,1fr) auto;gap:12px;align-items:start}
+.chart-setup-fields .progression-chooser{margin:0}.chart-setup-fields label{display:grid;gap:5px}
+.chart-setup-fields .harmony-tonality{display:grid;gap:6px}.chart-setup-fields #single-chord-chart{align-self:start;margin-top:23px}
+.chart-setup-fields .practice-help{margin:0;font-size:11px}.chart-title-group .chart-save-actions button{flex:0 1 auto}
+.chart-title-group>p{margin:0}.chart-title-group>#repertoire-status:empty{display:none}
+#custom-progression-builder{margin-top:0;padding:16px 0;border:0;background:transparent}
+.chart-editing-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+.chart-sheet-panel{min-width:0}.chart-sheet-panel .custom-builder-heading{gap:10px}.chart-sheet-panel .custom-builder-heading h3{font-size:16px}
+.chart-sheet-panel #chart-loop-status{margin:8px 0 12px}.harmony .chart-legend,.harmony #preview-controls{display:none!important}
+.chart-sheet-panel #custom-grid-help{font-size:11px}.chart-sheet-panel .rehearsal-controls{gap:6px;margin:10px 0}
+.chart-sheet-panel #loop-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;padding:10px 0}
+.chart-sheet-panel #custom-beat-grid .chart-beat.selected{box-shadow:inset 0 0 0 2px #745385}.chart-sheet-panel #custom-beat-grid .chart-beat.selected:not(.loop-selected){background:#eee7f1}
+.chart-editing-workspace .custom-editor{margin:0;padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--pulse)}
+.chart-editing-workspace .chart-chord-group,.chart-editing-workspace .chart-time-group{grid-template-columns:repeat(2,minmax(0,1fr))}
+.chart-editing-workspace .chart-chord-group{border-top:0;padding-top:0}
+.chart-chord-group #custom-mode-help,.chart-chord-group #custom-scale-check{grid-column:1/-1;margin:0;font-size:11px}
+.chart-editing-workspace #selected-chord-heading{text-transform:none;letter-spacing:0;font-size:14px}
+.chart-rehearsal-option{grid-column:1/-1}.chart-rehearsal-option summary{cursor:pointer;font-size:12px}.chart-rehearsal-option label{margin-top:10px}
+.harmony-reference{border-top:1px solid var(--line);padding-top:16px;margin-top:12px}.harmony-reference>summary{cursor:pointer;font-size:14px;font-weight:600}
+.harmony-reference .harmony-learning>.section-heading h2{display:none}.harmony-reference .harmony-learning{border-top:0}
+.custom-share{margin-top:14px}
+@media(min-width:1200px){.chart-editing-workspace{grid-template-columns:minmax(0,1fr) 360px}.chart-editing-workspace .custom-editor{position:sticky;top:100px}}
+@media(max-width:1000px){.chart-setup-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-setup-fields #single-chord-chart{margin-top:0;align-self:center}}
+@media(max-width:650px){.chart-setup-fields{grid-template-columns:minmax(0,1fr)}.chart-setup-fields #single-chord-chart{justify-self:start}.chart-title-group .chart-save-actions{gap:6px}.chart-title-group .chart-save-actions button{flex:1 1 115px;padding:9px 10px;min-width:0}.chart-editing-workspace .chart-chord-group,.chart-editing-workspace .chart-time-group{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-editing-workspace{gap:12px}}
+
+.chart-sheet-panel .chart-measures{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:700px){.chart-sheet-panel .chart-measures{grid-template-columns:minmax(0,1fr)}}
+
+.chart-editing-workspace .custom-editor .workspace-group>label:not([hidden]){grid-column:auto}
+.chart-editing-workspace .custom-editor select{width:100%;box-sizing:border-box}
+.chart-editing-workspace .custom-actions .practice-button{flex:1 1 90px}
+
+.chart-sheet-panel .rehearsal-controls #loop-controls{border:0;padding:0;margin:0}.chart-key-help{margin:0;font-size:11px}
+
+.chart-edit-swatch{border:2px solid #745385;background:#eee7f1;box-sizing:border-box}

@@ -119,7 +119,7 @@ app.innerHTML = `
       <label id="template-field" class="template-field" hidden>Progression template<select id="template">${['Parallel movements','Jazz standards','Mode practice','Custom'].map(group=>`<optgroup label="${group}">${Object.entries(PROGRESSIONS).filter(([,template])=>group==='Custom'?['custom','single'].includes(template.kind):group==='Mode practice'?template.kind==='modal':group==='Jazz standards'?template.kind==='jazz':!['custom','single','modal','jazz'].includes(template.kind)).map(([id,template])=>`<option value="${id}">${template.name}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <section id="custom-progression-builder" class="custom-progression-builder" aria-labelledby="custom-progression-title" hidden>
         <div class="custom-builder-heading"><div><p class="eyebrow">PROGRESSION BUILDER</p><h3 id="custom-progression-title">My progression</h3></div><button id="customize-progression" type="button" class="practice-button custom-progression-open" hidden>Create from this progression</button><div class="custom-history-actions" role="group" aria-label="Progression editing"><button id="custom-undo" type="button" class="practice-button" disabled>Undo</button><button id="custom-redo" type="button" class="practice-button" disabled>Redo</button><button id="custom-add" type="button" class="practice-button">+ Add chord</button><button id="custom-delete" type="button" class="practice-button">Delete chord</button></div></div>
-        <p id="chart-loop-status" class="practice-help" role="status">Drag across beats to loop them. Click a chord to edit; hold to hear it. Selection includes both endpoint beats.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><div hidden data-loop-state><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></div></div>
+        <p id="chart-loop-status" class="practice-help" role="status">Click a chord to edit; hold to hear it. Drag across beats to select an inclusive loop.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><div hidden data-loop-state><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></div></div>
 <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor"><label>Chart title<input id="custom-name" maxlength="60"></label><label>Start a section at this chord<input id="custom-section" maxlength="32" placeholder="e.g. A, Bridge, Solo"></label>
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
@@ -130,7 +130,7 @@ app.innerHTML = `
         </div>
         <p id="custom-scale-check" class="context-check" hidden></p><button id="custom-compatible-mode" type="button" class="practice-button" hidden>Use compatible scale guide</button><div class="custom-actions"><button id="custom-left" type="button" class="practice-button" aria-label="Move chord left">← Move</button><button id="custom-right" type="button" class="practice-button" aria-label="Move chord right">Move →</button><button id="custom-duplicate" type="button" class="practice-button">Duplicate</button></div>
         <details class="custom-share"><summary>Share or copy progression</summary><textarea id="custom-text" rows="3" aria-label="Custom progression text" readonly></textarea><button id="custom-copy" type="button" class="practice-button">Copy progression</button></details>
-        <p id="custom-status" class="practice-help" role="status">Changes save automatically in this browser and transpose with the tonic key.</p>
+        <p id="custom-status" class="practice-help" role="status">Edits are kept as a working draft in this browser.</p>
       </section>
       <div class="progression-strip" id="progression-strip" hidden></div>
     <section class="notes harmony-learning" aria-labelledby="notes-title">
@@ -534,7 +534,7 @@ function renderMusic(skipExercise=false,positionOverride:any=null) {
   el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${progressionTimeline(settings).reduce((sum:number,segment:any)=>sum+segment.duration,0)}-BEAT SELECTED LOOP` : custom ? `${progressionBeatDurations(settings).reduce((sum:number,beats:number)=>sum+beats,0)}-BEAT CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('progression-strip').classList.toggle('blues', template.roman.length === 12);
   el('progression-strip').hidden = true;
-  el('preview-controls').hidden = !settings.progression;el('preview-controls').querySelector('p')!.textContent='Click a chart chord or press Enter to edit. While stopped, hold it or hold Space to hear it; release to stop.';
+  el('preview-controls').hidden = true;el('preview-controls').querySelector('p')!.textContent='Click a chart chord or press Enter to edit. While stopped, hold it or hold Space to hear it; release to stop.';
   const focusedStep = (document.activeElement as HTMLElement)?.dataset.step;
   el('progression-strip').innerHTML = Array.from({ length: template.roman.length }, (_, i) => {
     const c = chordInfo(i);
@@ -738,7 +738,7 @@ function materializeWorkingChart(){
  select('template').value='custom';settings.customProgression=customProgression;
  saveCustomProgression('Editable working chart ready.');fillLoopOptions(true);update();
 }
-function saveCustomProgression(message='Custom progression saved in this browser.'){
+function saveCustomProgression(message='Working draft saved in this browser.'){
   customProgression=normalizeCustomProgression(customProgression);
   settings.customProgression=customProgression;
   (PROGRESSIONS as any).custom=customProgression;
@@ -756,12 +756,13 @@ function sectionControls(){
 }
 function renderCustomBeatGrid(){
  const durations=progressionBeatDurations(settings),total=durations.reduce((a:number,b:number)=>a+b,0);
- const definition=progressionDefinition(settings);
+ const definition=progressionDefinition(settings),loopControls=el('loop-controls');
  const chords=definition.roman.map((_:any,index:number)=>{const c=chordInfo(index);return c.name+c.suffix;});
  el<HTMLButtonElement>('chart-loop-clear').disabled=!settings.loopEnabled;
- el('chart-loop-status').textContent=settings.loopEnabled?(settings.loopUnit==='beats'?`Loop selected: beats ${settings.loopBeatStart+1}–${settings.loopBeatEnd+1} (included). Drag to change it, or clear the loop.`:`Loop selected: chords ${settings.loopStart+1}–${settings.loopEnd+1}. Drag to select exact beats.`):'Drag across beats to loop them. Click a chord to edit; hold to hear it. Selection includes both endpoint beats.';
+ el('chart-loop-status').textContent=settings.loopEnabled?(settings.loopUnit==='beats'?`Loop selected: beats ${settings.loopBeatStart+1}–${settings.loopBeatEnd+1} (included). Drag to change it, or clear the loop.`:`Loop selected: chords ${settings.loopStart+1}–${settings.loopEnd+1}. Drag to select exact beats.`):'Click a chord to edit; hold to hear it. Drag across beats to select an inclusive loop.';
  el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],marks:definition.steps?.map((s:any)=>s.section||'')||[],selected:settings.template==='custom'?customStepIndex:step,loopSteps:settings.loopEnabled&&settings.loopUnit!=='beats'?progressionOrder(settings):[],loopBeats:settings.loopEnabled&&settings.loopUnit==='beats'?progressionTimeline(settings).flatMap((segment:any)=>Array.from({length:segment.duration},(_,i)=>segment.start+i)):[]});
  el('custom-beat-grid').insertAdjacentHTML('beforeend',sectionControls());
+ if(el('custom-beat-grid').closest('.chart-sheet-panel'))el('custom-beat-grid').querySelector('.rehearsal-controls')?.append(loopControls);
  el('custom-grid-help').textContent=`${beatLength(total)} in ${settings.beats}/4. ${total%settings.beats?'This cycle repeats immediately, so the next cycle starts partway through a bar.':'The cycle ends on a bar boundary.'} Beat durations stay fixed when the metre changes; bar durations follow the metre.${total>128?' First 128 beats shown.':''}`;
 }
 function highlightCustomBeat(beat:number){const target=progressionPositionAtBeat(settings,beat).chartBeat;document.querySelectorAll<HTMLElement>('[data-grid-beat]').forEach(cell=>{const active=Number(cell.dataset.gridBeat)===target;cell.classList.toggle('playing',active);if(active)cell.setAttribute('aria-current','true');else cell.removeAttribute('aria-current');});}
@@ -803,6 +804,11 @@ function renderCustomBuilder(){
   customStepIndex=Math.max(0,Math.min(customProgression.steps.length-1,customStepIndex));
   el<HTMLButtonElement>('custom-undo').disabled=!customUndo.length;el<HTMLButtonElement>('custom-redo').disabled=!customRedo.length;
   const current=customProgression.steps[customStepIndex];
+  const startBeat=progressionBeatDurations(settings).slice(0,customStepIndex).reduce((sum:number,n:number)=>sum+n,0);
+  const bar=Math.floor(startBeat/settings.beats)+1,beat=startBeat%settings.beats+1;
+  const selectedHeading=document.getElementById('selected-chord-heading');
+  if(selectedHeading)selectedHeading.textContent=`Editing bar ${bar}${beat!==1?`, beat ${beat}`:''} · ${actualCustomName(current.root,current.letter)}${CHORDS[current.chord as keyof typeof CHORDS].symbol}`;
+
   el('mode-template').textContent=`Try ${MODES[current.mode as keyof typeof MODES].name} progression`;
   el('mode-template').hidden=!PROGRESSIONS[`modal_${current.mode}` as keyof typeof PROGRESSIONS];
   el('custom-progression-title').textContent=customProgression.name;
@@ -952,7 +958,7 @@ function update() {
   select('chord').parentElement!.hidden = jazz || diatonic || modal || custom;
   el('mode-tip').hidden = jazz || custom;
   select('chord').disabled = jazz || diatonic || modal || custom;
-  el('root-label').textContent = jazz || custom ? 'Tonic key' : settings.progression ? 'Starting root' : 'Root note';
+  el('root-label').textContent = jazz || custom ? 'Chart key' : settings.progression ? 'Starting root' : 'Root note';
   el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
   renderCustomBuilder();
   settings.subdivision = Number(select('subdivision').value);
@@ -1696,7 +1702,7 @@ el('customize-progression').addEventListener('click',()=>{
   rememberCustomEdit();
   customProgression=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
   customProgression.name='My progression';customStepIndex=0;
-  saveCustomProgression('Template copied. Edit any chord below; changes save automatically.');
+  saveCustomProgression('Template copied to a working draft. Named saved charts change only when you choose Update saved chart.');
   select('template').value='custom';settings.progression=true;input('loop-enabled').checked=false;step=0;
   fillChords(true);fillLoopOptions(true);update();
 });
@@ -2149,3 +2155,4 @@ installRepertoire({
 });
 
 organizeWorkspaces(showWorkspace);
+renderCustomBuilder();

@@ -1,0 +1,32 @@
+import {test,expect} from '@playwright/test';
+const open=async(page:any)=>{await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();};
+test('chart editing identifies repeated chords and separates chart transposition from chord edits',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await open(page);
+ await expect(page.locator('#selected-chord-heading')).toHaveText('Editing bar 1 · Am13');
+ await page.locator('[data-grid-step="1"]').first().click();
+ await expect(page.locator('#selected-chord-heading')).toHaveText('Editing bar 2 · Am13');
+ await expect(page.locator('[data-grid-step="1"]').first()).toHaveAttribute('aria-pressed','true');
+ await page.locator('#custom-chord').selectOption('min7');
+ await expect(page.locator('#selected-chord-heading')).toHaveText('Editing bar 2 · Am7');
+ await page.locator('[data-grid-step="0"]').first().click();await expect(page.locator('#custom-chord')).toHaveValue('min13');
+ await page.locator('#key').selectOption('0');await expect(page.locator('#selected-chord-heading')).toHaveText('Editing bar 1 · Cm13');
+ await page.locator('[data-grid-step="1"]').first().click();await expect(page.locator('#selected-chord-heading')).toHaveText('Editing bar 2 · Cm7');
+ await expect(page.locator('.chart-title-group #repertoire-save')).toBeVisible();
+ for(const id of ['custom-add','custom-duplicate','custom-delete','custom-left','custom-right'])await expect(page.locator(`.custom-editor #${id}`)).toBeVisible();
+ await expect(page.locator('.custom-actions')).not.toContainText('null');
+ await expect(page.locator('.harmony-reference')).not.toHaveAttribute('open','');
+ await page.locator('.harmony-reference>summary').click();await expect(page.locator('#note-list')).toBeVisible();
+ await expect(page.locator('#exercise option[value="arpeggio"]')).toHaveText('Chord tones');
+ expect(errors).toEqual([]);
+});
+test('mobile keeps editor after sheet, compact chart buttons and optional rehearsal marks',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await open(page);
+ const box=await page.locator('.chart-save-actions').boundingBox();expect(box).not.toBeNull();
+ const buttons=await page.locator('.chart-save-actions button').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().top));expect(new Set(buttons).size).toBeLessThan(5);
+ await page.evaluate(()=>document.fonts.ready);
+ const separation=await page.evaluate(()=>document.querySelector('.custom-editor')!.getBoundingClientRect().top-document.querySelector('.chart-sheet-panel')!.getBoundingClientRect().bottom);expect(separation).toBeGreaterThanOrEqual(0);
+ await expect(page.locator('#custom-section')).toBeHidden();await page.locator('.chart-rehearsal-option>summary').click();await page.locator('#custom-section').fill('Head');await page.locator('#custom-section').dispatchEvent('change');await expect(page.locator('.chart-rehearsal')).toContainText('Head');
+ await page.locator('#custom-duplicate').click();await expect(page.locator('[data-grid-step="2"]')).toHaveCount(4);
+ await page.locator('#custom-delete').click();await expect(page.locator('[data-grid-step="2"]')).toHaveCount(0);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
