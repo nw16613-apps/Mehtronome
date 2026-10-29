@@ -23,8 +23,8 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(tonalityFields,label('key'),label('quality'),label('chord'));tonality.append(tonalityFields);source.after(tonality);
  for(const row of Array.from(harmony.querySelectorAll(':scope>.field-row')))if(!row.children.length)row.remove();
  const progression=group('Chord chart','harmony-progression');move(progression,query('.progression-chooser'),get('single-chord-chart'),get('mode-template'),label('template'),get('custom-progression-builder'),query('.chart-management'),get('repertoire-status'));source.remove();tonality.after(progression);
- const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));progression.after(movement);
- const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';movement.after(map);
+ const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));query('.pad-settings').append(movement);
+ const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';progression.after(map);
 
  heading.after(get('active-musical-context'));get('active-musical-context').after(tonality);
  const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));map.after(help);progression.append(get('preview-controls'));
@@ -49,13 +49,13 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const roadmap=query('.practice-roadmap'),plan=group('Plan a session','roadmap-plan');move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Practice checklist'}));
  const reset=document.createElement('div');reset.className='roadmap-reset';reset.append(get('practice-roadmap-reset'));roadmap.append(reset);
  // Sound Settings: each instrument owns its sound controls and enable switch.
- const settings=query('.sound-settings');settings.querySelector(':scope>p')!.textContent='Choose sounds and patterns by instrument. Balance levels, mute and solo in the mixer.';
+ const settings=query('.sound-settings');settings.querySelector(':scope>p')!.textContent='Choose sounds and patterns by instrument. Unmute backing tracks in the mixer to hear them; balance levels and solo there too.';
  const mixerLink=link('Open mixer','practice','mix-title');settings.querySelector('.section-heading')!.append(mixerLink);
  const instrumentGrid=document.createElement('div');instrumentGrid.className='instrument-settings';
  for(const [id,title] of [['drums','Drums'],['bass','Bass'],['comping','Electric piano']] as const){
-  const instrument=group(title,'instrument-setting instrument-'+id),toggle=label(id);toggle.replaceChildren(get(id),document.createTextNode('Enabled'));instrument.querySelector('h3')!.after(toggle);move(instrument,get(id+'-controls'));instrumentGrid.append(instrument);
+  const instrument=group(title,'instrument-setting instrument-'+id),toggle=label(id);get(id).hidden=true;instrument.append(get(id));toggle.remove();move(instrument,get(id+'-controls'));instrumentGrid.append(instrument);
  }
- const sequence=query('.sound-settings .sequence'),sequenceToggle=label('sequence');sequenceToggle.replaceChildren(get('sequence'),document.createTextNode('Enabled'));sequence.querySelector('h3')!.after(sequenceToggle);sequence.classList.add('workspace-group','instrument-setting','instrument-sequence');
+ const sequence=query('.sound-settings .sequence'),sequenceToggle=label('sequence');get('sequence').hidden=true;sequence.append(get('sequence'));sequenceToggle.remove();sequence.classList.add('workspace-group','instrument-setting','instrument-sequence');
  const oldRhythm=query('.sound-settings .rhythm');oldRhythm.remove();query('.sound-settings-grid').before(instrumentGrid);settings.append(sequence);query('.sound-settings-grid').remove();
  // Keep every settings option expanded by default, as requested.
  settings.querySelectorAll('details').forEach(node=>node.open=true);

@@ -1,3 +1,4 @@
+import {chordOptionGroups} from './practice/chord-options.js';
 import {normalizeExerciseOptions,exerciseMenuOptions} from './practice/exercise-options.js';
 import {organizeWorkspaces} from './practice/workspace-layout.js';
 import {installRepertoire} from './practice/repertoire-view.js';
@@ -14,7 +15,7 @@ import {learningView,highlightLearningNote,updateProgressionMap} from './practic
 import {musicalContext,spellingHelp,scaleCompatibility} from './practice/context.js';
 import './beta.css';
 import {harmonizedSevenths} from './practice/harmonized-sevenths.js';
-import {MIX_CHANNELS} from './practice/mixer.js';
+import {MIX_CHANNELS,BACKING_CHANNELS,backingMutesForPreset} from './practice/mixer.js';
 import {extensionChoices} from './audio/extensions.js';
 import {tapBpm, beatStrength, formatTime} from './practice/pulse.js';
 import { roomImpulse } from './audio/ambience.js';
@@ -56,6 +57,9 @@ function modeOptions() {
   return ['Major scale', 'Melodic minor', 'Harmonic minor'].map(family =>
     `<optgroup label="${family}">${Object.entries(MODES).filter(([, mode]) => ('family' in mode ? mode.family : 'Major scale') === family).map(([id, mode]) => `<option value="${id}" ${id === 'dorian' ? 'selected' : ''}>${mode.name}</option>`).join('')}</optgroup>`
   ).join('');
+}
+function chordTypeOptions(ids=Object.keys(CHORDS),suggested=''){
+  return chordOptionGroups(ids).map((group:any)=>`<optgroup label="${escapeHtml(group.family)}">${group.ids.map((id:string)=>`<option value="${id}">${escapeHtml(CHORDS[id as keyof typeof CHORDS].name)}${id===suggested?' · suggested':''}</option>`).join('')}</optgroup>`).join('');
 }
 function sequencePatternOptions() {
   const categories=[...new Set(Object.values(SEQUENCE_PATTERNS).map(pattern=>pattern.category))];
@@ -118,7 +122,7 @@ app.innerHTML = `
 <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor"><label>Chart title<input id="custom-name" maxlength="60"></label><label>Start a section at this chord<input id="custom-section" maxlength="32" placeholder="e.g. A, Bridge, Solo"></label>
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
-          <label>Chord type<select id="custom-chord">${Object.entries(CHORDS).map(([id,chord])=>`<option value="${id}">${chord.name}</option>`).join('')}</select></label>
+          <label>Chord type<select id="custom-chord">${chordTypeOptions()}</select></label>
           <label>Scale guide<select id="custom-mode" aria-describedby="custom-mode-help">${modeOptions()}</select></label><p id="custom-mode-help" class="practice-help"></p>
           <label>Duration unit<select id="custom-duration-unit"><option value="bars">Bars</option><option value="beats">Beats</option></select></label><label id="custom-bars-label">Duration<select id="custom-bars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
           <label id="custom-beats-label" hidden>Duration<select id="custom-beats">${Array.from({length:32},(_,i)=>`<option value="${i+1}">${i+1} beat${i?'s':''}</option>`).join('')}</select></label><label>Bass note<select id="custom-bass"><option value="">Chord root</option>${names.map((name,index)=>`<option value="${index}">${name} pedal / slash bass</option>`).join('')}</select></label>
@@ -147,7 +151,7 @@ app.innerHTML = `
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
           <div class="console-level-scroll" tabindex="0" aria-label="Scroll mixer channels"><div class="mix-level-grid">${MIX_CHANNELS.map(consoleChannel).join('')}</div></div>
         </section>
-<div class="mixer-quick-switches" aria-label="Enable instruments"><label class="check"><input id="drums" type="checkbox">Drums</label><label class="check"><input id="bass" type="checkbox">Bass</label><label class="check"><input id="comping" type="checkbox">Electric piano</label><label class="check"><input id="sequence" type="checkbox">Melodic movement</label><button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
+<div class="mixer-quick-switches" aria-label="Sound settings"><label class="check"><input id="drums" type="checkbox">Drums</label><label class="check"><input id="bass" type="checkbox">Bass</label><label class="check"><input id="comping" type="checkbox">Electric piano</label><label class="check"><input id="sequence" type="checkbox">Melodic movement</label><button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
 <section class="studio-tools panel workspace-page workspace-practice" aria-labelledby="practice-tools-title"><div class="section-heading"><h2 id="practice-tools-title">Practice tools</h2><span class="small-label">MAKE EACH SESSION COUNT</span></div>      <div class="pulse-shortcut-row"><span class="small-label">TEMPO SHORTCUTS</span><div id="tempo-shortcuts" class="tempo-shortcuts"></div><button id="tempo-save" type="button" class="practice-button">Save current tempo</button><span id="tempo-shortcut-status" class="practice-help" role="status"></span></div>      <div class="pulse-tool-grid">
         <details class="pulse-tool"><summary>Swing</summary><div class="pulse-tool-fields"><label>Eighth-note swing <output id="pulse-swing-value">Straight</output><input id="pulse-swing" type="range" min="0" max="100" value="0" aria-describedby="pulse-swing-help"></label><p id="pulse-swing-help" class="practice-help">Select eighth notes above. Move from straight timing to a triplet feel; backing rhythms keep their own groove.</p></div></details>
         <details class="pulse-tool"><summary>Practice timer</summary><div class="pulse-tool-fields"><label>Session length (minutes; 0 = unlimited)<input id="pulse-minutes" type="number" min="0" max="180" step="1" value="0"></label><label class="check"><input id="pulse-finish-bar" type="checkbox" checked>Finish the current bar before stopping</label><output id="pulse-time" class="pulse-time" aria-live="off">0:00 elapsed</output><p class="practice-help">Starts after the count-in. Starting playback begins a new session.</p></div></details>
@@ -836,6 +840,7 @@ function updateSpace() {
   if (wet && context) wet.gain.setTargetAtTime((input('mute-space').checked?0:Number(input('space').value) / 100 * .65), context.currentTime, .08);
 }
 function update() {
+  for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
   const previous = [settings.key, settings.mode, settings.chord, settings.template].join('|');
@@ -1528,16 +1533,15 @@ function reflectMixerChannels(){
   let mutedCount=0;
   for(const channel of MIX_CHANNELS){
     const muted=input('mute-'+channel.id).checked;
-    const enabled=['drums','bass','comping','sequence'].includes(channel.id)?input(channel.id).checked:true;
     const card=document.querySelector<HTMLElement>(`[data-mix-channel="${channel.id}"]`)!;
     const solo=soloChannels.has(channel.id), excluded=soloChannels.size>0&&channel.id!=='space'&&!solo;
     card.classList.toggle('is-solo',solo);card.classList.toggle('is-excluded',excluded);
     card.querySelector('.channel-solo')?.setAttribute('aria-pressed',String(solo));
-    card.classList.toggle('is-muted',muted);card.classList.toggle('is-inactive',!enabled);
+    card.classList.toggle('is-muted',muted);card.classList.remove('is-inactive');
     const button=card.querySelector<HTMLButtonElement>('.channel-mute')!;
     button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',`${muted?'Unmute':'Mute'} ${channel.label}`);
     button.textContent='M';button.title=`${muted?'Unmute':'Mute'} ${channel.label}`;
-    el('mix-state-'+channel.id).textContent=!enabled?(muted?'Off · muted':'Off'):muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
+    el('mix-state-'+channel.id).textContent=muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
     if(muted)mutedCount++;
   }
   syncConsole();
@@ -1548,6 +1552,7 @@ function sendMixerSettings(){
   node?.port.postMessage({type:'settings',settings:exercisePlaying?exerciseAudioSettings():settings});
 }
 function updateMixerLevels(){
+  for(const id of BACKING_CHANNELS)input(id).checked=true;
   settings.click=Number(input('click').value)/100;
   settings.harmony=Number(input('harmony').value)/100;
   el('click-value').textContent=`${input('click').value}%`;
@@ -1636,10 +1641,7 @@ for (const mode of ['pedal', 'progression']) {
 function fillChords(preserve = false) {
   const previousChord = select('chord').value;
   const mode = select('quality').value as keyof typeof MODES;
-  select('chord').innerHTML = (settings.progression ? Object.keys(CHORDS) : compatibleChords(mode)).map(id => {
-    const chord = CHORDS[id as keyof typeof CHORDS];
-    return `<option value="${id}">${chord.name}${id === MODES[mode].chord ? ' · suggested' : ''}</option>`;
-  }).join('');
+  select('chord').innerHTML=chordTypeOptions(settings.progression?Object.keys(CHORDS):compatibleChords(mode),MODES[mode].chord);
   select('chord').value = preserve && Array.from(select('chord').options).some(option => option.value === previousChord) ? previousChord : MODES[mode].chord;
   el('mode-tip').textContent = MODES[mode].tip;
   el('mode-template').textContent = `Try ${MODES[mode].name} progression`;
@@ -2027,6 +2029,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     }
     fillChords();
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
+    for(const [id,muted] of Object.entries(backingMutesForPreset(preset.controls)))input(id).checked=muted;
     tempo(Number(input('bpm').value));
     guitarDegrees = select('fret-labels').value === 'degrees';
     restoreTheoryViews(preset.controls);
@@ -2085,11 +2088,12 @@ async function startGuidedGoal(){
  const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;activeGoal=goal.id;
  settings.progression=Boolean(goal.template);gripOnly=goal.id==='shape';step=0;overviewPosition='I';input('manual-position-route').value='';select('featured-position').value='path';select('quality').value=goal.mode;select('template').value=goal.template||'parallel1';settings.template=select('template').value;fillChords();select('chord').value=goal.chord;
  for(const id of ['pedal','progression']){const chosen=id===(settings.progression?'progression':'pedal');el(id).classList.toggle('selected',chosen);el(id).setAttribute('aria-pressed',String(chosen));}
- for(const id of ['sequence','drums','bass','comping','trainer-enabled','gap-enabled','loop-enabled','extension-morph'])input(id).checked=false;
- for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=false;soloChannels.clear();
+ for(const id of ['trainer-enabled','gap-enabled','loop-enabled','extension-morph'])input(id).checked=false;
+ for(const id of BACKING_CHANNELS)input(id).checked=true;
+ for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=BACKING_CHANNELS.includes(channel.id);soloChannels.clear();
  input('show-grip').checked=true;input('highlight-mode').checked=true;input('count-in').checked=true;select('beats').value='4';select('subdivision').value='1';input('bpm').value='80';input('click').value='40';input('harmony').value='35';input('space').value='20';
  const accompaniment=select('practice-accompaniment').value;
- if(accompaniment==='trio'){for(const id of ['drums','bass','comping'])input(id).checked=true;select('drum-groove').value='swing';select('bass-pattern').value='walk';}
+ if(accompaniment==='trio'){for(const id of ['drums','bass','comping'])input('mute-'+id).checked=false;select('drum-groove').value='swing';select('bass-pattern').value='walk';}
  if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';

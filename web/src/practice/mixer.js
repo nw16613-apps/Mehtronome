@@ -7,3 +7,11 @@ export const MIX_CHANNELS=[
   {id:'sequence',label:'Melodic movement',control:'sequence-volume',output:'sequence-volume-value',value:25},
   {id:'space',label:'Ambient space',control:'space',output:'space-value',value:75},
 ];
+
+export const BACKING_CHANNELS=['drums','bass','comping','sequence'];
+// Legacy presets had independent power and mute states. Preserve audibility
+// while translating power-off into the single mute state used by the mixer.
+export function backingMutesForPreset(controls){
+ return Object.fromEntries(BACKING_CHANNELS.map(id=>['mute-'+id,controls[id]===false||
+  (typeof controls['mute-'+id]==='boolean'?controls['mute-'+id]:controls[id]!==true)]));
+}

@@ -9,6 +9,12 @@ export const CUSTOM_PROGRESSION_KEY='mehtronome-custom-progression-v1';
 export function customPitchName(key,offset,letter=LETTERS[offset]){return spellPitch(key,letter,offset,ROOT_NAMES[key]);}
 
 export function recommendedMode(chord){
+  if(chord==='diminished')return 'locrian';
+  if(chord==='thirteenSus')return 'mixolydian';
+  if(chord==='sevenSusB9')return 'phrygian';
+  if(['dom7sharp11','dom13sharp11','dom7flat5'].includes(chord))return 'lydian_dominant';
+  if(['dom7sharp5','dom9sharp5'].includes(chord))return 'mixolydian_b6';
+  if(['dom7b9sharp5','dom7sharp9flat5','dom7sharp9sharp5'].includes(chord))return 'altered';
   if(chord==='sevenSus'||chord==='nineSus')return 'mixolydian';
   if(chord==='dom7alt')return 'altered';
   if(chord==='dom7b9')return 'phrygian_dominant';
@@ -38,6 +44,7 @@ function qualitySuffix(chord){
   if(chord==='halfDim11')return 'ø7(add11)';
   if(chord==='halfDim13')return 'ø7(add11,13)';
   if(chord==='dim7')return '°7';
+  if(chord==='diminished')return '°';
   if(chord==='minor')return '';
   if(chord.startsWith('min'))return (CHORDS[chord]?.symbol||'m').replace(/^m/,'');
   if(chord==='major')return '';
@@ -51,7 +58,7 @@ export function romanForStep(step){
     const delta=((root-[0,2,4,5,7,9,11][step.letter]+18)%12)-6;
     numeral=(delta<0?'♭'.repeat(-delta):'♯'.repeat(delta))+['I','II','III','IV','V','VI','VII'][step.letter];
   }
-  if(step.chord?.startsWith('min')||step.chord==='minor'||step.chord?.startsWith('halfDim')||step.chord==='dim7')numeral=numeral.toLowerCase();
+  if(step.chord?.startsWith('min')||step.chord==='minor'||step.chord?.startsWith('halfDim')||['dim7','diminished'].includes(step.chord))numeral=numeral.toLowerCase();
   return numeral+qualitySuffix(step.chord||'major');
 }
 

@@ -69,6 +69,13 @@ export const PIANO_VOICINGS={
   augMaj7:[0,8,11,16],augMaj9:[0,8,11,14,16],dom9sharp11:[0,10,14,16,18],dom7b9:[0,10,16,19,25],
   dom9b13:[0,10,14,16,20],dom7b9b13:[0,10,16,20,25],maj7sharp9sharp11:[0,11,16,18,27],
   dom7alt:[0,10,16,18,20,25,27],dim7:[0,6,9,15],fifth:[0,7,12],
+  add9:[0,7,14,16],add11:[0,7,16,29],maj13:[0,7,11,14,16,21],maj13sharp11:[0,11,14,16,18,21],
+  minAdd9:[0,7,14,15],minAdd11:[0,7,15,17],minSixNine:[0,7,9,14,15],min7add11:[0,7,10,15,17],
+  minMaj11:[0,7,11,14,15,17],minMaj13:[0,11,14,15,21],dom11:[0,10,14,16,29],
+  dom7sharp11:[0,10,16,18,19],dom13sharp11:[0,10,14,16,18,21],dom7flat5:[0,6,10,16],
+  dom7sharp5:[0,8,10,16],dom9sharp5:[0,8,10,14,16],dom7b9sharp5:[0,10,16,20,25],
+  dom7sharp9flat5:[0,10,16,18,27],dom7sharp9sharp5:[0,10,16,20,27],
+  thirteenSus:[0,7,10,14,17,21],sevenSusB9:[0,7,10,17,25],diminished:[0,6,15],
 };
 
 export function padVoicing(chordMidi, depth='wide', chordId='') {
@@ -228,6 +235,7 @@ export class Engine {
 
   configure(settings) {
     const previousTrainer = [this.settings.bpm,this.settings.trainerEnabled,this.settings.trainerBars,this.settings.trainerIncrement,this.settings.trainerTarget,this.settings.beats].join('/');
+    const previousBassMuted=this.muted?.has('bass')||false;
     const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousComping=this.settings.comping, previousGroove=this.settings.drumGroove;
     const previousSound=this.settings.sound;
     const previousSequenceRate=this.settings.sequenceRate;
@@ -286,6 +294,7 @@ export class Engine {
     const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
     this.gapMuted = !this.auditioning && this.beat >= this.remainingCount && gapAt(s,bar);
     this.setChord(this.auditioning ? this.step : s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0);
+    if(previousBassMuted!==this.muted.has('bass'))this.applyPadDepthState(this.depthMotionState);
   }
 
   /** @param {number[] | null} [notes] */
@@ -356,7 +365,7 @@ export class Engine {
     const base=entry.depthWeights?depthWeight(entry.depthWeights,state.position):entry.weight;
     const roleScale=entry.role==='foundation'?state.foundation:entry.role==='air'?state.air:state.body;
     const extension=entry.extensionIndex===undefined?1:extensionBlend(entry.extensionIndex,this.extensionCandidates.length,this.extensionBeat,this.settings.beats,this.settings.extensionBars);
-    return base*extension*roleScale*(this.settings.bass&&entry.role==='foundation'?.28:1);
+    return base*extension*roleScale*(this.settings.bass&&!this.muted.has('bass')&&entry.role==='foundation'?.28:1);
   }
 
   assignPadVoices(state=this.depthMotionState) {
