@@ -16,8 +16,8 @@ export function organizeExercisePanel(panel:HTMLElement){
  trainer.before(practiceBar);
  const trainerGrid=document.createElement('div');trainerGrid.className='exercise-trainer-controls';trainerGrid.append(...trainerLabels);
  trainer.replaceChildren(Object.assign(document.createElement('summary'),{textContent:'Tempo trainer'}),trainerGrid);
- if(find('#exercise-auto-tempo').hasAttribute('disabled')){const note=document.createElement('p');note.textContent='Tempo trainer is unavailable for chord-aligned studies. Playback stays at the exercise tempo.';trainer.append(note);}
- playback.append(find('.exercise-range-controls'),trainer);definition.after(playback);
+ if((find('#exercise-auto-tempo') as HTMLInputElement).disabled){for(const id of ['exercise-auto-every','exercise-auto-increment','exercise-auto-target'])(find('#'+id) as HTMLInputElement).disabled=true;const note=document.createElement('p');note.textContent='Tempo trainer is unavailable for chord-aligned studies. Playback stays at the exercise tempo.';trainer.append(note);}
+ const trainerHelp=document.createElement('p');trainerHelp.className='practice-help';trainerHelp.textContent='Automatic increases require Loop. Progression accompaniment keeps a fixed tempo.';trainer.append(trainerHelp);playback.append(find('.exercise-range-controls'),trainer);definition.after(playback);
  const navigation=find('.exercise-navigation');navigation.prepend(Object.assign(document.createElement('h4'),{textContent:'Chord & position'}));definition.after(navigation);navigation.querySelector('h4')!.after(find('.progression-reference'));
  const view=section('exercise-viewbar','View');view.append(label('exercise-display'),label('exercise-zoom'),find('#exercise-map-toggle'),find('#exercise-focus'));const diagram=find('.exercise-linked-fretboard');heading.after(navigation);navigation.after(diagram);diagram.after(definition);definition.after(view);
  const material=find('.exercise-material-layout');view.after(material);
@@ -26,7 +26,10 @@ export function organizeExercisePanel(panel:HTMLElement){
   for(const node of Array.from(panel.querySelectorAll(selector)))reference.append(node);
  }
  material.after(playback);playback.after(reference);
- const footer=find('.exercise-footer');footer.prepend(Object.assign(document.createElement('h4'),{textContent:'Save & export'}));footer.insertBefore(label('exercise-favourites'),footer.querySelector('.exercise-actions'));reference.after(footer);
+ const footer=find('.exercise-footer');footer.prepend(Object.assign(document.createElement('h4'),{textContent:'Export notation'}));reference.after(footer);
+ const saved=document.createElement('div');saved.className='exercise-saved-controls';label('exercise-favourites').firstChild!.textContent='Saved exercise options ';saved.append(label('exercise-favourites'),find('#exercise-favourite'));definition.querySelector('h4')!.after(saved);
+ const savedHelp=document.createElement('p');savedHelp.className='practice-help';savedHelp.textContent='Saved options apply to the current chart and positions; they do not load another chart.';saved.after(savedHelp);
+ const key=document.createElement('p');key.className='exercise-active-key';key.textContent='Ring: chord voicing · dashed ring: resolution target · square: current note';diagram.querySelector('#exercise-map-body')!.append(key);
  // Back/forward browse the same exercise menu, so keep them beside its choices.
  const browse=document.createElement('div');browse.className='exercise-browse';browse.append(find('#exercise-history-back'),find('#exercise-history-forward'));definition.append(browse);
  toolbar.remove();practiceBar.remove();

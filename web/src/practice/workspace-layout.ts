@@ -80,16 +80,26 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const overlaySummary=document.createElement('p');overlaySummary.id='fretboard-overlay-summary';overlaySummary.className='fretboard-overlay-summary';fretboardWorkspace.append(overlaySummary);
  const overlayDetails=document.createElement('details');overlayDetails.id='fretboard-overlay-details';overlayDetails.innerHTML='<summary>Overlay details</summary>';move(overlayDetails,get('theory-description'));fretboardWorkspace.append(overlayDetails);
  const oldSetup=query('.guitar-setup');oldSetup.remove();overview.hidden=true;
- // Saved setups: loading and saving should not share an ambiguous row.
- get('progress-title').innerHTML='Your practice';query('.workspace-progress .intro-copy').textContent='Save your setups and track your practice.';
+ // Progress prioritises recall; setup, manual checklist and backup have distinct scopes.
+ get('progress-title').textContent='Setups & progress';query('.workspace-progress .intro-copy').textContent='Recall your sound and chart settings; keep a manual practice checklist.';
  const presets=query('.presets'),presetFields=query('.preset-fields'),loadSetup=group('Load a saved setup','preset-load-group'),saveSetup=group('Save current setup','preset-save-group');
- move(loadSetup,label('preset-list'),query('.preset-actions'));move(saveSetup,label('preset-name'),get('preset-save'));presetFields.append(loadSetup,saveSetup);
- const presetBackup=group('Backup','preset-backup');move(presetBackup,query('.preset-transfer'));presets.append(presetBackup);
- const roadmap=query('.practice-roadmap'),plan=group('Plan a session','roadmap-plan');move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Practice checklist'}));
+ get('presets-title').textContent='Saved setups';presets.querySelector('.small-label')!.textContent='CHART · TEMPO · SOUND · MIX';
+ move(loadSetup,label('preset-list'),query('.preset-actions'));move(saveSetup,label('preset-name'),get('preset-save'),loadSetup.querySelector('#preset-update'));presetFields.append(loadSetup,saveSetup);
+ label('preset-name').firstChild!.textContent='Setup name ';get('preset-update').textContent='Update selected setup';get('preset-save').textContent='Save new setup';get('preset-delete').textContent='Delete selected setup';
+ const selectionHelp=document.createElement('p');selectionHelp.id='preset-selection-help';selectionHelp.className='practice-help';loadSetup.append(selectionHelp);
+ const setupContext=document.createElement('p');setupContext.id='setup-current-context';setupContext.className='practice-help';saveSetup.prepend(setupContext);
+ const scopeHelp=document.createElement('p');scopeHelp.className='practice-help';scopeHelp.textContent='Setups save the chart, tempo, sound, mix and fretboard settings. Save exercise options in Exercises; save individual charts in Harmony.';presets.querySelector('.section-heading')!.after(scopeHelp);
+ get('preset-export').textContent='Export setups';get('preset-import').textContent='Import setups';
+ const presetBackup=group('Backup & transfer','preset-backup');move(presetBackup,query('.preset-transfer'));presets.append(presetBackup);
+ presets.after(goals);const checklistLink=goals.querySelector<HTMLButtonElement>('[data-learning-nav]')!;checklistLink.removeAttribute('data-learning-nav');checklistLink.textContent='View checklist';checklistLink.onclick=()=>{get('practice-roadmap-title').focus({preventScroll:true});get('practice-roadmap-title').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
+ const roadmap=query('.practice-roadmap'),plan=group('Suggested session','roadmap-plan');get('practice-roadmap-title').textContent='Practice checklist';get('practice-roadmap-title').tabIndex=-1;roadmap.querySelector('.eyebrow')!.textContent='SELF-REPORTED PROGRESS';label('practice-roadmap-duration').firstChild!.textContent='Time budget ';
+ const checklistHelp=document.createElement('p');checklistHelp.id='practice-checklist-help';checklistHelp.className='practice-help';checklistHelp.textContent='Mark items yourself for the selected root, scale and chord. Suggested times are estimates; this is not an accuracy score.';roadmap.querySelector('.practice-roadmap-bar')!.after(checklistHelp);
+ move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Checklist items'}));
+ get('practice-roadmap-reset').textContent='Reset this checklist';
  const reset=document.createElement('div');reset.className='roadmap-reset';reset.append(get('practice-roadmap-reset'));roadmap.append(reset);
- // Sound Settings: each instrument owns its sound controls and enable switch.
+ // Sound Settings: each instrument owns its sounds; audibility belongs to the shared mixer.
  const settings=query('.sound-settings');settings.querySelector(':scope>p')!.textContent='Choose sounds and patterns by instrument. Unmute backing tracks in the mixer to hear them; balance levels and solo there too.';
- const mixerLink=link('Open mixer','practice','mix-title');settings.querySelector('.section-heading')!.append(mixerLink);
+ const mixerLink=document.createElement('button');mixerLink.type='button';mixerLink.className='practice-button';mixerLink.textContent='Open mixer';mixerLink.onclick=()=>{if(get('floating-mixer').hidden)get('mini-mixer').click();else get('floating-mixer-close').focus();};settings.querySelector('.section-heading')!.append(mixerLink);
  const instrumentGrid=document.createElement('div');instrumentGrid.className='instrument-settings';
  for(const [id,title] of [['drums','Drums'],['bass','Bass'],['comping','Electric piano']] as const){
   const instrument=group(title,'instrument-setting instrument-'+id),toggle=label(id);get(id).hidden=true;instrument.append(get(id));toggle.remove();move(instrument,get(id+'-controls'));instrumentGrid.append(instrument);
@@ -98,5 +108,17 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const oldRhythm=query('.sound-settings .rhythm');oldRhythm.remove();query('.sound-settings-grid').before(instrumentGrid);settings.append(sequence);query('.sound-settings-grid').remove();
  // Keep every settings option expanded by default, as requested.
  settings.querySelectorAll('details').forEach(node=>node.open=true);
+ const soundSections=[['click',query('.metronome-sound-settings'),'Metronome'],['harmony',query('.pad-settings'),'Sustained harmony'],['drums',query('.instrument-drums'),'Drums'],['bass',query('.instrument-bass'),'Bass'],['comping',query('.instrument-comping'),'Electric piano'],['sequence',sequence,'Melodic movement']] as const;
+ const jump=document.createElement('nav');jump.className='sound-jump-nav';jump.setAttribute('aria-label','Instrument settings');
+ for(const [channel,card,title] of soundSections){card.id='sound-'+channel;card.classList.add('sound-instrument-card');const heading=card.querySelector<HTMLElement>(':scope>h3')!;heading.tabIndex=-1;
+  const row=document.createElement('div');row.className='sound-section-heading';const badge=document.createElement('span');badge.dataset.soundState=channel;badge.className='sound-channel-state';row.append(heading,badge);card.prepend(row);
+  const button=document.createElement('button');button.type='button';button.className='practice-button';button.dataset.soundTarget=channel;button.textContent=title;button.onclick=()=>{heading.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};jump.append(button);
+ }
+ settings.querySelector(':scope>p')!.after(jump);
+ label('pad-movement').firstChild!.textContent='Texture motion ';query('label[for=pad-depth-amount]').firstChild!.textContent='Depth motion amount ';
+ label('comping-movement').firstChild!.textContent='Voicing movement ';query('label[for=comping-movement-amount]').firstChild!.textContent='Hook movement amount ';
+ label('sequence-rate').firstChild!.textContent='Note rate ';query('label[for=sequence-swing]').firstChild!.textContent='Melodic swing ';
+ query('.backing-shape>summary').textContent='Texture & voicing';query('.harmony-movement>h3').textContent='Chord extensions';
+ const hookHelp=document.createElement('p');hookHelp.id='comping-hook-help';hookHelp.className='practice-help';hookHelp.textContent='Hook length and movement amount apply when a voicing hook is selected.';get('comping-controls').append(hookHelp);
  get('open-sound-settings').textContent='Instrument sounds & patterns →';
 }

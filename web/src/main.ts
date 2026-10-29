@@ -85,7 +85,7 @@ app.innerHTML = `
   <section class="presets panel workspace-page workspace-progress" aria-labelledby="presets-title">
     <div class="section-heading"><h2 id="presets-title">Practice presets</h2><span class="small-label">PICK UP WHERE YOU LEFT OFF</span></div>
     <div class="preset-fields"><label>Preset name<input id="preset-name" type="text" maxlength="60" placeholder="e.g. D Dorian · slow groove"></label><button id="preset-save" class="practice-button">Save new</button><label>Saved setups<select id="preset-list"><option value="">Choose a preset</option></select></label><div class="preset-actions"><button id="preset-load" class="practice-button" disabled>Load</button><button id="preset-update" class="practice-button" disabled>Update</button><button id="preset-delete" class="practice-button" disabled>Delete</button></div></div>
-    <p id="preset-status" class="practice-help" role="status">Saved on this browser. Loading a preset stops playback.</p>
+    <p id="preset-status" class="practice-help" role="status">Saved on this browser. Loading a setup stops playback.</p>
   <div class="preset-transfer"><button id="preset-export" class="practice-button">Export presets</button><button id="preset-import" class="practice-button">Import presets</button><input id="preset-file" type="file" accept=".json,application/json" hidden></div>
   </section>
   <div class="workspace">
@@ -325,9 +325,9 @@ function updateExerciseCursor(){
     if(resting)document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>note.classList.remove('playing'));
     document.querySelector(`[data-note-index="${globalIndex}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
     if(status)status.textContent=resting?`Rest · next repetition on beat 1 · ${exerciseView.tempo} BPM`:`Note ${index+1} / ${sequence.length} · repetition ${repetition} · ${exerciseView.tempo} BPM`;
-    const tempoControl=document.querySelector<HTMLInputElement>('#exercise-tempo');if(tempoControl&&document.activeElement!==tempoControl)tempoControl.value=String(exerciseView.tempo);
     if(progress)progress.style.width=`${((index+1)/sequence.length)*100}%`;
   }
+  const tempoControl=document.querySelector<HTMLInputElement>('#exercise-tempo');if(tempoControl&&document.activeElement!==tempoControl)tempoControl.value=String(exerciseView.tempo);
   exerciseAnimationFrame=requestAnimationFrame(updateExerciseCursor);
 }
 
@@ -358,7 +358,6 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else if(settings.progression){
     currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionPlaybackBeatDurations(settings)[index]),board,{...exerciseView,rhythm:exerciseView.rhythm,source:sourceChoice?.id||'',positionPath});
-    exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else{exercisePlan=null;if(exerciseView.stage==='cell')currentExerciseGroups=shortCell(currentExerciseGroups);}
   if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
@@ -399,6 +398,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   input('exercise-backing').checked=exerciseView.backing;
   select('exercise-display').value=exerciseView.display;select('exercise-zoom').value=exerciseView.zoom;
   input('exercise-auto-tempo').checked=exerciseView.autoTempo;select('exercise-auto-every').value=String(exerciseView.autoEvery);input('exercise-auto-increment').value=String(exerciseView.autoIncrement);
+  refreshExerciseFavourites();
   const focusButton=el<HTMLButtonElement>('exercise-focus'),notationFocused=el('caged-exercise').classList.contains('notation-focused');
   focusButton.textContent=notationFocused?'Exit notation focus':'Focus notation';focusButton.setAttribute('aria-pressed',String(notationFocused));
   const exerciseOptions=Array.from(select('exercise-study').options),exerciseIndex=exerciseOptions.findIndex(option=>option.value===exerciseView.study);
@@ -406,7 +406,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan,adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{locked:playing||exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan&&isAlignedStudy(),adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   reflectExerciseSelection();
   exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
@@ -445,7 +445,7 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const phraseDuration=exercisePlan?exercisePlan.duration*60/exerciseView.tempo:sequence.length*noteLength;
   const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
   const nextStart=start+duration;exerciseNextStart=nextStart;
-  const lookahead=Math.min(1,Math.max(.2,duration*.25));
+  const lookahead=exerciseView.autoTempo?0:Math.min(1,Math.max(.2,duration*.25));
   // A backed, timed one-shot ends on the engine's sample-counted completion
   // message. A wall timer can outrun the audio thread under CPU load.
   if(!exerciseView.loop&&exerciseView.backing&&exercisePlan)return;
@@ -454,7 +454,7 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
     const remaining=nextStart-context.currentTime;
     if(!exerciseView.loop&&remaining>0){exerciseTimer=setTimeout(complete,Math.max(10,remaining*1000+60));return;}
 
-    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart;node?.port.postMessage({type:'settings',settings:{...exerciseBackingConfig(),bpm:exerciseView.tempo}});}scheduleExercise(nextStart);}else stopExercisePreview();
+    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart-(settings.countIn?settings.beats*60/exerciseView.tempo:0);syncMiniTransport();node?.port.postMessage({type:'settings',settings:{...exerciseBackingConfig(),bpm:exerciseView.tempo}});}scheduleExercise(nextStart);}else stopExercisePreview();
   };
   exerciseTimer=setTimeout(complete,Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
@@ -587,9 +587,9 @@ function renderPracticeRoadmap(info:any){
   const mode=MODES[info.mode as keyof typeof MODES];
   el('practice-roadmap-context').textContent=`${context.root} ${mode.name} · ${context.chord} · ${'family' in mode?mode.family:'Major scale'}`;
   el('practice-roadmap-percent').textContent=`${percent}%`;
-  el('practice-roadmap-count').textContent=`${count} of ${PRACTICE_TASKS.length} complete`;
+  el('practice-roadmap-count').textContent=`${count} of ${PRACTICE_TASKS.length} checked`;
   (el('practice-roadmap-fill') as HTMLElement).style.width=`${percent}%`;
-  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Next ${duration}-minute session · ${today.minutes} min planned</strong><span>${today.tasks.map(task=>escapeHtml(task.label)).join(' · ')}</span>`:'<strong>Path complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
+  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Suggested ${duration}-minute session · ${today.minutes} min estimated</strong><span>${today.tasks.map(task=>escapeHtml(task.label)).join(' · ')}</span>`:'<strong>Checklist complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
   const stages=[...new Set(PRACTICE_TASKS.map(task=>task.stage))];
   el('practice-roadmap-list').innerHTML=stages.map(stage=>`<fieldset><legend>${stage}</legend>${PRACTICE_TASKS.filter(task=>task.stage===stage).map(task=>`<label class="practice-roadmap-task${done.has(task.id)?' complete':''}"><input type="checkbox" data-practice-task="${task.id}" ${done.has(task.id)?'checked':''}><span>${escapeHtml(task.label)}</span><small>${task.minutes} min</small></label>`).join('')}</fieldset>`).join('');
   const root=context.root;
@@ -1382,13 +1382,17 @@ function moveExercise(direction:number){
   renderGuitar();select('exercise-study').focus({preventScroll:true});
 }
 function exerciseFavourites(){try{return JSON.parse(localStorage.getItem(EXERCISE_FAVOURITES_KEY)||'[]');}catch{return [];}}
+function refreshExerciseFavourites(){
+ const menu=document.getElementById('exercise-favourites') as HTMLSelectElement|null;if(!menu)return;
+ const items=exerciseFavourites(),snapshot=JSON.stringify(exerciseSnapshot());
+ menu.replaceChildren(new Option('Choose saved exercise options',''),...items.map((item:any,index:number)=>{const normal=normalizeExerciseOptions({...item}),name=Array.from(select('exercise-study').options).find(o=>o.value===normal.study)?.textContent||'Saved exercise';const material=exerciseMenuOptions(normal.study).material?Array.from(select('exercise-material').options).find(o=>o.value===normal.material)?.textContent:'';const motion=exerciseMenuOptions(normal.study).directions.find(([value]:string[])=>value===normal.motion)?.[1]||'';return new Option([name,material,motion].filter(Boolean).join(' · '),String(index));}));
+ const index=items.findIndex((item:any)=>JSON.stringify(item)===snapshot);menu.value=index<0?'':String(index);
+ const button=document.getElementById('exercise-favourite') as HTMLButtonElement|null;if(button){button.textContent=index<0?'Save exercise options':'Options saved';button.disabled=index>=0;}
+}
 function favouriteExercise(){
  const favourites=exerciseFavourites(),snapshot=exerciseSnapshot(),key=JSON.stringify(snapshot);
  if(!favourites.some((item:any)=>JSON.stringify(item)===key))favourites.push(snapshot);
- const saved=favourites.slice(-30);localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(saved));
- select('exercise-favourites').innerHTML='<option value="">Saved exercises</option>'+saved.map((item:any,index:number)=>`<option value="${index}">${escapeHtml(item.study)} · ${escapeHtml(item.pattern||item.material)}</option>`).join('');
- select('exercise-favourites').value=String(saved.findIndex((item:any)=>JSON.stringify(item)===key));
- const button=document.querySelector<HTMLButtonElement>('#exercise-favourite');if(button){button.textContent='Saved';applyStudioIcons(el('caged-exercise'));}
+ localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(favourites.slice(-30)));refreshExerciseFavourites();applyStudioIcons(el('caged-exercise'));
 }
 
 function exportExerciseSvg(){
@@ -1431,7 +1435,7 @@ el('caged-exercise').addEventListener('pointercancel',event=>{
   exerciseDragPointer=null;exerciseSelectionStart=null;exerciseSelectionEnd=null;reflectExerciseSelection();
 });
 el('caged-exercise').addEventListener('click',event=>{
-  if(event.target instanceof Element){exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;const button=event.target.closest<HTMLElement>('[data-learning-study]');if(button){stopExercisePreview();exerciseView.study=button.dataset.learningStudy!;exerciseView.backing=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();return;}if(event.target.closest('#exercise-map-toggle')){exerciseView.fretboard=!exerciseView.fretboard;el('exercise-map-body').hidden=!exerciseView.fretboard;document.querySelector<HTMLElement>('.exercise-linked-fretboard')!.hidden=!exerciseView.fretboard;el('exercise-map-toggle').textContent=exerciseView.fretboard?'Hide fretboard':'Show fretboard';el('exercise-map-toggle').setAttribute('aria-expanded',String(exerciseView.fretboard));document.querySelector('.exercise-material-layout')!.classList.toggle('map-hidden',!exerciseView.fretboard);return;}const linked=event.target.closest<SVGElement>('[data-exercise-index]');if(linked){chooseOrAuditionExerciseNote(Number(linked.dataset.exerciseIndex));return;}}
+  if(event.target instanceof Element){exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;const button=event.target.closest<HTMLElement>('[data-learning-study]');if(button){stopExercisePreview();exerciseView.study=button.dataset.learningStudy!;exerciseView.backing=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();return;}if(event.target.closest('#exercise-map-toggle')){exerciseView.fretboard=!exerciseView.fretboard;el('exercise-map-body').hidden=!exerciseView.fretboard;document.querySelector<HTMLElement>('.exercise-linked-fretboard')!.hidden=!exerciseView.fretboard;el('exercise-map-toggle').textContent=exerciseView.fretboard?'Hide diagram':'Show diagram';el('exercise-map-toggle').setAttribute('aria-expanded',String(exerciseView.fretboard));document.querySelector('.exercise-material-layout')!.classList.toggle('map-hidden',!exerciseView.fretboard);return;}const linked=event.target.closest<SVGElement>('[data-exercise-index]');if(linked){chooseOrAuditionExerciseNote(Number(linked.dataset.exerciseIndex));return;}}
   if(!(event.target instanceof Element))return;
   if(event.target.closest('#exercise-clear-range')){if(exercisePlaying)stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;reflectExerciseSelection();return;}
   if(event.target.closest('#exercise-preview'))void toggleExercisePreview();
@@ -1584,7 +1588,7 @@ function reflectMixerChannels(){
     el('mix-state-'+channel.id).textContent=muted?'Muted':excluded?'Solo muted':solo?'Solo':'On';
     if(muted)mutedCount++;
   }
-  syncConsole();
+  syncConsole();syncWorkspaceStates();
   el<HTMLButtonElement>('mixer-unmute-all').disabled=mutedCount===0;
   el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
@@ -1804,6 +1808,16 @@ function syncTrainerStatus() {
   el('bpm-caption').textContent=settings.trainerEnabled?'STARTING BPM':'BEATS PER MINUTE';
   el('trainer-status').textContent = !settings.trainerEnabled ? 'Starts at your selected tempo.' : playing ? `${currentBpm} BPM · ${currentBpm >= Math.max(settings.bpm,settings.trainerTarget) ? 'Target reached' : `towards ${settings.trainerTarget} BPM`}. Starting tempo: ${settings.bpm} BPM.` : `Start at ${settings.bpm} BPM; add ${settings.trainerIncrement} every ${settings.trainerBars} bars, up to ${Math.max(settings.bpm,settings.trainerTarget)} BPM.`;
 }
+function syncWorkspaceStates(){
+ const context=document.getElementById('setup-current-context');if(context)context.textContent=`Current setup: ${names[settings.key]} · ${settings.bpm} BPM · ${progressionDefinition(settings).name}`;
+ const selection=document.getElementById('preset-selection-help');if(selection){const option=select('preset-list').selectedOptions[0];selection.textContent=select('preset-list').value?`Selected: ${option?.textContent}. Load applies it; Update selected setup replaces it with the current settings.`:'Choose a saved setup to load, update or delete.';}
+ const locked=playing||exercisePlaying||exercisePreparing;
+ document.querySelectorAll<HTMLInputElement>('[data-practice-task]').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
+ const checklist=document.getElementById('practice-checklist-help');if(checklist)checklist.textContent=locked?'Stop playback before marking this checklist. It follows the currently selected chord.':'Mark items yourself for the selected root, scale and chord. Suggested times are estimates; this is not an accuracy score.';
+ for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&channel.id!=='space'&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
+ const still=select('comping-movement').value==='still';select('comping-hook-length').disabled=still;input('comping-movement-amount').disabled=still;
+ input('pad-depth-amount').disabled=select('pad-depth-motion').value==='fixed';
+}
 function syncMiniTransport() {
   document.dispatchEvent(new Event('mehtronome-playback-state'));
   syncExerciseRouteCards();
@@ -1835,6 +1849,7 @@ function syncMiniTransport() {
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
   el('mini-mode').title=`Tonic ${active.tonic} · next ${active.nextChord}`;
   el('mini-chord').textContent = info.name+info.suffix;
+  syncWorkspaceStates();
   const sessionChord=document.getElementById('session-chord'),sessionMode=document.getElementById('session-mode');
   if(sessionChord)sessionChord.textContent=info.name+info.suffix;
   if(sessionMode)sessionMode.textContent=active.scale;
@@ -1985,9 +2000,9 @@ reflectTheme();
 type PracticePreset = {id:string; name:string; progression:boolean; controls:Record<string,string | boolean>; customProgression?:any};
 let presets: PracticePreset[] = [];
 try { presets = readPresets(localStorage.getItem(PRESET_KEY)); }
-catch { el('preset-status').textContent = 'Saved presets are unavailable. Browser storage may be disabled or the saved data could not be read.'; }
+catch { el('preset-status').textContent = 'Saved setups are unavailable. Browser storage may be disabled or the saved data could not be read.'; }
 function renderPresets(selected = '') {
-  select('preset-list').replaceChildren(new Option('Choose a preset',''),...presets.map(p => new Option(p.name,p.id)));
+  select('preset-list').replaceChildren(new Option('Choose a saved setup',''),...presets.map(p => new Option(p.name,p.id)));
   select('preset-list').value = selected;
   reflectPresetButtons();
 }
@@ -1999,7 +2014,7 @@ function reflectPresetButtons() {
 }
 function snapshotPreset(id: string = crypto.randomUUID()) {
   const name = input('preset-name').value.trim().slice(0,60);
-  if (!name) throw new Error('Give your preset a name first.');
+  if (!name) throw new Error('Give your setup a name first.');
   const controls = Object.fromEntries(PRESET_CONTROLS.flatMap(key => {
     const control = el<HTMLInputElement | HTMLSelectElement>(key);
     return control instanceof HTMLInputElement || control instanceof HTMLSelectElement
@@ -2033,7 +2048,7 @@ for (const action of ['save','update']) el(`preset-${action}`).addEventListener(
 });
 el('preset-delete').addEventListener('click',()=>{
   const id = select('preset-list').value;
-  persistPresets(presets.filter(p => p.id !== id),'','Preset deleted.');
+  persistPresets(presets.filter(p => p.id !== id),'','Saved setup deleted.');
 });
 function restoreControl(id: string, value: unknown) {
   const control = el<HTMLInputElement | HTMLSelectElement>(id);
@@ -2098,7 +2113,7 @@ el('preset-export').addEventListener('click',()=>{
   try{
     const blob=new Blob([exportPresets(presets)],{type:'application/json'}),url=URL.createObjectURL(blob);
     const link=document.createElement('a');link.href=url;link.download='mehtronome-presets.json';link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);el('preset-status').textContent=`Exported ${presets.length} practice presets.`;
+    setTimeout(()=>URL.revokeObjectURL(url),1000);el('preset-status').textContent=`Exported ${presets.length} setups.`;
   }catch(error){el('preset-status').textContent=(error as Error).message;}
 });
 el('preset-import').addEventListener('click',()=>input('preset-file').click());
@@ -2107,7 +2122,7 @@ input('preset-file').addEventListener('change',async()=>{
   try{
     if(file.size>MAX_PRESET_FILE_BYTES)throw new Error('Preset files must be smaller than 512 KB.');
     const result=importPresets(await file.text(),presets);
-    persistPresets(result.items,result.items.at(-1)?.id||'',`Imported ${result.imported} practice preset${result.imported===1?'':'s'}. Existing setups kept.`);
+    persistPresets(result.items,result.items.at(-1)?.id||'',`Imported ${result.imported} setup${result.imported===1?'':'s'}. Existing setups kept.`);
   }catch(error){el('preset-status').textContent=(error as Error).message;}
   finally{input('preset-file').value='';}
 });
