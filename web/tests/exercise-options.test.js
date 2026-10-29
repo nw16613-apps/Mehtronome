@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeExerciseOptions,exerciseMenuOptions} from '../src/practice/exercise-options.js';
+import {normalizeExerciseOptions,exerciseMenuOptions,exerciseCollectionLabels} from '../src/practice/exercise-options.js';
 test('legacy favourites retain their starting direction and map removed studies to available exercises',()=>{
  for(const study of ['grip','guidetones','connections','harmonized','alternating'])for(const motion of ['ascending','descending','up-down','down-up']){
   const v=normalizeExerciseOptions({study,motion,material:'triad'});
@@ -15,4 +15,11 @@ test('menus expose only controls with distinct effects',()=>{
  assert.equal(exerciseMenuOptions('triadpairs').directions.length,4);
  for(const study of ['positional','upperstructure','triadpairs','pentatonic','thirds','enclosures'])assert.equal(exerciseMenuOptions(study).material,false);
  for(const study of ['harmonized','alternating','chordtones','inversions','approach','approacheverytone'])assert.equal(exerciseMenuOptions(study).material,true);
+});
+
+test('collection-aware labels distinguish scale-step patterns from chord inversions',()=>{
+ assert.equal(exerciseCollectionLabels('thirds',true).studies.thirds,'Alternate scale-note pairs');
+ assert.deepEqual(exerciseCollectionLabels('harmonized',true).materials,['3-note stacks','4-note stacks','5-note stacks']);
+ assert.deepEqual(exerciseCollectionLabels('inversions',true).materials,['Up to 3 chord tones','Up to 4 chord tones','Up to 5 chord tones']);
+ assert.deepEqual(exerciseCollectionLabels('harmonized',false).materials,['Triads','Tetrads','Ninth chords']);
 });

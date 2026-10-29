@@ -294,33 +294,13 @@ function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=6
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {
-  const count=harmony.scalePcs.length;
-  const size=MATERIAL_SIZES[material] || 4;
-  const ascending=motion==='ascending'||motion==='up-down';
-  const edge=board.notes.filter(note=>harmony.scalePcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
-  if(!edge)return [];
-  const edgeScaleIndex=harmony.scalePcs.indexOf(edge.pc);
-  // Ascending tetrads begin on their root. Descending tetrads begin on their
-  // seventh (or highest extension), exactly as a written arpeggio study does.
-  const rootStart=ascending?edgeScaleIndex:(edgeScaleIndex-2*(size-1)+count*10)%count;
-  const groups=[];
-  let previousAnchor=edge.midi;
-  for(let index=0;index<16;index++){
-    const degree=(rootStart+(ascending?index:-index)+count*10)%count;
-    const chordIndexes=Array.from({length:size},(_,offset)=>(degree+offset*2)%count);
-    const pcs=chordIndexes.map(scaleIndex=>harmony.scalePcs[scaleIndex]);
-    const names=chordIndexes.map(scaleIndex=>harmony.scaleNames[scaleIndex]);
-    const rootName=harmony.scaleNames[degree];
-    const firstPc=ascending?pcs[0]:pcs.at(-1);
-    const anchors=board.notes.filter(note=>note.pc===firstPc&&(index===0?note.midi===edge.midi:ascending?note.midi>previousAnchor:note.midi<previousAnchor)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
-    const anchor=anchors[0];
-    if(!anchor)break;
-    const path=pathForPcs(board,pcs,names,ascending,anchor.midi,anchor.midi);
-    if(!path||path.length!==size)break;
-    groups.push({degree:index+1,chord:`${rootName}${chordSuffix(pcs[0],pcs)}`,rootName,names,pcs,notes:contour(path,motion),sequenceAnchor:anchor.midi,sequenceDirection:ascending?1:-1});
-    previousAnchor=anchor.midi;
-  }
-  return groups;
+  const size=MATERIAL_SIZES[material] || 4,ascending=motion==='ascending'||motion==='up-down';
+  return scalePatternExercise(board,harmony,motion,Array.from({length:size},(_,i)=>i*2),'arpeggio').map(group=>{
+    // The label describes the stack from its root even when played downward.
+    const ordered=ascending?group.notes.slice(0,size):group.notes.slice(0,size).toReversed();
+    const pcs=ordered.map(note=>note.pc),names=ordered.map(note=>note.name);
+    return {...group,chord:`${names[0]}${chordSuffix(pcs[0],pcs)}`,rootName:names[0],names,pcs};
+  });
 }
 
 function directionalPath(board,pcs,names,motion,target,index) {
@@ -330,30 +310,22 @@ function directionalPath(board,pcs,names,motion,target,index) {
 }
 
 function scalePatternExercise(board,harmony,motion,offsets,label) {
-  const count=harmony.scalePcs.length;
-  const ascending=motion==='ascending'||motion==='up-down';
-  const edge=board.notes.filter(note=>harmony.scalePcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
-  if(!edge)return [];
-  const startDegree=harmony.scalePcs.indexOf(edge.pc),groups=[];
-  let previousAnchor=edge.midi;
-  for(let index=0;index<18;index++){
-    const degree=(startDegree+(ascending?index:-index)+count*10)%count;
-    const anchors=board.notes.filter(note=>note.pc===harmony.scalePcs[degree]&&(index===0?note.midi===edge.midi:ascending?note.midi>previousAnchor:note.midi<previousAnchor)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
-    const anchor=anchors[0];if(!anchor)break;
-    const signedOffsets=offsets.map(offset=>ascending?offset:-offset);
-    const notes=[];
-    for(const offset of signedOffsets){
-      const scaleIndex=((degree+offset)%count+count)%count;
-      const tonic=harmony.scalePcs[0],interval=index=>(harmony.scalePcs[index]-tonic+12)%12;
-      const delta=interval(scaleIndex)+12*Math.floor((degree+offset)/count)-interval(degree);
-      const midi=anchor.midi+delta;
-      const found=board.notes.find(note=>note.midi===midi&&note.pc===harmony.scalePcs[scaleIndex]);
-      if(!found){notes.length=0;break;}
-      notes.push({...found,name:harmony.scaleNames[scaleIndex]});
-    }
-    if(!notes.length)break;
-    groups.push({degree:index+1,chord:`${harmony.scaleNames[degree]} · ${label}`,rootName:harmony.scaleNames[degree],names:notes.map(note=>note.name),pcs:notes.map(note=>note.pc),notes:contour(notes,motion),sequenceAnchor:notes[0].midi,sequenceDirection:ascending?1:-1});
-    previousAnchor=anchor.midi;
+  const count=harmony.scalePcs.length,ascending=motion==='ascending'||motion==='up-down',direction=ascending?1:-1;
+  const byMidi=new Map();
+  for(const note of board.notes)if(harmony.scalePcs.includes(note.pc)&&!byMidi.has(note.midi))byMidi.set(note.midi,note);
+  const anchors=[...byMidi.values()].sort((a,b)=>(a.midi-b.midi)*direction),groups=[];
+  const intervals=harmony.scalePcs.map(pc=>(pc-harmony.scalePcs[0]+12)%12);
+  for(const anchor of anchors){
+    const degree=harmony.scalePcs.indexOf(anchor.pc);
+    const notes=offsets.map(offset=>{
+      const step=degree+direction*offset,index=((step%count)+count)%count;
+      const midi=anchor.midi+intervals[index]+12*Math.floor(step/count)-intervals[degree];
+      const note=byMidi.get(midi);return note?{...note,name:harmony.scaleNames[index]}:null;
+    });
+    // A missing interior pitch invalidates this cell, not every later cell.
+    // Keep the exact theoretical steps: never compress a gap in the scale.
+    if(notes.some(note=>!note))continue;
+    groups.push({degree:groups.length+1,chord:`${harmony.scaleNames[degree]} · ${label}`,rootName:harmony.scaleNames[degree],names:notes.map(note=>note.name),pcs:notes.map(note=>note.pc),notes:contour(notes,motion),sequenceAnchor:notes[0].midi,sequenceDirection:direction});
   }
   return groups;
 }
@@ -413,21 +385,19 @@ function combinedAlternatingChordTones(board,harmony,size,descendingFirst=false)
 
 function inversionExercise(board,harmony,material,motion) {
   const size=MATERIAL_SIZES[material] || 4;
-  const pcs=harmony.chordPcs.slice(0,Math.min(size,harmony.chordPcs.length));
-  const names=harmony.tones.slice(0,pcs.length);
+  const pcs=harmony.chordPcs.slice(0,Math.min(size,harmony.chordPcs.length)),names=harmony.tones.slice(0,pcs.length);
   const ascending=motion==='ascending'||motion==='up-down';
-  const edge=board.notes.filter(note=>pcs.includes(note.pc)).sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi)[0];
-  if(!edge)return [];
-  const edgeIndex=pcs.indexOf(edge.pc);
-  const firstRotation=ascending?edgeIndex:(edgeIndex+1)%pcs.length;
-  return pcs.map((_,sequenceIndex)=>{
-    const inversion=(firstRotation+(ascending?sequenceIndex:-sequenceIndex)+pcs.length*2)%pcs.length;
-    const rotatedPcs=[...pcs.slice(inversion),...pcs.slice(0,inversion)];
-    const rotatedNames=[...names.slice(inversion),...names.slice(0,inversion)];
+  const anchors=[...new Map(board.notes.filter(note=>pcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>ascending?a.midi-b.midi:b.midi-a.midi);
+  const groups=[];
+  for(const anchor of anchors){
+    const index=pcs.indexOf(anchor.pc),inversion=ascending?index:(index+1)%pcs.length;
+    const rotatedPcs=[...pcs.slice(inversion),...pcs.slice(0,inversion)],rotatedNames=[...names.slice(inversion),...names.slice(0,inversion)];
+    const path=pathForPcs(board,rotatedPcs,rotatedNames,ascending,anchor.midi,anchor.midi);
+    if(!path)continue;
     const inversionName=['root','1st inv.','2nd inv.','3rd inv.','4th inv.'][inversion] || `${inversion}th inv.`;
-    const path=pathForPcs(board,rotatedPcs,rotatedNames,ascending,edge.midi,sequenceIndex===0?edge.midi:null);
-    return {degree:sequenceIndex+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:contour(path,motion),sequenceAnchor:path?.[0]?.midi,sequenceDirection:ascending?1:-1};
-  }).filter(group=>group.notes.length);
+    groups.push({degree:groups.length+1,chord:`${harmony.name}${harmony.suffix} · ${inversionName}`,rootName:rotatedNames[0],names:rotatedNames,pcs:rotatedPcs,notes:contour(path,motion),sequenceAnchor:path[0].midi,sequenceDirection:ascending?1:-1});
+  }
+  return groups;
 }
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {

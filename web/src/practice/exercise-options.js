@@ -11,3 +11,11 @@ export function exerciseMenuOptions(study){
  [['ascending','Ascending'],['descending','Descending'],['up-down','Ascending and descending'],['down-up','Descending and ascending']]:
  [['ascending','Upward first'],['descending','Downward first']]};
 }
+
+// Scale-step patterns retain their mathematics in other collections, but their
+// intervals and stacks are not necessarily thirds, triads or seventh chords.
+export function exerciseCollectionLabels(study,nonDiatonic=false){
+ const studies=nonDiatonic?{thirds:'Alternate scale-note pairs',fourths:'Scale-step pairs · 1–4',sixths:'Scale-step pairs · 1–6',digital1324:'Scale-step 1–3–2–4',cells:'Scale-step 1–2–3–5',harmonized:'Alternate-note stacks',alternating:'Alternating scale-note stacks',chordtones:'Scale-note stacks from core chord tones',chordtonesalternating:'Alternating stacks from core chord tones',upperstructure:'Scale-step 3–5–7–9'}:{};
+ const materials=study==='inversions'?['Up to 3 chord tones','Up to 4 chord tones','Up to 5 chord tones']:nonDiatonic?['3-note stacks','4-note stacks','5-note stacks']:['Triads','Tetrads','Ninth chords'];
+ return {studies,materials};
+}

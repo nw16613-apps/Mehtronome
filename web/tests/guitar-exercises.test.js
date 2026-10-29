@@ -79,7 +79,7 @@ test('shared material and direction controls select every alternating arpeggio f
 
 test('exercise library provides selected-chord inversions',()=>{
   const inversions=cagedStudy(board,harmony,'inversions','seventh','ascending');
-  assert.equal(inversions.length,4);
+  assert.deepEqual(inversions.map(group=>group.notes[0].midi),[45,48,52,55,57,60,64]);
   assert.deepEqual(new Set(inversions.map(group=>group.rootName)),new Set(['A','C','E','G']));
   assert.equal(inversions[0].notes[0].midi,Math.min(...board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>note.midi)));
   const descending=cagedStudy(board,harmony,'inversions','seventh','descending');

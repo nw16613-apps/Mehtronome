@@ -1,0 +1,22 @@
+import {MODES} from '../src/audio/music.js';
+import {test,expect} from '@playwright/test';
+const tab=async(page:any,target:string)=>page.locator(`[data-workspace-target=${target}]`).click();
+test('inversion notation uses the upper register before reversing across repeated chord bars',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'inversion-audit',name:'Inversion registers',key:9,beats:4,progression:{version:2,name:'Inversion registers',steps:[0,0].map(root=>({root,chord:'min7',mode:'dorian',bars:1,bass:null}))}}]})));
+ await page.goto('/');await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('saved:inversion-audit');await tab(page,'caged-exercise');await page.locator('#exercise-study').selectOption('inversions');await page.locator('#exercise-material').selectOption('seventh');await page.locator('#exercise-rhythm').selectOption('sixteenths');await page.locator('#exercise-position-navigation').selectOption('all');for(const slot of [0,1]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption('II');}
+ const names=await page.locator('.exercise-note[data-group-index="1"]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')!.split(',')[0]));expect(names).toEqual(['C','E','G','A','E','G','A','C','A','G','E','C','G','E','C','A']);await expect(page.locator('#exercise-material option[value=seventh]')).toHaveText('Up to 4 chord tones');await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
+});
+test('non-heptatonic charts label scale-step sequences and material accurately',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'collection-audit',name:'Whole tone study',key:0,beats:4,progression:{version:2,name:'Whole tone study',steps:[{root:0,chord:'dom9sharp5',mode:'whole_tone',bars:2,bass:null}]}}]})));
+ await page.goto('/');await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('saved:collection-audit');await expect(page.locator('#repertoire-status')).toContainText('Saved chart loaded');await tab(page,'caged-exercise');await expect(page.locator('#exercise-study option[value=thirds]')).toHaveText('Alternate scale-note pairs');await expect(page.locator('#exercise-material option[value=seventh]')).toHaveText('4-note stacks');await page.locator('#exercise-study').selectOption('inversions');await expect(page.locator('#exercise-material option[value=seventh]')).toHaveText('Up to 4 chord tones');await page.locator('#exercise-study').selectOption('groups4');await expect(page.locator('.exercise-note').first()).toBeVisible();await page.locator('.exercise-lesson>summary').click();await expect(page.locator('.exercise-lesson')).toContainText('6-note scale');await expect(page.locator('.exercise-lesson')).toContainText('missing pitch is not replaced');expect(errors).toEqual([]);
+});
+
+test('every scale family can load from Harmony and regenerate scale and chord arpeggio notation',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const cases=Object.entries(MODES).map(([mode,definition])=>({mode,chord:definition.chord}));
+ await page.addInitScript(cases=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:cases.map(({mode,chord})=>({id:mode,name:mode,key:9,beats:4,progression:{version:2,name:mode,steps:[{root:0,chord,mode,bars:2,bass:null}]}}))})),cases);
+ await page.goto('/');
+ for(const {mode}of cases){await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('saved:'+mode);await expect(page.locator('#repertoire-status')).toContainText('Saved chart loaded');await tab(page,'caged-exercise');await page.locator('#exercise-study').selectOption('groups4');await expect(page.locator('.exercise-note').first()).toBeVisible();await page.locator('#exercise-study').selectOption('inversions');await expect(page.locator('.exercise-note').first()).toBeVisible();await expect(page.locator('#progression-choice')).toHaveValue('saved:'+mode);}
+ expect(errors).toEqual([]);
+});

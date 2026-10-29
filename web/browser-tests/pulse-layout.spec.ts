@@ -1,9 +1,9 @@
 import {test,expect} from '@playwright/test';
 test('shared session playback describes its scope and tracks the selected harmony',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/');await expect(page.locator('.pulse-main-controls #tap-tempo')).toBeVisible();await expect(page.locator('.pulse-main-controls #tempo-save')).toBeVisible();await expect(page.locator('#session-chord')).toHaveText('Am13');await expect(page.locator('#session-mode')).toHaveText('A Dorian');
+ await page.goto('/');await expect(page.locator('.pulse-main-controls #tap-tempo')).toBeVisible();await expect(page.locator('.pulse-main-controls #tempo-save')).toBeVisible();await expect(page.locator('#session-chord')).toHaveText('Am7');await expect(page.locator('#session-mode')).toHaveText('A Dorian');
  await expect(page.locator('.session-playback')).toContainText('all unmuted tracks');await page.locator('#count-in').uncheck();await page.locator('#play').click();await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await page.locator('#mini-play').click();await expect(page.locator('#play')).toHaveAttribute('aria-pressed','false');
- await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#key').selectOption('0');await page.locator('[data-workspace-target=pulse-title]').click();await expect(page.locator('#session-chord')).toHaveText('Cm13');
+ await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#key').selectOption('0');await page.locator('[data-workspace-target=pulse-title]').click();await expect(page.locator('#session-chord')).toHaveText('Cm7');
  await expect(page.locator('#guided-goals')).toBeHidden();await page.locator('[data-workspace-target=progress-title]').click();await expect(page.locator('#guided-goals')).toBeVisible();await page.locator('#start-guided-goal').click();await expect(page.locator('#guided-session')).toBeVisible();expect(errors).toEqual([]);
 });
 test('timer mode and custom accents have explicit states',async({page})=>{
