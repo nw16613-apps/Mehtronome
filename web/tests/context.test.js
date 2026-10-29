@@ -11,7 +11,7 @@ test('compatibility checks compare real pitches and preserve intentional outside
 
 test('melodic colours are accepted across keys without a repair warning',async()=>{
  const {scaleCompatibility}=await import('../src/practice/context.js'),{harmonyAt}=await import('../src/audio/music.js');
- for(let key=0;key<12;key++)for(const [chord,mode] of [['dom13','major_pentatonic'],['dom13','major_blues'],['dom13','minor_blues'],['dom7','whole_tone'],['dom7','altered']]){
+ for(let key=0;key<12;key++)for(const [chord,mode] of [['dom13','major_pentatonic'],['dom13','major_blues'],['min13','minor_blues'],['dom9sharp5','whole_tone'],['dom7alt','altered']]){
   assert.equal(scaleCompatibility(harmonyAt({key,chord,mode})), '',`${key} ${chord} ${mode}`);
  }
 });

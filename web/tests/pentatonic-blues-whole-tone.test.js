@@ -18,7 +18,7 @@ test('whole tone, augmented, pentatonic and blues spellings and strict chord gui
  assert.deepEqual(modeNotes(0,'minor_blues'),['C','E♭','F','G♭','G','B♭']);
  const guides=chord=>compatibleScaleGroups(chord).flatMap(g=>g.choices.map(c=>c.id));
  for(const chord of ['dom7sharp5','dom9sharp5','dom7flat5'])assert.ok(guides(chord).includes('whole_tone'));
- assert.ok(guides('dom7').includes('whole_tone'));assert.ok(guides('dom7').includes('minor_blues'));assert.ok(guides('min7').includes('minor_blues'));assert.ok(guides('sixNine').includes('major_blues'));assert.ok(guides('augMaj7').includes('augmented_scale'));
+ assert.ok(!guides('dom7').includes('whole_tone'));assert.ok(!guides('dom7').includes('minor_blues'));assert.ok(guides('min7').includes('minor_blues'));assert.ok(guides('sixNine').includes('major_blues'));assert.ok(guides('augMaj7').includes('augmented_scale'));
 });
 test('all six new guides support every tonic, complete note collections and finite backing voices',()=>{
  for(const mode of scales)for(let key=0;key<12;key++){
