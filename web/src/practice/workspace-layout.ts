@@ -63,15 +63,23 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));reference.append(help);
  get('preview-controls').hidden=true;
  const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));query('.pad-settings').append(movement);
- // Guitar: musical choices and view controls before diagrams; theory explanations afterward.
- const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!;
- guitarHelp.querySelector('summary')!.textContent='Diagram reference & guidance';
- move(guitarHelp,get('guitar-context'),get('guitar-scale'),get('guitar-parent'),get('grip-toggle-help'),query('.guitar-legend'));
- const guitarProgression=query('.guitar-progression-panel');guitarProgression.classList.add('workspace-group');guitarProgression.prepend(Object.assign(document.createElement('h3'),{textContent:'Chord & position'}));guitarProgression.append(get('guitar-scale-check'));
- const shapes=query('.guitar-shape-controls'),diagramControls=query('#position-path-guide .position-path-controls');
- diagramControls.classList.add('caged-diagram-controls');diagramControls.setAttribute('aria-label','CAGED diagram choices');diagramControls.append(shapes);
- const guitarView=group('View','guitar-viewbar');move(guitarView,query('.guitar-controls'),guitar.querySelector('[data-learning-focus]'));overview.append(guitarView);
- const oldSetup=query('.guitar-setup');oldSetup.remove();
+ // Fretboard: chart slots first, then position, display and the active diagram.
+ const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!,legend=query('.guitar-legend');
+ guitarHelp.querySelector('summary')!.textContent='Fretboard reference';
+ move(guitarHelp,get('guitar-context'),get('guitar-scale'),get('guitar-parent'),get('grip-toggle-help'));
+ const guitarProgression=query('.guitar-progression-panel');guitarProgression.classList.add('workspace-group');guitarProgression.prepend(Object.assign(document.createElement('h3'),{textContent:'Chord & position'}));guitarProgression.append(get('guitar-scale-check'),get('position-path'));
+ const fretboardWorkspace=document.createElement('section');fretboardWorkspace.className='fretboard-workspace';fretboardWorkspace.setAttribute('aria-label','Fretboard explorer');overview.before(fretboardWorkspace);
+ const diagramControls=query('#position-path-guide .position-path-controls');diagramControls.classList.add('caged-diagram-controls');diagramControls.setAttribute('aria-label','Position choices');
+ move(fretboardWorkspace,get('position-path-guide'),get('position-overview'),query('.position-navigation'));
+ const toolbar=group('Diagram','fretboard-toolbar'),guitarView=group('Display','guitar-viewbar');
+ move(guitarView,query('.guitar-controls'),query('.grip-toggle'),guitar.querySelector('[data-learning-focus]'));
+ const overlays=group('Overlay','fretboard-overlay-controls');move(overlays,query('.shared-theory-controls'));toolbar.append(guitarView,overlays);
+ const displayStatus=document.createElement('p');displayStatus.id='fretboard-display-status';displayStatus.className='practice-help';toolbar.append(displayStatus);fretboardWorkspace.append(toolbar);
+ move(fretboardWorkspace,get('guitar-diagrams'),legend,get('grip-preview-status'));
+ const overlayKey=document.createElement('div');overlayKey.id='fretboard-overlay-key';overlayKey.className='theory-legend';legend.append(overlayKey);
+ const overlaySummary=document.createElement('p');overlaySummary.id='fretboard-overlay-summary';overlaySummary.className='fretboard-overlay-summary';fretboardWorkspace.append(overlaySummary);
+ const overlayDetails=document.createElement('details');overlayDetails.id='fretboard-overlay-details';overlayDetails.innerHTML='<summary>Overlay details</summary>';move(overlayDetails,get('theory-description'));fretboardWorkspace.append(overlayDetails);
+ const oldSetup=query('.guitar-setup');oldSetup.remove();overview.hidden=true;
  // Saved setups: loading and saving should not share an ambiguous row.
  get('progress-title').innerHTML='Your practice';query('.workspace-progress .intro-copy').textContent='Save your setups and track your practice.';
  const presets=query('.presets'),presetFields=query('.preset-fields'),loadSetup=group('Load a saved setup','preset-load-group'),saveSetup=group('Save current setup','preset-save-group');

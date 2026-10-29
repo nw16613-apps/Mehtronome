@@ -80,3 +80,30 @@ html:root[data-palette][data-theme] body[data-workspace=practice] .workspace{gri
 @media(max-width:550px){.pulse-main-controls{grid-template-columns:minmax(0,1fr)}.session-playback{grid-template-columns:1fr 1fr;align-items:center}.session-playback .check,.session-playback .play-status,.session-playback>.practice-help{grid-column:1/-1}.transport .pulse-options{grid-template-columns:1fr}.metronome-training{grid-template-columns:1fr}.pulse-tempo-zone .pulse-shortcut-row{display:flex;flex-wrap:wrap}.pulse-tempo-zone .pulse-shortcut-row>.small-label{width:auto}.tempo-actions #tap-status{flex-basis:auto}}
 
 .chart-sheet-panel #loop-controls[hidden]{display:none!important}
+
+/* Fretboard exploration: chart slots, position choices, toolbar, then diagram. */
+.guitar-overview[hidden]{display:none!important}.fretboard-workspace{min-width:0;margin-top:12px}
+.guitar-progression-panel #position-path{margin-top:12px}.guitar-progression-panel .reference-current{margin-bottom:8px}
+.fretboard-workspace #position-path-guide{padding:0;border:0;margin:0 0 12px;background:transparent}.fretboard-workspace .position-path-heading{display:block}
+.fretboard-workspace .position-path-heading>p{margin:8px 0 0!important;font-size:11px!important;line-height:1.5;text-transform:none!important;letter-spacing:normal!important;text-align:left}
+.fretboard-workspace .caged-diagram-controls{gap:10px}.fretboard-workspace .caged-diagram-controls>label{flex:0 1 230px}
+.fretboard-workspace #position-overview{margin:10px 0;gap:8px}.fretboard-workspace .position-thumbnail svg{max-height:86px}.fretboard-workspace .position-thumbnail>span{font-size:12px}
+.fretboard-workspace .position-navigation{margin:8px 0 12px;gap:10px}.fretboard-workspace .position-navigation .practice-button{min-height:38px}
+.fretboard-toolbar{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px 20px;padding:12px 0}
+.fretboard-toolbar>h3{display:none}.fretboard-toolbar>.workspace-group{border:0;padding:0}.fretboard-toolbar>.workspace-group>h3{font-size:11px;margin-bottom:8px}
+.fretboard-toolbar .guitar-viewbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.fretboard-toolbar .guitar-viewbar .guitar-controls{flex:1 1 260px;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fretboard-toolbar .guitar-viewbar>h3{width:100%}.fretboard-toolbar .grip-toggle{min-height:38px;display:flex;align-items:center;gap:6px;margin:0;font-size:12px}
+.fretboard-toolbar .shared-theory-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}.fretboard-toolbar label{display:grid;gap:4px;font-size:12px}.fretboard-toolbar select{width:100%;box-sizing:border-box;margin:0}
+.fretboard-toolbar #fretboard-display-status{grid-column:1/-1;font-size:11px;margin:0}.fretboard-workspace [hidden]{display:none!important}
+.guitar.has-featured .fretboard-workspace #guitar-diagrams{max-width:900px;margin:8px auto 0}.guitar.has-featured .fretboard-workspace .featured-position{padding:14px;border:1px solid var(--line)}
+.guitar.has-featured .fretboard-workspace .featured-position svg{max-width:680px;width:100%;margin-inline:auto}.fretboard-workspace .featured-position .position-heading h4::after{content:none}
+.fretboard-workspace .position-heading h4{font-size:14px}.fretboard-workspace .position-heading{align-items:baseline;flex-wrap:wrap}
+.fretboard-workspace .guitar-legend{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin:10px 0;font-size:11px}.fretboard-workspace .guitar-legend .theory-legend{display:flex;gap:12px;margin:0}
+.fretboard-voicing-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}.fretboard-voicing-actions .grip-stage-buttons{margin:0}.fretboard-workspace .voicing-details{margin-top:12px}.voicing-details summary,#fretboard-overlay-details>summary{cursor:pointer;font-size:12px;font-weight:600}.voicing-details p{font-size:12px;line-height:1.6}
+.fretboard-overlay-summary{font-size:12px;line-height:1.6;margin:8px 0}.fretboard-workspace #fretboard-overlay-details{margin:10px 0 16px}.fretboard-workspace .theory-description{font-size:12px;letter-spacing:normal;text-transform:none;line-height:1.6}
+.guitar #full-fretboard-panel{margin-top:18px}
+.focus-view .guitar :is(.guitar-progression-panel,#position-path-guide,.fretboard-toolbar,.position-navigation,#fretboard-overlay-details,#fretboard-overlay-summary){display:none!important}
+@media(max-width:900px){.fretboard-toolbar{grid-template-columns:1fr}.fretboard-toolbar .guitar-viewbar .guitar-controls{flex-basis:260px}}
+@media(max-width:700px){.fretboard-workspace #position-overview{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(112px,1fr);overflow-x:auto;padding-bottom:5px}.fretboard-workspace .position-thumbnail svg{display:none}.fretboard-workspace .position-thumbnail{padding:9px;min-height:58px;text-align:left}.fretboard-workspace .position-thumbnail>small{font-size:11px}.fretboard-workspace .caged-diagram-controls>label{flex:1 1 145px;min-width:0}.fretboard-toolbar .guitar-viewbar .guitar-controls{flex-basis:100%}.fretboard-toolbar .shared-theory-controls{grid-template-columns:1fr 1fr}.fretboard-workspace .position-navigation{justify-content:space-between}.fretboard-workspace #position-indicator{font-size:11px}.fretboard-workspace .fretboard-voicing-actions>.practice-button{flex:1 1 130px}.fretboard-workspace .grip-stage-buttons{width:100%}.fretboard-workspace .grip-stage-buttons button{flex:1}}
+
+.fretboard-workspace .position-thumbnail>small{display:block!important}

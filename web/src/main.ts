@@ -74,7 +74,7 @@ app.innerHTML = `
     <span class="workspace-nav-label">Workspace</span>
     <button type="button" class="workspace-tab selected" data-workspace-target="pulse-title" aria-current="page"><span>01</span>Metronome &amp; Mixer</button>
     <button type="button" class="workspace-tab" data-workspace-target="harmony-title"><span>02</span>Harmony</button>
-    <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Guitar</button>
+    <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Fretboard</button>
     <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>04</span>Exercises</button>
     <button type="button" class="workspace-tab" data-workspace-target="progress-title"><span>05</span>Progress</button>
     <button type="button" class="workspace-tab" data-workspace-target="sound-settings-title"><span>06</span>Sound Settings</button>
@@ -177,21 +177,21 @@ app.innerHTML = `
       <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Best completion for each mode at the current root, across the chord voicings you have studied.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
     </section>
     <section class="guitar panel workspace-page workspace-guitar" aria-labelledby="guitar-title">
-      <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Guitar reference</h2></div><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
-      <section class="progression-reference compact-reference" aria-label="Guitar progression reference"></section>
+      <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Fretboard explorer</h2></div><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
+      <section class="progression-reference compact-reference" aria-label="Fretboard progression reference"></section>
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
-        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Highlight chord shapes</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
-        <div class="theory-controls shared-theory-controls"><label>Explore all positions<select id="theory-view" aria-label="Explore all CAGED positions"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Suggestion<select id="theory-choice" aria-label="Suggestion for all CAGED positions"><option value="">None</option></select></label></div><div id="theory-description"></div>
-        <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Suggested chord shape</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
+        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Show chord voicing</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
+        <div class="theory-controls shared-theory-controls"><label>Melodic overlay<select id="theory-view" aria-label="Melodic overlay"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Pentatonic source<select id="theory-choice" aria-label="Pentatonic source"><option value="">None</option></select></label></div><div id="theory-description"></div>
+        <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord voicing</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
-      <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full fretboard</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
+      <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full-neck map</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show CAGED regions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
-      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With the chord overlay on, play only the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. The shared Explore selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Chord shapes and modal rings return when exploration is off.</p>
+      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With Show chord voicing enabled, play the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. The Melodic overlay selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Voicing and modal markings return when the overlay is off.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </details>
     </section>
@@ -232,8 +232,8 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
-let fullFretboardCollapsed=false;
-try { fullFretboardCollapsed=localStorage.getItem('mehtronome-full-fretboard-collapsed')==='true'; } catch { /* Keep the context map open. */ }
+let fullFretboardCollapsed=matchMedia('(max-width:700px)').matches;
+try { const stored=localStorage.getItem('mehtronome-full-fretboard-collapsed');if(stored!==null)fullFretboardCollapsed=stored==='true'; } catch { /* Keep the context map open. */ }
 const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
 let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
@@ -493,7 +493,7 @@ function renderProgressionReference(activeStep=step) {
     const referenceExpanded=element.querySelector<HTMLDetailsElement>('details')?.open??(element.getAttribute('aria-label')==='Exercise progression reference'?exerciseReferenceExpanded:false);
     if(exercisePlaying&&exerciseView.backing&&!settings.progression&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'||settings.loopUnit==='beats'?order.reduce((sum:number,index:number)=>sum+progressionPlaybackBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
-    const compatibility=scaleCompatibility(info);if(compatibility&&element.getAttribute('aria-label')!=='Guitar progression reference')element.insertAdjacentHTML('beforeend',`<p class="context-check">${escapeHtml(compatibility)}</p>`);
+    const compatibility=scaleCompatibility(info);if(compatibility&&element.getAttribute('aria-label')!=='Fretboard progression reference')element.insertAdjacentHTML('beforeend',`<p class="context-check">${escapeHtml(compatibility)}</p>`);
     const context=musicalContext(settings,activeStep);
     if(element.classList.contains('compact-reference')){element.querySelector('ol')?.remove();element.querySelector('.reference-preview-help')?.remove();element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
     if(settings.progression&&settings.template==='custom')element.insertAdjacentHTML('beforeend',sectionControls());
@@ -616,7 +616,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   if(!skipExercise&&(exercisePlaying||exercisePreparing))stopExercisePreview();
   if (previewGripShape) stopPreview();
   positionGrips.clear();
-  const showGrip = input('show-grip').checked;
+  const requestedGrip = input('show-grip').checked;
   let requestedFeatured = select('featured-position').value;
   if(!['all','path'].includes(requestedFeatured)){
     select('featured-position').value='path';
@@ -631,21 +631,34 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const featured=settings.progression?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!settings.progression;
   select('position-region').parentElement!.hidden=!following;
-  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic CAGED route · choose a region':'Choose a chord card, then its position · other chords stay unchanged';
+  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic route. Choosing a position below switches this chart slot to manual; other slots keep their positions.':'Manual positions. Choose a chart slot, then its position; other slots stay unchanged.';
   select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
-  el('grip-legend').hidden = !showGrip;
   const info = chordInfo(step);
   const chord = `${info.name}${info.suffix}`;
   const mode = MODES[info.mode as keyof typeof MODES];
   const suggestions = theoryOptions(info) as {pentatonics:TheorySuggestion[];triadPairs:TheorySuggestion[]};
+  for(const [kind,choices] of [['pentatonic',suggestions.pentatonics],['triads',suggestions.triadPairs]] as const){select('theory-view').querySelector<HTMLOptionElement>(`option[value=${kind}]`)!.disabled=!choices.length;if(theoryView.kind===kind&&!choices.length)theoryView.kind='none';}
   const theoryOptionsForView = theoryView.kind === 'triads' ? suggestions.triadPairs : suggestions.pentatonics;
   const selectedTheory = theoryView.kind === 'none' ? null : theoryOptionsForView.find(option=>option.id===theoryView.choiceId) || theoryOptionsForView[0];
+  const showGrip=requestedGrip&&!selectedTheory;
+  input('show-grip').disabled=Boolean(selectedTheory);select('fret-view').disabled=Boolean(selectedTheory);
+  el('grip-legend').hidden=!showGrip;
+  el('characteristic-legend').hidden=Boolean(selectedTheory)||!input('highlight-mode').checked;
+  const legend=document.querySelector('.guitar-legend');
+  if(legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=Boolean(selectedTheory);(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=Boolean(selectedTheory)||select('exercise').value==='arpeggio'||showGrip&&gripOnly;}
+  const displayStatus=document.getElementById('fretboard-display-status');if(displayStatus){displayStatus.hidden=!selectedTheory;displayStatus.textContent=selectedTheory?'Overlay active. Turn it off to restore your diagram and voicing settings.':'';}
+  const sourceLabel=el('theory-choice-label');sourceLabel.firstChild!.textContent=theoryView.kind==='triads'?'Triad pair ':'Pentatonic source ';select('theory-choice').setAttribute('aria-label',theoryView.kind==='triads'?'Triad pair':'Pentatonic source');
   theoryView.choiceId = selectedTheory?.id || '';
   select('theory-view').value=theoryView.kind;
   select('theory-choice').replaceChildren(...(selectedTheory?theoryOptionsForView.map(option=>new Option(option.name,option.id,option.id===selectedTheory.id,option.id===selectedTheory.id)):[new Option('None','')]));
   el('theory-choice-label').hidden=!selectedTheory;
-  el('theory-description').innerHTML = !selectedTheory ? '' : `<div class="theory-description"><h5>${escapeHtml(selectedTheory.name)}</h5><p class="theory-tones">${selectedTheory.names.map((name,i)=>`${escapeHtml(name)} (${escapeHtml(selectedTheory.degrees[i])})`).join(' · ')}</p>${selectedTheory.groups?`<div class="theory-legend">${selectedTheory.groups.map((group,i)=>`<span class="theory-group-${i===0?'a':'b'}"><i>${i===0?'A':'B'}</i>${escapeHtml(group.name)} · ${group.names.map(escapeHtml).join(' – ')}</span>`).join('')}</div>`:'<div class="theory-legend"><span><i class="theory-pentatonic-key"></i>Coloured notes form the pentatonic.</span><span><i class="theory-pentatonic-root-key"></i>Plum ring marks its root; gold remains the modal root.</span></div>'}<p>${escapeHtml(overlayPurpose(selectedTheory,info))}</p><p class="theory-hint">${theoryView.kind==='triads'?'Alternate triad A and triad B as single-note lines. ':'Try short phrases from the coloured notes. '}Degrees are relative to ${escapeHtml(info.scaleNames[0])} ${escapeHtml(mode.name)}.${select('exercise').value==='arpeggio'?' Exploration shows the scale; switching off restores chord tones only.':''}</p></div>`;
+  const overlayKey=document.getElementById('fretboard-overlay-key'),overlaySummary=document.getElementById('fretboard-overlay-summary'),overlayDetails=document.getElementById('fretboard-overlay-details');
+  const keyMarkup=!selectedTheory?'':selectedTheory.groups?selectedTheory.groups.map((group,i)=>`<span class="theory-group-${i===0?'a':'b'}"><i>${i===0?'A':'B'}</i>${escapeHtml(group.name)}</span>`).join(''):'<span><i class="theory-pentatonic-key"></i>Pentatonic notes</span><span><i class="theory-pentatonic-root-key"></i>Pentatonic root</span>';
+  if(overlayKey)overlayKey.innerHTML=keyMarkup;
+  if(overlaySummary){overlaySummary.hidden=!selectedTheory;overlaySummary.textContent=selectedTheory?`${selectedTheory.name} · ${selectedTheory.names.map((name,i)=>`${name} (${selectedTheory.degrees[i]})`).join(' · ')}`:'';}
+  if(overlayDetails)overlayDetails.hidden=!selectedTheory;
+  el('theory-description').innerHTML=!selectedTheory?'':`<div class="theory-description"><p>${escapeHtml(overlayPurpose(selectedTheory,info))}</p>${selectedTheory.groups?selectedTheory.groups.map(group=>`<p>${escapeHtml(group.name)}: ${group.names.map(escapeHtml).join(' · ')}</p>`).join(''):''}<p>${theoryView.kind==='triads'?'Alternate triad A and triad B as single-note lines.':'Try short phrases from the coloured notes.'} Degrees are relative to ${escapeHtml(info.scaleNames[0])} ${escapeHtml(mode.name)}.</p></div>`;
   const displayedPositions=POSITIONS.map(position=>{
     const board=fretboardFor(info,position.shape,select('exercise').value==='arpeggio');
     return {...cagedPositionFor(board),geometryShape:position.shape,board};
@@ -660,18 +673,18 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
       .replace('viewBox="0 0 480 218"','viewBox="36 8 408 180"');
-    return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}"><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
+    return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
   }).join('');
   el('position-indicator').textContent=`Position ${selectedPosition.numeral} of V · ${selectedPosition.shape} shape`;
-  for(const id of ['position-previous','position-next']) (el(id) as HTMLButtonElement).disabled=following;
+  for(const id of ['position-previous','position-next']) (el(id) as HTMLButtonElement).disabled=playing||exercisePlaying||exercisePreparing;
   el('guitar-diagrams').innerHTML = [selectedPosition].map(position => {
     const chordBoard = position.board;
     const board = selectedTheory ? fretboardFor(info,position.geometryShape) : chordBoard;
     const grip = showGrip ? recommendedGrip(info, chordBoard) : null;
     positionGrips.set(position.geometryShape,grip);
-    const gripDetails = !showGrip ? '' : grip ? `<div class="grip-details"><div class="grip-stage-buttons"><button class="practice-button" data-grip-display="grip" aria-pressed="${gripOnly}">Learn grip only</button><button class="practice-button" data-grip-display="scale" aria-pressed="${!gripOnly}">Connect to scale</button></div><p><b>Formula:</b> ${escapeHtml(info.intervals.join(' · '))}. <b>Bass:</b> ${escapeHtml(gripFacts(grip,info)!.bass)}</p><p class="grip-tones">Voiced low to high: ${grip.notes.map((n: any,i: number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p class="grip-help">${selectedTheory ? 'Strum chord previews the accompanying harmony. Explore the highlighted notes melodically.' : `${grip.omitted.length ? `Omitted: ${grip.omitted.join(' · ')}. ` : ''}Ringed notes form the suggested chord; mute × strings.`}</p><button type="button" class="practice-button grip-preview" data-grip="${position.geometryShape}" data-preview-label="position ${position.numeral}" aria-label="Strum chord, position ${position.numeral}" aria-pressed="false" ${playing ? 'disabled' : ''}>Strum chord</button><button type="button" class="practice-button" data-practise-grip="${position.numeral}" ${playing?'disabled':''}>Practise this shape →</button><p class="practice-help">This is a suggested compact voicing inside the ${position.shape} CAGED framework, not a complete six-string CAGED chord. No inferred finger numbers are taught.</p></div>` : '<p class="grip-help">No compact chord shape fits this position.</p>';
+    const gripDetails=!showGrip?'':grip?`<div class="grip-details"><div class="fretboard-voicing-actions"><div class="grip-stage-buttons"><button class="practice-button" data-grip-display="grip" aria-pressed="${gripOnly}">Voicing only</button><button class="practice-button" data-grip-display="scale" aria-pressed="${!gripOnly}">Voicing + scale</button></div><button type="button" class="practice-button grip-preview" data-grip="${position.geometryShape}" data-preview-label="position ${position.numeral}" aria-label="Strum chord, position ${position.numeral}" aria-pressed="false" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Strum chord</button><button type="button" class="practice-button" data-practise-grip="${position.numeral}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Practise arpeggio →</button></div><details class="voicing-details"><summary>Voicing details</summary><p><b>Chord formula:</b> ${escapeHtml(info.intervals.join(' · '))}. <b>Voiced bass:</b> ${escapeHtml(gripFacts(grip,info)!.bass)}</p><p class="grip-tones">Voiced low to high: ${grip.notes.map((n:any,i:number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p>${grip.omitted.length?`Omitted: ${grip.omitted.join(' · ')}. `:''}Ringed notes form a suggested compact voicing inside this CAGED framework; mute × strings.</p></details></div>`:'<p class="grip-help">No compact chord voicing fits this position.</p>';
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
-    return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:board.notes.filter((n:any)=>grip.notes.some(g=>g.string===n.string&&g.fret===n.fret))}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
+    return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>${escapeHtml(chord)} · Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:board.notes.filter((n:any)=>grip.notes.some(g=>g.string===n.string&&g.fret===n.fret))}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
   const fullBoard=fullFretboardFor(info,1,17,selectedTheory?false:select('exercise').value==='arpeggio');
   const fullFretboardGrips=showGrip&&!selectedTheory?displayedPositions.map(position=>{
@@ -1235,7 +1248,6 @@ function chooseOverviewPosition(numeral:string, focus=false) {
   if(focus)positionOverview.querySelector<HTMLButtonElement>(`[data-overview-position="${numeral}"]`)?.focus({preventScroll:true});
 }
 function moveOverviewPosition(direction:number) {
-  if(settings.progression&&select('featured-position').value==='path')return;
   const index=positionNumerals.indexOf(overviewPosition);
   chooseOverviewPosition(positionNumerals[(index+direction+positionNumerals.length)%positionNumerals.length]!,true);
 }
@@ -1796,6 +1808,8 @@ function syncMiniTransport() {
   document.dispatchEvent(new Event('mehtronome-playback-state'));
   syncExerciseRouteCards();
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
+  el('position-overview').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
+  for(const id of ['position-previous','position-next'])el<HTMLButtonElement>(id).disabled=playing||exercisePlaying||exercisePreparing;
   for(const id of ['exercise-position-navigation','exercise-position-region','featured-position','position-region','guitar-chord-position']){const control=document.getElementById(id) as HTMLSelectElement|null;if(control)control.disabled=playing||exercisePlaying||exercisePreparing;}
   const positionControl=document.getElementById('exercise-position') as HTMLSelectElement|null;if(positionControl)positionControl.disabled=playing||exercisePlaying||exercisePreparing||(settings.progression&&select('featured-position').value==='path');
   el('caged-exercise').querySelectorAll<HTMLButtonElement>('button[data-grip]').forEach(b=>b.disabled=playing||exercisePlaying||exercisePreparing);
@@ -2171,6 +2185,7 @@ installRepertoire({
 organizeWorkspaces(showWorkspace);
 applyStudioIcons();
 renderCustomBuilder();
+renderGuitar();
 
 el('pulse-timer-mode').addEventListener('input',()=>{input('pulse-minutes').value=select('pulse-timer-mode').value==='unlimited'?'0':String(Number(input('pulse-minutes').value)||10);update();});
 syncPulseToolsUI();syncMiniTransport();

@@ -1,7 +1,7 @@
 import {characteristicNotes} from '../audio/music.js';
 import {recommendedGrip} from '../guitar/grips.js';
 export const GOALS=[
- {id:'mode',name:'Learn a mode’s sound',mode:'dorian',chord:'min7',study:'thirds',workspace:'harmony',tip:'Hear the held minor seventh. Sing the root, minor third and natural sixth; then find them in Guitar.'},
+ {id:'mode',name:'Learn a mode’s sound',mode:'dorian',chord:'min7',study:'thirds',workspace:'harmony',tip:'Hear the held minor seventh. Sing the root, minor third and natural sixth; then find them in Fretboard.'},
  {id:'shape',name:'Explore a chord arpeggio',mode:'dorian',chord:'min7',study:'positional',workspace:'guitar',tip:'Strum the ringed grip, choose Practise this shape, then explore its full positional arpeggio.'},
  {id:'connect',name:'Connect two CAGED positions',mode:'dorian',chord:'min7',study:'groups4',workspace:'exercises',tip:'Play the first cell in Position I, select Position II here, then repeat the idea and resolve to the same chord tone.'},
  {id:'jazz',name:'Outline an essential ii–V–I',mode:'major',chord:'maj7',study:'harmonized',template:'major251essential',workspace:'exercises',tip:'Explore diatonic arpeggio cells through the ii–V–I chord changes.'},
