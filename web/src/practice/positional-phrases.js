@@ -2,22 +2,23 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
 
-// Sweeps omit their last endpoint: it starts the return leg instead.
+// Each triplet bar traverses the full span, then turns near its destination
+// edge. The following bar uses the opposite form, even in a new position.
 const phraseFor=(span,descending,turnaround)=>{
- const ordered=descending?span.toReversed():span,cycle=[],sections=[];
- const addSweep=size=>{
-  const leg=size-1;
-  for(const [notes,up] of [[ordered.slice(0,leg),!descending],[ordered.slice(1,size).toReversed(),descending]]){
-   sections.push({start:cycle.length,length:leg,up});cycle.push(...notes);
+ const cycle=[],sections=[];
+ if(span.length<2)return {cycle:[...span],sections:span.length?[{start:0,length:1,up:!descending}]:[]};
+ const leg=span.length-1,half=turnaround?Math.ceil(leg/12)*12:leg;
+ for(const down of [descending,!descending]){
+  const ordered=down?span.toReversed():span,notes=ordered.slice(0,leg);
+  const radius=Math.min(2,leg),period=2*radius;
+  while(notes.length<half){
+   const phase=(notes.length-leg)%period,distance=phase<=radius?phase:period-phase;
+   notes.push(ordered[leg-distance]);
   }
- };
- if(span.length<2)return {cycle:[...ordered],sections:ordered.length?[{start:0,length:1,up:!descending}]:[]};
- addSweep(span.length);
- if(turnaround){
-  // Usually 16+8 or 18+6 notes. Larger ranges use complete two-bar
-  // blocks; small ranges repeat legal sweeps rather than inventing pitches.
-  const target=Math.ceil(cycle.length/24)*24;
-  while(cycle.length<target)addSweep(Math.min(span.length,(target-cycle.length)/2+1));
+  // The opposite form begins on the endpoint. Leave its lead-in below that
+  // endpoint (above it for downward-first), avoiding a repeated turning note.
+  if(turnaround&&notes.length>leg&&notes.at(-1)===ordered[leg]&&radius===2)notes[notes.length-1]=ordered[leg-2];
+  sections.push({start:cycle.length,length:half,up:!down});cycle.push(...notes);
  }
  return {cycle,sections};
 };

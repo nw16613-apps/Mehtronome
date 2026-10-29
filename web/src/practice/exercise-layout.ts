@@ -5,7 +5,7 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  const label=(id:string)=>find('#'+id).closest('label')!;
  const heading=find('.exercise-heading'),toolbar=find('.exercise-learning-toolbar'),controls=find('.exercise-controls');
  const definition=section('exercise-definition','Exercise');
- controls.prepend(label('exercise-study'));controls.append(label('exercise-stage'));label('exercise-stage').firstChild!.textContent='Scope ';
+ controls.prepend(label('exercise-study'));controls.append(label('exercise-stage'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));label('exercise-stage').firstChild!.textContent='Scope ';
  const singleScope=(find('#exercise-study') as HTMLSelectElement).value==='positional'?'One run per chord':'One cell per chord';
  for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?singleScope:'Continuous pattern';
  definition.append(controls);heading.after(definition);

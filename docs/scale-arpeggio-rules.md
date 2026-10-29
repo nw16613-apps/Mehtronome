@@ -15,7 +15,7 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Groups of four | Steps 1–2–3–4 | First note |
 | Diatonic 1–3–2–4 | Steps 1–3–2–4 | First note |
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
-| Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: full sweep plus smaller sweep completing 24 triplet notes for normal seventh-chord positions | Phrase ordinal phase; nearest fitting window at a context change |
+| Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each with a turnaround near its destination edge | Phrase ordinal phase; nearest fitting window at a context change |
 | Harmonized scale | Alternate scale notes: 1–3–5, 1–3–5–7 or 1–3–5–7–9 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
 | Arpeggios from core chord tones | Same scale stacks, restricted to roots among the first four written chord tones (all tones if shorter) | First note of the directed stack |

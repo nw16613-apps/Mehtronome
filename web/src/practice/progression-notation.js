@@ -13,15 +13,16 @@ export function progressionNotationSvg(plan,title){
  const unit=Math.max(guide?30:48,...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
  const barWidth=Math.max(guide?155:230,plan.beats*unit+35),systems=[];
  for(let first=0;first<barCount;first+=perSystem){
-  const count=Math.min(perSystem,barCount-first),width=100+Math.min(perSystem,barCount)*barWidth,height=290,staffEnd=90+count*barWidth-8;
-  let svg=`<svg class="exercise-notation aligned-notation" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)} · chord-aligned rhythm</title><rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text class="exercise-title" x="90" y="20">${esc(title)}${first?' · continued':''}</text><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">${plan.beats}</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
+  const systemEvents=plan.events.filter(e=>e.start<(first+perSystem)*plan.beats&&e.start+e.duration>first*plan.beats),musicOffset=plan.division===3&&systemEvents.length?Math.max(0,100-Math.min(...systemEvents.map(e=>staffY(e.note)))):0;
+  const count=Math.min(perSystem,barCount-first),width=100+Math.min(perSystem,barCount)*barWidth,height=290+musicOffset,staffEnd=90+count*barWidth-8;
+  let svg=`<svg class="exercise-notation aligned-notation" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)} · chord-aligned rhythm</title><rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text class="exercise-title" x="90" y="20">${esc(title)}${first?' · continued':''}</text><g transform="translate(0,${musicOffset})"><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">${plan.beats}</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
   for(let line=0;line<5;line++)svg+=`<line class="notation-line" x1="44" x2="${staffEnd}" y1="${61+line*10}" y2="${61+line*10}"/>`;
   for(let string=0;string<6;string++)svg+=`<line class="notation-line tab-line" x1="44" x2="${staffEnd}" y1="${150+string*18}" y2="${150+string*18}"/>`;
   for(let bar=first;bar<first+count;bar++){
    const start=bar*plan.beats,end=start+plan.beats,left=90+(bar-first)*barWidth,unit=(barWidth-35)/plan.beats;
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
    const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
-   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit,hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+=chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="272">${esc(change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':plan.study==='positional'?'Arpeggio':change.annotation.match(/\d+ cells?/)?.[0]||'Cell'))}</text>`;}
+   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit,hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+='</g>'+chordSvg(change.chord,x,40,'backing')+`<text class="exercise-degree" x="${x}" y="${272+musicOffset}">${esc(change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':plan.study==='positional'&&change.position?`Position ${change.position.numeral} · ${change.position.shape} shape`:change.annotation.match(/\d+ cells?/)?.[0]||'Cell'))}</text><g transform="translate(0,${musicOffset})">`;}
    const beamNotes=[],accidentals=new Map();
    let at=start;
    while(at<end-1e-6){
@@ -47,7 +48,6 @@ export function progressionNotationSvg(plan,title){
      if(duration>=1&&event.accent&&Math.abs(at-event.start)<1e-6)svg+=`<text class="note-accent" x="${x}" y="${y-38}" text-anchor="middle">&gt;</text>`;
      if(duration===3)svg+=`<circle class="duration-dot" cx="${x+13}" cy="${y}" r="2"/>`;
     }
-    if(plan.division===3&&duration<1&&Math.abs(at-Math.round(at))<1e-6)svg+=`<text class="tuplet-number" x="${x+unit/3}" y="53">3</text>`;
     at+=duration;
    }
    // Beam within a quarter-note beat, never across a rest or chord change.
@@ -58,16 +58,22 @@ export function progressionNotationSvg(plan,title){
     for(const note of group)svg+=`<line class="note-stem" x1="${note.x+6}" x2="${note.x+6}" y1="${note.y}" y2="${top}"/>`;
     for(const note of group)if(note.accent)svg+=`<text class="note-accent" x="${note.x}" y="${top-10}" text-anchor="middle">&gt;</text>`;
     if(group.length===1){const note=group[0];svg+=`<path class="note-flag" d="M ${note.x+6} ${top} q 13 6 3 17"/>`;if(note.duration<.3)svg+=`<path class="note-flag" d="M ${note.x+6} ${top+6} q 13 6 3 17"/>`;continue;}
-    svg+=`<line class="note-beam" data-beam-beat="${Math.floor(group[0].at)}" x1="${group[0].x+6}" x2="${group.at(-1).x+6}" y1="${top}" y2="${top}"/>`;
+    svg+=`<line class="note-beam" data-beam-beat="${Math.floor(group[0].at+1e-6)}" x1="${group[0].x+6}" x2="${group.at(-1).x+6}" y1="${top}" y2="${top}"/>`;
     for(let i=0;i<group.length;i++){
      const note=group[i];if(note.duration>=.3)continue;
      if(group[i+1]?.duration<.3)svg+=`<line class="note-beam secondary" x1="${note.x+6}" x2="${group[i+1].x+6}" y1="${top+6}" y2="${top+6}"/>`;
      else if(!(group[i-1]?.duration<.3)){const toward=i<group.length-1?1:-1;svg+=`<line class="note-beam secondary" x1="${note.x+6}" x2="${note.x+6+toward*10}" y1="${top+6}" y2="${top+6}"/>`;}
     }
    }
+   if(plan.division===3)for(let beat=start;beat<end;beat++){
+    const sounding=beamNotes.filter(n=>Math.floor(n.at+1e-6)===beat);
+    if(!sounding.length)continue;
+    const x=left+18+(beat-start+1/3)*unit+6,top=Math.min(...sounding.map(n=>n.y))-28;
+    svg+=`<text class="tuplet-number" data-tuplet-beat="${beat}" x="${x}" y="${top-9}">3</text>`;
+   }
    const right=left+barWidth-8;svg+=`<line class="bar-line" data-bar="${bar+1}" x1="${right}" x2="${right}" y1="61" y2="101"/><line class="bar-line" x1="${right}" x2="${right}" y1="150" y2="240"/>`;
   }
-  systems.push(svg+'</svg>');
+  systems.push(svg+'</g></svg>');
  }
  return systems.join('');
 }
