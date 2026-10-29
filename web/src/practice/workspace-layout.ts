@@ -30,7 +30,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));map.after(help);progression.append(get('preview-controls'));
  // Editor keeps title, selected chord and time controls distinct without changing its hidden state.
  const editor=query('.custom-editor');const titleGroup=group('Chart','chart-title-group'),chordGroup=group('Selected chord','chart-chord-group'),timeGroup=group('Duration & rehearsal mark','chart-time-group');
- move(titleGroup,label('custom-name'),query('.chart-save-actions'),query('.chart-management'),get('repertoire-status'));move(chordGroup,label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-scale-check'),get('custom-compatible-mode'));
+ move(titleGroup,label('custom-name'),query('.chart-save-actions'),get('repertoire-status'));move(chordGroup,label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-scale-check'),get('custom-compatible-mode'));
  move(timeGroup,label('custom-duration-unit'),get('custom-bars-label'),get('custom-beats-label'),label('custom-section'));editor.append(titleGroup,chordGroup,timeGroup);
  // Guitar: musical choices and view controls before diagrams; theory explanations afterward.
  const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!;
