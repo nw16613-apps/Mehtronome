@@ -7,7 +7,7 @@ export function notationChordDiagram(harmony,board,position,x,y){
  const grip=harmony&&board?recommendedGrip(harmony,board):null;
  const label=`Position ${position?.numeral||'—'}${position?.shape?' · '+position.shape+' shape':''}`;
  const title=`${harmony? harmony.name+harmony.suffix:''} · ${label}`;
- let svg=`<g class="notation-chord-diagram" data-position="${esc(position?.numeral||'')}" data-grip-available="${Boolean(grip)}" transform="translate(${x} ${y}) scale(0.6)" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
+ let svg=`<g class="notation-chord-diagram" data-position="${esc(position?.numeral||'')}" data-grip-available="${Boolean(grip)}" transform="translate(${x} ${y}) scale(0.7)" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
  // Inline styling keeps diagrams readable in exported SVGs and printed scores.
  const text=(value,tx,ty,size=8,anchor='middle')=>`<text x="${tx}" y="${ty}" text-anchor="${anchor}" style="font:${size}px system-ui;fill:#17201d">${esc(value)}</text>`;
  if(!grip)return svg+text('No grip in this',34,28)+text('position',34,40)+text(label,34,90,7)+'</g>';
@@ -24,4 +24,4 @@ export function notationChordDiagram(harmony,board,position,x,y){
  }
  return svg+text(label,34,90,7)+'</g>';
 }
-export function notationDiagramKey(slot){return JSON.stringify([slot.chord,slot.position?.numeral,slot.board?.start,slot.board?.end]);}
+export function notationDiagramKey(slot){return slot.position?.numeral||slot.position?.geometryShape||slot.position?.shape||'';}

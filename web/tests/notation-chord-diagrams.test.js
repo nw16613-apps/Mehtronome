@@ -33,3 +33,14 @@ test('an unavailable position grip is explicit instead of substituting another s
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),svg=notationChordDiagram(h,{notes:[]},{numeral:'III',shape:'C'},0,0);
  assert.ok(svg.includes('No grip in this'));assert.ok(!svg.includes('notation-grip-dot'));assert.ok(svg.includes('Position III'));
 });
+
+
+test('only a CAGED position change repeats a diagram, independently of chord and fret changes',()=>{
+ const hs=[9,11,2,4,9].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
+ const groups=['C','C','A','A','C'].map((shape,slot)=>{const h=hs[slot],board=fretboardFor(h,shape);return {slot,chord:h.name+h.suffix,harmony:h,board,position:cagedPositionFor(board),annotation:'',notes:[]};});
+ const plan=progressionStudyPlan(groups,[0,1,2,3,4],[1,1,1,1,1],4,'positional','sixteenths');
+ const svg=progressionNotationSvg(plan,'Position changes',{chordDiagrams:true});
+ assert.equal(diagramCount(svg),3);assert.equal((svg.match(/class="notation-chord-symbol"/g)||[]).length,5);
+ assert.deepEqual([...svg.matchAll(/class="notation-chord-diagram" data-position="([^"]+)"/g)].map(match=>match[1]),['II','III','II']);
+ assert.ok(svg.includes('aria-label="Dm7 · Position III'));assert.ok(!svg.includes('aria-label="Bm7 · Position II'));
+});
