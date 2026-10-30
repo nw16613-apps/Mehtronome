@@ -7,7 +7,7 @@ import {positionalArpeggio} from '../src/practice/learning.js';
 import {recommendedMode} from '../src/practice/custom-progression.js';
 import {progressionExerciseGroups} from '../src/practice/progression-exercises.js';
 const patterns={thirds:[0,2],fourths:[0,3],sixths:[0,5],groups3:[0,1,2],groups4:[0,1,2,3],digital1324:[0,2,1,3],cells:[0,1,2,4]};
-const sizes={triad:3,seventh:4,extensions:5};
+const sizes={triad:3,seventh:4,extensions:4};
 const midiCells=cells=>cells.map(c=>c.notes.map(n=>n.midi));
 // Independent reference: construct the theoretical scale through MIDI octaves,
 // then retain only cells whose exact pitches are present on this diagram.
@@ -61,7 +61,7 @@ test('core-chord-tone stacks use exact scale steps and alternate only the played
 });
 test('inversions cover every fitting anchor for every chord type, including suspended and extended chords',()=>{
  for(const chord of Object.keys(CHORDS))for(const shape of ['C','A','G','E','D'])for(const [material,size]of Object.entries(sizes))for(const direction of [1,-1]){
-  const h=harmonyAt({key:6,mode:recommendedMode(chord),chord}),board=fretboardFor(h,shape),motion=direction>0?'ascending':'descending',pcs=h.chordPcs.slice(0,size),available=new Set(board.notes.map(n=>n.midi));
+  const h=harmonyAt({key:6,mode:recommendedMode(chord),chord}),board=fretboardFor(h,shape),motion=direction>0?'ascending':'descending',pcs=[...new Set(h.chordPcs.filter((_,i)=>CHORDS[chord].intervals[i]<12))].slice(0,size),available=new Set(board.notes.map(n=>n.midi));
   const expected=[...available].filter(midi=>pcs.includes(midi%12)).sort((a,b)=>(a-b)*direction).map(anchor=>{
    const first=pcs.indexOf(anchor%12),notes=[anchor];
    for(let i=1;i<pcs.length;i++){const pc=pcs[(first+direction*i+pcs.length*10)%pcs.length],last=notes.at(-1),delta=((direction*(pc-last%12))%12+12)%12||12;notes.push(last+direction*delta);}
@@ -71,10 +71,10 @@ test('inversions cover every fitting anchor for every chord type, including susp
  }
 });
 
-test('positional pitch libraries include each written chord pitch once with chord-tone spelling',()=>{
+test('positional pitch libraries include each written core chord pitch once with chord-tone spelling',()=>{
  for(const chord of Object.keys(CHORDS))for(const shape of ['C','A','G','E','D'])for(const direction of [1,-1]){
   const h=harmonyAt({key:0,mode:recommendedMode(chord),chord}),board=fretboardFor(h,shape),notes=positionalArpeggio(board,h,direction>0?'ascending':'descending').flatMap(c=>c.notes);
-  const expected=[...new Set(board.notes.filter(n=>h.chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>(a-b)*direction);
+  const expected=[...new Set(board.notes.filter(n=>h.chordPcs.filter((_,i)=>CHORDS[chord].intervals[i]<12).includes(n.pc)).map(n=>n.midi))].sort((a,b)=>(a-b)*direction);
   assert.deepEqual(notes.map(n=>n.midi),expected);
   for(const note of notes){const index=h.chordPcs.indexOf(note.pc);assert.equal(note.name,h.tones[index]);assert.equal(note.chromaticDegree,h.intervals[index]);}
  }

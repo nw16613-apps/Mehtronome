@@ -191,7 +191,7 @@ test('long notation wraps into multiple complete systems',()=>{
 test('jazz language library generates playable notation for every new study family',()=>{
   const boundedBoard={...board,start:1,end:12};
   const modalHarmony={...harmony,mode:'dorian',midi:[57,60,64,67]};
-  const studies=['enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','upperstructure','guidetones','connections','triadpairs','pentatonic'];
+  const studies=['enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','guidetones','connections','triadpairs','pentatonic'];
   for(const study of studies){
     const groups=cagedStudy(boundedBoard,modalHarmony,study,'seventh','ascending',{progression:[modalHarmony]});
     assert.ok(groups.length>0,`${study} should produce at least one group`);
@@ -200,7 +200,6 @@ test('jazz language library generates playable notation for every new study fami
     assert.match(exerciseNotationSvg(groups,'eighths',study),/class="tab-fret"/,`${study} should render TAB`);
   }
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'enclosures').some(group=>group.notes.some(note=>!modalHarmony.scalePcs.includes(note.pc))),'enclosures should include chromatic neighbours');
-  assert.ok(cagedStudy(boundedBoard,modalHarmony,'upperstructure')[0].annotation.includes('9'));
   assert.ok(cagedStudy(boundedBoard,modalHarmony,'triadpairs')[0].source);
   assert.equal(cagedStudy(boundedBoard,modalHarmony,'pentatonic')[0].source,undefined);
 });

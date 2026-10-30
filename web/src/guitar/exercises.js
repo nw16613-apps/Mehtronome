@@ -1,3 +1,4 @@
+import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
 import {theoryOptions} from './superimposition.js';
@@ -5,7 +6,7 @@ import {continuationCell} from '../practice/sequence-continuity.js';
 
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
-const MATERIAL_SIZES={triad:3,seventh:4,extensions:5};
+const MATERIAL_SIZES={triad:3,seventh:4,extensions:4};
 const SHARP_NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const FLAT_NAMES=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
 export const PENTATONIC_PATTERNS={
@@ -175,10 +176,6 @@ function approachEveryArpeggioTone(board,harmony,material,motion) {
     }
     return {...group,notes,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),annotation:'chromatic approach into every arpeggio tone'};
   }).filter(Boolean);
-}
-
-function upperStructureExercise(board,harmony,motion) {
-  return scalePatternExercise(board,harmony,motion,[2,4,6,8],'3–5–7–9').map(group=>({...group,annotation:'3 · 5 · 7 · 9'}));
 }
 
 function guideToneLines(board,harmony,motion,progression=[]) {
@@ -401,6 +398,8 @@ function inversionExercise(board,harmony,material,motion) {
 }
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
+  if(study==='upperstructure')study='harmonized';
+  if(ARPEGGIO_STUDIES.has(study))harmony=arpeggioHarmony(harmony);
   const size=MATERIAL_SIZES[material] || 4;
   if(study==='positionalscale')return scalePatternExercise(board,harmony,motion,[0],'scale');
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
@@ -441,7 +440,6 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='chromaticneighbors')return chromaticTargetCells(board,harmony,motion,'chromaticneighbors');
   if(study==='passingtones')return chromaticPassingTones(board,harmony,motion);
   if(study==='approacheverytone')return approachEveryArpeggioTone(board,harmony,material,motion);
-  if(study==='upperstructure')return upperStructureExercise(board,harmony,motion);
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion,context.progression);
   if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source,undefined,context.anchorMidi??60);

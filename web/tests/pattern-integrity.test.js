@@ -6,7 +6,7 @@ import {cagedStudy,alignedProgressionGroups} from '../src/guitar/exercises.js';
 import {progressionExerciseGroups} from '../src/practice/progression-exercises.js';
 import {gripStudy,positionalArpeggio} from '../src/practice/learning.js';
 import {progressionStudyPlan} from '../src/practice/progression-timing.js';
-const studies=['grip','positional','thirds','fourths','sixths','groups3','groups4','digital1324','cells','harmonized','alternating','chordtones','chordtonesalternating','inversions','upperstructure','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','triadpairs','pentatonic'];
+const studies=['grip','positional','thirds','fourths','sixths','groups3','groups4','digital1324','cells','harmonized','alternating','chordtones','chordtonesalternating','inversions','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','approach','doubleapproach','chromaticneighbors','passingtones','approacheverytone','triadpairs','pentatonic'];
 const stamp=notes=>notes.map(n=>[n.midi,n.string,n.fret]);
 const pathFor=(harmonies,shapes)=>harmonies.map((h,i)=>({...cagedPositionFor(fretboardFor(h,shapes[i%shapes.length])),geometryShape:shapes[i%shapes.length]}));
 const direct=(study,board,h,material,motion)=>study==='grip'?gripStudy(board,h):study==='positional'?positionalArpeggio(board,h,motion):cagedStudy(board,h,study,material,motion,{pattern:'groups3'});
@@ -71,16 +71,6 @@ test('alternating cells retain direction and register across repeated bars in ev
  }
 });
 
-test('upper structures retain the compound ninth and interval patterns keep their written offsets',()=>{
- for(const key of [0,6,9])for(const mode of ['dorian','lydian','altered'])for(const shape of ['C','A','G','E','D'])for(const motion of ['ascending','descending']){
-  const h=harmonyAt({key,mode,chord:MODES[mode].chord}),b=fretboardFor(h,shape);
-  for(const cell of cagedStudy(b,h,'upperstructure','seventh',motion)){
-   assert.equal(cell.notes.length,4);const direction=motion==='ascending'?1:-1;
-   for(let i=1;i<4;i++)assert.ok((cell.notes[i].midi-cell.notes[i-1].midi)*direction>0);
-   assert.ok(Math.abs(cell.notes[3].midi-cell.notes[0].midi)>7);
-  }
- }
-});
 
 test('guide tones and connected arpeggios retain harmonic order and valid directions in moving harmony',()=>{
  for(const template of ['major251essential','major251altered','modal_dorian','fourths1'])for(const key of [0,6,9])for(const motion of ['ascending','descending']){

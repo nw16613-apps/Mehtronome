@@ -1,6 +1,6 @@
 # Scale sequences and arpeggios: current musical contract
 
-This pass covers the seven Scale sequences and seven Arpeggios entries. It adds no licks or chord workshops. The chart, scale guide and per-slot CAGED positions remain the sources of truth.
+This pass covers the Scale sequences and Arpeggios entries. It adds no licks or chord workshops. The chart, scale guide and per-slot CAGED positions remain the sources of truth.
 
 ## Definitions
 
@@ -17,18 +17,16 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
 | Positional scale | Every distinct available scale pitch in the selected CAGED shape, in pitch order | Rearticulate a shared endpoint at a changed context; otherwise nearest pitch ahead, reversing at the available range limit |
 | Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each with a turnaround near its destination edge | Phrase ordinal phase; nearest fitting window at a context change |
-| Harmonized scale | Alternate scale notes: 1–3–5, 1–3–5–7 or 1–3–5–7–9 | First note of the directed stack |
+| Harmonized scale | Alternate scale notes: 1–3–5 or 1–3–5–7 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
-| Arpeggios from core chord tones | Same scale stacks, restricted to roots among the first four written chord tones (all tones if shorter) | First note of the directed stack |
+| Arpeggios from core chord tones | Same scale stacks, restricted to roots among the core chord tones through the seventh (all tones if shorter) | First note of the directed stack |
 | Alternating arpeggios from core chord tones | Same restricted stacks; alternating played contours | Structural first note before alternating reversal |
-| Selected-chord inversions | Rotate the first three, four or five written chord tones; use every fitting register. A shorter chord uses all its tones | First note of the directed rotation |
-| 3-to-9 arpeggios | Existing interpretation retained: scale steps 3–5–7–9 from successive scale degrees | First played note |
+| Selected-chord inversions | Rotate up to three or four core written chord tones; use every fitting register. A shorter chord uses all its tones | First note of the directed rotation |
 
 Downward scale sequences negate their scale-step offsets. Downward harmonized cells reverse the tertian stack and move its upper starting anchor down through the region. Core-chord-tone cells keep their underlying chord-tone roots while reversing contour/order. Inversion names describe the rotated cell's lower chord tone, not a change to the backing bass.
 
-On five-, six- and eight-note collections, thirds/fourths/sixths menus use scale-step wording and Material uses 3/4/5-note stacks: counting collection steps does not guarantee an ordinary third, triad, seventh or ninth chord. Inversions remain based on the actual written chord; their material menu says “Up to N chord tones”. Labels use a consistent collection-aware vocabulary for a mixed chart. Internal option IDs and saved-option compatibility are unchanged.
+On five-, six- and eight-note collections, thirds/fourths/sixths menus use scale-step wording and Material uses 3/4-note stacks: counting collection steps does not guarantee an ordinary third, triad or seventh chord. Inversions remain based on the actual written chord; their material menu says “Up to N chord tones”. Labels use a consistent collection-aware vocabulary for a mixed chart. Saved ninth-material choices migrate to seventh material.
 
-The 3-to-9 choice overlaps harmonized tetrads under its present interpretation. Whether to redefine it as the current backing chord's 3rd–5th–7th–9th is a separate, explicit musical decision; this pass does not silently change that meaning.
 
 ## Continuation and timing
 
@@ -87,3 +85,16 @@ Shared endpoint rearticulation alone does not preserve a traversal when its next
 This prevents the reported eight-bar A/C/E♭/F♯ Dorian chart from inserting D♭–C or C♯–B fragments before climbing. With the shown Position II/I/V/III route, the four entries are B47, C48, C48 and B47. Each region has seventeen pitches and retains its 32-note ascent/descent cycle. Broader scale/cardinality changes retain their available full range and are not forced into a restricted span.
 
 Regression coverage compares every note of all four two-bar groups, the later E♭m7 and F♯m7 entries, and their peak times in the actual browser notation, in addition to every scale family/key/changed-position pair at pending upper and lower turns. Multi-note sequence families and positional arpeggio phrase rules are unchanged.
+
+
+## Arpeggio material capped at the seventh
+
+Positional and selected-chord arpeggios use written core tones through degree seven. Ninths, elevenths and thirteenths—including altered extensions—do not enlarge these exercise arpeggios. Altered fifths/sevenths, suspended second/fourth qualities, sixth chords and diminished sevenths keep their defining tones. Triads remain triads; add9/add11 chords reduce to their core triad; no missing seventh is invented. Repeated octave roots are deduplicated.
+
+Scale-harmonized and core-tone-rooted stacks offer triads or seventh/four-note material only. A cell's degrees are relative to its own root: a diatonic seventh-chord cell can still contain an upper colour relative to the backing root. Chromatic approach notes remain approach notes rather than extra chord extensions. Non-heptatonic collections retain their explicit three/four-note stack terminology.
+
+The Ninth chords material choice and 3-to-9 arpeggios exercise are removed. Saved 'extensions' material maps to 'seventh'; saved 'upperstructure' exercises map to Harmonized scale. Raw legacy material requests also cap at four harmonic tones.
+
+Harmony's chord definitions, audio, chart symbols, chosen scale guide, fretboard voicings and positional scales retain their full content. Only exercise arpeggio material is filtered. Degree metadata may still describe a note's relationship to the full backing chord. A shared core-tone helper preserves pitch/spelling/interval alignment without mutating the source harmony.
+
+Tests cover every chord type in twelve roots and five CAGED positions, altered/suspended/sixth/diminished qualities, extended/core chord equivalence, all positional rhythms and directions, unchanged source chord definitions, material capping, removed controls, saved-option migration, retained extended chart symbols and exercise playback.
