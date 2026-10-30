@@ -31,11 +31,12 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   let cells=makeCells();
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
-  // changed contexts choose the nearest valid cell in the ongoing direction.
+  // Changed contexts may rearticulate a shared endpoint; otherwise choose
+  // the nearest valid cell in the ongoing direction.
   if(context!==previousContext){
    cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;
    if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
-    let next=continuationCell(cells,lastAnchor,travel);
+    let next=continuationCell(cells,lastAnchor,travel,false,directional&&!alternating?lastMidi:null);
     if(next.reset&&directional){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
     cellIndex=next.index;
    }

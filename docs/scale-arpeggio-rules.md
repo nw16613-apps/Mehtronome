@@ -15,7 +15,7 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Groups of four | Steps 1–2–3–4 | First note |
 | Diatonic 1–3–2–4 | Steps 1–3–2–4 | First note |
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
-| Positional scale | Every distinct available scale pitch in the selected CAGED shape, in pitch order | Nearest pitch ahead through chord/mode/position changes; reverse at the available range limit |
+| Positional scale | Every distinct available scale pitch in the selected CAGED shape, in pitch order | Rearticulate a shared endpoint at a changed context; otherwise nearest pitch ahead, reversing at the available range limit |
 | Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each with a turnaround near its destination edge | Phrase ordinal phase; nearest fitting window at a context change |
 | Harmonized scale | Alternate scale notes: 1–3–5, 1–3–5–7 or 1–3–5–7–9 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
@@ -69,3 +69,12 @@ Positional scale is the first option under Scale sequences. It uses the selected
 Material is hidden because this exercise is neither a stacked chord nor an arpeggio. The arpeggio-specific balanced-span and triplet-turnaround choices do not restrict the scale range. Eighths, triplets and sixteenths change timing without changing pitch-order rules. One run per chord continues to the next range boundary and leaves unused slot time as rests. Saved exercise options and CAGED captions support the new study. The default exercise remains Positional arpeggio.
 
 Tests cover all scale families, twelve keys, five shapes, both directions, all rhythms, real notes/spelling, repeated bars, changed roots/qualities/modes/positions, one-run scope, notation captions, saved options, playback and mobile width.
+
+
+### Shared-boundary entry
+
+At a changed chord, scale or CAGED position, an incoming traversal may rearticulate a shared lowest or highest pitch. For the reported Am7 Position II to Cm7 Position I example, Am7 ends on C48; Cm7 now begins on the same C48 (low E string, fret 8), then D50, E♭51, F53. It no longer skips that entry C because a strictly lower/higher note is unavailable.
+
+This single-note traversal exception applies only when the actual preceding sounded note and the outgoing structural anchor both equal the incoming endpoint/entry note. Interior shared notes still use forward continuation, unchanged contexts retain their cursor, and ordinary range turns do not double their endpoint. Multi-note patterns, including closed chromatic motifs, retain their existing cell stepping and anchor-based sequence progress; the final note of an arpeggio cannot override its structural anchor. Alternating contours retain their existing phase rules. The positional arpeggio phrase engine already supports shared entries within its fixed phrase phase and is unchanged.
+
+Explicit tests exercise the reported note/string/fret/time, shared upper and lower boundaries in every scale family and key across changed CAGED positions, unchanged-range continuity, multi-note pattern-anchor safety, and notation/playback at the reported chord change.

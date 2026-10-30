@@ -24,3 +24,13 @@ test('positional scale adapts across a mixed-mode chart and exposes pentatonic a
  for(const item of items){await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#progression-choice').selectOption('saved:'+item.id);await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await expect(page.locator('#caged-exercise-title')).toContainText('Positional scale');await expect(page.locator('.exercise-note[data-group-index="1"]').first()).toBeVisible();for(const [slot,step]of item.progression.steps.entries()){const written=await pitches(page,slot),h=harmonyAt({key:(item.key+step.root)%12,mode:step.mode,chord:step.chord});expect(written).toHaveLength(16);expect(written.every(midi=>h.scalePcs.includes(midi%12))).toBe(true);}}
  expect(errors).toEqual([]);
 });
+
+test('Am7 to Cm7 rearticulates C at fret eight in notation and playback',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'shared-boundary',name:'Shared C boundary',key:9,beats:4,progression:{version:2,name:'Shared C boundary',steps:[{root:0,chord:'min7',mode:'dorian',bars:2,bass:null},{root:3,chord:'min7',mode:'dorian',bars:2,bass:null}]}}]})));
+ await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#progression-choice').selectOption('saved:shared-boundary');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const [slot,position]of [[0,'II'],[1,'I']]as const){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(position);}
+ expect((await pitches(page,0)).at(-1)).toBe(48);expect((await pitches(page,1)).slice(0,5)).toEqual([48,50,51,53,55]);
+ const entry=page.locator('.exercise-note[data-group-index="1"]').first();await expect(entry).toHaveAttribute('aria-label',/^C, string 6, fret 8,/);await expect(entry).toHaveAttribute('data-start-beat','8');
+ await page.locator('#exercise-backing').uncheck();await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="1"]').first()).toBeVisible({timeout:5000});await page.locator('#exercise-preview').click();expect(errors).toEqual([]);
+});

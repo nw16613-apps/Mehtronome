@@ -1,8 +1,19 @@
 /** Select an intact cell by the movement of its pattern anchor, not by the
  * final played note (an arpeggio normally jumps between consecutive cells). */
-export function continuationCell(cells,anchor,direction,canTurn=false){
+export function continuationCell(cells,anchor,direction,canTurn=false,sharedBoundaryMidi=null){
  const rows=cells.map((cell,index)=>({index,anchor:cell.sequenceAnchor,direction:cell.sequenceDirection})).filter(c=>Number.isFinite(c.anchor));
  const leg=rows.filter(c=>c.direction===direction);
+ // At a changed harmony/position, a single-note traversal endpoint may
+ // be rearticulated. Multi-note motifs retain their cell stepping.
+ // Compare the actual entry note as well as the structural anchor: repeating
+ // an arpeggio's old anchor alone would repeat a cell, not a shared note.
+ // The sounding pitch must also be the outgoing anchor: do not replace
+ // multi-note pattern-anchor progress with its final played pitch.
+ if(Number.isFinite(sharedBoundaryMidi)&&sharedBoundaryMidi===anchor&&leg.length){
+  const edge=leg.filter(row=>row.anchor===sharedBoundaryMidi&&cells[row.index].notes?.length===1&&cells[row.index].notes[0].midi===sharedBoundaryMidi);
+  const bounds=[Math.min(...leg.map(row=>row.anchor)),Math.max(...leg.map(row=>row.anchor))];
+  if(bounds.includes(sharedBoundaryMidi)&&edge.length)return {index:edge[0].index,direction,reset:false};
+ }
  const forward=leg.filter(c=>(c.anchor-anchor)*direction>0).sort((a,b)=>(a.anchor-b.anchor)*direction);
  if(forward.length)return {index:forward[0].index,direction,reset:false};
  if(canTurn){

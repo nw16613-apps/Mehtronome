@@ -108,3 +108,16 @@ test('voice-led arpeggio connections continue their cell-anchor direction throug
 
  }
 });
+
+test('a changed-context shared endpoint can repeat, without replacing multi-note cell-anchor continuity',()=>{
+ const cells=[60,62,64].map(midi=>({sequenceAnchor:midi,sequenceDirection:1,notes:[{midi}]}));
+ assert.deepEqual(continuationCell(cells,60,1,false,60),{index:0,direction:1,reset:false});
+ assert.deepEqual(continuationCell(cells,64,1,false,64),{index:2,direction:1,reset:false});
+ assert.deepEqual(continuationCell(cells,62,1,false,62),{index:2,direction:1,reset:false});
+ assert.deepEqual(continuationCell(cells,60,1),{index:1,direction:1,reset:false});
+ assert.deepEqual(continuationCell(cells,62,1,false,60),{index:2,direction:1,reset:false});
+ const arpeggios=cells.map(c=>({...c,notes:[{midi:c.sequenceAnchor},{midi:c.sequenceAnchor+7}]}));
+ assert.deepEqual(continuationCell(arpeggios,60,1,false,67),{index:1,direction:1,reset:false});
+ const closed=cells.map(c=>({...c,notes:[{midi:c.sequenceAnchor},{midi:c.sequenceAnchor+1},{midi:c.sequenceAnchor}]}));
+ assert.deepEqual(continuationCell(closed,60,1,false,60),{index:1,direction:1,reset:false});
+});

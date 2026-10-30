@@ -27,11 +27,30 @@ test('continuous scale traverses the whole range without duplicate endpoints at 
 test('chord, scale and position changes continue to the nearest pitch ahead and turn only at the range boundary',()=>{
  for(const mode of Object.keys(MODES))for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
   const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode,chord:MODES[mode].chord})],gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path(hs,[from,to])});let last=null,direction=motion==='ascending'?1:-1;
-  for(const g of gs){const pitches=available(g.board,g.harmony);for(const n of g.notes){let ahead=last===null?pitches:pitches.filter(m=>(m-last)*direction>0);if(!ahead.length){direction=-direction;ahead=pitches.filter(m=>(m-last)*direction>0);}const expected=direction>0?Math.min(...ahead):Math.max(...ahead);assert.equal(n.midi,expected);assert.equal(n.name,g.harmony.scaleNames[g.harmony.scalePcs.indexOf(n.pc)]);last=n.midi;}}
+  for(const g of gs){const pitches=available(g.board,g.harmony);for(const [index,n] of g.notes.entries()){let ahead=last===null?pitches:g.slot>0&&index===0&&(last===pitches[0]||last===pitches.at(-1))?[last]:pitches.filter(m=>(m-last)*direction>0);if(!ahead.length){direction=-direction;ahead=pitches.filter(m=>(m-last)*direction>0);}const expected=direction>0?Math.min(...ahead):Math.max(...ahead);assert.equal(n.midi,expected);assert.equal(n.name,g.harmony.scaleNames[g.harmony.scalePcs.indexOf(n.pc)]);last=n.midi;}}
  }
 });
 test('one run per chord stops at the boundary and resumes the opposite form on the next repeated chord',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=[h,h],gs=progressionExerciseGroups(hs,[16,16],fretboardFor(h,'C'),{study:'positionalscale',stage:'cell',rhythm:'sixteenths',positionPath:path(hs,['C'])}),pitches=available(gs[0].board,h);
  assert.deepEqual(gs[0].notes.map(n=>n.midi),pitches);assert.deepEqual(gs[1].notes.map(n=>n.midi),pitches.toReversed().slice(1));
  const plan=progressionStudyPlan(gs,[0,1],[4,4],4,'positionalscale','sixteenths'),svg=progressionNotationSvg(plan,'Positional scale');assert.ok(svg.includes('Position II · D shape'));assert.ok(svg.includes('notation-rest'));
+});
+
+test('reported Am7 to Cm7 change rearticulates low-string C8 before ascending',()=>{
+ const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode:'dorian',chord:'min7'})],gs=progressionExerciseGroups(hs,[8,8],fretboardFor(hs[0],'C'),{study:'positionalscale',rhythm:'sixteenths',positionPath:path(hs,['C','D'])});
+ assert.equal(gs[0].notes.at(-1).midi,48);assert.deepEqual(gs[1].notes.slice(0,4).map(n=>[n.name,n.midi]),[['C',48],['D',50],['E♭',51],['F',53]]);assert.deepEqual([gs[1].notes[0].string,gs[1].notes[0].fret],[0,8]);
+ const plan=progressionStudyPlan(gs,[0,1],[2,2],4,'positionalscale','sixteenths');assert.equal(plan.events.find(e=>e.start===8).note.midi,48);
+});
+test('shared lower and upper endpoints are rearticulated across every scale family, key and changed shape',()=>{
+ let checks=0;
+ for(const [mode,definition]of Object.entries(MODES))for(let key=0;key<12;key++)for(const from of shapes)for(const to of shapes)if(from!==to)for(const motion of ['ascending','descending']){
+  const h=harmonyAt({key,mode,chord:definition.chord}),before=available(fretboardFor(h,from),h),after=available(fretboardFor(h,to),h),ordered=motion==='ascending'?before:before.toReversed();
+  for(const boundary of [after[0],after.at(-1)]){
+   const index=ordered.indexOf(boundary);if(index<0)continue;
+   const gs=progressionExerciseGroups([h,h],[(index+1)/4,1],fretboardFor(h,from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path([h,h],[from,to])});
+   assert.equal(gs[0].notes.at(-1).midi,boundary);assert.equal(gs[1].notes[0].midi,boundary);assert.equal(gs[1].notes[1].midi,boundary===after[0]?after[1]:after.at(-2));
+   assert.ok(gs[1].notes.every(n=>after.includes(n.midi)));checks++;
+  }
+ }
+ assert.ok(checks>1000);
 });
