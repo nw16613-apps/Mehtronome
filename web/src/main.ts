@@ -1,3 +1,4 @@
+import {ExerciseBufferCache,ExerciseAudioQueue,exerciseNoteDuration} from './audio/exercise-playback.js';
 import {ARPEGGIO_STUDIES} from './guitar/arpeggio-harmony.js';
 import {MODE_FAMILIES} from './audio/music.js';
 import {chordOptionGroups} from './practice/chord-options.js';
@@ -43,7 +44,6 @@ import { DRUM_GROOVES, BASS_PATTERNS } from './audio/rhythm.js';
 import { COMPING_PATTERNS, COMPING_MOVEMENTS, COMPING_TONES } from './audio/comping.js';
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
-import { renderJazzGuitarNote } from './audio/jazz-guitar.js';
 import { CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
 import { compatibleScaleGroups,compatibleModeForChord } from './practice/scale-explorer.js';
@@ -263,6 +263,21 @@ function exerciseGuitarOutput(){
   }
   return exerciseGuitarGain;
 }
+const exerciseBufferCache=new ExerciseBufferCache();
+let exerciseBuffers=new Map<string,AudioBuffer>();
+let exerciseNoteQueue:ExerciseAudioQueue|undefined;
+let exerciseGuitarFilter:BiquadFilterNode|undefined;
+let exercisePlaybackSequence:any[]=[];
+let exercisePlaybackPlan:any=null;
+let exerciseCursorKey='',exerciseCursorFrame=-Infinity,exerciseReferenceDirty=false,exerciseLegacyCycle=-1;
+function exerciseGuitarInstrumentOutput(){
+ if(!exerciseGuitarFilter||exerciseGuitarFilter.context!==context){exerciseGuitarFilter=context!.createBiquadFilter();exerciseGuitarFilter.type='lowpass';exerciseGuitarFilter.frequency.value=3100;exerciseGuitarFilter.Q.value=.45;exerciseGuitarFilter.connect(exerciseGuitarOutput());}
+ return exerciseGuitarFilter;
+}
+function exerciseBufferRequests(tempo:number){
+ const division=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
+ return exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({midi:e.note.midi,duration:exerciseNoteDuration(e.duration*60/tempo)})):exercisePlaybackSequence.map(note=>({midi:note.midi,duration:exerciseNoteDuration(60/tempo/division)}));
+}
 let exercisePlaying=false;
 let exercisePreparing=false,exercisePrepareGeneration=0;
 let noteAuditionGeneration=0;
@@ -285,7 +300,7 @@ function escapeHtml(text:string) { return String(text).replace(/[&<>"']/g,c=>({'
 function stopExercisePreview() {
   exercisePrepareGeneration++;exercisePreparing=false;
   const stopBacking=exercisePlaying&&exerciseView.backing&&!playing;
-  clearTimeout(exerciseTimer);exerciseTimer=undefined;
+  clearTimeout(exerciseTimer);exerciseTimer=undefined;exerciseNoteQueue?.stop();exerciseBuffers.clear();exercisePlaybackSequence=[];exercisePlaybackPlan=null;exerciseCursorKey='';exerciseCursorFrame=-Infinity;exerciseLegacyCycle=-1;
   for(const source of exerciseSources){try{source.stop();}catch{}}
   exerciseSources=[];exercisePlaying=false;exerciseSymbolCycle=-1;exerciseNextStart=undefined;exerciseTimelineStart=undefined;exerciseRepetitions=0;cancelAnimationFrame(exerciseAnimationFrame);
   if(stopBacking){node?.port.postMessage({type:'stop'});renderProgressionReference();}
@@ -309,19 +324,25 @@ function reflectExerciseSelection(){
   const description=document.querySelector<HTMLElement>('#exercise-range-description');if(description)description.textContent=range?`${range.end-range.start+1} notes selected. Play uses this passage${exerciseView.loop?' and repeats it':''}.`:'Drag across notation notes to select a passage. Play uses the full exercise when no passage is selected.';
   if(clearButton){clearButton.disabled=!range;clearButton.hidden=!range;}
 }
-function updateExerciseCursor(){
+function updateExerciseCursor(frame=performance.now()){
   if(!exercisePlaying||!context||exerciseTimelineStart===undefined)return;
-  const sequence=selectedExercise(),divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2,noteLength=60/exerciseView.tempo/divisions;
+  if(frame-exerciseCursorFrame<33){exerciseAnimationFrame=requestAnimationFrame(updateExerciseCursor);return;}exerciseCursorFrame=frame;
+  const sequence=exercisePlaybackSequence,divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2,noteLength=60/exerciseView.tempo/divisions;
   const elapsed=context.currentTime-exerciseTimelineStart,countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const status=document.querySelector<HTMLElement>('#exercise-playback-status'),progress=document.querySelector<HTMLElement>('#exercise-progress-fill');
   if(elapsed<countIn){const beat=Math.max(1,Math.ceil((countIn-elapsed)/(60/exerciseView.tempo)));if(status)status.textContent=`Count-in · ${settings.beats-beat+1} / ${settings.beats}`;}
   else if(sequence.length&&exercisePlan){
     const elapsedBeats=Math.max(0,elapsed-countIn)*exerciseView.tempo/60;
-    const position=planPosition({...exercisePlan,events:selectedPlanEvents()},elapsedBeats);
+    const position=planPosition(exercisePlaybackPlan,elapsedBeats);
     const index=position.event?.index??null;
-    document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',index!==null&&Number(note.dataset.noteIndex)===index&&position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
-    if(position.slot.slot!==exerciseMapSlot&&currentExerciseGroups[position.slot.slot]?.harmony){showExerciseGroup(currentExerciseGroups[position.slot.slot]);}
-    highlightLearningNote(index,currentExercise);
+    const changed=position.slot.slot!==exerciseMapSlot;
+    if(changed&&currentExerciseGroups[position.slot.slot]?.harmony)showExerciseGroup(currentExerciseGroups[position.slot.slot]);
+    const cursorKey=`${index}:${position.slot.slot}:${Math.floor(position.beat/settings.beats)}`;
+    if(changed||cursorKey!==exerciseCursorKey){
+     exerciseCursorKey=cursorKey;document.querySelectorAll('.exercise-note.playing').forEach(note=>note.classList.remove('playing'));
+     if(index!==null)document.querySelectorAll<HTMLElement>(`.exercise-note[data-note-index="${index}"]`).forEach(note=>{const at=Number(note.dataset.startBeat),duration=Number(note.dataset.durationBeats);note.classList.toggle('playing',position.beat>=at-1e-6&&position.beat<at+duration-1e-6);});
+     highlightLearningNote(index,currentExercise);
+    }
     if(status)status.textContent=`${position.slot.chord} · ${index===null?'Rest':exerciseView.study==='guidetones'?'Hold guide tone':'Play '+exerciseView.study} · bar ${Math.floor(position.beat/settings.beats)+1} · ${exerciseView.tempo} BPM`;
     if(progress)progress.style.width=`${position.beat/exercisePlan.duration*100}%`;
   }
@@ -331,10 +352,16 @@ function updateExerciseCursor(){
     const cyclePosition=elapsedExercise%cycleDuration;const cycle=Math.floor(elapsedExercise/cycleDuration);if(cycle!==exerciseSymbolCycle){exerciseSymbolCycle=cycle;refreshBackingSymbols(cycle*cycleDuration*exerciseView.tempo/60);}
     const repetition=Math.floor(elapsedExercise/cycleDuration)+1;
     const resting=cyclePosition>=phraseDuration,index=resting?sequence.length-1:Math.min(sequence.length-1,Math.floor(cyclePosition/noteLength)),globalIndex=exerciseRange().start+index;
-    document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>{const value=Number(note.dataset.noteIndex);note.classList.toggle('playing',value===globalIndex);note.classList.toggle('played',value<globalIndex&&value>=exerciseRange().start);});
-    highlightLearningNote(resting?null:globalIndex,currentExercise);
-    if(resting)document.querySelectorAll<HTMLElement>('.exercise-note').forEach(note=>note.classList.remove('playing'));
-    document.querySelector(`[data-note-index="${globalIndex}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
+    const cursorKey=`${cycle}:${resting}:${globalIndex}`;
+    if(cursorKey!==exerciseCursorKey){
+     exerciseCursorKey=cursorKey;
+     const sameCycle=cycle===exerciseLegacyCycle;
+     if(!sameCycle){exerciseLegacyCycle=cycle;document.querySelectorAll('.exercise-note.played').forEach(note=>note.classList.remove('played'));}
+     document.querySelectorAll('.exercise-note.playing').forEach(note=>{note.classList.remove('playing');if(sameCycle)note.classList.add('played');});
+     document.querySelectorAll<HTMLElement>(`.exercise-note[data-note-index="${globalIndex}"]`).forEach(note=>note.classList.toggle('playing',!resting));
+     highlightLearningNote(resting?null:globalIndex,currentExercise);
+     if(!resting)document.querySelector(`[data-note-index="${globalIndex}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
+    }
     if(status)status.textContent=resting?`Rest · next repetition on beat 1 · ${exerciseView.tempo} BPM`:`Note ${index+1} / ${sequence.length} · repetition ${repetition} · ${exerciseView.tempo} BPM`;
     if(progress)progress.style.width=`${((index+1)/sequence.length)*100}%`;
   }
@@ -436,22 +463,27 @@ function exerciseAudioSettings(){return {...exerciseBackingConfig(),bpm:exercise
 function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   if(!context||!master||!currentExercise.length||!exercisePlaying)return;
   const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
-  const noteLength=60/exerciseView.tempo/divisions,sequence=selectedExercise();
+  const noteLength=60/exerciseView.tempo/divisions,sequence=exercisePlaybackSequence;
   const countIn=scheduledStart===undefined&&settings.countIn?settings.beats*60/exerciseView.tempo:0;
-  const start=scheduledStart??context.currentTime+.03+countIn;
+  const start=scheduledStart??context.currentTime+.12+countIn;
   if(exerciseTimelineStart===undefined){exerciseTimelineStart=timelineOrigin??start-countIn;updateExerciseCursor();}
-  const events=exercisePlan?selectedPlanEvents().map((e:any)=>({note:e.note,accent:e.accent,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
-  events.forEach(({note,at,length,accent}:any)=>{
-    const duration=Math.max(.045,Math.min(12,length*.96)),release=Math.min(.045,duration*.3);
-    const samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration);
-    const buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);
-    const source=context!.createBufferSource(),gain=context!.createGain(),filter=context!.createBiquadFilter();source.buffer=buffer;
-    filter.type='lowpass';filter.frequency.value=3100;filter.Q.value=.45;
-    gain.gain.setValueAtTime(accent ? .42 : .3,at);gain.gain.setValueAtTime(accent ? .42 : .3,at+duration-release);gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-    source.connect(filter).connect(gain).connect(exerciseGuitarOutput());
-    source.start(at);source.stop(at+duration);exerciseSources.push(source);
-    source.onended=()=>{const sourceIndex=exerciseSources.indexOf(source);if(sourceIndex>=0)exerciseSources.splice(sourceIndex,1);};
+  const events=exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({note:e.note,accent:e.accent,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
+  if(!exerciseNoteQueue||exerciseNoteQueue.context!==context)exerciseNoteQueue=new ExerciseAudioQueue(context,({note,at,length,accent}:any)=>{
+    if(!exercisePlaying||!context)return;
+    const duration=exerciseNoteDuration(length),release=Math.min(.045,duration*.3),key=exerciseBufferCache.key(context,note.midi,duration);
+    const buffer=exerciseBuffers.get(key)||exerciseBufferCache.get(context,note.midi,duration);
+    const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;
+    const offset=Math.max(0,context.currentTime+.005-at),begin=at+offset,end=at+duration;
+    if(begin>=end)return;
+    gain.gain.setValueAtTime(accent ? .42 : .3,begin);gain.gain.setValueAtTime(accent ? .42 : .3,Math.max(begin,end-release));gain.gain.exponentialRampToValueAtTime(.0001,end);
+    source.connect(gain).connect(exerciseGuitarInstrumentOutput());source.start(begin,offset);source.stop(end);exerciseSources.push(source);
+    source.onended=()=>{source.disconnect();gain.disconnect();const index=exerciseSources.indexOf(source);if(index>=0)exerciseSources.splice(index,1);};
   });
+  exerciseNoteQueue.enqueue(events);
+  if(exerciseView.loop&&exerciseView.autoTempo&&(exerciseRepetitions+1)%exerciseView.autoEvery===0){
+   const nextTempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement),generation=exercisePrepareGeneration;
+   void exerciseBufferCache.prepare(context,exerciseBufferRequests(nextTempo),()=>generation!==exercisePrepareGeneration);
+  }
   const phraseDuration=exercisePlan?exercisePlan.duration*60/exerciseView.tempo:sequence.length*noteLength;
   const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
   const nextStart=start+duration;exerciseNextStart=nextStart;
@@ -476,8 +508,12 @@ async function toggleExercisePreview() {
   stopPreview();
   const generation=++exercisePrepareGeneration;exercisePreparing=true;el('exercise-preview').textContent='Loading… click to cancel';el('exercise-preview').setAttribute('aria-busy','true');syncMiniTransport();
   try{
-    await prepareAudio();if(generation!==exercisePrepareGeneration)return;exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
-    const backingStart=exerciseView.backing?context!.currentTime+.08:undefined;
+    await prepareAudio();if(generation!==exercisePrepareGeneration)return;
+    exercisePlaybackSequence=selectedExercise();exercisePlaybackPlan=exercisePlan?{...exercisePlan,events:selectedPlanEvents()}:null;
+    const prepared=await exerciseBufferCache.prepare(context!,exerciseBufferRequests(exerciseView.tempo),()=>generation!==exercisePrepareGeneration);
+    if(!prepared||generation!==exercisePrepareGeneration)return;exerciseBuffers=prepared;
+    exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
+    const backingStart=exerciseView.backing?context!.currentTime+.12:undefined;
     if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
@@ -487,7 +523,7 @@ async function toggleExercisePreview() {
 }
 
 function chordInfo(index: number) { return harmonyAt(settings, index); }
-function renderProgressionReference(activeStep=step) {
+function renderProgressionReference(activeStep=step,exerciseOnly=false) {
   const template=progressionDefinition(settings),durations=progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats);
   const order=settings.progression?progressionOrder(settings):[0];
   const active=settings.progression?activeStep:0,info=chordInfo(active);
@@ -499,7 +535,7 @@ function renderProgressionReference(activeStep=step) {
     const chord=chordInfo(index),bars=durations[index],duration=settings.loopEnabled&&settings.loopUnit==='beats'?`${progressionPlaybackBeatDurations(settings)[index]} beats`:settings.template==='custom'?durationLabel(index):`${bars} bar${bars===1?'':'s'}`;
     return `<li><button type="button" class="reference-chord ${index===active?'current':''}" ${index===active?'aria-current="step"':''} data-reference-step="${index}" title="While stopped, hold to hear this chord" ${playing||exercisePlaying?'disabled':''}><strong>${escapeHtml(label(index))}</strong><span>${escapeHtml(chord.roman)}${settings.progression?` · ${duration}`:''}</span><small>${escapeHtml(scale(chord))}</small></button></li>`;
   }).join('');
-  document.querySelectorAll<HTMLElement>('.progression-reference').forEach(element=>{
+  document.querySelectorAll<HTMLElement>(exerciseOnly?'#caged-exercise .progression-reference':'.progression-reference').forEach(element=>{
     const referenceExpanded=element.querySelector<HTMLDetailsElement>('details')?.open??(element.getAttribute('aria-label')==='Exercise progression reference'?exerciseReferenceExpanded:false);
     if(exercisePlaying&&exerciseView.backing&&!settings.progression&&element.getAttribute('aria-label')==='Exercise progression reference'){element.innerHTML=`<p><b>Static study backing:</b> ${escapeHtml(studyHarmony.name+studyHarmony.suffix)} · the main progression setup is retained.</p>`;return;}
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'||settings.loopUnit==='beats'?order.reduce((sum:number,index:number)=>sum+progressionPlaybackBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
@@ -1123,7 +1159,7 @@ async function initialiseAudio() {
     node.port.onmessage = ({ data }) => {
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if(!playing&&exercisePlaying&&data.type==='session-complete'){stopExercisePreview();return;}
-      if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number'){exerciseBackingStep=data.step;renderProgressionReference(data.step);syncMiniTransport();}
+      if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number'&&exerciseBackingStep!==data.step){exerciseBackingStep=data.step;syncMiniTransport();}
       if (!playing) return;
       if(data.type==='session-complete'){
         void stop().then(()=>{el('play-status').textContent='Session complete. Nice work.';el('pulse-time').textContent=`${formatTime(data.elapsed)} elapsed · Session complete`;el('pulse-large-status').textContent='Session complete';});return;
@@ -1379,12 +1415,12 @@ function setNotationFocus(value:boolean) {
   if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));applyStudioIcons(el('caged-exercise'));}
 }
 async function auditionExerciseNote(index:number){
-  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,samples=renderJazzGuitarNote(context!.sampleRate,note.midi,duration),buffer=context!.createBuffer(1,samples.length,context!.sampleRate);buffer.copyToChannel(samples,0);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(exerciseGuitarOutput());source.start();source.stop(context!.currentTime+duration);
+  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,buffer=exerciseBufferCache.get(context!,note.midi,duration);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(exerciseGuitarOutput());source.start();source.stop(context!.currentTime+duration);source.onended=()=>{source.disconnect();gain.disconnect();};
 }
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;
- if(settings.progression){const actualStep=progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;renderMusic(true,group.position);renderProgressionReference(step);}
- exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);syncExerciseRouteCards();
+ if(settings.progression){const actualStep=progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;if(exercisePlaying&&document.body.dataset.workspace==='exercises'){exerciseReferenceDirty=true;renderProgressionReference(step,true);}else{renderMusic(true,group.position);renderProgressionReference(step);}}
+ exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);syncMiniTransport();
 }
 function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying||exercisePreparing)return;
  const group=currentExerciseGroups.find((g:any)=>index>=g.globalStart&&index<g.globalStart+g.notes.length);
@@ -1963,6 +1999,7 @@ for(const tab of workspaceTabs)tab.addEventListener('click',()=>{
 });
 function showWorkspace(name:string,target?:string) {
   document.body.dataset.workspace=name;
+  if(exerciseReferenceDirty&&name!=='exercises'){exerciseReferenceDirty=false;renderMusic(true,currentExerciseGroups[exerciseMapSlot]?.position);}
   selectWorkspaceTab(Object.entries(workspaceNames).find(([,value])=>value===name)?.[0]||'pulse-title');
   try{localStorage.setItem('mehtronome-workspace',name);}catch{/* Session-only. */}
   if(target)requestAnimationFrame(()=>el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));

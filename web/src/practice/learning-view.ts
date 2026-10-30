@@ -76,7 +76,8 @@ export function learningView(panel:HTMLElement,context:any){
 }
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
  document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
- document.querySelectorAll<SVGElement>('.exercise-note[data-note-index]').forEach(el=>el.classList.toggle('target-preview',markNotation&&Number(el.dataset.noteIndex)===index));
+ document.querySelectorAll('.exercise-note.target-preview').forEach(el=>el.classList.remove('target-preview'));
+ if(markNotation&&index!==null)document.querySelectorAll(`.exercise-note[data-note-index="${index}"]`).forEach(el=>el.classList.add('target-preview'));
  const selected=index===null?null:notes[index];document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
 }
 
