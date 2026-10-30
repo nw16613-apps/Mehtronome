@@ -2,15 +2,16 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {cagedStudy} from '../guitar/exercises.js';
 import {MODES} from '../audio/music.js';
 
-/** Overlap ascending/descending twelve-note runs so the last run reaches the
- * destination edge on its final attack, without inserting a turnaround. */
+/** Overlap twelve-note runs, reserving the destination edge for the opposite
+ * form's opening attack so ordinary range turns do not repeat their endpoint. */
 export function scaleTripletForm(span,down){
  const ordered=down?span.toReversed():span;
  if(!ordered.length)return [];
- if(ordered.length<12){const run=[...Array(12-ordered.length).fill(ordered[0]),...ordered];return [...run,...run];}
- const runs=Math.max(2,Math.ceil(ordered.length/12));
+ const pad=run=>[...Array(12-run.length).fill(run[0]),...run];
+ if(ordered.length<=12)return [...pad(ordered),...pad(ordered.length>1?ordered.slice(0,-1):ordered)];
+ const runs=Math.max(2,Math.ceil((ordered.length-1)/12));
  return Array.from({length:runs},(_,run)=>{
-  const start=Math.floor(run*(ordered.length-12)/(runs-1));
+  const start=Math.floor(run*(ordered.length-13)/(runs-1));
   return ordered.slice(start,start+12);
  }).flat();
 }

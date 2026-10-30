@@ -9,8 +9,8 @@ const lineFor=(board,h)=>[...new Set(board.notes.filter(n=>h.scalePcs.includes(n
 const paths=(hs,ss)=>hs.map((h,i)=>({...cagedPositionFor(fretboardFor(h,ss[i%ss.length])),geometryShape:ss[i%ss.length]}));
 function expectedForm(line,down){
  const ordered=down?line.toReversed():line;
- if(line.length>=12)return [...ordered.slice(0,12),...ordered.slice(-12)];
- const run=Array.from({length:12},(_,i)=>ordered[Math.max(0,i-(12-line.length))]);return [...run,...run];
+ const pad=run=>Array.from({length:12},(_,i)=>run[Math.max(0,i-(12-run.length))]);
+ return [...pad(ordered.slice(0,12)),...pad(ordered.slice(Math.max(0,ordered.length-13),-1))];
 }
 const cycle=(g,motion)=>{const line=lineFor(g.board,g.harmony),down=motion==='descending';return [...expectedForm(line,down),...expectedForm(line,!down)];};
 test('all modes, twelve roots and five CAGED positions use complete overlapping runs with no internal reversal',()=>{
@@ -21,19 +21,19 @@ test('all modes, twelve roots and five CAGED positions use complete overlapping 
   assert.deepEqual(gs.map(g=>g.phrasePhase),[0,12,24,36]);
   for(let bar=0;bar<4;bar++){
    const g=gs[bar],down=(motion==='descending')!==(bar>=2);assert.equal(g.notes.length,12);assert.equal(g.phraseHalfLength,24);assert.equal(g.phraseCycleLength,48);
-   for(let i=1;i<12;i++){const delta=g.notes[i].midi-g.notes[i-1].midi;assert.ok(down?delta<=0:delta>=0);if(available.length>=12)assert.notEqual(delta,0);}
+   for(let i=1;i<12;i++){const delta=g.notes[i].midi-g.notes[i-1].midi;assert.ok(down?delta<=0:delta>=0);if(available.length>=13)assert.notEqual(delta,0);}
    for(const n of g.notes){assert.equal(n.name,h.scaleNames[h.scalePcs.indexOf(n.pc)]);assert.ok(g.board.notes.some(p=>p.string===n.string&&p.fret===n.fret&&p.midi===n.midi));}
   }
-  assert.deepEqual([...new Set(gs.slice(0,2).flatMap(g=>g.notes.map(n=>n.midi)))].sort((a,b)=>a-b),available);
-  assert.equal(gs[1].notes.at(-1).midi,motion==='ascending'?available.at(-1):available[0]);assert.equal(gs[2].notes[0].midi,gs[1].notes.at(-1).midi);
+  assert.deepEqual([...new Set(gs.flatMap(g=>g.notes.map(n=>n.midi)))].sort((a,b)=>a-b),available);
+  assert.equal(gs[1].notes.at(-1).midi,motion==='ascending'?available.at(-2):available[1]);assert.equal(gs[2].notes[0].midi,motion==='ascending'?available.at(-1):available[0]);assert.equal(gs[3].notes.at(-1).midi,motion==='ascending'?available[1]:available.at(-2));
  }
 });
-test('reported A Dorian Position I begins bar two on lower F-sharp and ascends to the top C',()=>{
+test('reported A Dorian Position I begins bar two on E and reserves the top C for the descending form',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=[h,h,h,h],gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,'D'),{study:'positionalscale',rhythm:'triplets',motion:'ascending',positionPath:paths(hs,['D'])});
  assert.deepEqual(gs[0].notes.map(n=>n.midi),[45,47,48,50,52,54,55,57,59,60,62,64]);
- assert.deepEqual(gs[1].notes.map(n=>n.midi),[54,55,57,59,60,62,64,66,67,69,71,72]);
- assert.deepEqual([gs[1].notes[0].name,gs[1].notes[0].string,gs[1].notes[0].fret],['F♯',2,4]);
- assert.deepEqual(gs[2].notes.map(n=>n.midi),gs[1].notes.map(n=>n.midi).toReversed());assert.deepEqual(gs[3].notes.map(n=>n.midi),gs[0].notes.map(n=>n.midi).toReversed());
+ assert.deepEqual(gs[1].notes.map(n=>n.midi),[52,54,55,57,59,60,62,64,66,67,69,71]);
+ assert.deepEqual([gs[1].notes[0].name,gs[1].notes[0].string,gs[1].notes[0].fret],['E',1,7]);
+ assert.deepEqual(gs[2].notes.map(n=>n.midi),[72,71,69,67,66,64,62,60,59,57,55,54]);assert.deepEqual(gs[3].notes.map(n=>n.midi),[66,64,62,60,59,57,55,54,52,50,48,47]);
  const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positionalscale','triplets');assert.equal(plan.events.length,48);assert.equal(plan.events[12].start,4);assert.equal(plan.events[24].start,8);
  for(let i=0;i<48;i++)assert.ok(Math.abs(plan.events[i].start-i/3)<1e-10);
 });

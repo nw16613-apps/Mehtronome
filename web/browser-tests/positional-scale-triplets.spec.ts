@@ -3,7 +3,7 @@ import {harmonyAt} from '../src/audio/music.js';
 import {fretboardFor,cagedPositionFor} from '../src/guitar/fretboard.js';
 const pitches=async(page:any,slot:number)=>page.locator(`.exercise-note[data-group-index="${slot}"]`).evaluateAll(nodes=>nodes.map(n=>{const m=n.getAttribute('aria-label')!.match(/^(.+), string (\d), fret (\d+)/)!;return [0,64,59,55,50,45,40][Number(m[2])]+Number(m[3]);}));
 const line=(h:any,position:string)=>{const board=['C','A','G','E','D'].map(shape=>fretboardFor(h,shape)).find(board=>cagedPositionFor(board).numeral===position)!;return [...new Set(board.notes.filter(n=>h.scalePcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);};
-const form=(ordered:number[])=>{if(ordered.length>=12)return [...ordered.slice(0,12),...ordered.slice(-12)];const run=[...Array(12-ordered.length).fill(ordered[0]),...ordered];return [...run,...run];};
+const form=(ordered:number[])=>{const pad=(run:number[])=>[...Array(12-run.length).fill(run[0]),...run];return [...pad(ordered.slice(0,12)),...pad(ordered.slice(Math.max(0,ordered.length-13),-1))];};
 test('full-range scale triplets use two-bar forms and descend in the new position at bar three',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
  await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-stage').selectOption('full');await page.locator('#exercise-position-navigation').selectOption('all');
@@ -37,11 +37,11 @@ test('two-bar triplet forms adapt to minor, dominant, major and pentatonic harmo
 });
 
 
-test('reported bar two starts from lower F-sharp and ascends to the top before bar three descends',async({page})=>{
+test('reported bar two starts from E and leaves the top C for bar three to descend',async({page})=>{
  await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-motion').selectOption('ascending');await page.locator('#exercise-position-navigation').selectOption('all');
  for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption('I');}
- expect(await pitches(page,1)).toEqual([54,55,57,59,60,62,64,66,67,69,71,72]);expect(await pitches(page,2)).toEqual([72,71,69,67,66,64,62,60,59,57,55,54]);
- await expect(page.locator('.exercise-note[data-note-index="12"]')).toHaveAttribute('aria-label',/^F♯, string 4, fret 4,/);await expect(page.locator('.exercise-note[data-note-index="23"]')).toHaveAttribute('aria-label',/^C, string 1, fret 8,/);
+ expect(await pitches(page,1)).toEqual([52,54,55,57,59,60,62,64,66,67,69,71]);expect(await pitches(page,2)).toEqual([72,71,69,67,66,64,62,60,59,57,55,54]);
+ await expect(page.locator('.exercise-note[data-note-index="12"]')).toHaveAttribute('aria-label',/^E, string 5, fret 7,/);await expect(page.locator('.exercise-note[data-note-index="24"]')).toHaveAttribute('aria-label',/^C, string 1, fret 8,/);
  await expect(page.locator('.notation-rest')).toHaveCount(0);
 });
 
