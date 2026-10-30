@@ -12,8 +12,8 @@ const durationPart=(remaining,at,division)=>{
 export function progressionNotationSvg(plan,title,options={chordDiagrams:false}){
  const diagramChanges=new Set(options.chordDiagrams?plan.slots.filter((slot,index)=>index===0||notationDiagramKey(slot)!==notationDiagramKey(plan.slots[index-1])):[]);
  const chordChanges=new Set(plan.slots.filter((slot,index)=>index===0||slot.chord!==plan.slots[index-1].chord));
- const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=options.chordDiagrams?2:dense?2:guide?4:3;
- const unit=Math.max(guide?30:48,...plan.slots.map(s=>Math.max(s.chord.length*7+22,options.chordDiagrams?90:0)/Math.min(s.duration,plan.beats)));
+ const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=dense?2:guide?4:3;
+ const unit=Math.max(guide?30:48,...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
  const barWidth=Math.max(guide?155:230,plan.beats*unit+35),systems=[];
  for(let first=0;first<barCount;first+=perSystem){
   const systemEvents=plan.events.filter(e=>e.start<(first+perSystem)*plan.beats&&e.start+e.duration>first*plan.beats),musicOffset=plan.division===3&&systemEvents.length?Math.max(0,100-Math.min(...systemEvents.map(e=>staffY(e.note)))):0;

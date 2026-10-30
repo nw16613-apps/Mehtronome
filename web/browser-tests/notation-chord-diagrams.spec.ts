@@ -23,3 +23,19 @@ test('optional chord diagrams follow per-slot CAGED positions and survive displa
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.locator('.notation-scroll').screenshot({path:'/workspace/notation-chord-diagrams-mobile.png'});
  await page.reload();await page.locator('[data-workspace-target=caged-exercise]').click();await expect(page.locator('#exercise-chord-diagrams')).toBeChecked();await expect(page.locator('.notation-chord-diagram').first()).toBeVisible();await page.locator('#exercise-chord-diagrams').uncheck();await expect(page.locator('.notation-chord-diagram')).toHaveCount(0);expect(errors).toEqual([]);
 });
+
+test('compact diagrams preserve notation size and bar layout at desktop and phone widths',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
+ const footprint=()=>page.locator('.exercise-notation').evaluateAll((svgs:any[])=>svgs.map(svg=>({width:svg.viewBox.baseVal.width,bars:svg.querySelectorAll('.bar-line[data-bar]').length,notes:[...svg.querySelectorAll('.note-head')].map(n=>{const box=n.getBoundingClientRect();return {x:box.x-svg.getBoundingClientRect().x,width:box.width};})})));
+ for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
+  await page.setViewportSize(viewport);
+  for(const zoom of ['fit','comfortable'])for(const rhythm of ['sixteenths','triplets']){
+   await page.locator('#exercise-zoom').selectOption(zoom);await page.locator('#exercise-rhythm').selectOption(rhythm);await page.locator('#exercise-chord-diagrams').uncheck();const before=await footprint();
+   await page.locator('#exercise-chord-diagrams').check();const after=await footprint();
+   expect(after.length).toBe(before.length);
+   for(let i=0;i<after.length;i++){expect(after[i].width).toBe(before[i].width);expect(after[i].bars).toBe(before[i].bars);expect(after[i].notes.length).toBe(before[i].notes.length);for(let j=0;j<after[i].notes.length;j++){expect(after[i].notes[j].x).toBeCloseTo(before[i].notes[j].x,1);expect(after[i].notes[j].width).toBeCloseTo(before[i].notes[j].width,1);}}
+   const diagram=await page.locator('.notation-chord-diagram').first().boundingBox();const score=await page.locator('.exercise-notation').first().boundingBox();expect(diagram!.width/score!.width).toBeLessThan(.07);
+   expect((await clearance(page)).every(gap=>gap>=4)).toBe(true);
+  }
+ }
+});
