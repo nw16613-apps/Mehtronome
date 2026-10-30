@@ -33,7 +33,7 @@ test('eight-note patterns retain the eighth degree and use eight steps per octav
  const board={start:1,end:24,notes:Array.from({length:25},(_,i)=>60+i).filter(midi=>h.scalePcs.includes(midi%12)).map(midi=>({midi,pc:midi%12,name:h.scaleNames[h.scalePcs.indexOf(midi%12)],fret:midi-40,string:0}))};
  const groups=cagedStudy(board,h,'groups4','seventh','ascending');
  assert.deepEqual(groups[0].notes.map(n=>n.midi),[60,61,63,64]);assert.deepEqual(groups[7].notes.map(n=>n.midi),[70,72,73,75]);
- const upper=cagedStudy(board,h,'upperstructure','seventh','ascending');assert.deepEqual(upper[0].notes.map(n=>n.midi),[63,66,69,72]);
+ const upper=cagedStudy(board,h,'upperstructure','seventh','ascending');assert.deepEqual(upper[0].notes.map(n=>n.midi),[60,63,66,69]); // Retired 3-to-9 study migrates to harmonized scale.
  const stacks=cagedStudy(board,h,'harmonized','seventh','ascending');assert.deepEqual(stacks[0].notes.map(n=>n.midi),[60,63,66,69]);assert.ok(stacks.some(c=>c.sequenceAnchor===70));
 });
 test('mixed seven/eight-note progressions support intact patterns, turns, voicings and sources',()=>{

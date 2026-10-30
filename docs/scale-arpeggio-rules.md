@@ -35,7 +35,8 @@ On five-, six- and eight-note collections, thirds/fourths/sixths menus use scale
 - Repeated harmony, scale and geometry retain the sequence cursor; bar boundaries do not restart it.
 - For cell-based families, at a changed harmony or position, select the nearest complete cell ahead of the previous structural anchor in the current travel direction. Alternating contour phase follows emitted cells, including across changes.
 - At the usable range limit, generate the opposite-direction form and continue from the nearest valid anchor to the outgoing upper/lower extent. A cell's final played note is not a general-purpose traversal anchor.
-- Pattern cells stay complete within each chord slot. Only an insufficient remaining time budget produces a rest. One-cell scope deliberately leaves the rest of the slot silent. Positional arpeggios retain their sixteen-note phrase phase across bars and context changes; see `positional-phrase-boundaries.md`.
+- Harmonized scale in Continuous pattern keeps the cell note ordinal across slot boundaries. An unchanged context resumes the same stack; a changed scale or position selects the fitting directed stack whose next unplayed tone is nearest the old next tone, preserving the ordinal. A completed cell then advances normally. No unused bar tail is introduced merely because three/four does not divide the slot capacity.
+- Other cell families retain their complete-cell slot policy. Only an insufficient remaining time budget produces a rest. One-cell scope deliberately leaves the rest of the slot silent. Positional arpeggios retain their sixteen-note phrase phase across bars and context changes; see `positional-phrase-boundaries.md`.
 - Notation, TAB, note audition and exercise playback consume the same generated notes. Written chord-tone spelling is used for positional arpeggios; scale sequences retain the scale guide's spelling.
 
 ## Findings and fixes
@@ -98,3 +99,18 @@ The Ninth chords material choice and 3-to-9 arpeggios exercise are removed. Save
 Harmony's chord definitions, audio, chart symbols, chosen scale guide, fretboard voicings and positional scales retain their full content. Only exercise arpeggio material is filtered. Degree metadata may still describe a note's relationship to the full backing chord. A shared core-tone helper preserves pitch/spelling/interval alignment without mutating the source harmony.
 
 Tests cover every chord type in twelve roots and five CAGED positions, altered/suspended/sixth/diminished qualities, extended/core chord equivalence, all positional rhythms and directions, unchanged source chord definitions, material capping, removed controls, saved-option migration, retained extended chart symbols and exercise playback.
+
+
+## Harmonized-scale review
+
+The existing generator already builds exact alternate-scale-step triads/seventh chords, uses the active scale guide rather than blindly transposing, continues by the nearest structural anchor through changes, and reverses at the usable complete-cell boundary. Those rules and the reviewed descending Am7-to-Bm7 notes remain unchanged.
+
+The review found that whole-cell-only slot packing broke continuity for triads and for short/irregular chord durations: it left rests and restarted the next cell from its beginning. Harmonized scale in Continuous pattern now carries a zero-based cell offset. A continuing stack can span bar lines. At a context change within that stack, compare the next unplayed tone with the same ordinal of all complete directed stacks in the incoming diagram; use the nearest candidate, breaking ties by the existing directed library order. Play its remainder, then advance through that library. This preserves note phase and rhythm while all sounded notes use the incoming scale and actual CAGED frets. A change between completed cells retains the existing nearest-forward-anchor rule.
+
+A range turn occurs after completing the last usable stack, rather than clipping a stack at the chart boundary. The opposite form uses the existing outgoing-extent rule. No fixed bar-length ascent/descent is imposed on these overlapping stacks. One-cell scope still deliberately plays a complete cell followed by space; other exercise families keep their current packing policy. The backing chart and its extensions are unchanged.
+
+Group metadata records fragment offsets and complete cell sizes so previews identify continued material and captions count cell segments accurately. Timing guidance explains flow and adaptation instead of promising rests after every partial cell.
+
+Independent reference tests construct theoretical scale pitches before restricting stacks to the diagram. They cover every mode, twelve roots, five shapes, triads/sevenths, both directions and all three subdivisions, with arbitrary slot splits and range turns. Additional tests cover exact mid-cell changes, mixed minor/dominant/major/harmonic-minor/pentatonic harmony with changed shapes, actual frets, and one-cell scope. Browser checks cover the written triad continuation, continuous timestamps, no unintended rests, playback across the change, and mobile width.
+
+Three older test expectations were confirmed to fail on the pre-change source: retired ninth-material labels, retired 3-to-9 output, and old positional guidance text. They now assert the already-established seventh-chord cap, migration to harmonized scale, and current core-tone wording.

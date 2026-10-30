@@ -38,10 +38,10 @@ test('diatonic Roman numerals reflect real qualities and altered scale degrees',
  }
  assert.equal(romanForStep({root:2,chord:'halfDim9'}),'iiø9');assert.equal(romanForStep({root:6,chord:'dim7'}),'♭v°7');
 });
-test('ninth arpeggio names retain minor and major seventh quality',()=>{
+test('legacy extension material retains the correct seventh-chord qualities',()=>{
  const h=harmonyAt({key:0,mode:'major',chord:'maj9'}),names=new Set();
  for(const p of POSITIONS)for(const g of cagedProgressionExercise(fretboardFor(h,p.shape),h,'extensions'))names.add(g.chord);
- assert.ok(names.has('Dm9'));assert.ok(names.has('Cmaj9'));assert.ok(names.has('Em7(♭9)'));assert.ok(!names.has('D9'));
+ assert.ok(names.has('Dm7'));assert.ok(names.has('Cmaj7'));assert.ok(names.has('Em7'));assert.ok(names.has('G7'));assert.ok(!names.has('Dm9'));assert.ok(!names.has('D7'));
 });
 test('staff position uses written octave and accidentals cancel within each bar in both renderers',()=>{
  assert.deepEqual(writtenPitch({name:'B♯',midi:60}),{letter:6,alteration:1,octave:3});assert.equal(writtenPitch({name:'C♭',midi:59}).octave,4);assert.equal(staffY({name:'B♯',midi:60}),staffY({name:'B',midi:59}));

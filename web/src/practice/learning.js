@@ -35,7 +35,8 @@ export function lessonCells(groups,limit=2){
   for(const [i,length]of lengths.entries()){
    const notes=group.notes.slice(offset,offset+length);offset+=length;
    if(!notes.length)continue;
-   cells.push({name:group.materialCells?.[i]||group.chord,notes:notes.map(n=>n.name).join(' · ')});
+   const continued=(group.cellOffsets?.[i]||0)>0?' · continued':'';
+   cells.push({name:(group.materialCells?.[i]||group.chord)+continued,notes:notes.map(n=>n.name).join(' · ')});
    if(cells.length===limit)return cells;
   }
  }
@@ -60,6 +61,7 @@ export function exerciseLesson(study,groups,harmony,source,options={}){
   trains='Hear the scale harmonised in successive arpeggio cells.';
   pattern='Stack alternate scale notes from successive available scale degrees. Material chooses triads (1–3–5) or seventh chords (1–3–5–7), relative to each cell root.';
   listen='A study cell and the backing can be different chords. Compare the first displayed cells below; the symbols above the staff name only the accompaniment.';
+  if(study==='harmonized')pattern+=' In Continuous pattern, a bar line does not interrupt a cell. If the harmony or position changes inside a cell, its remaining tones adapt at the same note ordinal. One-cell scope plays a complete cell, then leaves space.';
   apply='Take one arpeggio cell, vary its ending and resolve to a tone of the backing chord.';
  }else if(study==='grip'){trains='Learn the exact sounding notes of this voicing.';pattern='Low-to-high notes of the displayed grip, without adding the omitted chord tones.';listen='Keep the chord sound in mind while picking each string.';apply='Strum once, pick the grip notes, then choose Positional arpeggio to explore a balanced phrase in the region.';}
  else if(study==='positional'){trains='Play a balanced chord-arpeggio phrase in this CAGED region.';pattern='Use the chord’s core tones through the seventh, omitting ninth, eleventh and thirteenth extensions. Keep altered fifths/sevenths, suspensions and sixth-chord tones. Use consecutive pitches without repeating turning notes. Triplets use a seven-note span: six notes each way, two beats per half. Sixteenths use nine pitches: eight notes each way, also two beats per half. Eighths retain nine pitches for four beats each way. A position with fewer pitches uses a shorter span. For triplets, Full position with turnaround alternates a full ascending form plus upper turnaround and a full descending form plus lower turnaround. Each direction lasts one bar of 4/4, keeping the directional phase through chord and position changes.';listen='Hear the same chord in several registers.';apply='Choose two grip notes, add a nearby arpeggio note, then finish on the third.';}
@@ -82,7 +84,7 @@ export function exerciseLesson(study,groups,harmony,source,options={}){
  }
 
  const first=groups.flatMap(g=>g.notes||[])[0];
- const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?study==='positionalscale'?'The scale continues through chord slots and turns at the position boundary.':'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
+ const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?study==='positionalscale'?'The scale continues through chord slots and turns at the position boundary.':study==='harmonized'&&options.stage!=='cell'?'Arpeggio cells continue through bar lines, retaining their note ordinal at a harmony or position change.':'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
  return {trains,pattern,listen,apply,starting,cells:lessonCells(groups),rhythm:`Try this yourself in 4/4: play ${harmony.tones[1]||harmony.name} on beat 1, hold through beat 2, rest on beat 3, then play ${harmony.tones[0]} on beat 4. This is an application prompt, not the subdivision exercise playback.`};
 }
 export function shortCell(groups){return groups.length?[{...groups[0],notes:groups[0].notes.slice(0,8),targetIndex:groups[0].targetIndex<8?groups[0].targetIndex:undefined}]:[];}
