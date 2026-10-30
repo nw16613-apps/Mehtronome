@@ -108,3 +108,11 @@ test('the single return arc chooses the nearest available link to the actual inc
  }
  assert.ok(improved>0);
 });
+
+test('I to II to III to IV enters the top of III on bar three without carrying the ascending offset',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=[h,h,h,h];
+ const gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,'D'),{study:'positionalscale',rhythm:'triplets',motion:'ascending',positionPath:paths(hs,['D','C','A','G'])});
+ assert.deepEqual(gs.map(g=>g.position.numeral),['I','II','III','IV']);assert.deepEqual(gs.map(g=>g.phrasePhase),[0,12,24,36]);
+ const incoming=lineFor(gs[2].board,h).toReversed();assert.deepEqual(gs[2].notes.slice(0,3).map(n=>n.midi),incoming.slice(0,3));assert.equal(gs[2].notes[0].midi,78);
+ const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positionalscale','triplets');assert.equal(plan.events[24].start,8);assert.equal(plan.events[24].note.midi,78);
+});

@@ -50,3 +50,10 @@ test('the reported upper C turnaround is one broad arc before descending from th
  expect((await names(1)).slice(4)).toEqual(['C','B','A','G','F♯','G','A','B']);expect((await names(2)).slice(0,3)).toEqual(['D','C','B']);
  await expect(page.locator('.notation-rest')).toHaveCount(0);await page.locator('.notation-scroll').screenshot({path:'/workspace/scale-return-arc.png'});
 });
+
+test('four successive assigned positions enter Position III at its upper boundary in bar three',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-motion').selectOption('ascending');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const [slot,position]of ['I','II','III','IV'].entries()){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(position);}
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),top=line(h,'III').toReversed();expect((await pitches(page,2)).slice(0,3)).toEqual(top.slice(0,3));
+ await expect(page.locator('.exercise-note[data-note-index="24"]')).toHaveAttribute('data-start-beat','8');await expect(page.locator('.exercise-note[data-note-index="24"]')).toHaveAttribute('aria-label',/^F♯, string 1, fret 14,/);
+});

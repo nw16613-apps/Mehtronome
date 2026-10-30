@@ -16,6 +16,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  if(study==='positionalscale'&&rhythm==='triplets'&&stage!=='cell')return positionalScaleTripletGroups(harmonies,durations,path,options);
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
  const flowingCells=study==='harmonized'&&stage!=='cell';
+ const scaleTraversal=study==='positionalscale'&&stage!=='cell';
+ let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
@@ -27,19 +29,26 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
   const chosen=sources.find(choice=>choice.id===source)||sources[0],adapted=Boolean(source&&sources.length&&!sources.some(choice=>choice.id===source));
   const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,board.notes.map(n=>[n.string,n.fret,n.pc])]);
-  if(context!==previousContext){triadReference=lastMidi??60;if(study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
+  const phaseTurn=scaleTraversal&&scaleRemaining===0;
+  if(context!==previousContext){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
    return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
+  if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
   // Changed contexts may rearticulate a shared endpoint; otherwise choose
   // the nearest valid cell in the ongoing direction.
   if(context!==previousContext){
    cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;
-   if(flowingCells&&cellOffset&&pendingCell&&cells.length){
+   if(phaseTurn){
+    // The preceding form has used its allotted traversal steps. Start the
+    // opposite form at the incoming position's actual endpoint, rather than
+    // continuing upward to it from the nearest pitch.
+    cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);
+   }else if(flowingCells&&cellOffset&&pendingCell&&cells.length){
     // A change inside a stack adapts its unplayed tones at the same ordinal.
     // Compare the next structural tone, not a fresh cell's starting note.
     const target=pendingCell.notes[cellOffset].midi;
@@ -50,8 +59,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     // changes with the incoming mode/shape. Do not insert a tiny extra
     // traversal by choosing a new intermediary pitch before that turn.
     let next=study==='positionalscale'&&pendingScaleBoundary?{index:cells.length-1,direction:travel,reset:false}:continuationCell(cells,lastAnchor,travel,false,directional&&!alternating?lastMidi:null);
-    if(next.reset&&directional){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
+    const rangeTurn=next.reset&&directional;
+    if(rangeTurn){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
     cellIndex=next.index;
+    if(scaleTraversal&&(pendingScaleTurn||rangeTurn))scaleRemaining=Math.max(1,cells.length-1-cellIndex);
    }
   }
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
@@ -59,6 +70,11 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],sequenceAnchors=[],sequenceDirections=[];
   while(cells.length&&notes.length<capacity){
    const previousTravel=travel,previousIndex=cellIndex;
+   if(scaleTraversal&&scaleRemaining===0){
+    const edgeAlreadyPlayed=cellIndex>=cells.length;travel=-travel;cells=makeCells();
+    cellIndex=edgeAlreadyPlayed?continuationCell(cells,lastAnchor,travel).index:0;
+    scaleRemaining=Math.max(1,cells.length-1-cellIndex);
+   }
    if(cellIndex>=cells.length){
     if(study==='positionalscale'&&stage==='cell'&&notes.length)break;
     if(!directional)break;
@@ -66,6 +82,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     if(!cells.length)break;
     cellIndex=0;
     if(lastAnchor!==null)cellIndex=continuationCell(cells,lastRangeEdge??lastAnchor,travel).index;
+    if(scaleTraversal)scaleRemaining=Math.max(1,cells.length-1-cellIndex);
    }
    const cell=cells[cellIndex];
    // Other families keep their existing complete-cell slot policy.
@@ -91,6 +108,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    // Use the structural extent so an alternating stroke cannot move the turn.
    lastRangeEdge=travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
    lastMidi=played.at(-1).midi;
+   if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
    if(cell.targetIndex!==undefined)targetIndices.push(start+cell.targetIndex);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
    if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=cell;}

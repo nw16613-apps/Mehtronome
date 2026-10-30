@@ -24,19 +24,26 @@ test('eighths and sixteenths traverse the whole range without duplicate endpoint
   assert.ok(gs.every(g=>g.notes.length===4*division));assert.equal(progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positionalscale',rhythm).duration,16);
  }
 });
-test('chord, scale and position changes continue to the nearest pitch ahead and turn only at the range boundary',()=>{
- for(const mode of Object.keys(MODES))for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
-  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode,chord:MODES[mode].chord})],gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path(hs,[from,to])});let last=null,direction=motion==='ascending'?1:-1,pendingBoundary=false,pendingTurn=false;
-  for(const g of gs){
-   const pitches=available(g.board,g.harmony);if(g.slot>0&&pendingTurn)direction=-direction;
-   for(const [index,n]of g.notes.entries()){
-    let ahead=last===null?pitches:g.slot>0&&index===0&&pendingBoundary?[direction>0?pitches.at(-1):pitches[0]]:g.slot>0&&index===0&&(last===pitches[0]||last===pitches.at(-1))?[last]:pitches.filter(m=>(m-last)*direction>0);
-    if(!ahead.length){direction=-direction;ahead=pitches.filter(m=>(m-last)*direction>0);}
-    const expected=direction>0?Math.min(...ahead):Math.max(...ahead);assert.equal(n.midi,expected);assert.equal(n.name,g.harmony.scaleNames[g.harmony.scalePcs.indexOf(n.pc)]);last=n.midi;
+test('changed scales choose the nearest forward entry until the traversal deadline, then start the opposite form at its endpoint',()=>{
+ for(const mode of Object.keys(MODES))for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,3,4]){
+  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode,chord:MODES[mode].chord})],gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path(hs,[from,to])});
+  const initial=available(fretboardFor(hs[0],from),hs[0]),line=available(fretboardFor(hs[1],to),hs[1]);let direction=motion==='ascending'?1:-1;
+  const ordered=direction>0?initial:initial.toReversed(),first=ordered.slice(0,duration*4);assert.deepEqual(gs[0].notes.map(n=>n.midi),first);
+  let last=first.at(-1),remaining=initial.length-1-first.length,index,expected=[];
+  const edge=()=>direction>0?0:line.length-1;
+  const forward=()=>line.map((midi,index)=>({midi,index})).filter(row=>(row.midi-last)*direction>0).sort((a,b)=>(a.midi-b.midi)*direction)[0]?.index;
+  const reset=()=>{remaining=direction>0?line.length-1-index:index;};
+  if(remaining===0){direction=-direction;index=edge();reset();}
+  else if(last===line[0]||last===line.at(-1))index=line.indexOf(last);
+  else{index=forward();if(index===undefined){direction=-direction;index=forward()??edge();reset();}}
+  for(let n=0;n<16;n++){
+   if(n){
+    if(remaining===0){direction=-direction;index=edge();if(line[index]===last)index+=direction;reset();}
+    else{index+=direction;if(index<0||index>=line.length){direction=-direction;index=line.indexOf(last)+direction;reset();}}
    }
-   const lastIndex=pitches.indexOf(last),nextIndex=lastIndex+direction;
-   pendingBoundary=nextIndex===0||nextIndex===pitches.length-1;pendingTurn=nextIndex<0||nextIndex>=pitches.length;
+   expected.push(line[index]);last=line[index];remaining--;
   }
+  assert.deepEqual(gs[1].notes.map(n=>n.midi),expected,`${mode} ${from} ${to} ${motion} ${duration}`);
  }
 });
 test('one run per chord stops at the boundary and resumes the opposite form on the next repeated chord',()=>{
@@ -78,4 +85,12 @@ test('pending upper and lower turns enter the corresponding new endpoint in ever
   const gs=progressionExerciseGroups([h,h],[duration,1],fretboardFor(h,from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path([h,h],[from,to])});
   assert.equal(gs[1].notes[0].midi,motion==='ascending'?after.at(-1):after[0]);assert.equal(gs[1].notes[1].midi,motion==='ascending'?after.at(-2):after[1]);
  }
+});
+
+test('reported eighth-note I-II-III-IV route starts bar three at the incoming upper boundary',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=[h,h,h,h];
+ const gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,'D'),{study:'positionalscale',rhythm:'eighths',motion:'ascending',positionPath:path(hs,['D','C','A','G'])});
+ assert.deepEqual(gs[0].names,['A','B','C','D','E','F♯','G','A']);assert.deepEqual(gs[1].names,['B','C','D','E','F♯','G','A','B']);
+ assert.deepEqual(gs[2].notes.map(n=>n.midi),[78,76,74,72,71,69,67,66]);assert.deepEqual(gs[2].names,['F♯','E','D','C','B','A','G','F♯']);
+ assert.ok(gs[2].sequenceDirections.every(d=>d===-1));
 });

@@ -46,3 +46,12 @@ test('the whole eight-bar modal chart preserves its turns without short dips at 
  }
  await expect(page.locator('.exercise-note[data-group-index="2"]').first()).toHaveAttribute('aria-label',/^C, string 6, fret 8,/);await expect(page.locator('.exercise-note[data-group-index="3"]').first()).toHaveAttribute('aria-label',/^B, string 6, fret 7,/);expect(errors).toEqual([]);
 });
+
+test('reported eighth-note I-II-III-IV route begins bar three on high-E fret fourteen and descends',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('eighths');await page.locator('#exercise-stage').selectOption('full');await page.locator('#exercise-motion').selectOption('ascending');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const [slot,position]of ['I','II','III','IV'].entries()){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(position);}
+ expect(await pitches(page,0)).toEqual([45,47,48,50,52,54,55,57]);expect(await pitches(page,1)).toEqual([59,60,62,64,66,67,69,71]);expect(await pitches(page,2)).toEqual([78,76,74,72,71,69,67,66]);
+ await expect(page.locator('.exercise-note[data-note-index="16"]')).toHaveAttribute('aria-label',/^F♯, string 1, fret 14,/);await expect(page.locator('.exercise-note[data-note-index="16"]')).toHaveAttribute('data-start-beat','8');
+ await page.locator('#exercise-backing').uncheck();await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="2"]').first()).toBeVisible({timeout:5000});await expect(page.locator('.exercise-map-heading')).toContainText('Position III');await page.locator('#exercise-preview').click();
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
+});
