@@ -1,7 +1,7 @@
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
- if(!['balanced','turnaround'].includes(view.phrase))view.phrase='balanced';
+ if(!['balanced','balanced2','balanced3','turnaround'].includes(view.phrase))view.phrase='balanced';
  if(view.material==='extensions')view.material='seventh';
  if(view.study==='upperstructure')view.study='harmonized';
  if(view.study==='grip')view.study='positional';
@@ -22,3 +22,5 @@ export function exerciseCollectionLabels(study,nonDiatonic=false){
  const materials=study==='inversions'?['Up to 3 chord tones','Up to 4 chord tones']:nonDiatonic?['3-note stacks','4-note stacks']:['Triads','Seventh chords'];
  return {studies,materials};
 }
+
+export function exercisePhraseLabel(phrase){return new Map([['balanced','Balanced phrase'],['balanced2','Balanced phrase · variation 2'],['balanced3','Balanced phrase · variation 3'],['turnaround','Full position with turnaround']]).get(phrase)||'Balanced phrase';}

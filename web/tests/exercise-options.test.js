@@ -27,3 +27,8 @@ test('collection-aware labels distinguish scale-step patterns from chord inversi
 test('removed ninth stacks and 3-to-9 saved exercises migrate to seventh-chord material',()=>{
  const view=normalizeExerciseOptions({study:'upperstructure',material:'extensions',motion:'descending'});assert.equal(view.study,'harmonized');assert.equal(view.material,'seventh');assert.equal(view.motion,'descending');
 });
+
+test('balanced triplet variations survive saved-option normalization',()=>{
+ for(const phrase of ['balanced','balanced2','balanced3','turnaround'])assert.equal(normalizeExerciseOptions({study:'positional',rhythm:'triplets',phrase}).phrase,phrase);
+ assert.equal(normalizeExerciseOptions({study:'positional',phrase:'unknown'}).phrase,'balanced');
+});

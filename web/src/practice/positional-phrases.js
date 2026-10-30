@@ -30,14 +30,16 @@ export function rangePhrase(span,descending,turnaround,block=12){
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,turnaround=rhythm==='triplets'&&options.phrase==='turnaround',spanSize=turnaround?Infinity:rhythm==='triplets'?7:9;
+ const variation=rhythm==='triplets'&&!turnaround?({balanced2:1,balanced3:2}[options.phrase]||0):0;
  let cursor=0,globalStart=0,previousContext='',span=[],lastMidi=null;
  return harmonies.map((harmony,slot)=>{
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape),available=positionalArpeggio(board,harmony,'ascending')[0]?.notes||[];
   const context=JSON.stringify(available.map(n=>[n.midi,n.string,n.fret,n.name]));
   const size=Math.min(spanSize,available.length),windows=Array.from({length:Math.max(0,available.length-size+1)},(_,i)=>available.slice(i,i+size)).filter(ns=>ns.length);
   if(context!==previousContext){
-   span=descending?windows.at(-1)||[]:windows[0]||[];
-   if(lastMidi!==null&&windows.length>1){
+   const offset=Math.min(variation,Math.max(0,windows.length-1));
+   span=windows[descending?windows.length-1-offset:offset]||[];
+   if(!variation&&lastMidi!==null&&windows.length>1){
     const candidates=windows.map((window,index)=>{
      const {cycle}=rangePhrase(window,descending,turnaround),phase=cursor%cycle.length,note=cycle[phase],previous=cycle[(phase+cycle.length-1)%cycle.length];
      const direction=Math.sign(note.midi-previous.midi),distance=note.midi-lastMidi;
@@ -62,8 +64,9 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
    const up=section.up;cellLengths.push(length);materialCells.push(`${harmony.name}${harmony.suffix} · ${up?'ascending':'descending'} half`);offset+=length;
   }
   cursor+=notes.length;lastMidi=notes.at(-1)?.midi??lastMidi;
-  const warning=!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:!turnaround&&span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'';
-  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:turnaround?span.length:spanSize,phraseStyle:turnaround?'turnaround':'balanced',annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
+  const variationWarning=variation>=windows.length&&span.length?` Variation ${variation+1} needs more chord tones in this position; using the nearest available span.`:'';
+  const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:!turnaround&&span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+variationWarning;
+  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:turnaround?span.length:spanSize,phraseStyle:turnaround?'turnaround':'balanced',phraseVariation:variation,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
   globalStart+=notes.length;return group;
  });
 }
