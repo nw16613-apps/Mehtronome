@@ -7,7 +7,7 @@ export function progressionStudyPlan(groups,steps,bars,beats,study,rhythm='eight
     if(group?.warning)warnings.push(group.warning);
     const fits=study==='guidetones'?1:Math.floor(duration*division);
     if((group?.notes.length||0)>fits)warnings.push(`${group.chord}: only the first ${fits} notes fit at this rhythm. Choose a faster subdivision or a longer chord duration to hear the full arpeggio.`);
-    slots.push({slot,step,start:offset,duration,chord:group?.chord||'',annotation:group?.annotation||'',position:group?.position});
+    slots.push({slot,step,start:offset,duration,chord:group?.chord||'',annotation:group?.annotation||'',position:group?.position,board:group?.board,harmony:group?.harmony});
     for(const [local,note]of (group?.notes||[]).entries()){
       const at=study==='guidetones'?0:local/division;
       if(at>=duration)break;

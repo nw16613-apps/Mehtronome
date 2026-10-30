@@ -1,6 +1,7 @@
 import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
+import {notationChordDiagram} from '../practice/notation-chord-diagram.js';
 import {theoryOptions} from './superimposition.js';
 import {continuationCell} from '../practice/sequence-continuity.js';
 
@@ -451,7 +452,7 @@ export function flattenExercise(groups) { return groups.flatMap(group=>group.not
 
 function esc(text) { return String(text).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
 
-function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0,options={backingChord:'',groupChords:false,beats:4}) {
+function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',systemIndex=0,isLastSystem=false,totalNoteCount=0,options={backingChord:'',groupChords:false,beats:4,chordDiagram:null}) {
   const notes=flattenExercise(groups);
   const perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
   const notesPerBar=perBeat*(options.beats||4);
@@ -524,11 +525,12 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
     svg+=`<line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="150" y2="240"/>`;
   }
   svg+='</g><g class="notation-chord-band">';
-  if(options.backingChord)for(let at=0;at<notes.length;at++){if(at===0||(renderedNotes[at]?.globalIndex%notesPerBar===0))svg+=chordSvg(options.backingChord,xFor(at)-6,50,'backing');}
+  if(options.backingChord&&systemIndex===0&&notes.length){svg+=chordSvg(options.backingChord,xFor(0)-6,50,'backing');if(options.chordDiagram)svg+=notationChordDiagram(options.chordDiagram.harmony,options.chordDiagram.board,options.chordDiagram.position,xFor(0)-6,58);}
   return svg+'</g></svg>';
 }
 
-export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise',options={backingChord:'',groupChords:false,beats:4}) {
+/** @param {{backingChord?:string,groupChords?:boolean,beats?:number,chordDiagram?:{harmony:any,board:any,position:any}|null}} options */
+export function exerciseNotationSvg(groups,rhythm='eighths',title='CAGED exercise',options={backingChord:'',groupChords:false,beats:4,chordDiagram:null}) {
   const systems=[],perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,maxNotes=perBeat*(options.beats||4)*(rhythm==='sixteenths'?2:rhythm==='triplets'?2:3);
   let current=[],count=0,globalStart=0,previousSource=null;
   const shownAnnotations=new Set();

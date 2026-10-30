@@ -99,3 +99,5 @@ html:root[data-palette][data-theme] .caged-exercise>.exercise-linked-fretboard{d
 html:root[data-palette][data-theme] :is(.guitar-progression-panel,.exercise-navigation) .progression-reference{border:0;box-shadow:none;background:transparent;padding:0;margin:0 0 12px}.guitar-progression-panel .position-path-guide{border:0}.guitar-progression-panel .reference-current{margin-top:0}
 
 #exercise-clear-range[hidden]{display:none!important}.exercise-playback-panel .exercise-range-controls{margin-top:10px;font-size:11px}
+
+.exercise-viewbar label:has(#exercise-chord-diagrams){display:flex;align-items:center;gap:6px;min-height:36px;flex:0 1 auto}.notation-chord-diagram{pointer-events:none}
