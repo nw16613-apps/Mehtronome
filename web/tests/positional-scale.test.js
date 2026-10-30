@@ -16,8 +16,8 @@ test('plain scale includes every actual scale pitch, with correct spelling, in e
   for(const n of notes){assert.equal(n.name,h.scaleNames[h.scalePcs.indexOf(n.pc)]);assert.ok(board.notes.some(p=>p.string===n.string&&p.fret===n.fret&&p.midi===n.midi));}
  }
 });
-test('continuous scale traverses the whole range without duplicate endpoints at all subdivisions',()=>{
- for(const shape of shapes)for(const motion of ['ascending','descending'])for(const [rhythm,division]of [['eighths',2],['triplets',3],['sixteenths',4]]){
+test('eighths and sixteenths traverse the whole range without duplicate endpoints',()=>{
+ for(const shape of shapes)for(const motion of ['ascending','descending'])for(const [rhythm,division]of [['eighths',2],['sixteenths',4]]){
   const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h),gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,shape),{study:'positionalscale',motion,rhythm,positionPath:path(hs,[shape])});
   const line=available(gs[0].board,h),ordered=motion==='ascending'?line:line.toReversed(),cycle=[...ordered,...ordered.slice(1,-1).toReversed()];
   assert.deepEqual(gs.flatMap(g=>g.notes.map(n=>n.midi)),Array.from({length:16*division},(_,i)=>cycle[i%cycle.length]));

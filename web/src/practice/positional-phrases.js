@@ -2,12 +2,13 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
 
-// Each triplet bar traverses the full span, then turns near its destination
-// edge. The following bar uses the opposite form, even in a new position.
-const phraseFor=(span,descending,turnaround)=>{
+// A triplet form traverses the full span, then turns near its destination
+// edge. Arpeggios use twelve-note blocks; full scales use twenty-four.
+// The following form uses the opposite direction, even in a new position.
+export function rangePhrase(span,descending,turnaround,block=12){
  const cycle=[],sections=[];
  if(span.length<2)return {cycle:[...span],sections:span.length?[{start:0,length:1,up:!descending}]:[]};
- const leg=span.length-1,half=turnaround?Math.ceil(leg/12)*12:leg;
+ const leg=span.length-1,half=turnaround?Math.ceil(leg/block)*block:leg;
  for(const down of [descending,!descending]){
   const ordered=down?span.toReversed():span,notes=ordered.slice(0,leg);
   const radius=Math.min(2,leg),period=2*radius;
@@ -21,7 +22,7 @@ const phraseFor=(span,descending,turnaround)=>{
   sections.push({start:cycle.length,length:half,up:!down});cycle.push(...notes);
  }
  return {cycle,sections};
-};
+}
 
 /** Keep the phrase's ordinal place across chart/position changes. Pitch proximity
  * chooses among complete windows; it never advances or resets the phrase phase. */
@@ -37,7 +38,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
    span=descending?windows.at(-1)||[]:windows[0]||[];
    if(lastMidi!==null&&windows.length>1){
     const candidates=windows.map((window,index)=>{
-     const {cycle}=phraseFor(window,descending,turnaround),phase=cursor%cycle.length,note=cycle[phase],previous=cycle[(phase+cycle.length-1)%cycle.length];
+     const {cycle}=rangePhrase(window,descending,turnaround),phase=cursor%cycle.length,note=cycle[phase],previous=cycle[(phase+cycle.length-1)%cycle.length];
      const direction=Math.sign(note.midi-previous.midi),distance=note.midi-lastMidi;
      // Prefer forward movement when it fits the same phrase phase. A shared
      // boundary can be rearticulated; a forced register move keeps the phase.
@@ -48,7 +49,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
    }
   }
   previousContext=context;
-  const {cycle,sections}=phraseFor(span,descending,turnaround),phaseStart=cycle.length?cursor%cycle.length:0,sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
+  const {cycle,sections}=rangePhrase(span,descending,turnaround),phaseStart=cycle.length?cursor%cycle.length:0,sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
   const capacity=Math.max(1,Math.floor(durations[slot]*division));
   // One-run scope includes its turning note, then leaves the slot's remaining
   // time silent. Continuous scope keeps cycling without repeating endpoints.

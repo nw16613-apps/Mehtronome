@@ -1,4 +1,5 @@
 import {positionalProgressionGroups} from './positional-phrases.js';
+import {positionalScaleTripletGroups} from './positional-scale-phrases.js';
 import {cagedStudy,approachNoteFor} from '../guitar/exercises.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {progressionPositionPath} from '../guitar/position-path.js';
@@ -12,6 +13,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const {study,material='seventh',motion='ascending',rhythm='eighths',stage='full',source='',pattern='groups3'}=options;
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
+ if(study==='positionalscale'&&rhythm==='triplets'&&stage!=='cell')return positionalScaleTripletGroups(harmonies,durations,path,options);
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
  const flowingCells=study==='harmonized'&&stage!=='cell';
  let cellOffset=0,pendingCell=null;
