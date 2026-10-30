@@ -402,6 +402,7 @@ function inversionExercise(board,harmony,material,motion) {
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
   const size=MATERIAL_SIZES[material] || 4;
+  if(study==='positionalscale')return scalePatternExercise(board,harmony,motion,[0],'scale');
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
   if(study==='thirds')return scalePatternExercise(board,harmony,motion,[0,2],'3rds');
   if(study==='fourths')return scalePatternExercise(board,harmony,motion,[0,3],'4ths');

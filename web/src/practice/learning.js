@@ -48,7 +48,8 @@ export function overlayPurpose(source,harmony){
 export function exerciseLesson(study,groups,harmony,source,options={}){
  const annotation=groups[0]?.annotation;
  let trains='Hear chords built from the scale and compare them with the backing.',pattern='Stack alternate scale degrees to form the selected triads, seventh or ninth chords. Each cell is one arpeggio built by stacking alternate notes of the scale guide; the backing chord symbols above the staff describe the accompaniment.',listen='Hear how each study cell colours the held chord. A cell’s chord can differ from the accompaniment.',apply='Pick three notes, repeat their rhythm, then change the ending and leave space.';
- if(study==='chordtones'||study==='chordtonesalternating'){
+ if(study==='positionalscale'){trains='Learn every scale pitch across the selected CAGED position.';pattern='Move through the available scale pitches in pitch order, turning at the highest and lowest available notes without repeating the endpoint. Keep the direction across chord and position changes, choosing the nearest available note ahead. The whole range flows across bar lines rather than fitting an artificial fixed-length span.';listen='Hear how scale degrees relate to the backing chord as the harmony changes.';apply='Follow one complete ascent and descent, then connect the same movement to another position.';}
+ else if(study==='chordtones'||study==='chordtonesalternating'){
   trains='Build scale-note stacks from the core tones of the backing chord.';
   pattern='Use the first four written chord tones as cell roots (or all tones of a shorter chord), then stack alternate notes of the scale guide: 1–3–5 for triads, 1–3–5–7 for tetrads, or 1–3–5–7–9 for ninth chords. These numbers are relative to that cell root.';
   listen='The cells can be different chords. For Bm7 in B Dorian, seventh-chord cells rooted on B, D, F♯ and A are Bm7, Dmaj7, F♯m7 and Amaj7—not four inversions of Bm7. Only cells that fit the region are shown.';
@@ -73,7 +74,7 @@ export function exerciseLesson(study,groups,harmony,source,options={}){
  if(['alternating','chordtonesalternating'].includes(study))pattern+=' Successive cells alternate upward and downward contours. Starting direction controls both the initial travel through the position and the first cell contour; alternation continues through chord changes and range turns.';
  if(['thirds','fourths','sixths','groups3','groups4','digital1324','cells'].includes(study))pattern+=' Downward first mirrors the scale-step offsets. Only exact, complete cells available in the chosen diagram are used; a missing pitch is not replaced by the next available note.';
  if(options.progression&&study==='positional')listen+=' Chord and position changes preserve the phrase phase. The nearest fitting span is selected without skipping ahead in the phrase. The backing chart stays unchanged.';
- if(options.progression&&study!=='positional')listen+=' The pattern is rebuilt from the new chord’s scale guide while continuing in the current direction from the nearest valid cell. A position change adapts that sequence rather than resetting at the edge; repeated harmony retains its cursor. At the usable range boundary, the sequence turns into the opposite pattern. Study cells do not change the backing progression.';
+ if(options.progression&&!['positional','positionalscale'].includes(study))listen+=' The pattern is rebuilt from the new chord’s scale guide while continuing in the current direction from the nearest valid cell. A position change adapts that sequence rather than resetting at the edge; repeated harmony retains its cursor. At the usable range boundary, the sequence turns into the opposite pattern. Study cells do not change the backing progression.';
  if(harmony.scalePcs.length!==7){
   const count=harmony.scalePcs.length;
   const intro=`This is a ${count}-note scale. Numeric patterns count positions in its ordered collection, including octave wrapping. `;
@@ -81,7 +82,7 @@ export function exerciseLesson(study,groups,harmony,source,options={}){
  }
 
  const first=groups.flatMap(g=>g.notes||[])[0];
- const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
+ const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?study==='positionalscale'?'The scale continues through chord slots and turns at the position boundary.':'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
  return {trains,pattern,listen,apply,starting,cells:lessonCells(groups),rhythm:`Try this yourself in 4/4: play ${harmony.tones[1]||harmony.name} on beat 1, hold through beat 2, rest on beat 3, then play ${harmony.tones[0]} on beat 4. This is an application prompt, not the subdivision exercise playback.`};
 }
 export function shortCell(groups){return groups.length?[{...groups[0],notes:groups[0].notes.slice(0,8),targetIndex:groups[0].targetIndex<8?groups[0].targetIndex:undefined}]:[];}

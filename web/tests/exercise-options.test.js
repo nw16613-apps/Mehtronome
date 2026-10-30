@@ -11,9 +11,9 @@ test('legacy favourites retain their starting direction and map removed studies 
  assert.equal(normalizeExerciseOptions({study:'triadpairs',motion:'down-up'}).motion,'down-up');
 });
 test('menus expose only controls with distinct effects',()=>{
- for(const study of ['positional','harmonized','alternating','chordtones','pentatonic','enclosures'])assert.deepEqual(exerciseMenuOptions(study).directions.map(d=>d[0]),['ascending','descending']);
+ for(const study of ['positionalscale','positional','harmonized','alternating','chordtones','pentatonic','enclosures'])assert.deepEqual(exerciseMenuOptions(study).directions.map(d=>d[0]),['ascending','descending']);
  assert.equal(exerciseMenuOptions('triadpairs').directions.length,4);
- for(const study of ['positional','upperstructure','triadpairs','pentatonic','thirds','enclosures'])assert.equal(exerciseMenuOptions(study).material,false);
+ for(const study of ['positionalscale','positional','upperstructure','triadpairs','pentatonic','thirds','enclosures'])assert.equal(exerciseMenuOptions(study).material,false);
  for(const study of ['harmonized','alternating','chordtones','inversions','approach','approacheverytone'])assert.equal(exerciseMenuOptions(study).material,true);
 });
 

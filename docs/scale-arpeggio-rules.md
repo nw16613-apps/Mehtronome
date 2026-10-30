@@ -15,6 +15,7 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Groups of four | Steps 1–2–3–4 | First note |
 | Diatonic 1–3–2–4 | Steps 1–3–2–4 | First note |
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
+| Positional scale | Every distinct available scale pitch in the selected CAGED shape, in pitch order | Nearest pitch ahead through chord/mode/position changes; reverse at the available range limit |
 | Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each with a turnaround near its destination edge | Phrase ordinal phase; nearest fitting window at a context change |
 | Harmonized scale | Alternate scale notes: 1–3–5, 1–3–5–7 or 1–3–5–7–9 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
@@ -59,3 +60,12 @@ Fresh sessions now open four separately selectable one-bar Am7 slots in A Dorian
 The initial exercise is Positional arpeggio (nine-note span), Sixteenth notes, Continuous pattern, Upward first. Saved exercise options remain explicit user choices and are not rewritten.
 
 Validation result: production TypeScript/Vite build and 11 focused unit files passed. Twenty-three targeted browser scenarios were validated, with the continuity fixture rerun after explicitly selecting its material-based study under the new positional default. The full historical suite is not claimed: older adaptive-exercise fixtures still target the retired pedal control and the former location of guided setup. Hosted publication is checked through deployment status; browser validation is local.
+
+
+### Plain positional scale
+
+Positional scale is the first option under Scale sequences. It uses the selected harmony's scale guide and every distinct available scale pitch in its CAGED diagram, retaining the real string/fret coordinates and scale spelling. Duplicate unisons are played once. Starting direction chooses the first range edge; continuous traversal turns at the opposite edge without doubling the endpoint. It flows across bar lines and retains direction through chord, mode and position changes, selecting the nearest pitch ahead, or reversing only if no forward pitch fits.
+
+Material is hidden because this exercise is neither a stacked chord nor an arpeggio. The arpeggio-specific balanced-span and triplet-turnaround choices do not restrict the scale range. Eighths, triplets and sixteenths change timing without changing pitch-order rules. One run per chord continues to the next range boundary and leaves unused slot time as rests. Saved exercise options and CAGED captions support the new study. The default exercise remains Positional arpeggio.
+
+Tests cover all scale families, twelve keys, five shapes, both directions, all rhythms, real notes/spelling, repeated bars, changed roots/qualities/modes/positions, one-run scope, notation captions, saved options, playback and mobile width.

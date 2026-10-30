@@ -46,6 +46,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   while(cells.length&&notes.length<capacity){
    const previousTravel=travel,previousIndex=cellIndex;
    if(cellIndex>=cells.length){
+    if(study==='positionalscale'&&stage==='cell'&&notes.length)break;
     if(!directional)break;
     travel=-travel;cells=makeCells();
     if(!cells.length)break;
@@ -76,7 +77,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    if(cell.targetIndex!==undefined)targetIndices.push(start+cell.targetIndex);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
    cellIndex++;emittedCells++;
-   if(stage==='cell')break;
+   if(stage==='cell'&&study!=='positionalscale')break;
   }
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:'';
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,sequenceAnchors,sequenceDirections,globalStart,warning,
