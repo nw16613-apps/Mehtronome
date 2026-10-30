@@ -93,7 +93,7 @@ test('full-position triplets alternate full-range forms every bar in all positio
   const h=harmonyAt({key,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h);
   const gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,shape),{study:'positional',rhythm:'triplets',phrase:'turnaround',motion,positionPath:pathFor(hs,Array(4).fill(shape))});
   const available=[...new Set(gs[0].board.notes.filter(n=>arpeggioHarmony(h).chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),ordered=motion==='ascending'?available:available.toReversed();
-  const indices=available.length===9?[0,1,2,3,4,5,6,7,8,7,6,7]:[0,1,2,3,4,5,6,7,8,9,8,7],expected=[...indices.map(i=>ordered[i]),...indices.map(i=>ordered[ordered.length-1-i])];
+  const indices=available.length===9?[0,1,2,3,4,5,2,3,4,5,6,7]:[0,1,2,3,4,5,3,4,5,6,7,8],expected=[...indices.map(i=>ordered[i]),...indices.map(i=>ordered[ordered.length-1-i])];
   assert.equal(expected.length,24);assert.deepEqual(gs.flatMap(g=>g.notes.map(n=>n.midi)),[...expected,...expected]);
   for(const g of gs){assert.deepEqual(g.positionalSpan.map(n=>n.midi),available);assert.equal(g.phraseCycleLength,24);assert.equal(g.warning,'');}
   const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positional','triplets');assert.equal(plan.events[24].start,8);assert.equal(plan.duration,16);
@@ -104,7 +104,7 @@ test('turnarounds keep their 24-note phase through changing chords, ranges and p
   const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode:'dorian',chord:'min7'})];
   const gs=progressionExerciseGroups(hs,[duration,8],fretboardFor(hs[0],from),{study:'positional',rhythm:'triplets',phrase:'turnaround',motion,positionPath:pathFor(hs,[from,to])});let cursor=0;
   for(const g of gs){
-   const ordered=motion==='ascending'?g.positionalSpan:g.positionalSpan.toReversed(),indices=ordered.length===9?[0,1,2,3,4,5,6,7,8,7,6,7]:[0,1,2,3,4,5,6,7,8,9,8,7],expected=[...indices.map(i=>ordered[i]),...indices.map(i=>ordered[ordered.length-1-i])];
+   const ordered=motion==='ascending'?g.positionalSpan:g.positionalSpan.toReversed(),indices=ordered.length===9?[0,1,2,3,4,5,2,3,4,5,6,7]:[0,1,2,3,4,5,3,4,5,6,7,8],expected=[...indices.map(i=>ordered[i]),...indices.map(i=>ordered[ordered.length-1-i])];
    assert.equal(g.phrasePhase,cursor%24);assert.deepEqual(g.notes.map(n=>n.midi),Array.from({length:g.notes.length},(_,i)=>expected[(cursor+i)%24].midi));assert.ok(g.notes.every(n=>g.board.notes.some(p=>p.midi===n.midi&&p.string===n.string&&p.fret===n.fret)));cursor+=g.notes.length;
   }
  }
@@ -114,5 +114,22 @@ test('full-position turnaround handles all chord types without leaving the avail
   const h=harmonyAt({key:9,mode:recommendedMode(chord),chord}),[g]=progressionExerciseGroups([h],[16],fretboardFor(h,shape),{study:'positional',rhythm:'triplets',phrase:'turnaround',positionPath:pathFor([h],[shape])});
   const available=[...new Set(g.board.notes.filter(n=>arpeggioHarmony(h).chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);
   assert.deepEqual(g.positionalSpan.map(n=>n.midi),available);assert.ok(g.notes.every(n=>available.includes(n.midi)));if(available.length>1)assert.equal(g.phraseCycleLength%24,0);
+ }
+});
+
+test('reported I-II-II-I triplets restart on low G at beat three and connect into top C',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),hs=Array(4).fill(h),gs=progressionExerciseGroups(hs,[4,4,4,4],fretboardFor(h,'D'),{study:'positional',rhythm:'triplets',phrase:'turnaround',positionPath:pathFor(hs,['D','C','C','D'])});
+ assert.deepEqual(gs[0].notes.map(n=>n.midi),[45,48,52,55,57,60,55,57,60,64,67,69]);
+ assert.deepEqual([gs[0].notes[6].name,gs[0].notes[6].string,gs[0].notes[6].fret],['G',2,5]);
+ assert.deepEqual(gs[1].notes.map(n=>n.midi),[72,69,67,64,60,57,67,64,60,57,55,52]);
+ const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positional','triplets');assert.equal(plan.events[6].start,2);assert.equal(plan.events[12].start,4);assert.equal(plan.events.length,48);
+});
+test('full-position six-note runs stay monotonic and connect through the edge for all chord types and roots',()=>{
+ for(const chord of Object.keys(CHORDS))for(let key=0;key<12;key++)for(const shape of shapes)for(const motion of ['ascending','descending']){
+  const h=harmonyAt({key,mode:recommendedMode(chord),chord}),[g]=progressionExerciseGroups([h],[16],fretboardFor(h,shape),{study:'positional',rhythm:'triplets',phrase:'turnaround',motion,positionPath:pathFor([h],[shape])});
+  const span=g.positionalSpan.map(n=>n.midi),cycle=g.notes.slice(0,g.phraseCycleLength).map(n=>n.midi),half=g.phraseCycleLength/2;
+  assert.deepEqual([...new Set(cycle)].sort((a,b)=>a-b),span);
+  for(let start=0;start<cycle.length;start+=6){const down=(motion==='descending')!==(start>=half);for(let i=start+1;i<start+6;i++)assert.ok(down?cycle[i]<=cycle[i-1]:cycle[i]>=cycle[i-1]);}
+  for(const boundary of [half,cycle.length]){const a=cycle[boundary-1],b=cycle[boundary%cycle.length];assert.equal(Math.abs(span.indexOf(a)-span.indexOf(b)),1);}
  }
 });

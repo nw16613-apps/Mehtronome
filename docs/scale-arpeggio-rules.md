@@ -16,7 +16,7 @@ Numbers below describe ordered scale steps relative to a cell's starting degree,
 | Diatonic 1–3–2–4 | Steps 1–3–2–4 | First note |
 | Diatonic 1–2–3–5 | Steps 1–2–3–5 | First note |
 | Positional scale | Every distinct available scale pitch in the selected CAGED shape, in pitch order | Rearticulate a shared endpoint at a changed context; otherwise nearest pitch ahead, reversing at the available range limit |
-| Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each with a turnaround near its destination edge | Phrase ordinal phase; nearest fitting window at a context change |
+| Positional arpeggio | Balanced: seven consecutive written chord-tone pitches for triplets (six up/six down); nine for eighths and sixteenths (eight up/eight down). Full position with turnaround: alternating twelve-note ascending and descending forms, each made from two overlapping six-note runs | Phrase ordinal phase; nearest fitting window at a context change |
 | Harmonized scale | Alternate scale notes: 1–3–5 or 1–3–5–7 | First note of the directed stack |
 | Alternating diatonic arpeggios | Same scale stacks; alternate the played up/down contour of successive cells | Structural first note before alternating reversal |
 | Arpeggios from core chord tones | Same scale stacks, restricted to roots among the core chord tones through the seventh (all tones if shorter) | First note of the directed stack |
@@ -137,3 +137,9 @@ Continuous eighth/sixteenth positional scales now retain a separate count of att
 The accepted first two bars remain A–B–C–D–E–F♯–G–A and B–C–D–E–F♯–G–A–B. Bar 3 is now F♯–E–D–C–B–A–G–F♯. Each chart slot keeps its assigned CAGED position. One run per chord, triplet scale return arcs, arpeggios and other sequence families keep their existing policies.
 
 Regression checks cover the exact screenshot’s MIDI pitches, note names, high-E fret 14 at beat 8, notation/TAB, playback and linked Position III diagram; the original triplet I–II–III–IV entry; mirrored and unchanged-context traversals; nearest entries and scheduled boundary transitions across all scale families, keys and shapes; shared boundaries without doubled endpoints; and the earlier complete parallel-minor chart.
+
+## Full-position arpeggio triplets: six-note overlapping runs
+
+The existing full-position phrase choice now replaces its oscillating tail with two ascending six-note runs, mirrored for descent. The final run ends one arpeggio step before the edge, leaving that edge for the opening of the next opposite form. The available full positional span remains unchanged; the complete cycle includes every pitch. Short spans repeat the opening pitch as needed; spans requiring more than twelve attacks per direction retain additional twelve-note blocks.
+
+For A Dorian/Am7 Position I, bar 1 is A45 C48 E52 G55 A57 C60, then G55 A57 C60 E64 G67 A69. Beat 3 therefore starts on G55, D string fret 5. The incoming Position II opens bar 2 at its top C72 and descends. Each assigned chart slot keeps its position and the global subdivision phase, including changes within a run. The mirrored form follows the same rule at the bottom. Balanced triplet arpeggios, eighths, sixteenths and positional scales are unchanged.
