@@ -29,6 +29,6 @@ test('removed ninth stacks and 3-to-9 saved exercises migrate to seventh-chord m
 });
 
 test('balanced triplet variations survive saved-option normalization',()=>{
- for(const phrase of ['balanced','balanced2','balanced3','turnaround'])assert.equal(normalizeExerciseOptions({study:'positional',rhythm:'triplets',phrase}).phrase,phrase);
+ for(const phrase of ['balanced','balanced2','balanced3','balancedcycle','turnaround'])assert.equal(normalizeExerciseOptions({study:'positional',rhythm:'triplets',phrase}).phrase,phrase);
  assert.equal(normalizeExerciseOptions({study:'positional',phrase:'unknown'}).phrase,'balanced');
 });
