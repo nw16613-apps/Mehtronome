@@ -2,8 +2,8 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
 
-// A triplet form traverses the full span, then turns near its destination
-// edge. Arpeggios use twelve-note blocks; full scales use twenty-four.
+// An arpeggio triplet form traverses the full span, then turns near its
+// destination edge in twelve-note blocks.
 // The following form uses the opposite direction, even in a new position.
 export function rangePhrase(span,descending,turnaround,block=12){
  const cycle=[],sections=[];

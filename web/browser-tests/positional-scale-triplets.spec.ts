@@ -1,9 +1,14 @@
 import {test,expect} from '@playwright/test';
 import {harmonyAt} from '../src/audio/music.js';
 import {fretboardFor,cagedPositionFor} from '../src/guitar/fretboard.js';
-const ordinal=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,15,14,15,16,15,14,15];
 const pitches=async(page:any,slot:number)=>page.locator(`.exercise-note[data-group-index="${slot}"]`).evaluateAll(nodes=>nodes.map(n=>{const m=n.getAttribute('aria-label')!.match(/^(.+), string (\d), fret (\d+)/)!;return [0,64,59,55,50,45,40][Number(m[2])]+Number(m[3]);}));
 const line=(h:any,position:string)=>{const board=['C','A','G','E','D'].map(shape=>fretboardFor(h,shape)).find(board=>cagedPositionFor(board).numeral===position)!;return [...new Set(board.notes.filter(n=>h.scalePcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b);};
+const form=(ordered:number[],target:number|null=null)=>{
+ const remaining=24-ordered.length,edge=ordered.length-1,candidates:number[][]=[];
+ for(let depth=1;depth<=edge;depth++){const arc:number[]=[];for(let i=1;i<=depth;i++)arc.push(ordered[edge-i]);for(let i=depth-1;arc.length<remaining&&i>=1;i--)arc.push(ordered[edge-i]);if(arc.length===remaining&&depth<remaining)candidates.push(arc);}
+ candidates.sort((a,b)=>Math.abs(a.at(-1)!-(target??ordered.at(-1)!))-Math.abs(b.at(-1)!-(target??ordered.at(-1)!)));
+ return [...ordered,...candidates[0]];
+};
 test('full-range scale triplets use two-bar forms and descend in the new position at bar three',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
  await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-stage').selectOption('full');await page.locator('#exercise-position-navigation').selectOption('all');
@@ -13,7 +18,8 @@ test('full-range scale triplets use two-bar forms and descend in the new positio
   await page.locator('#exercise-motion').selectOption(motion);
   for(let half=0;half<2;half++){
    const available=line(h,half?'III':'II'),down=(motion==='descending')!==(half===1),ordered=down?available.toReversed():available;
-   expect([...(await pitches(page,half*2)),...(await pitches(page,half*2+1))]).toEqual(ordinal.map(i=>ordered[i]));
+   const incoming=line(h,'III'),target=half===0?(down?incoming[0]:incoming.at(-1)!):null;
+   expect([...(await pitches(page,half*2)),...(await pitches(page,half*2+1))]).toEqual(form(ordered,target));
   }
   await expect(page.locator('.exercise-note')).toHaveCount(48);await expect(page.locator('.notation-rest')).toHaveCount(0);
  }
@@ -31,7 +37,16 @@ test('two-bar triplet forms adapt to minor, dominant, major and pentatonic harmo
  for(const [slot,step]of steps.entries()){
   const h=harmonyAt({key:(9+step.root)%12,mode:step.mode,chord:step.chord}),available=line(h,positions[slot]),ordered=slot%2?available.toReversed():available,written=await pitches(page,slot);
   expect(written).toHaveLength(24);expect(written.slice(0,ordered.length)).toEqual(ordered);expect(written.every(midi=>available.includes(midi))).toBe(true);
-  expect(written.slice(ordered.length).every(midi=>ordered.slice(-3).includes(midi))).toBe(true);
+  const tail=written.slice(ordered.length-1),directions=tail.slice(1).map((midi,i)=>Math.sign(midi-tail[i])),runs=directions.filter((d,i)=>!i||d!==directions[i-1]);expect(runs).toEqual(slot%2?[1,-1]:[-1,1]);
  }
  await expect(page.locator('.exercise-note')).toHaveCount(96);await expect(page.locator('.notation-rest')).toHaveCount(0);await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+
+test('the reported upper C turnaround is one broad arc before descending from the next position',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');await page.locator('#exercise-motion').selectOption('ascending');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(slot<2?'I':'II');}
+ const names=async(slot:number)=>page.locator(`.exercise-note[data-group-index="${slot}"]`).evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')!.split(',')[0]));
+ expect((await names(1)).slice(4)).toEqual(['C','B','A','G','F♯','G','A','B']);expect((await names(2)).slice(0,3)).toEqual(['D','C','B']);
+ await expect(page.locator('.notation-rest')).toHaveCount(0);await page.locator('.notation-scroll').screenshot({path:'/workspace/scale-return-arc.png'});
 });
