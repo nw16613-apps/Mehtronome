@@ -78,3 +78,12 @@ At a changed chord, scale or CAGED position, an incoming traversal may rearticul
 This single-note traversal exception applies only when the actual preceding sounded note and the outgoing structural anchor both equal the incoming endpoint/entry note. Interior shared notes still use forward continuation, unchanged contexts retain their cursor, and ordinary range turns do not double their endpoint. Multi-note patterns, including closed chromatic motifs, retain their existing cell stepping and anchor-based sequence progress; the final note of an arpeggio cannot override its structural anchor. Alternating contours retain their existing phase rules. The positional arpeggio phrase engine already supports shared entries within its fixed phrase phase and is unchanged.
 
 Explicit tests exercise the reported note/string/fret/time, shared upper and lower boundaries in every scale family and key across changed CAGED positions, unchanged-range continuity, multi-note pattern-anchor safety, and notation/playback at the reported chord change.
+
+
+### Pending scale turns through changes
+
+Shared endpoint rearticulation alone does not preserve a traversal when its next note is the old range endpoint. The continuation engine now retains two pieces of scale state: whether the next step reaches that endpoint, and whether the endpoint has already sounded and the following step reverses direction. At a changed harmony/position, the former enters the corresponding new endpoint; the latter reverses before selecting the next new-scale pitch. Mid-range continuation still chooses the nearest forward pitch. Unchanged contexts keep the original cursor and endpoint rules.
+
+This prevents the reported eight-bar A/C/E♭/F♯ Dorian chart from inserting D♭–C or C♯–B fragments before climbing. With the shown Position II/I/V/III route, the four entries are B47, C48, C48 and B47. Each region has seventeen pitches and retains its 32-note ascent/descent cycle. Broader scale/cardinality changes retain their available full range and are not forced into a restricted span.
+
+Regression coverage compares every note of all four two-bar groups, the later E♭m7 and F♯m7 entries, and their peak times in the actual browser notation, in addition to every scale family/key/changed-position pair at pending upper and lower turns. Multi-note sequence families and positional arpeggio phrase rules are unchanged.

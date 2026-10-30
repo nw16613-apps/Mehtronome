@@ -26,8 +26,17 @@ test('continuous scale traverses the whole range without duplicate endpoints at 
 });
 test('chord, scale and position changes continue to the nearest pitch ahead and turn only at the range boundary',()=>{
  for(const mode of Object.keys(MODES))for(const from of shapes)for(const to of shapes)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
-  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode,chord:MODES[mode].chord})],gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path(hs,[from,to])});let last=null,direction=motion==='ascending'?1:-1;
-  for(const g of gs){const pitches=available(g.board,g.harmony);for(const [index,n] of g.notes.entries()){let ahead=last===null?pitches:g.slot>0&&index===0&&(last===pitches[0]||last===pitches.at(-1))?[last]:pitches.filter(m=>(m-last)*direction>0);if(!ahead.length){direction=-direction;ahead=pitches.filter(m=>(m-last)*direction>0);}const expected=direction>0?Math.min(...ahead):Math.max(...ahead);assert.equal(n.midi,expected);assert.equal(n.name,g.harmony.scaleNames[g.harmony.scalePcs.indexOf(n.pc)]);last=n.midi;}}
+  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:0,mode,chord:MODES[mode].chord})],gs=progressionExerciseGroups(hs,[duration,4],fretboardFor(hs[0],from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path(hs,[from,to])});let last=null,direction=motion==='ascending'?1:-1,pendingBoundary=false,pendingTurn=false;
+  for(const g of gs){
+   const pitches=available(g.board,g.harmony);if(g.slot>0&&pendingTurn)direction=-direction;
+   for(const [index,n]of g.notes.entries()){
+    let ahead=last===null?pitches:g.slot>0&&index===0&&pendingBoundary?[direction>0?pitches.at(-1):pitches[0]]:g.slot>0&&index===0&&(last===pitches[0]||last===pitches.at(-1))?[last]:pitches.filter(m=>(m-last)*direction>0);
+    if(!ahead.length){direction=-direction;ahead=pitches.filter(m=>(m-last)*direction>0);}
+    const expected=direction>0?Math.min(...ahead):Math.max(...ahead);assert.equal(n.midi,expected);assert.equal(n.name,g.harmony.scaleNames[g.harmony.scalePcs.indexOf(n.pc)]);last=n.midi;
+   }
+   const lastIndex=pitches.indexOf(last),nextIndex=lastIndex+direction;
+   pendingBoundary=nextIndex===0||nextIndex===pitches.length-1;pendingTurn=nextIndex<0||nextIndex>=pitches.length;
+  }
  }
 });
 test('one run per chord stops at the boundary and resumes the opposite form on the next repeated chord',()=>{
@@ -53,4 +62,20 @@ test('shared lower and upper endpoints are rearticulated across every scale fami
   }
  }
  assert.ok(checks>1000);
+});
+
+test('the complete parallel-minor chart retains its lower turns at all four harmonic entries',()=>{
+ const hs=[0,1,2,3].map(i=>harmonyAt({key:9,mode:'dorian',chord:'min7',progression:true,template:'parallel2'},i)),gs=progressionExerciseGroups(hs,[8,8,8,8],fretboardFor(hs[0],'C'),{study:'positionalscale',rhythm:'sixteenths',positionPath:path(hs,['C','D','E','A'])});
+ assert.deepEqual(gs.map(g=>g.notes[0].midi),[47,48,48,47]);
+ for(const g of gs){const line=available(g.board,g.harmony),cycle=[...line,...line.slice(1,-1).toReversed()];assert.equal(cycle.length,32);assert.deepEqual(g.notes.map(n=>n.midi),cycle);}
+ assert.deepEqual(gs[2].notes.slice(0,4).map(n=>[n.name,n.midi]),[['C',48],['D♭',49],['E♭',51],['F',53]]);
+ assert.deepEqual(gs[3].notes.slice(0,4).map(n=>[n.name,n.midi]),[['B',47],['C♯',49],['D♯',51],['E',52]]);
+});
+
+test('pending upper and lower turns enter the corresponding new endpoint in every mode and key',()=>{
+ for(const [mode,definition]of Object.entries(MODES))for(let key=0;key<12;key++)for(const from of shapes)for(const to of shapes)if(from!==to)for(const motion of ['ascending','descending']){
+  const h=harmonyAt({key,mode,chord:definition.chord}),before=available(fretboardFor(h,from),h),after=available(fretboardFor(h,to),h),duration=(before.length-1)/4;
+  const gs=progressionExerciseGroups([h,h],[duration,1],fretboardFor(h,from),{study:'positionalscale',motion,rhythm:'sixteenths',positionPath:path([h,h],[from,to])});
+  assert.equal(gs[1].notes[0].midi,motion==='ascending'?after.at(-1):after[0]);assert.equal(gs[1].notes[1].midi,motion==='ascending'?after.at(-2):after[1]);
+ }
 });

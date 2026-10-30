@@ -34,3 +34,15 @@ test('Am7 to Cm7 rearticulates C at fret eight in notation and playback',async({
  const entry=page.locator('.exercise-note[data-group-index="1"]').first();await expect(entry).toHaveAttribute('aria-label',/^C, string 6, fret 8,/);await expect(entry).toHaveAttribute('data-start-beat','8');
  await page.locator('#exercise-backing').uncheck();await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="1"]').first()).toBeVisible({timeout:5000});await page.locator('#exercise-preview').click();expect(errors).toEqual([]);
 });
+
+test('the whole eight-bar modal chart preserves its turns without short dips at harmonic entries',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'whole-modal-chart',name:'Eight-bar modal turns',key:9,beats:4,progression:{version:2,name:'Eight-bar modal turns',steps:[0,3,6,9].map(root=>({root,chord:'min7',mode:'dorian',bars:2,bass:null}))}}]})));
+ await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#progression-choice').selectOption('saved:whole-modal-chart');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-position-navigation').selectOption('all');
+ for(const [slot,position]of [[0,'II'],[1,'I'],[2,'V'],[3,'III']]as const){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(position);}
+ for(const [slot,shape]of ['C','D','E','A'].entries()){
+  const h=harmonyAt({key:(9+slot*3)%12,mode:'dorian',chord:'min7'}),line=[...new Set(fretboardFor(h,shape).notes.filter(n=>h.scalePcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),expected=[...line,...line.slice(1,-1).toReversed()];
+  expect(await pitches(page,slot)).toEqual(expected);await expect(page.locator(`.exercise-note[data-group-index="${slot}"]`).nth(16)).toHaveAttribute('data-start-beat',String(slot*8+4));
+ }
+ await expect(page.locator('.exercise-note[data-group-index="2"]').first()).toHaveAttribute('aria-label',/^C, string 6, fret 8,/);await expect(page.locator('.exercise-note[data-group-index="3"]').first()).toHaveAttribute('aria-label',/^B, string 6, fret 7,/);expect(errors).toEqual([]);
+});
