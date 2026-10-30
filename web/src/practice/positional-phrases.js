@@ -25,15 +25,16 @@ export function rangePhrase(span,descending,turnaround,block=12){
  return {cycle,sections};
 }
 
-/** Rotate three balanced windows, changing direction after every leg. */
+/** Cycle complete balanced phrases: base, variation 2, variation 3, variation 2. */
 function cyclingBalancedPhrase(available,descending){
  const cycle=[],sections=[],size=Math.min(7,available.length);
  if(!size)return {cycle,sections};
  const last=available.length-size;
- for(let leg=0;leg<6;leg++){
-  const variation=leg%3,offset=Math.min(variation,last),down=descending!==(leg%2===1),start=down?last-offset:offset;
-  const span=available.slice(start,start+size),ordered=down?span.toReversed():span,notes=ordered.slice(0,Math.max(1,size-1));
-  sections.push({start:cycle.length,length:notes.length,up:!down,variation:variation+1,endpoint:ordered.at(-1)});cycle.push(...notes);
+ for(const variation of [0,1,2,1]){
+  const offset=Math.min(variation,last),start=descending?last-offset:offset,span=available.slice(start,start+size);
+  const phrase=rangePhrase(span,descending,false),base=cycle.length;
+  sections.push(...phrase.sections.map(section=>({...section,start:base+section.start,variation:variation+1,endpoint:section.up?span.at(-1):span[0]})));
+  cycle.push(...phrase.cycle);
  }
  return {cycle,sections};
 }

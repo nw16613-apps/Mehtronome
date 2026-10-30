@@ -39,16 +39,16 @@ test('balanced triplet variations do not affect eighth or sixteenth note phrases
 });
 const cyclingLine=(line,motion)=>{
  const size=Math.min(7,line.length),last=line.length-size;
- return Array.from({length:6},(_,leg)=>{const down=(motion==='descending')!==(leg%2===1),offset=Math.min(leg%3,last),start=down?last-offset:offset,window=line.slice(start,start+size),ordered=down?window.toReversed():window;return ordered.slice(0,Math.max(1,size-1));}).flat();
+ return [0,1,2,1].flatMap(variation=>{const offset=Math.min(variation,last),start=motion==='descending'?last-offset:offset,window=line.slice(start,start+size),ordered=motion==='descending'?window.toReversed():window;return [...ordered,...ordered.slice(1,-1).toReversed()];});
 };
-test('cycling balanced follows all six directed variations and retains repeated G attacks at the joins',()=>{
+test('cycling balanced plays complete balanced bars in order 1-2-3-2 and retains repeated joins',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),gs=groups([h,h,h,h],['C'],[4,4,4,4],'balancedcycle');
- const cycle=[48,52,55,57,60,64,69,67,64,60,57,55,55,57,60,64,67,69,72,69,67,64,60,57,52,55,57,60,64,67,67,64,60,57,55,52];
- assert.deepEqual(gs.flatMap(g=>g.notes.map(n=>n.midi)),[...cycle,...cycle.slice(0,12)]);
- assert.deepEqual(gs.map(g=>g.phrasePhase),[0,12,24,0]);assert.equal(gs[0].phraseCycleLength,36);assert.equal(gs[0].phraseLegLength,6);
+ const first=[48,52,55,57,60,64,67,64,60,57,55,52],second=[52,55,57,60,64,67,69,67,64,60,57,55],third=[55,57,60,64,67,69,72,69,67,64,60,57];
+ assert.deepEqual(gs.map(g=>g.notes.map(n=>n.midi)),[first,second,third,second]);
+ assert.deepEqual(gs.map(g=>g.phrasePhase),[0,12,24,36]);assert.equal(gs[0].phraseCycleLength,48);assert.equal(gs[0].phraseLegLength,6);
  const plan=progressionStudyPlan(gs,[0,1,2,3],[1,1,1,1],4,'positional','triplets');assert.equal(plan.events.length,48);assert.equal(plan.duration,16);
- assert.deepEqual(plan.events.slice(11,13).map(e=>e.note.midi),[55,55]);assert.ok(plan.events[12].start>plan.events[11].start);assert.equal(plan.events[12].start,4);
- assert.deepEqual(plan.events.slice(29,31).map(e=>e.note.midi),[67,67]);
+ assert.deepEqual(plan.events.slice(11,13).map(e=>e.note.midi),[52,52]);assert.ok(plan.events[12].start>plan.events[11].start);assert.equal(plan.events[12].start,4);
+ assert.deepEqual(plan.events.slice(23,25).map(e=>e.note.midi),[55,55]);
 });
 test('cycling balanced adapts every mode, root and shape, mirrors directions and keeps short windows in range',()=>{
  for(const [mode,def]of Object.entries(MODES))for(let key=0;key<12;key++)for(const shape of shapes)for(const motion of ['ascending','descending']){
