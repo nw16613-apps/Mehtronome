@@ -10,7 +10,8 @@ const durationPart=(remaining,at,division)=>{
 /** True-duration notation/TAB for chord-aligned studies. Notes crossing bars
  * are tied and retain the same audition/selection index in every segment. */
 export function progressionNotationSvg(plan,title,options={chordDiagrams:false}){
- const diagramChanges=new Set(options.chordDiagrams?plan.slots.filter((slot,index)=>index===0||notationDiagramKey(slot)!==notationDiagramKey(plan.slots[index-1])):[]);
+ const positionChanges=new Set(plan.slots.filter((slot,index)=>index===0||notationDiagramKey(slot)!==notationDiagramKey(plan.slots[index-1])));
+ const diagramChanges=options.chordDiagrams?positionChanges:new Set();
  const chordChanges=new Set(plan.slots.filter((slot,index)=>index===0||slot.chord!==plan.slots[index-1].chord));
  const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=dense?2:guide?4:3;
  const unit=Math.max(guide?30:48,...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
@@ -26,7 +27,15 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
    const start=bar*plan.beats,end=start+plan.beats,left=90+(bar-first)*barWidth,unit=(barWidth-35)/plan.beats;
    const slot=plan.slots.find(s=>start>=s.start&&start<s.start+s.duration);
    const changes=plan.slots.filter(s=>s.start<end&&s.start+s.duration>start);
-   for(const change of changes){const at=Math.max(start,change.start),x=left+18+(at-start)*unit;if(diagramChanges.has(change)&&Math.abs(at-change.start)<1e-6)diagramBand+=notationChordDiagram(change.harmony,change.board,change.position,x,58);const hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);svg+='</g>'+(chordChanges.has(change)&&Math.abs(at-change.start)<1e-6?chordSvg(change.chord,x,40,'backing'):'')+`<text class="exercise-degree" x="${x}" y="${272+musicOffset}">${esc(change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':['positional','positionalscale'].includes(plan.study)&&change.position?`Position ${change.position.numeral} · ${change.position.shape} shape`:change.annotation.match(/\d+ cell(?: segments|s)?/)?.[0]||'Cell'))}</text><g transform="translate(0,${musicOffset})">`;}
+   for(const change of changes){
+    const at=Math.max(start,change.start),x=left+18+(at-start)*unit,atChange=Math.abs(at-change.start)<1e-6;
+    if(diagramChanges.has(change)&&atChange)diagramBand+=notationChordDiagram(change.harmony,change.board,change.position,x,58);
+    const hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);
+    const caption=change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':['positional','positionalscale'].includes(plan.study)&&change.position?`Position ${change.position.numeral} · ${change.position.shape} shape`:change.annotation.match(/\d+ cell(?: segments|s)?/)?.[0]||'Cell');
+    const showCaption=!caption.startsWith('Position ')||positionChanges.has(change)&&atChange;
+    svg+='</g>'+(chordChanges.has(change)&&atChange?chordSvg(change.chord,x,40,'backing'):'')+
+     (showCaption?`<text class="exercise-degree" x="${x}" y="${272+musicOffset}">${esc(caption)}</text>`:'')+`<g transform="translate(0,${musicOffset})">`;
+   }
    const beamNotes=[],accidentals=new Map();
    let at=start;
    while(at<end-1e-6){

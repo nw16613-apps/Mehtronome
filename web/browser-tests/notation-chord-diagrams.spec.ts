@@ -12,7 +12,10 @@ test('optional chord diagrams follow per-slot CAGED positions and survive displa
  await expect(page.locator('.notation-chord-symbol')).toHaveCount(1);await expect(page.locator('.notation-chord-diagram')).toHaveCount(0);
  await page.locator('#exercise-position-navigation').selectOption('all');
  for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption(slot<2?'II':'III');}
+ const captions=()=>page.locator('.exercise-degree').allTextContents();expect(await captions()).toEqual(['Position II · D shape','Position III · C shape']);
  await page.locator('#exercise-chord-diagrams').check();await page.evaluate(()=>document.fonts.ready);
+ expect(await captions()).toEqual(['Position II · D shape','Position III · C shape']);
+ expect((await page.locator('.notation-chord-diagram text').allTextContents()).some(text=>text.includes('Position'))).toBe(false);
  await expect(page.locator('.notation-chord-symbol')).toHaveCount(1);await expect(page.locator('.notation-chord-diagram')).toHaveCount(2);
  await expect(page.locator('.notation-chord-diagram[data-position="II"]')).toHaveAttribute('data-grip-available','true');await expect(page.locator('.notation-chord-diagram[data-position="III"]')).toHaveAttribute('data-grip-available','true');
  const coordinates=await page.locator('.notation-chord-diagram').evaluateAll(nodes=>nodes.map(n=>[...n.querySelectorAll('.notation-grip-dot')].map(dot=>[dot.getAttribute('data-string'),dot.getAttribute('data-fret')])));

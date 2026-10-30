@@ -10,7 +10,7 @@ export function notationChordDiagram(harmony,board,position,x,y){
  let svg=`<g class="notation-chord-diagram" data-position="${esc(position?.numeral||'')}" data-grip-available="${Boolean(grip)}" transform="translate(${x} ${y}) scale(0.7)" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
  // Inline styling keeps diagrams readable in exported SVGs and printed scores.
  const text=(value,tx,ty,size=8,anchor='middle')=>`<text x="${tx}" y="${ty}" text-anchor="${anchor}" style="font:${size}px system-ui;fill:#17201d">${esc(value)}</text>`;
- if(!grip)return svg+text('No grip in this',34,28)+text('position',34,40)+text(label,34,90,7)+'</g>';
+ if(!grip)return svg+text('No grip in this',34,28)+text('position',34,40)+'</g>';
  const fretted=grip.notes.filter(note=>note.fret>0),start=fretted.length?Math.min(...fretted.map(note=>note.fret)):1;
  const rows=4,left=10,top=18,dx=10,dy=14;
  svg+='<g fill="none" stroke="#17201d" stroke-width=".8">';
@@ -22,6 +22,6 @@ export function notationChordDiagram(harmony,board,position,x,y){
   if(!note||note.fret===0)svg+=text(note?'○':'×',cx,top-5,10);
   else svg+=`<circle class="notation-grip-dot" data-string="${string}" data-fret="${note.fret}" cx="${cx}" cy="${top+(note.fret-start+.5)*dy}" r="3.5" fill="#17201d"/>`;
  }
- return svg+text(label,34,90,7)+'</g>';
+ return svg+'</g>';
 }
 export function notationDiagramKey(slot){return slot.position?.numeral||slot.position?.geometryShape||slot.position?.shape||'';}

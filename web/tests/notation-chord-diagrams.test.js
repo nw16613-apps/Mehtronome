@@ -44,3 +44,16 @@ test('only a CAGED position change repeats a diagram, independently of chord and
  assert.deepEqual([...svg.matchAll(/class="notation-chord-diagram" data-position="([^"]+)"/g)].map(match=>match[1]),['II','III','II']);
  assert.ok(svg.includes('aria-label="Dm7 · Position III'));assert.ok(!svg.includes('aria-label="Bm7 · Position II'));
 });
+
+
+test('position captions appear only below the stave at position changes, with diagrams on or off',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'});
+ const groups=['C','C','C','A','C'].map((shape,slot)=>{const board=fretboardFor(h,shape);return {slot,chord:'Am7',harmony:h,board,position:cagedPositionFor(board),annotation:'',notes:[board.notes[0]]};});
+ const plan=progressionStudyPlan(groups,[0,1,2,3,4],[1,1,1,1,1],4,'positional','sixteenths');
+ for(const chordDiagrams of [false,true]){
+  const svg=progressionNotationSvg(plan,'Position captions',{chordDiagrams});
+  assert.deepEqual([...svg.matchAll(/class="exercise-degree"[^>]*>(Position[^<]+)<\/text>/g)].map(match=>match[1]),['Position II · D shape','Position III · C shape','Position II · D shape']);
+ }
+ const diagram=notationChordDiagram(h,groups[0].board,groups[0].position,0,0);
+ assert.doesNotMatch(diagram,/<text[^>]*>Position/);assert.ok(diagram.includes('aria-label="Am7 · Position II'));
+});
