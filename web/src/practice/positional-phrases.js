@@ -40,37 +40,12 @@ function cyclingBalancedPhrase(available,descending){
  return {cycle,sections};
 }
 
-/** Triplet starts move complete phrases or rebuild intact runs, never cut a run. */
-function tripletStart(span,available,harmony,descending,selected,cycling,turnaround,base){
- const degree=selected.split(':')[0],role=note=>harmony.intervals?.[harmony.chordPcs.indexOf(note.pc)]?.match(/\d+/)?.[0];
- const fallback={...base,span:cycling?available:span,rotation:0,warning:`Chord degree ${degree} cannot start this complete phrase in this CAGED position; using the phrase default.`};
- if(cycling){
-  const entry=base.sections.find(section=>section.up===!descending&&role(base.cycle[section.start])===degree);
-  return entry?{...base,span:available,rotation:entry.start,warning:''}:fallback;
- }
- if(turnaround){
-  const ordered=descending?span.toReversed():span,index=ordered.findIndex((note,i)=>role(note)===degree&&i+6<=ordered.length);
-  if(index<0)return fallback;
-  const cycle=[...base.cycle];cycle.splice(0,6,...ordered.slice(index,index+6));
-  // Retain the original starting edge in the opposite form when the new entry
-  // omits it, preserving full-position coverage without adding a partial run.
-  if(index>0)cycle.splice(cycle.length-6,6,...ordered.slice(0,6).toReversed());
-  return {...base,cycle,span,rotation:0,warning:''};
- }
- const size=Math.min(7,available.length),target=resolveArpeggioStart(span,harmony,descending,selected).note;
- const windows=Array.from({length:available.length-size+1},(_,i)=>available.slice(i,i+size));
- const candidates=windows.filter(window=>role(descending?window.at(-1):window[0])===degree).sort((a,b)=>Math.abs((descending?a.at(-1):a[0]).midi-(target?.midi||0))-Math.abs((descending?b.at(-1):b[0]).midi-(target?.midi||0)));
- if(!candidates.length)return fallback;
- const chosen=candidates[0],note=descending?chosen.at(-1):chosen[0];
- return {...rangePhrase(chosen,descending,false),span:chosen,rotation:0,warning:note.midi===target?.midi?'':'Using another octave of the selected degree so the complete balanced phrase fits this position.'};
-}
-
 /** Keep the phrase's ordinal place across chart/position changes. Pitch proximity
  * chooses among complete windows; it never advances or resets the phrase phase. */
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,turnaround=rhythm==='triplets'&&options.phrase==='turnaround',spanSize=turnaround?Infinity:rhythm==='triplets'?7:9;
- const selectedStart=options.startTone||'default';
+ const selectedStart=rhythm==='triplets'?'default':options.startTone||'default';
  const cycling=rhythm==='triplets'&&options.phrase==='balancedcycle';
  const variation=rhythm==='triplets'&&!turnaround?({balanced2:1,balanced3:2}[options.phrase]||0):0;
  let cursor=0,globalStart=0,previousContext='',span=[],lastMidi=null;
@@ -96,9 +71,8 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   previousContext=context;
   const patternStart=resolveArpeggioStart(cycling?available:span,harmony,descending,selectedStart);
   const base=cycling?cyclingBalancedPhrase(available,descending):rangePhrase(span,descending,turnaround),referenceCycle=base.cycle;
-  const adapted=rhythm==='triplets'&&selectedStart!=='default'?tripletStart(span,available,harmony,descending,selectedStart,cycling,turnaround,base):{...base,span:cycling?available:span,rotation:null,warning:patternStart.warning};
-  const {cycle,sections}=adapted,phraseSpan=adapted.span;
-  const rotation=adapted.rotation??(selectedStart==='default'?0:Math.max(0,cycle.findIndex(note=>note.midi===patternStart.note?.midi)));
+  const {cycle,sections}=base,phraseSpan=cycling?available:span;
+  const rotation=selectedStart==='default'?0:Math.max(0,cycle.findIndex(note=>note.midi===patternStart.note?.midi));
   const phaseStart=cycle.length?(cursor+rotation)%cycle.length:0,sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
   const capacity=Math.max(1,Math.floor(durations[slot]*division));
   // One-run scope includes its turning note, then leaves the slot's remaining
@@ -115,7 +89,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   // reference cycle rather than influencing which pitch span is chosen next.
   lastMidi=notes.length?referenceCycle[(cursor-1)%referenceCycle.length]?.midi:notes.at(-1)?.midi??lastMidi;
   const variationWarning=cycling&&windows.length<3&&span.length?' Some cycling variations need more chord tones in this position; using the nearest available spans.':variation>=windows.length&&span.length?` Variation ${variation+1} needs more chord tones in this position; using the nearest available span.`:'';
-  const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:!turnaround&&span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+variationWarning+(adapted.warning?' '+adapted.warning:'');
+  const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:!turnaround&&span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+variationWarning+(patternStart.warning?' '+patternStart.warning:'');
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:phraseSpan,phraseLegLength:cycling?Math.max(1,size-1):null,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:turnaround?span.length:spanSize,phraseStyle:cycling?'balanced-cycle':turnaround?'turnaround':'balanced',phraseVariation:variation,phraseStartIndex:patternStart.index,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
   globalStart+=notes.length;return group;
  });
