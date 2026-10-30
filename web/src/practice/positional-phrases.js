@@ -45,7 +45,7 @@ function cyclingBalancedPhrase(available,descending){
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,turnaround=rhythm==='triplets'&&options.phrase==='turnaround',spanSize=turnaround?Infinity:rhythm==='triplets'?7:9;
- const selectedStart=rhythm==='eighths'?(options.startTone||'default'):'default';
+ const selectedStart=options.startTone||'default';
  const cycling=rhythm==='triplets'&&options.phrase==='balancedcycle';
  const variation=rhythm==='triplets'&&!turnaround?({balanced2:1,balanced3:2}[options.phrase]||0):0;
  let cursor=0,globalStart=0,previousContext='',span=[],lastMidi=null;
@@ -69,8 +69,10 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
    }
   }
   previousContext=context;
-  const patternStart=resolveArpeggioStart(span,harmony,descending,selectedStart);
-  const {cycle,sections}=cycling?cyclingBalancedPhrase(available,descending):rangePhrase(span,descending,turnaround),phaseStart=cycle.length?(cursor+patternStart.index)%cycle.length:0,sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
+  const patternStart=resolveArpeggioStart(cycling?available:span,harmony,descending,selectedStart);
+  const {cycle,sections}=cycling?cyclingBalancedPhrase(available,descending):rangePhrase(span,descending,turnaround);
+  const rotation=selectedStart==='default'?0:Math.max(0,cycle.findIndex(note=>note.midi===patternStart.note?.midi));
+  const phaseStart=cycle.length?(cursor+rotation)%cycle.length:0,sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
   const capacity=Math.max(1,Math.floor(durations[slot]*division));
   // One-run scope includes its turning note, then leaves the slot's remaining
   // time silent. Cycling variations preserve repeated attacks at shared joins.
@@ -84,7 +86,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   cursor+=notes.length;
   // Preserve the original window route: a starting-degree choice rotates the
   // reference cycle rather than influencing which pitch span is chosen next.
-  lastMidi=rhythm==='eighths'&&notes.length?cycle[(cursor-1)%cycle.length]?.midi:notes.at(-1)?.midi??lastMidi;
+  lastMidi=notes.length?cycle[(cursor-1)%cycle.length]?.midi:notes.at(-1)?.midi??lastMidi;
   const variationWarning=cycling&&windows.length<3&&span.length?' Some cycling variations need more chord tones in this position; using the nearest available spans.':variation>=windows.length&&span.length?` Variation ${variation+1} needs more chord tones in this position; using the nearest available span.`:'';
   const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:!turnaround&&span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+variationWarning+(patternStart.warning?' '+patternStart.warning:'');
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:cycling?available:span,phraseLegLength:cycling?Math.max(1,size-1):null,phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:turnaround?span.length:spanSize,phraseStyle:cycling?'balanced-cycle':turnaround?'turnaround':'balanced',phraseVariation:variation,phraseStartIndex:patternStart.index,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};

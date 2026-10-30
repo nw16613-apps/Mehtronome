@@ -32,7 +32,14 @@ test('one-run stops at the next endpoint; missing occurrences and absent degrees
  const [short]=run([h],['C'],[4],'7:8');assert.match(short.warning,/nearest available octave/);assert.equal(short.notes[0].pc,7);
  const sus=harmonyAt({key:9,mode:'mixolydian',chord:'sus4'}),[missing]=run([sus],['C'],[4],'3:0');assert.match(missing.warning,/absent/);assert.equal(missing.phraseStartIndex,0);
 });
-test('other rhythms ignore starting-degree choices and legacy options retain shape-default behavior',()=>{
- const h=harmonyAt({key:9,mode:'dorian',chord:'min7'});for(const rhythm of ['triplets','sixteenths'])assert.deepEqual(run([h,h],['C','A'],[4,4],'3:0','ascending',rhythm).map(g=>g.notes),run([h,h],['C','A'],[4,4],'default','ascending',rhythm).map(g=>g.notes));
- for(const [value,expected]of [[undefined,'default'],['3:0','3:0'],['5:1','5:1'],['9:0','default'],['bad','default']])assert.equal(normalizeExerciseOptions({startTone:value}).startTone,expected);
+test('starting-degree option normalization migrates higher octave choices and legacy snapshots',()=>{
+ for(const [value,expected]of [[undefined,'default'],['3:0','3:0'],['5:1','5:0'],['9:0','default'],['bad','default']])assert.equal(normalizeExerciseOptions({startTone:value}).startTone,expected);
+});
+
+test('sixteenths and every triplet phrase rotate their exact existing cycles for each chord degree',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'min7'});
+ for(const shape of shapes)for(const motion of ['ascending','descending'])for(const [rhythm,phrase]of [['sixteenths','balanced'],['triplets','balanced'],['triplets','balanced2'],['triplets','balanced3'],['triplets','balancedcycle'],['triplets','turnaround']]){
+  const make=startTone=>progressionExerciseGroups([h],[48],fretboardFor(h,shape),{study:'positional',rhythm,phrase,motion,startTone,positionPath:[{...cagedPositionFor(fretboardFor(h,shape)),geometryShape:shape}]}),[base]=make('default'),original=base.notes.slice(0,base.phraseCycleLength);
+  for(const degree of ['1','3','5','7']){const [g]=make(degree+':0'),ordered=motion==='descending'?base.positionalSpan.toReversed():base.positionalSpan,note=ordered.find(n=>h.intervals[h.chordPcs.indexOf(n.pc)].match(/\d+/)[0]===degree);if(!note)continue;const offset=original.findIndex(n=>n.midi===note.midi);assert.deepEqual(g.positionalSpan,base.positionalSpan);assert.equal(g.phraseCycleLength,base.phraseCycleLength);assert.equal(g.notes[0].midi,note.midi);assert.deepEqual(g.notes,Array.from({length:g.notes.length},(_,i)=>original[(offset+i)%original.length]));}
+ }
 });
