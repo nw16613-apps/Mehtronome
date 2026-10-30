@@ -56,8 +56,15 @@ const CELLS={
   ballad:[[[0,2.6,.65],[12,.78,.46]],[[0,1.8,.62],[10,1.2,.54]],[[0,2.4,.66],[14,.42,.42]],[[4,1.35,.54],[12,1.45,.62]]],
 };
 
+const TONE_SHAPES={
+ warmTine:{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018},
+ felt:{attack:.02,release:.34,decay:.34,fm:.1,second:.035,third:.012,tremolo:.012},
+ suitcase:{attack:.006,release:.24,decay:.52,fm:.4,second:.15,third:.045,tremolo:.055},
+ reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
+};
+
 export class CompingInstrument{
-  constructor(rate){this.rate=rate;this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  constructor(rate){this.rate=rate;this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;}
   tick(settings,beat,phase,notes,hook,sample,step,onEvent){
     const grid=beat*4+Math.min(3,Math.floor(phase*4));
@@ -84,26 +91,25 @@ export class CompingInstrument{
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
-      Object.assign(voice,{active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      const shape=this.shapes[tone]||this.shapes.warmTine;
+      Object.assign(voice,{shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
     onEvent?.({type,sample,step,notes:pitches,duration,velocity});
   }
-  render(){
+  render(audible=true){
     let output=0;
     for(const voice of this.voices){
       if(!voice.active)continue;
-      const frequency=440*2**((voice.midi-69)/12),increment=frequency/this.rate;
+      const increment=voice.increment,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
-      const seconds=voice.age/this.rate,tone=voice.tone||'warmTine';
-      const shape={
-        warmTine:{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018},
-        felt:{attack:.02,release:.34,decay:.34,fm:.1,second:.035,third:.012,tremolo:.012},
-        suitcase:{attack:.006,release:.24,decay:.52,fm:.4,second:.15,third:.045,tremolo:.055},
-        reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
-      }[tone]||{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018};
-      const attack=Math.min(1,seconds/shape.attack);
-      const release=voice.age<=voice.hold?1:Math.exp(-(voice.age-voice.hold)/(this.rate*shape.release));
-      const body=Math.exp(-seconds*shape.decay),bell=Math.exp(-seconds*(tone==='felt'?4.8:3.2));
+      voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;
+      if(voice.age===voice.releaseAt)voice.release=voice.firstRelease;else if(voice.age>voice.releaseAt)voice.release*=shape.releaseFactor;
+      const release=voice.release;if(release<.0005)voice.active=false;
+      // Muted voices retain their age, envelope and oscillator phase without
+      // allocating tone objects or evaluating inaudible FM oscillators.
+      if(!audible)continue;
+      const seconds=voice.age/this.rate,tone=voice.tone||'warmTine',attack=Math.min(1,voice.age/shape.attackFrames),body=voice.body,bell=voice.bell;
       const phase=2*Math.PI*voice.phase,mod=shape.fm*bell*Math.sin(2*Math.PI*voice.modPhase);
       const fundamental=Math.sin(phase+mod),second=Math.sin(phase*2+.12),third=Math.sin(phase*3+.24);
       const tremolo=1-shape.tremolo+shape.tremolo*Math.sin(2*Math.PI*seconds*4.7+voice.pan);

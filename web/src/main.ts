@@ -1,3 +1,4 @@
+import {audioContextOptions} from './audio/context-options.js';
 import {ExerciseBufferCache,ExerciseAudioQueue,exerciseNoteDuration} from './audio/exercise-playback.js';
 import {ARPEGGIO_STUDIES} from './guitar/arpeggio-harmony.js';
 import {MODE_FAMILIES} from './audio/music.js';
@@ -212,6 +213,7 @@ let master: GainNode | undefined;
 let wet: GainNode | undefined;
 let reverbGate: GainNode | undefined;
 let reverb: ConvolverNode | undefined;
+let reverbSleepTimer:ReturnType<typeof setTimeout>|undefined;
 let impulse: AudioBuffer | undefined;
 let playing = false;
 let busy = false;
@@ -923,7 +925,13 @@ function commitCustomEdit(autoMode=false){
 function updateSpace() {
   el('space-value').textContent = `${input('space').value}%`;
   syncConsole();
-  if (wet && context) wet.gain.setTargetAtTime((input('mute-space').checked?0:Number(input('space').value) / 100 * .65), context.currentTime, .08);
+  if(wet&&context){
+    const amount=input('mute-space').checked?0:Number(input('space').value)/100*.65;
+    clearTimeout(reverbSleepTimer);
+    if(amount>0&&reverb&&impulse&&reverb.buffer!==impulse)reverb.buffer=impulse;
+    wet.gain.setTargetAtTime(amount,context.currentTime,amount>0?.08:.015);
+    if(amount===0&&reverb){const current=reverb;reverbSleepTimer=setTimeout(()=>{if(current===reverb&&(input('mute-space').checked||Number(input('space').value)===0))current.buffer=null;},120);}
+  }
 }
 function update() {
   for(const id of BACKING_CHANNELS)input(id).checked=true;
@@ -1130,7 +1138,7 @@ async function prepareAudio(){
 async function initialiseAudio() {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
-    context = new AudioContext({ latencyHint: 'balanced', sampleRate: 48000 });
+    context = new AudioContext(audioContextOptions(navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContextOptions);
     reverb = undefined;
     await context.audioWorklet.addModule(workletUrl);
     let kit: Record<string, Float32Array>;
@@ -1171,7 +1179,9 @@ async function initialiseAudio() {
         Array.from(el('pulse-poly-beats').children).forEach((beat,i)=>beat.classList.toggle('active',i===data.beat));return;
       }
       if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
-      if (typeof data.bpm === 'number') currentBpm = data.bpm;
+      // Instrument note notifications are not transport beat messages.
+      if(!Number.isInteger(data.beat)||!Number.isFinite(data.bpm))return;
+      currentBpm = data.bpm;
       syncMiniTransport();
       syncTrainerStatus();
       if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'passing between colours'} · ${settings.extensionBars}-bar cycle`;
@@ -1202,11 +1212,12 @@ async function initialiseAudio() {
   await context.resume();
   if (context.state !== 'running') throw new Error('Your browser could not enable audio. Check site sound permissions, then try Start again.');
   // A new convolver discards the previous session's frozen reverb tail.
-  if (reverb) { node!.disconnect(reverb, 1); reverb.disconnect(); }
+  clearTimeout(reverbSleepTimer);
+  if (reverb) { node!.disconnect(reverb, 1);if(exerciseGuitarGain?.context===context){try{exerciseGuitarGain.disconnect(reverb);}catch{}}reverb.disconnect(); }
   reverb = context.createConvolver();
-  reverb.buffer = impulse!;
+  reverb.buffer = !input('mute-space').checked&&Number(input('space').value)>0?impulse!:null;
   node!.connect(reverb, 1);
-  reverb.connect(wet!);
+  reverb.connect(wet!);if(exerciseGuitarGain?.context===context)exerciseGuitarGain.connect(reverb);
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
 async function previewChord(index: number, hold: string, retainExercise=false) {

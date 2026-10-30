@@ -8,6 +8,7 @@ import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, characteristicNotes } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
+const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   mutedChannels:'', extensionMorph:true, extensionBars:8,
@@ -430,9 +431,9 @@ export class Engine {
     const smoothing = this.smoothing;
     const voiceSmoothing = this.voiceSmoothing;
     const sound = SOUNDS[s.sound] || SOUNDS.warm;
-    const movement={still:.08,evolving:1,expansive:2}[s.padMovement]||1;
+    const movement=PAD_MOVEMENT[s.padMovement]||1;
     let depth=.4+1.4*(this.depthMotionState?.position??depthIndex(s.padDepth));
-    const brightness={dark:.38,balanced:1,luminous:1.75}[s.padBrightness]||1;
+    const brightness=PAD_BRIGHTNESS[s.padBrightness]||1;
     let echoTarget = Math.min(.2,(sound.echo || 0)*depth);
     const attack = 1-Math.exp(-1/(this.rate*sound.attack));
     const release = 1-Math.exp(-1/(this.rate*sound.release));
@@ -506,7 +507,7 @@ export class Engine {
       if(s.sequence && backingActive && !this.auditioning){
         this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext);
       }
-      if (s.sequence || this.sequenceLevel > .000001) this.sequence.render();
+      if (s.sequence || this.sequenceLevel > .000001) this.sequence.render(sequenceVolume>0||this.sequenceLevel>.000001);
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
@@ -520,11 +521,12 @@ export class Engine {
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;
       this.compingLevel+=((s.comping && rhythmActive?compingVolume:0)-this.compingLevel)*smoothing;
       this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
-      const comping=this.comping.render();
+      const comping=this.comping.render(compingVolume>0||this.compingLevel>.000001);
       // The sampled rhythm section needs enough headroom to sit in front of the
       // wide, sustained pad. These trims keep the mixer controls perceptually
       // useful without forcing users to turn the harmony almost all the way down.
       const rhythmSample=this.level*(.5*this.drumsLevel*this.rhythm.drums+.3*this.bassLevel*this.rhythm.bass+.24*this.compingLevel*comping);
+      const padAudible=harmonyVolume>0||this.harmonyLevel>.000001;
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
       if ((this.age & 31) === 0) {
@@ -542,7 +544,7 @@ export class Engine {
         }
         const arc=1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
         this.phraseArcDelta=(arc-this.phraseArc)/32;
-        for (const voice of this.voices) {
+        if(padAudible)for (const voice of this.voices) {
           if (!voice.targetLevel && voice.level<.000001) continue;
           const offset=voice.index*1.31;
           const motion=.5+.5*Math.sin(time*.19+offset);
@@ -575,6 +577,7 @@ export class Engine {
         voice.level+=(voice.targetLevel-voice.level)*(voice.targetLevel>voice.level?attack:release);
         if (!voice.targetLevel && voice.level<.000001) { voice.level=0; continue; }
         const increment=voice.frequency*inverseRate;
+        if(padAudible){
         voice.coefficient+=voice.coefficientDelta;
         voice.pan+=voice.panDelta;
         voice.detune+=voice.detuneDelta;
@@ -582,6 +585,7 @@ export class Engine {
         voice.mix+=voice.mixDelta;
         voice.width+=voice.widthDelta;
         voice.halo+=voice.haloDelta;
+        }
         voice.phase+=increment*(1-voice.detune*.5);
         voice.detuned+=increment*(1+voice.detune*.5);
         voice.haloPhase+=increment*2;
@@ -590,6 +594,7 @@ export class Engine {
         if(voice.detuned>=1)voice.detuned-=Math.floor(voice.detuned);
         if(voice.haloPhase>=1)voice.haloPhase-=Math.floor(voice.haloPhase);
         if(voice.subPhase>=1)voice.subPhase-=Math.floor(voice.subPhase);
+        if(!padAudible)continue;
         let base=readWave(this.waveCurrent[voice.band],voice.phase);
         let layer=readWave(this.layerCurrent[voice.band],voice.detuned);
         if(this.soundBlend<1){
@@ -613,7 +618,7 @@ export class Engine {
       // A high inner voice moves between chord colours in slow, breath-like
       // swells. Pitches change at the silent edge of each cell, avoiding
       // retrigger clicks while keeping a pedal chord gently alive.
-      if(this.motionNotes?.length){
+      if(padAudible&&this.motionNotes?.length){
         const cellLengthBeats=s.padMovement==='expansive'?1:2;
         const position=this.chordAge*this.currentBpm/(60*this.rate*cellLengthBeats);
         const cell=Math.floor(position),fraction=position-cell;
@@ -625,7 +630,7 @@ export class Engine {
         this.motionPhase+=this.motionFrequency*inverseRate;
         if(this.motionPhase>=1)this.motionPhase-=Math.floor(this.motionPhase);
         const swell=Math.sin(Math.PI*fraction)**2;
-        const motionGain={still:.018,evolving:.04,expansive:.065}[s.padMovement]||.04;
+        const motionGain=PAD_MOTION_GAIN[s.padMovement]||.04;
         const motion=readWave(SINE,this.motionPhase)*swell*motionGain;
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
