@@ -1,3 +1,4 @@
+import {createMasterOutput,MASTER_VOLUME_KEY,DEFAULT_MASTER_VOLUME,masterVolumePercent} from './audio/master-output.js';
 import {BUS_GAINS} from './audio/mix-balance.js';
 import {installBackingStyles} from './practice/backing-styles-view.js';
 import {backingStyleInstruments,backingStyleForControls} from './practice/backing-styles.js';
@@ -158,6 +159,7 @@ app.innerHTML = `
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Mixer</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <p id="mixer-docked-note" class="practice-help" hidden>Mixer is open above the focus bar. <button id="mixer-return" type="button" class="panel-action">Return mixer here</button></p><div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; ambience</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
+          <div class="master-output"><label for="master-volume">Master volume</label><input id="master-volume" type="range" min="0" max="100" value="100" aria-describedby="master-volume-help"><output id="master-volume-value" for="master-volume">100%</output><p id="master-volume-help" class="practice-help">Overall listening level. Your instrument balance stays the same.</p></div>
           <div class="console-level-scroll" tabindex="0" aria-label="Scroll mixer channels"><div class="mix-level-grid">${MIX_CHANNELS.map(consoleChannel).join('')}</div></div>
         </section>
 <div class="mixer-quick-switches" aria-label="Sound settings"><label class="check"><input id="drums" type="checkbox">Drums</label><label class="check"><input id="bass" type="checkbox">Bass</label><label class="check"><input id="comping" type="checkbox">Electric piano</label><label class="check"><input id="sequence" type="checkbox">Melodic movement</label><button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
@@ -217,6 +219,9 @@ document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pu
 let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
 let settings = { ...DEFAULTS, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
 let master: GainNode | undefined;
+let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
+let masterVolume=DEFAULT_MASTER_VOLUME;
+try{masterVolume=masterVolumePercent(localStorage.getItem(MASTER_VOLUME_KEY));}catch{}
 let wet: GainNode | undefined;
 let reverbGate: GainNode | undefined;
 let reverb: ConvolverNode | undefined;
@@ -1169,7 +1174,8 @@ async function initialiseAudio() {
     node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));
     master = context.createGain();
     master.gain.value = 0;
-    master.connect(context.destination);
+    masterOutput=createMasterOutput(context,masterVolume);
+    master.connect(masterOutput.input);
     node.connect(master, 0); // Click stays dry and rhythmically clear.
     node.connect(master, 1);
     node.connect(master, 2); // Drums and bass bypass pad reverb and echoes.
@@ -2219,6 +2225,15 @@ input('preset-file').addEventListener('change',async()=>{
 installConsole(()=>{
   if(!context||context.state!=='running'||!master||master.gain.value<.00001)return [0,0];
   return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
+});
+
+input('master-volume').value=String(masterVolume);
+el('master-volume-value').textContent=masterVolume+'%';
+input('master-volume').addEventListener('input',()=>{
+ masterVolume=masterVolumePercent(input('master-volume').value);
+ el('master-volume-value').textContent=masterVolume+'%';
+ masterOutput?.setVolume(masterVolume);
+ try{localStorage.setItem(MASTER_VOLUME_KEY,String(masterVolume));}catch{}
 });
 
 applyStudioIcons();
