@@ -24,4 +24,5 @@ export function exerciseCollectionLabels(study,nonDiatonic=false){
  return {studies,materials};
 }
 
-export function exercisePhraseLabel(phrase){return new Map([['balanced','Balanced phrase'],['balanced2','Balanced phrase · variation 2'],['balanced3','Balanced phrase · variation 3'],['balancedcycle','Balanced phrase · cycle variations'],['turnaround','Full position with turnaround']]).get(phrase)||'Balanced phrase';}
+export const POSITIONAL_TRIPLET_PHRASES=[['balanced','Balanced span'],['balancedcycle','Cycling spans'],['turnaround','Full-position runs']];
+export function exercisePhraseLabel(phrase){return POSITIONAL_TRIPLET_PHRASES.find(([id])=>id===phrase)?.[1]||({'balanced2':'Balanced span · previous variation 2','balanced3':'Balanced span · previous variation 3'}[phrase])||'Balanced span';}
