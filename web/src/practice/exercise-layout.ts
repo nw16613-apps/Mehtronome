@@ -5,7 +5,7 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  const label=(id:string)=>find('#'+id).closest('label')!;
  const heading=find('.exercise-heading'),toolbar=find('.exercise-learning-toolbar'),controls=find('.exercise-controls');
  const definition=section('exercise-definition','Exercise');
- controls.prepend(label('exercise-study'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));
+ controls.prepend(label('exercise-study'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));
  definition.append(controls);
  const startHelp=controls.querySelector('#exercise-start-note')?.closest('label')?.querySelector('small');if(startHelp){const help=document.createElement('p');help.className='practice-help exercise-pattern-help';help.setAttribute('role','status');help.textContent=startHelp.textContent;startHelp.remove();definition.append(help);}
  heading.after(definition);

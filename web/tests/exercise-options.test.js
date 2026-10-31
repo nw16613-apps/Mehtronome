@@ -28,7 +28,9 @@ test('removed ninth stacks and 3-to-9 saved exercises migrate to seventh-chord m
  const view=normalizeExerciseOptions({study:'upperstructure',material:'extensions',motion:'descending'});assert.equal(view.study,'harmonized');assert.equal(view.material,'seventh');assert.equal(view.motion,'descending');
 });
 
-test('balanced triplet variations survive saved-option normalization',()=>{
- for(const phrase of ['balanced','balanced2','balanced3','balancedcycle','turnaround'])assert.equal(normalizeExerciseOptions({study:'positional',rhythm:'triplets',phrase}).phrase,phrase);
- assert.equal(normalizeExerciseOptions({study:'positional',phrase:'unknown'}).phrase,'balanced');
+test('saved triplet phrase formulas retire without changing explicit Pattern start or direction',()=>{
+ for(const phrase of ['balanced','balanced2','balanced3','balancedcycle','turnaround','unknown']){
+  const view=normalizeExerciseOptions({study:'positional',rhythm:'triplets',phrase,startTone:'5:0',motion:'descending'});
+  assert.equal(view.phrase,undefined);assert.equal(view.startTone,'5:0');assert.equal(view.motion,'descending');
+ }
 });

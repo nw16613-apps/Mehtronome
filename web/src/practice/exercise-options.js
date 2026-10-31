@@ -3,7 +3,8 @@ const fixedMaterial=new Set(['arpgroups3','arpgroups4','positionalscale','positi
 export function normalizeExerciseOptions(view){
  view.stage='full';
  view.startTone=/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
- if(!['balanced','balanced2','balanced3','balancedcycle','turnaround'].includes(view.phrase))view.phrase='balanced';
+ // Retire saved triplet phrase formulas; preserve explicit degree starts.
+ delete view.phrase;
  if(view.material==='extensions')view.material='seventh';
  if(view.study==='upperstructure')view.study='harmonized';
  if(view.study==='grip')view.study='positional';
@@ -24,6 +25,3 @@ export function exerciseCollectionLabels(study,nonDiatonic=false){
  const materials=study==='inversions'?['Up to 3 chord tones','Up to 4 chord tones']:nonDiatonic?['3-note stacks','4-note stacks']:['Triads','Seventh chords'];
  return {studies,materials};
 }
-
-export const POSITIONAL_TRIPLET_PHRASES=[['balanced','Balanced span'],['balancedcycle','Cycling spans'],['turnaround','Full-position runs']];
-export function exercisePhraseLabel(phrase){return POSITIONAL_TRIPLET_PHRASES.find(([id])=>id===phrase)?.[1]||({'balanced2':'Balanced span · previous variation 2','balanced3':'Balanced span · previous variation 3'}[phrase])||'Balanced span';}
