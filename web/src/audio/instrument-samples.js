@@ -1,4 +1,4 @@
-// Checked pitch centres; upright uses verified sounding octaves (source names differ).
+// Checked pitch centres. Upright plucks are tuned offline to their sounding MIDI roots.
 export const INSTRUMENT_SAMPLE_ZONES={
   "piano": [
     {
@@ -64,24 +64,24 @@ export const INSTRUMENT_SAMPLE_ZONES={
   ],
   "upright": [
     {
-      "id": "upright28",
-      "rootMidi": 28.0
-    },
-    {
       "id": "upright36",
-      "rootMidi": 36.0
+      "rootMidi": 36
     },
     {
-      "id": "upright42",
-      "rootMidi": 42.0
+      "id": "upright39",
+      "rootMidi": 39
     },
     {
-      "id": "upright49",
-      "rootMidi": 49.0
+      "id": "upright45",
+      "rootMidi": 45
     },
     {
-      "id": "upright52",
-      "rootMidi": 52.0
+      "id": "upright48",
+      "rootMidi": 48
+    },
+    {
+      "id": "upright54",
+      "rootMidi": 54
     }
   ]
 };
