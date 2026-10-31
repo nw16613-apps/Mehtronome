@@ -14,12 +14,12 @@ function setup(settings,study='positionalscale',rhythm='triplets',shape='C'){
  const groups=progressionExerciseGroups(hs,order.map(i=>durations[i]),fretboardFor(hs[0],shape),{study,rhythm,positionPath:path});
  return {groups,plan:progressionStudyPlan(groups,order,durations.map(d=>d/settings.beats),settings.beats,study,rhythm)};
 }
-test('ending adds exactly one full bar, chooses the nearest core chord pitch in the final position, and leaves the exercise prefix untouched',()=>{
+test('ending adds exactly one full bar, chooses the nearest different core chord pitch in the final position, and leaves the exercise prefix untouched',()=>{
  for(const template of ['single','major251essential','minor251','turnaround','diatonic'])for(const key of [0,6,9])for(const shape of ['C','A','G','E','D'])for(const study of ['positional','positionalscale','groups3','harmonized'])for(const rhythm of ['eighths','sixteenths','triplets']){
   const s={...DEFAULTS,key,mode:'dorian',chord:'min7',progression:true,template},base=setup(s,study,rhythm,shape),before=JSON.stringify(base),out=withExerciseResolution(base.groups,base.plan),e=out.plan.events.at(-1),slot=base.plan.slots.at(-1),last=base.plan.events.at(-1),core=arpeggioHarmony(slot.harmony);
   assert.equal(JSON.stringify(base),before);assert.deepEqual(out.plan.events.slice(0,-1),base.plan.events);assert.deepEqual(out.groups.slice(0,-1),base.groups);
-  assert.equal(out.plan.duration,base.plan.duration+4);assert.equal(e.start,base.plan.duration);assert.equal(e.duration,4);assert.ok(core.chordPcs.includes(e.note.pc));
-  assert.equal(Math.abs(e.note.midi-last.note.midi),Math.min(...slot.board.notes.filter(n=>core.chordPcs.includes(n.pc)).map(n=>Math.abs(n.midi-last.note.midi))));
+  assert.equal(out.plan.duration,base.plan.duration+4);assert.equal(e.start,base.plan.duration);assert.equal(e.duration,4);assert.ok(core.chordPcs.includes(e.note.pc));assert.notEqual(e.note.midi,last.note.midi);
+  assert.equal(Math.abs(e.note.midi-last.note.midi),Math.min(...slot.board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi).map(n=>Math.abs(n.midi-last.note.midi))));
   assert.ok(slot.board.notes.some(n=>n.midi===e.note.midi&&n.string===e.note.string&&n.fret===e.note.fret));
   assert.equal(planPosition(out.plan,e.start+3.9).event,e);assert.deepEqual(withExerciseResolution(out.groups,out.plan),out);
  }
@@ -53,4 +53,18 @@ test('the audio engine keeps the last harmony through every beat of the ending a
  const final=plan.slots.length-1;
  assert.deepEqual(beatSteps.slice(plan.resolution.start,plan.duration),Array(plan.beats).fill(final));
  assert.equal(beatSteps[plan.duration],0);
+});
+
+
+test('an Am7 arpeggio ending on low-E fret 15 resolves to the nearby A rather than repeating G',()=>{
+ const s={...DEFAULTS,key:9,mode:'dorian',chord:'min7',progression:true,template:'single'},base=setup(s,'positional','triplets','G');
+ const last=base.plan.slots.at(-1).board.notes.find(n=>n.midi===55&&n.fret===15);assert.ok(last);
+ base.plan.events.at(-1).note=last;
+ const ending=withExerciseResolution(base.groups,base.plan).plan.events.at(-1);
+ assert.equal(ending.note.midi,57);assert.equal(ending.note.fret,12);assert.equal(ending.duration,4);
+});
+test('a board containing only the previous pitch does not add a repeated-note ending on another string',()=>{
+ const s={...DEFAULTS,key:9,mode:'dorian',chord:'min7',progression:true,template:'single'},base=setup(s,'positional','triplets','G'),last=base.plan.events.at(-1).note;
+ base.plan.slots.at(-1).board={...base.plan.slots.at(-1).board,notes:[last,{...last,string:last.string+1}]};
+ const out=withExerciseResolution(base.groups,base.plan);assert.equal(out.plan,base.plan);assert.equal(out.groups,base.groups);
 });

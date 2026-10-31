@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 const pitch=(label:string)=>{const m=label.match(/string (\d), fret (\d+)/)!;return [0,64,59,55,50,45,40][Number(m[1])]+Number(m[2]);};
-test('every rhythm appends one nearest-chord-tone whole-note bar and keeps the pattern prefix',async({page})=>{
+test('every rhythm appends one nearest-different-chord-tone whole-note bar and keeps the pattern prefix',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();
  for(const study of ['positional','positionalscale','groups3','harmonized']){
@@ -9,7 +9,7 @@ test('every rhythm appends one nearest-chord-tone whole-note bar and keeps the p
    await page.locator('#exercise-rhythm').selectOption(rhythm);
    const tail=page.locator('.exercise-note.resolution-note');await expect(tail).toHaveCount(1);await expect(page.locator('.exercise-note')).toHaveCount(count+1);
    await expect(tail).toHaveAttribute('data-start-beat','16');await expect(tail).toHaveAttribute('data-duration-beats','4');await expect(tail.locator('.note-hole')).toHaveCount(1);
-   expect([9,0,4,7]).toContain(pitch((await tail.getAttribute('aria-label'))!)%12);
+   const endingPitch=pitch((await tail.getAttribute('aria-label'))!);expect([9,0,4,7]).toContain(endingPitch%12);expect(endingPitch).not.toBe(pitch((await page.locator('.exercise-note:not(.resolution-note)').last().getAttribute('aria-label'))!));
    const bar=page.locator('.bar-line[data-bar]');await expect(bar).toHaveCount(5);
   }
  }

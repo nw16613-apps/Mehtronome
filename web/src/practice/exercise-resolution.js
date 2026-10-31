@@ -4,13 +4,13 @@ import {cloneTemplate} from './custom-progression.js';
 import {progressionDefinition} from '../audio/music.js';
 
 /** Add an ending to the displayed/playable study, never to the user's chart or
- * to the sequence generators. The closest core chord tone stays in the final
- * assigned CAGED region. An already consonant final pitch can be rearticulated. */
+ * to the sequence generators. The closest different core chord tone stays in the final
+ * assigned CAGED region; a unison on another string is still the same pitch. */
 export function withExerciseResolution(groups,plan){
  if(!plan?.events.length||plan.resolution)return {groups,plan};
  const finalSlot=plan.slots.at(-1),last=plan.events.at(-1),harmony=finalSlot?.harmony,board=finalSlot?.board;
  if(!harmony||!board)return {groups,plan};
- const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc));
+ const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
  const ranked=candidates.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
   Math.abs(a.midi-last.note.midi)-Math.abs(b.midi-last.note.midi)||
   Number(a.pc!==core.chordPcs[0])-Number(b.pc!==core.chordPcs[0])||

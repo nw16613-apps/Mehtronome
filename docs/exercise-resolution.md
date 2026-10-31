@@ -1,6 +1,6 @@
 # Exercise ending bar
 
-The displayed and playable exercise appends one bar after the generated pattern. The ending uses the nearest core chord tone through the seventh from the final assigned CAGED board, with the selected chord's spelling and altered/suspended/sixth tones. If the last pitch is already a chord tone, rearticulate that pitch and hold it. Equal pitch distances prefer a root, then the existing string and the lower pitch. Never invent a fret outside the final board.
+The displayed and playable exercise appends one bar after the generated pattern. The ending uses the nearest different core chord tone through the seventh from the final assigned CAGED board, with the selected chord's spelling and altered/suspended/sixth tones. The ending must move to a different sounding pitch, even if the preceding note is already a chord tone. A unison on another string is excluded too. If the supplied board contains no different core pitch, leave the plan unchanged rather than append a repeated-note ending. Equal pitch distances prefer a root, then the existing string and the lower pitch. Never invent a fret outside the final board.
 
 The ending is one duration-aware event. In 4/4 it is a whole note; other meters use ordinary note values and ties as needed. Notation, TAB, SVG export, selection, audition and the playback cursor share its index and pitch. The audio buffer and release use the full bar duration, including slow tempos beyond the ordinary short-note buffer cap.
 
