@@ -72,7 +72,7 @@ test('tempo changes preserve beat position and reset restores count-in', () => {
 test('all subdivision grids produce clicks at exact sample positions', () => {
   for (const subdivision of [1,2,3,4,5,6,7]) {
     const engine = new Engine(12000);
-    engine.configure({bpm:120, subdivision, harmony:0, accent:false});
+    engine.configure({bpm:120, subdivision, click:1, harmony:0, accent:false});
     engine.reset();
     const output = new Float32Array(24000);
     engine.render(output);

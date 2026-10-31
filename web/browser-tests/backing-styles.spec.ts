@@ -4,7 +4,7 @@ const mix=async(page:any)=>page.evaluate(()=>Object.fromEntries(['mute-click','m
 test('one style menu replaces instrument controls and changes the whole arrangement without changing the mix, chart or tempo',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{const Original=window.AudioContext;(window as any).__contexts=0;window.AudioContext=class extends Original{constructor(options?:AudioContextOptions){super(options);(window as any).__contexts++;}};});
- await page.goto('/');const before=await mix(page);await page.locator('[data-workspace-target=sound-settings-title]').click();
+ await page.goto('/');for(const id of ['click','harmony','drums','bass','comping','sequence','space'])await expect(page.locator('#gain-'+id)).toHaveText('-12.0');const before=await mix(page);await page.locator('[data-workspace-target=sound-settings-title]').click();
  await expect(page.locator('#backing-style')).toBeVisible();await expect(page.locator('#backing-style option')).toHaveCount(10);
  for(const id of ['drum-groove','bass-pattern','comping-tone','comping-pattern','comping-movement','sequence-role','sequence-pattern','sound','pad-movement'])await expect(page.locator('#'+id)).not.toBeVisible();
  await expect(page.locator('#pulse-sound')).toBeVisible();await expect(page.locator('#extension-morph')).toBeVisible();

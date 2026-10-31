@@ -26,7 +26,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const timerMode=document.createElement('label');timerMode.innerHTML='Session duration<select id="pulse-timer-mode"><option value="unlimited">Unlimited</option><option value="timed">Fixed duration</option></select>';timer.querySelector('.pulse-tool-fields')!.prepend(timerMode);timer.querySelector('#pulse-minutes')!.closest('label')!.firstChild!.textContent='Minutes ';
  const training=group('Training','metronome-training');move(training,query('.tempo-training'),query('.gap-training'));move(tools,session,training);pulseGrid.remove();
  const goals=get('guided-goals');goals.classList.replace('workspace-practice','workspace-progress');query('.presets').before(goals);goals.querySelector('h2')!.textContent='Guided session setup';
- const mixHelp=document.createElement('p');mixHelp.className='practice-help mixer-instructions';mixHelp.textContent='Unmute a track to add it. Solo isolates tracks; Ambient space controls the reverb return.';query('.levels-heading').after(mixHelp);
+ const mixHelp=document.createElement('p');mixHelp.className='practice-help mixer-instructions';mixHelp.textContent='Start with each fader at −12 dB. Unmute a track to add it. Solo isolates tracks; Ambient space controls the reverb return.';query('.levels-heading').after(mixHelp);
  // Harmony: chart setup, sheet and selected-chord editor, then optional reference.
  const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!;
  harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();

@@ -1,3 +1,4 @@
+import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
 import {beatStrength, subdivisionAt, progressiveGap} from '../practice/pulse.js';
 import { GuitarStrum } from './guitar.js';
@@ -17,10 +18,10 @@ export const DEFAULTS = {
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
-  drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
-  comping:false, compingPattern:'sparse', compingTone:'brightKeys', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
-  sequence:false, sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:.25,
-  click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
+  drums:false, drumGroove:'straight', drumsVolume:MIX_REFERENCE_LEVEL, bass:false, bassPattern:'roots', bassVolume:MIX_REFERENCE_LEVEL,
+  comping:false, compingPattern:'sparse', compingTone:'brightKeys', compingVolume:MIX_REFERENCE_LEVEL, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
+  sequence:false, sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:MIX_REFERENCE_LEVEL,
+  click: MIX_REFERENCE_LEVEL, harmony: MIX_REFERENCE_LEVEL, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
   if (!settings.gapEnabled) return false;
@@ -411,6 +412,7 @@ export class Engine {
 
   render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP) {
     const s = this.settings;
+    const {click:clickGain,harmony:harmonyGain,drums:drumGain,bass:bassGain,comping:compingGain,sequence:sequenceGain}=BUS_GAINS;
     const clickVolume=this.muted.has('click')?0:s.click;
     const harmonyVolume=this.muted.has('harmony')?0:s.harmony;
     const drumsVolume=this.muted.has('drums')?0:s.drumsVolume,bassVolume=this.muted.has('bass')?0:s.bassVolume;
@@ -527,7 +529,7 @@ export class Engine {
       // The sampled rhythm section needs enough headroom to sit in front of the
       // wide, sustained pad. These trims keep the mixer controls perceptually
       // useful without forcing users to turn the harmony almost all the way down.
-      const rhythmSample=this.level*(.5*this.drumsLevel*this.rhythm.drums+.3*this.bassLevel*this.rhythm.bass+.24*this.compingLevel*comping);
+      const rhythmSample=this.level*(drumGain*this.drumsLevel*this.rhythm.drums+bassGain*this.bassLevel*this.rhythm.bass+compingGain*this.compingLevel*comping);
       const padAudible=harmonyVolume>0||this.harmonyLevel>.000001;
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
@@ -637,13 +639,13 @@ export class Engine {
         const motionPan=.36*Math.sin(cell*1.7);
         chord+=motion*(1-motionPan);chordRight+=motion*(1+motionPan);
       }
-      const clickSample = this.level * .3 * (this.auditioning ? 0 : this.clickLevel*(click*this.clickStrength + 1.4*polyClick));
+      const clickSample = this.level * clickGain * (this.auditioning ? 0 : this.clickLevel*(click*this.clickStrength + 1.4*polyClick));
       // Give transients and bass fundamentals a little room against the pad.
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.
       const rhythmDucking=1-.12*Math.max(this.drumsLevel,this.bassLevel);
-      let left=.37*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.left;
-      let right=.37*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+.15*this.sequenceLevel*this.sequence.right;
+      let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+sequenceGain*this.sequenceLevel*this.sequence.left;
+      let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+sequenceGain*this.sequenceLevel*this.sequence.right;
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
       if(this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive
@@ -668,14 +670,14 @@ export class Engine {
       const peak=this.meterPeaks,gate=this.level*backingGate;
       const clickPeak=Math.abs(clickSample*clickGate*.92);
       peak[0]=Math.max(peak[0],clickPeak);peak[1]=Math.max(peak[1],clickPeak);
-      peak[2]=Math.max(peak[2],Math.abs(gate*.37*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking));
-      peak[3]=Math.max(peak[3],Math.abs(gate*.37*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking));
-      const drumPeak=Math.abs(gate*.5*this.drumsLevel*this.rhythm.drums),bassPeak=Math.abs(gate*.3*this.bassLevel*this.rhythm.bass),compPeak=Math.abs(gate*.24*this.compingLevel*comping);
+      peak[2]=Math.max(peak[2],Math.abs(gate*harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking));
+      peak[3]=Math.max(peak[3],Math.abs(gate*harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking));
+      const drumPeak=Math.abs(gate*drumGain*this.drumsLevel*this.rhythm.drums),bassPeak=Math.abs(gate*bassGain*this.bassLevel*this.rhythm.bass),compPeak=Math.abs(gate*compingGain*this.compingLevel*comping);
       peak[4]=Math.max(peak[4],drumPeak);peak[5]=Math.max(peak[5],drumPeak);
       peak[6]=Math.max(peak[6],bassPeak);peak[7]=Math.max(peak[7],bassPeak);
       peak[8]=Math.max(peak[8],compPeak);peak[9]=Math.max(peak[9],compPeak);
-      peak[10]=Math.max(peak[10],Math.abs(gate*.15*this.sequenceLevel*this.sequence.left));
-      peak[11]=Math.max(peak[11],Math.abs(gate*.15*this.sequenceLevel*this.sequence.right));
+      peak[10]=Math.max(peak[10],Math.abs(gate*sequenceGain*this.sequenceLevel*this.sequence.left));
+      peak[11]=Math.max(peak[11],Math.abs(gate*sequenceGain*this.sequenceLevel*this.sequence.right));
       if (gapOutput) gapOutput[i] = backingGate;
       const backingSample=this.level*left*backingGate;
       const rightSample=this.level*right*backingGate;

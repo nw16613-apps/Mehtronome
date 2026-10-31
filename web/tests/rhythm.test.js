@@ -61,7 +61,7 @@ test('comping variation is a deterministic vocabulary of whole modal chords or i
   for(const movement of Object.keys(COMPING_MOVEMENTS)){
    const voicings=compingChordVoicings(h,h,movement,4);
    assert.ok(voicings.length);assert.deepEqual(voicings,compingChordVoicings(h,h,movement,4));
-   for(const notes of voicings){assert.ok(notes.length>=3);assert.ok(notes.every(n=>h.chordPcs.includes(n%12)||movement==='modal'&&h.scalePcs.includes(n%12)));}
+   for(const notes of voicings){assert.ok(notes.length>=3);assert.ok(notes.every(n=>h.chordPcs.includes(n%12)||['modal','extensions'].includes(movement)&&h.scalePcs.includes(n%12)));}
   }
  }
 });

@@ -29,7 +29,7 @@ export async function readSampleBank(rate) {
     let peak=0;
     for(let i=0;i<pcm.length;i++){pcm[i]-=mean;peak=Math.max(peak,Math.abs(pcm[i]));}
     if(peak<1e-7)throw new Error(`Silent WAV: ${name}`);
-    const gain=(name.startsWith('bass')?.8:.85)/peak,attack=Math.max(1,Math.round(rate*.0005)),release=Math.max(1,Math.round(rate*.012));
+    const gain=((name.startsWith('bass')||name.startsWith('upright'))?.8:.85)/peak,attack=Math.max(1,Math.round(rate*.0005)),release=Math.max(1,Math.round(rate*.012));
     for(let i=0;i<pcm.length;i++)pcm[i]*=gain*Math.min(1,i/attack,(pcm.length-1-i)/release);
     return [name,pcm];
   }));

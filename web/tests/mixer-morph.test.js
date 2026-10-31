@@ -22,7 +22,7 @@ test('backing channel mutes retain enabled parts and their levels while their vo
   const state=engine({drums:true,bass:true,comping:true,sequence:true,harmony:.4,mutedChannels:'harmony,drums,bass,comping,sequence'});
   assert.equal(peak(render(state).audio),0);
   assert.ok(state.rhythm.lastGrid>0);assert.equal(state.settings.drums,true);
-  assert.equal(state.settings.harmony,.4);assert.equal(state.settings.drumsVolume,.35);
+  assert.equal(state.settings.harmony,.4);assert.equal(state.settings.drumsVolume,.25);
   state.configure({mutedChannels:''});assert.ok(peak(render(state).audio)>.001);
 });
 

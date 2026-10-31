@@ -1,3 +1,5 @@
+import {COMPING_TRIMS} from './mix-balance.js';
+import {extensionChoices} from './extensions.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision} from './groove-time.js';
@@ -7,7 +9,7 @@ export const COMPING_PATTERNS={
   bossa:'Electric piano · bossa', ballad:'Electric piano · ambient ballad',
 };
 export const COMPING_MOVEMENTS={
-  still:'Still chords', modal:'Modal chord colours', inner:'Chord inversions',
+  still:'Still chords', extensions:'Chord extensions & inversions', modal:'Modal chord colours', inner:'Chord inversions',
   response:'Chord responses', voiceLead:'Voice-led chords',
 };
 export const COMPING_TONES={
@@ -31,8 +33,33 @@ function inversions(pcs){
  return out.sort((a,b)=>Math.abs(a.reduce((s,n)=>s+n,0)/a.length-67)-Math.abs(b.reduce((s,n)=>s+n,0)/b.length-67)||a[0]-b[0]);
 }
 
+// Add modal tensions as whole chord voicings. Seventh chords can omit the root
+// (the bass supplies it), but retain their third/suspension, seventh and altered
+// fifth. Triads keep their original quality; no seventh is invented for them.
+export function compingExtensionVoicings(harmony){
+ const root=harmony.chordPcs?.[0];if(!Number.isFinite(root))return [];
+ const intervals=harmony.chordPcs.map(pc=>(pc-root+12)%12),pcs=harmony.chordPcs;
+ const third=intervals.findIndex(i=>[3,4].includes(i)),suspension=third<0?intervals.findIndex(i=>[2,5].includes(i)):-1;
+ const seventh=intervals.findIndex(i=>[10,11].includes(i)),sixth=seventh<0?intervals.findIndex(i=>i===9):-1;
+ const altered=intervals.includes(7)?-1:intervals.findIndex(i=>[6,8].includes(i));
+ const shell=[third>=0?third:suspension,seventh>=0?seventh:sixth,altered].filter(i=>i>=0).map(i=>pcs[i]);
+ const extensions=extensionChoices(harmony,Infinity).map(note=>note.midi%12).filter(pc=>pc!==root&&!shell.includes(pc));
+ if(!extensions.length||shell.length<1)return [];
+ const colourSets=extensions.map(pc=>[pc]);
+ if(seventh>=0||sixth>=0)for(let a=0;a<extensions.length;a++)for(let b=a+1;b<extensions.length;b++)colourSets.push([extensions[a],extensions[b]]);
+ const result=[];
+ for(const colours of colourSets){
+  const required=seventh>=0||sixth>=0?shell:pcs;
+  const tones=[...new Set([...required,...colours])];if(tones.length>4)continue;
+  if(tones.length<4&&!tones.includes(root))tones.unshift(root);
+  const options=inversions(tones);if(options[0])result.push(options[0]);
+ }
+ return result;
+}
+
 /** A small cached vocabulary of complete chords. Modal alternatives are
  * diatonic triads sharing a third/seventh guide tone with the backing chord.
+ * Extensions retain defining chord tones and use the current scale.
  * Non-seven-note collections use actual chord inversions rather than assuming
  * ordinary tertian triads. Future harmony never sounds ahead of its change. */
 export function compingChordVoicings(harmony,nextHarmony,movement='inner',length=4){
@@ -40,13 +67,15 @@ export function compingChordVoicings(harmony,nextHarmony,movement='inner',length
  const pcs=[...new Set(voicingTones(harmony).map(index=>harmony.chordPcs[index]))],base=inversions(pcs);
  if(!base.length)return [];
  if(movement==='still')return [base[0]];
- const count=Math.max(2,Math.min(4,Number(length)||4)),variants=[base[0]];
+ const extended=movement==='extensions'||movement==='modal';
+ const count=extended?12:Math.max(2,Math.min(4,Number(length)||4)),variants=[base[0]];
  const add=chord=>{if(chord&&!variants.some(v=>v.join(',')===chord.join(',')))variants.push(chord);};
  const sameChord=base.filter(chord=>chord[0]%12!==base[0][0]%12);
  if(movement==='voiceLead'&&nextHarmony?.chordPcs?.length){
   const target=nextHarmony.chordPcs[0];
   sameChord.sort((a,b)=>Math.min((a.at(-1)%12-target+12)%12,(target-a.at(-1)%12+12)%12)-Math.min((b.at(-1)%12-target+12)%12,(target-b.at(-1)%12+12)%12));
  }
+ if(extended)for(const chord of compingExtensionVoicings(harmony))add(chord);
  if(movement==='modal'&&harmony.scalePcs?.length===7){
   const guides=harmony.chordPcs.filter((_,i)=>['3','7'].includes(harmony.intervals[i]?.match(/\d+/)?.[0]));
   for(let root=0;root<7;root++){
@@ -112,7 +141,7 @@ export class CompingInstrument{
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       const shape=this.shapes[tone]||this.shapes.warmTine;
-      Object.assign(voice,{shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      Object.assign(voice,{shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
       voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
