@@ -3,9 +3,9 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {cagedStudy} from '../guitar/exercises.js';
 import {MODES} from '../audio/music.js';
 
-/** Overlap twelve-note runs, reserving the destination edge for the opposite
- * form's opening attack so ordinary range turns do not repeat their endpoint. */
-export function scaleTripletForm(span,down){
+/** Overlap twelve-note runs. A supported shift moves both windows together;
+ * mirrored descending windows retain full range without repeated endpoints. */
+export function scaleTripletForm(span,down,shift=0){
  const ordered=down?span.toReversed():span;
  if(!ordered.length)return [];
  const pad=run=>[...Array(12-run.length).fill(run[0]),...run];
@@ -13,7 +13,7 @@ export function scaleTripletForm(span,down){
  const runs=Math.max(2,Math.ceil((ordered.length-1)/12));
  return Array.from({length:runs},(_,run)=>{
   const start=Math.floor(run*(ordered.length-13)/(runs-1));
-  return ordered.slice(start,start+12);
+  return ordered.slice(start+shift,start+shift+12);
  }).flat();
 }
 
@@ -25,10 +25,10 @@ export function positionalScaleTripletGroups(harmonies,durations,path,options){
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape);
   const span=cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes);
   const entry=scaleStartingState(span,harmony,descending,options.startTone||'default',true);
-  const first=scaleTripletForm(span,descending),second=scaleTripletForm(span,!descending);
+  const shift=entry.supported?entry.index:0;
+  const first=scaleTripletForm(span,descending,shift),second=scaleTripletForm(span,!descending,shift);
   const cycle=[...first,...second];
-  const rotation=entry.supported?Math.max(0,cycle.findIndex(note=>note.midi===entry.note?.midi)):0;
-  const half=first.length||24,cycleLength=half*2,phaseStart=(cursor+rotation)%cycleLength;
+  const half=first.length||24,cycleLength=half*2,phaseStart=cursor%cycleLength;
   const capacity=Math.max(1,Math.floor(durations[slot]*3+1e-8));
   const notes=span.length?Array.from({length:capacity},(_,i)=>cycle[(phaseStart+i)%cycle.length]):[];
   const cellLengths=[],materialCells=[];
