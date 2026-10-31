@@ -1,3 +1,4 @@
+import {backingSubdivision} from './groove-time.js';
 import { SampledBass } from './bass.js';
 import { DRUM_SAMPLE_GROUPS } from './sample-map.js';
 
@@ -7,6 +8,7 @@ export const DRUM_GROOVES = {
   modernJazz: 'Modern jazz comping', ballad: 'Ambient ballad',
 };
 export const BASS_PATTERNS = {
+  blues:'Blues · shuffle figure',
   roots: 'Ambient · sustained roots', fifths: 'Pop / rock · root & fifth', walk: 'Jazz · walking chord tones',
   bossa: 'Bossa nova · syncopated fifths', funk: 'Funk · syncopated chord tones',
   fusion: 'Fusion · displaced sixteenths', neoSoul: 'Neo-soul · spacious pocket', modal: 'Modal · pedal syncopation',
@@ -88,6 +90,12 @@ const GROOVES = {
 //  duration in beats, velocity]. Bass cells answer the drums without copying
 // their swing: steady ostinatos can be combined with any drum style.
 const BASS_LINES = {
+  blues:[
+    [[0,0,0,.48,.85],[2,-1,0,.23,.62],[4,0,1,.48,.78],[6,-1,0,.23,.6],[8,0,0,.48,.83],[10,1,0,.23,.61],[12,-1,0,.48,.76],[14,-2,0,.23,.62]],
+    [[0,0,0,.48,.84],[2,-1,0,.23,.62],[4,0,1,.48,.78],[6,-1,0,.23,.61],[8,0,0,.48,.82],[10,-1,0,.23,.63],[12,1,0,.48,.75],[14,-1,0,.23,.61]],
+    [[0,0,0,.48,.86],[2,-1,0,.23,.63],[4,0,1,.48,.8],[6,-1,0,.23,.61],[8,0,0,.48,.83],[10,1,0,.23,.62],[12,-1,0,.48,.77],[14,-2,0,.23,.63]],
+    [[0,0,0,.48,.85],[2,-1,0,.23,.62],[4,0,1,.48,.79],[6,-1,0,.23,.6],[8,0,0,.48,.83],[10,1,0,.23,.62],[12,-1,0,.35,.75],[14,0,0,.23,.65]],
+  ],
   roots: [
     [[0,0,0,2.05,.9],[8,0,0,1.85,.76]],
     [[0,0,0,3.3,.87],[14,-1,0,.38,.49]],
@@ -225,16 +233,14 @@ export class Rhythm {
     this.bassInstrument.installKit(kit);
   }
   gridAt(settings, beat, phase) {
-    const shuffled = settings.drumGroove === 'shuffle' || settings.drumGroove === 'swing';
-    const sub = shuffled ? (phase >= 5/6 ? 3 : phase >= 2/3 ? 2 : phase >= 1/3 ? 1 : 0) : Math.min(3, Math.floor(phase * 4));
-    return beat * 4 + sub;
+    return beat*4+backingSubdivision(phase,settings.drumGroove);
   }
-  bassGridAt(beat, phase) { return beat * 4 + Math.min(3, Math.floor(phase * 4)); }
+  bassGridAt(beat,phase,groove='straight'){return beat*4+backingSubdivision(phase,groove);}
   clearDrums() { for (const voice of this.drumVoices) voice.sample = null; this.activeDrums=0; }
   clearBass() { this.bassInstrument.clear();this.bassCursor=0;this.lastBassMidi=null; }
   tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes) {
     const grid = this.gridAt(settings, beat, phase);
-    const bassGrid = this.bassGridAt(beat, phase);
+    const bassGrid = this.bassGridAt(beat, phase,settings.drumGroove);
     const inBar = beat % settings.beats;
     const bar = Math.floor(beat / settings.beats);
     if (grid !== this.lastGrid) {

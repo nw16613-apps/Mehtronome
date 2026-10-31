@@ -1,3 +1,5 @@
+import {installBackingStyles} from './practice/backing-styles-view.js';
+import {backingStyleForControls} from './practice/backing-styles.js';
 import {withExerciseResolution,resolutionBackingSettings,singleChordExercisePlan} from './practice/exercise-resolution.js';
 import {scaleStartingState} from './practice/scale-start.js';
 import {arpeggioStartingChoices} from './practice/arpeggio-start.js';
@@ -211,6 +213,7 @@ const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElem
 const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pulse-large" aria-labelledby="pulse-large-title"><div class="pulse-large-toolbar"><h2 id="pulse-large-title">The pulse</h2><button id="pulse-large-close" type="button" class="practice-button">Close</button></div><div id="pulse-large-number" class="pulse-large-number">Ready</div><p id="pulse-large-status">Ready to practice</p><button id="pulse-large-play" type="button" class="practice-button">Start practicing</button></dialog>`);
+let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
 let settings = { ...DEFAULTS, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
 let master: GainNode | undefined;
 let wet: GainNode | undefined;
@@ -950,6 +953,7 @@ function updateSpace() {
   }
 }
 function update() {
+  if(backingStyleUi)settings.backingStyle=backingStyleUi.sync();
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
@@ -2175,6 +2179,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     }
     fillChords();
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
+    select('backing-style').value=backingStyleForControls(preset.controls);
     for(const [id,muted] of Object.entries(backingMutesForPreset(preset.controls)))input(id).checked=muted;
     tempo(Number(input('bpm').value));
     guitarDegrees = select('fret-labels').value === 'degrees';
@@ -2239,7 +2244,7 @@ async function startGuidedGoal(){
  for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=BACKING_CHANNELS.includes(channel.id);soloChannels.clear();
  input('show-grip').checked=true;input('highlight-mode').checked=true;input('count-in').checked=true;select('beats').value='4';select('subdivision').value='1';input('bpm').value='80';input('click').value='40';input('harmony').value='35';input('space').value='20';
  const accompaniment=select('practice-accompaniment').value;
- if(accompaniment==='trio'){for(const id of ['drums','bass','comping'])input('mute-'+id).checked=false;select('drum-groove').value='swing';select('bass-pattern').value='walk';}
+ if(accompaniment==='trio'){for(const id of ['drums','bass','comping'])input('mute-'+id).checked=false;select('backing-style').value='traditionalJazz';}
  if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';
@@ -2281,6 +2286,8 @@ installRepertoire({
 });
 
 organizeWorkspaces(showWorkspace);
+backingStyleUi=installBackingStyles(update);
+update();
 applyStudioIcons();
 renderCustomBuilder();
 renderGuitar();

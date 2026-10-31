@@ -141,3 +141,4 @@ html:root[data-palette][data-theme] body .studio-tools>.section-heading,html:roo
 .exercise-span-status{font-size:12px;color:var(--muted);text-align:center;margin:8px 0}#caged-exercise .exercise-map-diagram .fret-note.exercise-outside-span{opacity:.25}
 
 .exercise-definition>.exercise-pattern-help{margin:10px 0 0;line-height:1.5}
+.backing-style-settings>label{display:block;max-width:36rem}.backing-style-parts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}.backing-style-parts>div{padding:14px;border:1px solid var(--line,#344b5e);border-radius:8px}.backing-style-parts dt{font-weight:700;margin-bottom:6px}.backing-style-parts dd{margin:0;color:var(--muted,#b8c4cf)}@media(max-width:600px){.backing-style-parts{grid-template-columns:1fr}}

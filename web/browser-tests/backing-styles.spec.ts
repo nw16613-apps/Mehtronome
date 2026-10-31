@@ -1,0 +1,38 @@
+import {test,expect} from '@playwright/test';
+const matrix={popRock:['straight','fifths','popRock','brightKeys'],traditionalJazz:['swing','walk','jazz','brightKeys'],fusionJazz:['fusion','fusion','fusion','brightTine'],blues:['shuffle','blues','blues','brightKeys'],motown:['motown','motown','motown','clav'],funk:['fusion','funk','funk','clav'],neoSoul:['neoSoul','neoSoul','neoSoul','brightTine'],bossa:['bossa','bossa','bossa','brightKeys'],latin:['tumbao','tumbao','latin','brightKeys'],ballad:['ballad','ballad','ballad','brightTine']};
+const mix=async(page:any)=>page.evaluate(()=>Object.fromEntries(['mute-click','mute-harmony','mute-drums','mute-bass','mute-comping','mute-sequence','mute-space','click','harmony','drums-volume','bass-volume','comping-volume','sequence-volume','space','mini-bpm','key','quality','chord','template','beats','pulse-swing'].map(id=>{const el=document.getElementById(id) as HTMLInputElement;return [id,el.type==='checkbox'?el.checked:el.value];})));
+test('one style menu replaces instrument controls and changes the whole arrangement without changing the mix, chart or tempo',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{const Original=window.AudioContext;(window as any).__contexts=0;window.AudioContext=class extends Original{constructor(options?:AudioContextOptions){super(options);(window as any).__contexts++;}};});
+ await page.goto('/');const before=await mix(page);await page.locator('[data-workspace-target=sound-settings-title]').click();
+ await expect(page.locator('#backing-style')).toBeVisible();await expect(page.locator('#backing-style option')).toHaveCount(10);
+ for(const id of ['drum-groove','bass-pattern','comping-tone','comping-pattern','comping-movement','sequence-role','sequence-pattern','sound','pad-movement'])await expect(page.locator('#'+id)).not.toBeVisible();
+ await expect(page.locator('#pulse-sound')).toBeVisible();await expect(page.locator('#extension-morph')).toBeVisible();
+ for(const [style,values]of Object.entries(matrix)){
+  await page.locator('#backing-style').selectOption(style);for(const [i,id]of ['drum-groove','bass-pattern','comping-pattern','comping-tone'].entries())await expect(page.locator('#'+id)).toHaveValue(values[i]);
+  expect(await mix(page)).toEqual(before);await expect(page.locator('#backing-style-description')).not.toBeEmpty();await expect(page.locator('.backing-style-parts>div')).toHaveCount(4);
+ }
+ expect(await page.evaluate(()=>(window as any).__contexts)).toBe(0);
+ await page.locator('#backing-style').selectOption('motown');await page.reload();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('motown');await expect(page.locator('#comping-tone')).toHaveValue('clav');
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
+});
+test('style selection survives saved setups and older jazz setups migrate to a matching band style',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('mehtronome-practice-presets-v1',JSON.stringify({version:1,items:[{id:'legacy-jazz',name:'Older jazz band',progression:true,controls:{key:'9',quality:'dorian',chord:'min7',template:'single',bpm:'110','drum-groove':'swing','bass-pattern':'walk',drums:true,bass:true,comping:true,'mute-comping':true,'comping-volume':'22'}}]})));
+ await page.goto('/');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-list').selectOption('legacy-jazz');await page.locator('#preset-load').click();
+ await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('traditionalJazz');await expect(page.locator('#mute-comping')).toBeChecked();await expect(page.locator('#comping-volume')).toHaveValue('22');
+ await page.locator('#backing-style').selectOption('fusionJazz');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-name').fill('Fusion band');await page.locator('#preset-save').click();const id=await page.locator('#preset-list').inputValue();
+ await page.locator('[data-workspace-target=sound-settings-title]').click();await page.locator('#backing-style').selectOption('blues');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-list').selectOption(id);await page.locator('#preset-load').click();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('fusionJazz');await expect(page.locator('#comping-pattern')).toHaveValue('fusion');expect(errors).toEqual([]);
+});
+test('styles reach the audio engine during playback while mute and solo choices remain intact',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{const Original=window.AudioWorkletNode;(window as any).__bandMessages=[];window.AudioWorkletNode=class extends Original{constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){super(context,name,options);const post=this.port.postMessage.bind(this.port);this.port.postMessage=(data:any,transfer?:Transferable[])=>{if(data.settings)(window as any).__bandMessages.push(data);if(transfer)post(data,transfer);else post(data);};}};});
+ await page.goto('/');await page.locator('#mini-mixer').click();await page.locator('[data-mute-channel=comping]:visible').click();await page.locator('[data-solo-channel=comping]:visible').click();await page.locator('#floating-mixer-close').click();
+ const before=await mix(page);await page.locator('[data-workspace-target=sound-settings-title]').click();await page.locator('#backing-style').selectOption('traditionalJazz');await page.locator('#mini-play').click();await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');
+ await page.locator('#backing-style').selectOption('motown');await expect.poll(()=>page.evaluate(()=>(window as any).__bandMessages.at(-1)?.settings.compingTone)).toBe('clav');
+ const config=await page.evaluate(()=>(window as any).__bandMessages.at(-1).settings);expect(config.drumGroove).toBe('motown');expect(config.bassPattern).toBe('motown');expect(config.compingPattern).toBe('motown');expect(await mix(page)).toEqual(before);
+ await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await page.locator('#mini-play').click();
+ await page.locator('[data-workspace-target=caged-exercise]').click();await expect(page.locator('#exercise-preview')).toBeEnabled();await page.locator('#exercise-preview').click();
+ await expect.poll(()=>page.evaluate(()=>(window as any).__bandMessages.filter((m:any)=>m.type==='start').at(-1)?.settings.customProgression?.steps.length)).toBe(5);
+ const exercise=await page.evaluate(()=>(window as any).__bandMessages.filter((m:any)=>m.type==='start').at(-1).settings);expect(exercise.compingTone).toBe('clav');expect(exercise.drumGroove).toBe('motown');await page.locator('#exercise-preview').click();expect(errors).toEqual([]);
+});

@@ -4,6 +4,7 @@ import { BASS_SAMPLE_ZONES } from './sample-map.js';
 // Articulation is chosen once per note. The recordings retain their attack and
 // body; these gentle tone/gate differences give each rhythmic style its own touch.
 const ARTICULATIONS = {
+  blues:{attack:.003,release:.065,cutoff:2700,dry:.55,decay:1.1},
   roots:  {attack:.007, release:.14, cutoff:1700, dry:.38, decay:1.8},
   fifths: {attack:.004, release:.07, cutoff:3000, dry:.58, decay:1.15},
   walk:   {attack:.005, release:.085,cutoff:2200, dry:.46, decay:1.3},

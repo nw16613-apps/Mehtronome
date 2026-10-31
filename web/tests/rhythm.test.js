@@ -47,7 +47,7 @@ test('electric piano comping follows the chord with distinct multi-bar rhythms',
 
 test('electric piano tones have distinct bounded attacks and tails',()=>{
   const rendered=Object.keys(COMPING_TONES).map(compingTone=>render(setup({drums:false,bass:false,comping:true,compingMovement:'still',compingVolume:1,compingTone}),8000).dry);
-  assert.equal(rendered.length,4);
+  assert.equal(rendered.length,7);
   for(const signal of rendered){assert.ok(signal.some(sample=>Math.abs(sample)>.001));assert.ok(signal.every(sample=>Number.isFinite(sample)&&Math.abs(sample)<1));}
   for(let left=0;left<rendered.length;left++)for(let right=left+1;right<rendered.length;right++){
     let difference=0;for(let index=0;index<rendered[left].length;index++)difference+=Math.abs(rendered[left][index]-rendered[right][index]);
@@ -142,7 +142,7 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
 
 test('drum and bass styles produce distinct event patterns and articulations',()=>{
   assert.equal(Object.keys(DRUM_GROOVES).length,11);
-  assert.equal(Object.keys(BASS_PATTERNS).length,12);
+  assert.equal(Object.keys(BASS_PATTERNS).length,13);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
   assert.equal(new Set(drumSignatures).size,Object.keys(DRUM_GROOVES).length);
   const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{
@@ -216,12 +216,14 @@ test('phrases vary over four bars with ghost notes, pickups, dynamics and bass o
   }
 });
 
-test('bass ostinato timing stays independent of drum swing and uses exact sixteenths',()=>{
+test('backing bass follows the arrangement swing while retaining its pitches and articulation',()=>{
   const signature=drumGroove=>render(setup({drumGroove,bassPattern:'funk'}),16000).events.filter(e=>e.type==='bass');
   const straight=signature('straight');
   assert.deepEqual(straight.map(e=>e.sample),[0,3000,6000,9000,11000,14000,15000]);
-  assert.deepEqual(signature('swing'),straight);
-  assert.deepEqual(signature('shuffle'),straight);
+  const swung=signature('swing');
+  assert.deepEqual(swung.map(e=>e.sample),[0,3334,6667,9334,11334,14667,15334]);
+  assert.deepEqual(swung.map(({sample,...note})=>note),straight.map(({sample,...note})=>note));
+  assert.deepEqual(signature('shuffle'),swung);
   const {events}=render(setup({bass:false,drumGroove:'shuffle'}),16000);
   assert.ok(events.some(e=>e.type==='snare'&&e.sample===3334&&e.gain<.2));
 });

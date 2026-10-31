@@ -11,14 +11,14 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  mutedChannels:'', extensionMorph:true, extensionBars:8,
+  backingStyle:'popRock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:.35, bass:false, bassPattern:'roots', bassVolume:.4,
-  comping:false, compingPattern:'sparse', compingTone:'warmTine', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
+  comping:false, compingPattern:'sparse', compingTone:'brightKeys', compingVolume:.3, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
   sequence:false, sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:.25,
   click: 0.5, harmony: 0.35, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
@@ -258,7 +258,7 @@ export class Engine {
     if (!previousBass && s.bass) this.rhythm.clearBass();
     if (!previousComping && s.comping) this.comping.clear();
     if (previousDrums!==s.drums || previousBass!==s.bass || previousGroove!==s.drumGroove) {
-      this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
+      this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate),s.drumGroove) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     this.muted=new Set(String(s.mutedChannels||'').split(','));
