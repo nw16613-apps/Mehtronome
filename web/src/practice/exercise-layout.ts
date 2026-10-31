@@ -5,8 +5,10 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  const label=(id:string)=>find('#'+id).closest('label')!;
  const heading=find('.exercise-heading'),toolbar=find('.exercise-learning-toolbar'),controls=find('.exercise-controls');
  const definition=section('exercise-definition','Exercise');
- controls.prepend(label('exercise-study'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));
- definition.append(controls);heading.after(definition);
+ controls.prepend(label('exercise-study'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));
+ definition.append(controls);
+ const startHelp=controls.querySelector('#exercise-start-note')?.closest('label')?.querySelector('small');if(startHelp){const help=document.createElement('p');help.className='practice-help exercise-pattern-help';help.setAttribute('role','status');help.textContent=startHelp.textContent;startHelp.remove();definition.append(help);}
+ heading.after(definition);
  const playback=section('exercise-playback-panel','Playback'),playControls=document.createElement('div');playControls.className='exercise-playback-controls';
  playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));const volume=document.createElement('label');volume.className='exercise-guitar-volume';volume.htmlFor='exercise-guitar-volume';volume.innerHTML=`<span>Guitar volume <output id="exercise-guitar-volume-value" for="exercise-guitar-volume">${guitarVolume}%</output></span><input id="exercise-guitar-volume" type="range" min="0" max="100" value="${guitarVolume}">`;playControls.append(volume);playback.append(playControls);
  const trainer=find('.exercise-setup'),practiceBar=find('.exercise-practice-bar');

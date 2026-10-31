@@ -26,14 +26,14 @@ export function positionalScaleTripletGroups(harmonies,durations,path,options){
   const span=cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes);
   const entry=scaleStartingState(span,harmony,descending,options.startTone||'default',true);
   const first=scaleTripletForm(span,descending),second=scaleTripletForm(span,!descending);
-  if(entry.supported&&entry.index>0){const ordered=descending?span.toReversed():span;first.splice(0,12,...ordered.slice(entry.index,entry.index+12));second.splice(second.length-12,12,...ordered.slice(0,12).toReversed());}
   const cycle=[...first,...second];
-  const half=first.length||24,cycleLength=half*2,phaseStart=cursor%cycleLength;
+  const rotation=entry.supported?Math.max(0,cycle.findIndex(note=>note.midi===entry.note?.midi)):0;
+  const half=first.length||24,cycleLength=half*2,phaseStart=(cursor+rotation)%cycleLength;
   const capacity=Math.max(1,Math.floor(durations[slot]*3+1e-8));
-  const notes=span.length?Array.from({length:capacity},(_,i)=>cycle[(cursor+i)%cycle.length]):[];
+  const notes=span.length?Array.from({length:capacity},(_,i)=>cycle[(phaseStart+i)%cycle.length]):[];
   const cellLengths=[],materialCells=[];
   for(let offset=0;offset<notes.length;){
-   const attack=cursor+offset,length=Math.min(notes.length-offset,12-attack%12),down=descending!==(Math.floor(attack/half)%2===1);
+   const attack=phaseStart+offset,length=Math.min(notes.length-offset,12-attack%12),down=descending!==(Math.floor(attack/half)%2===1);
    cellLengths.push(length);materialCells.push(`${harmony.scaleNames[0]} ${MODES[harmony.mode].name} · ${down?'descending':'ascending'} overlapping run`);offset+=length;
   }
   cursor+=capacity;

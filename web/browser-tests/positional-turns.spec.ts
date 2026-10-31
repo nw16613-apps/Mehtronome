@@ -59,7 +59,7 @@ test('triplet phrase control follows the existing menus without moving them',asy
  await page.evaluate(()=>document.fonts.ready);const ids=['exercise-study','exercise-motion','exercise-rhythm'];
  const geometry=()=>page.evaluate(ids=>{const origin=document.querySelector('.exercise-controls')!.getBoundingClientRect();return ids.map(id=>{const b=document.getElementById(id)!.getBoundingClientRect();return {x:b.x-origin.x,y:b.y-origin.y};});},ids);
  const before=await geometry();await page.locator('#exercise-rhythm').selectOption('triplets');
- const order=await page.locator('.exercise-definition .exercise-controls select:visible').evaluateAll(nodes=>nodes.map(n=>n.id));expect(order).toEqual([...ids,'exercise-phrase','exercise-start-note']);
+ const order=await page.locator('.exercise-definition .exercise-controls select:visible').evaluateAll(nodes=>nodes.map(n=>n.id));expect(order).toEqual([...ids,'exercise-start-note','exercise-phrase']);
  const after=await geometry();expect(after).toEqual(before);
 });
 
