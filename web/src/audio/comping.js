@@ -1,3 +1,4 @@
+import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision} from './groove-time.js';
 export const COMPING_PATTERNS={
   popRock:'Pop / rock stabs', fusion:'Fusion accents', blues:'Blues shuffle responses', motown:'Motown offbeats', funk:'Funk stabs', latin:'Latin chord accents',
@@ -5,48 +6,56 @@ export const COMPING_PATTERNS={
   bossa:'Electric piano · bossa', ballad:'Electric piano · ambient ballad',
 };
 export const COMPING_MOVEMENTS={
-  still:'Still chords', modal:'Modal hook', inner:'Inner-voice hook',
-  response:'Call and response', voiceLead:'Voice-led hook',
+  still:'Still chords', modal:'Modal chord colours', inner:'Chord inversions',
+  response:'Chord responses', voiceLead:'Voice-led chords',
 };
 export const COMPING_TONES={
   brightKeys:'Bright percussive keys', brightTine:'Bright electric tine', clav:'Dry clav-style keys',
   warmTine:'Warm tine', felt:'Dark felt electric', suitcase:'Suitcase shimmer', reed:'Reed electric',
 };
 
-const nearestMidi=(pc,target=72)=>{
-  let midi=pc+12*Math.round((target-pc)/12);
-  while(midi<60)midi+=12;while(midi>84)midi-=12;
-  return midi;
-};
-const closestPc=(pcs,targetPc)=>pcs.reduce((best,pc)=>{
-  const distance=Math.min((pc-targetPc+12)%12,(targetPc-pc+12)%12);
-  const bestDistance=Math.min((best-targetPc+12)%12,(targetPc-best+12)%12);
-  return distance<bestDistance?pc:best;
-},pcs[0]);
+// Enumerate compact keyboard inversions, not isolated moving upper notes.
+function inversions(pcs){
+ const tones=[...new Set(pcs)],out=[];
+ for(const bass of tones)for(let midi=55;midi<=76;midi++){
+  if(midi%12!==bass)continue;
+  const chord=[midi];
+  while(chord.length<Math.max(3,tones.length)){
+   let next=chord.at(-1)+1;while(!tones.includes(next%12))next++;
+   chord.push(next);
+  }
+  if(chord.at(-1)<=84&&chord.at(-1)-chord[0]<=19)out.push(chord);
+ }
+ return out.sort((a,b)=>Math.abs(a.reduce((s,n)=>s+n,0)/a.length-67)-Math.abs(b.reduce((s,n)=>s+n,0)/b.length-67)||a[0]-b[0]);
+}
 
-/** Build a repeatable upper-voice cell from modal colour and chord-guide tones. */
-export function compingHook(harmony,nextHarmony,movement='modal',length=3){
-  if(movement==='still'||!harmony?.scalePcs?.length)return [];
-  const count=Math.max(2,Math.min(4,Number(length)||3));
-  const colourPc=harmony.characteristicPcs?.[0]??harmony.scalePcs[3];
-  const colourIndex=Math.max(0,harmony.scalePcs.indexOf(colourPc));
-  const below=harmony.scalePcs[(colourIndex+harmony.scalePcs.length-1)%harmony.scalePcs.length],above=harmony.scalePcs[(colourIndex+1)%harmony.scalePcs.length];
-  const guidePcs=harmony.chordPcs.filter(pc=>pc!==harmony.scalePcs[0]);
-  const guide=closestPc(guidePcs.length?guidePcs:harmony.chordPcs,colourPc);
-  const resolution=movement==='voiceLead'
-    ?closestPc(nextHarmony?.chordPcs?.length?nextHarmony.chordPcs:harmony.chordPcs,above)
-    :closestPc(harmony.chordPcs,above);
-  const shapes={
-    modal:[guide,colourPc,resolution,guide],
-    inner:[below,colourPc,above,resolution],
-    response:[colourPc,above,guide,below],
-    voiceLead:[guide,below,above,resolution],
-  };
-  const full=shapes[movement]||shapes.modal;
-  const pcs=full.slice(0,count);
-  const notes=[];
-  for(const pc of pcs)notes.push(nearestMidi(pc,notes.length?notes.at(-1):74));
-  return notes;
+/** A small cached vocabulary of complete chords. Modal alternatives are
+ * diatonic triads sharing a third/seventh guide tone with the backing chord.
+ * Non-seven-note collections use actual chord inversions rather than assuming
+ * ordinary tertian triads. Future harmony never sounds ahead of its change. */
+export function compingChordVoicings(harmony,nextHarmony,movement='inner',length=4){
+ if(!harmony?.chordPcs?.length)return [];
+ const pcs=[...new Set(voicingTones(harmony).map(index=>harmony.chordPcs[index]))],base=inversions(pcs);
+ if(!base.length)return [];
+ if(movement==='still')return [base[0]];
+ const count=Math.max(2,Math.min(4,Number(length)||4)),variants=[base[0]];
+ const add=chord=>{if(chord&&!variants.some(v=>v.join(',')===chord.join(',')))variants.push(chord);};
+ const sameChord=base.filter(chord=>chord[0]%12!==base[0][0]%12);
+ if(movement==='voiceLead'&&nextHarmony?.chordPcs?.length){
+  const target=nextHarmony.chordPcs[0];
+  sameChord.sort((a,b)=>Math.min((a.at(-1)%12-target+12)%12,(target-a.at(-1)%12+12)%12)-Math.min((b.at(-1)%12-target+12)%12,(target-b.at(-1)%12+12)%12));
+ }
+ if(movement==='modal'&&harmony.scalePcs?.length===7){
+  const guides=harmony.chordPcs.filter((_,i)=>['3','7'].includes(harmony.intervals[i]?.match(/\d+/)?.[0]));
+  for(let root=0;root<7;root++){
+   const tones=[0,2,4].map(step=>harmony.scalePcs[(root+step)%7]);
+   if(tones[0]===harmony.chordPcs[0]||!tones.some(pc=>guides.includes(pc))||tones.length===pcs.length&&tones.every(pc=>pcs.includes(pc)))continue;
+   add(inversions(tones)[0]);if(variants.length>=Math.max(2,count-1))break;
+  }
+ }
+ for(const chord of sameChord)add(chord);
+ for(const chord of base)add(chord);
+ return variants.slice(0,count);
 }
 
 // [sixteenth position, duration in beats, velocity]. Four related bars create
@@ -76,27 +85,21 @@ const TONE_SHAPES={
 };
 
 export class CompingInstrument{
-  constructor(rate){this.rate=rate;this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
-  clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;}
-  tick(settings,beat,phase,notes,hook,sample,step,onEvent){
+  constructor(rate){this.rate=rate;this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;}
+  tick(settings,beat,phase,notes,voicings,sample,step,onEvent){
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove);
     if(grid===this.lastGrid)return;this.lastGrid=grid;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
-    const pattern=CELLS[settings.compingPattern]||CELLS.sparse;
-    for(const [position,duration,velocity] of pattern[bar%pattern.length])if(position===offset)this.strike(notes,duration,velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone);
-    if(hook.length&&settings.compingMovement!=='still'){
+    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[bar%pattern.length];
+    for(const [position,duration,velocity]of cell)if(position===offset){
       const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));
-      const activeBars=Math.ceil(amount*4),phraseBar=bar%4;
-      if([0,2,1,3].slice(0,activeBars).includes(phraseBar)){
-        const span=Math.min(4,settings.beats)*4;
-        const start=Math.max(1,span-hook.length*2);
-        const index=Math.round((offset-start)/2);
-        if(index>=0&&index<hook.length&&start+index*2===offset){
-          const ending=phraseBar===3&&hook.length>2;
-          const note=ending&&index===hook.length-1?hook[0]:hook[index];
-          this.strike([note],.34,.34+.18*amount,settings.bpm,sample,step,onEvent,'comping-hook',settings.compingTone);
-        }
-      }
+      const vary=settings.compingMovement!=='still'&&voicings.length>1&&amount>0&&position!==cell[0][0]&&this.hits%4<amount*4;
+      const index=vary?1+Math.floor(this.hits/4)%(voicings.length-1):0;
+      const chord=Array.isArray(voicings[index])?voicings[index]:notes;
+      // All comping attacks are full chords on the style's existing rhythm.
+      if(chord.length>=3)this.strike(chord,duration,velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone);
+      this.hits++;
     }
   }
   strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys'){

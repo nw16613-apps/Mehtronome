@@ -116,9 +116,9 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  }
  settings.querySelector(':scope>p')!.after(jump);
  label('pad-movement').firstChild!.textContent='Texture motion ';query('label[for=pad-depth-amount]').firstChild!.textContent='Depth motion amount ';
- label('comping-movement').firstChild!.textContent='Voicing movement ';query('label[for=comping-movement-amount]').firstChild!.textContent='Hook movement amount ';
+ label('comping-movement').firstChild!.textContent='Voicing movement ';query('label[for=comping-movement-amount]').firstChild!.textContent='Chord variation amount ';
  label('sequence-rate').firstChild!.textContent='Note rate ';query('label[for=sequence-swing]').firstChild!.textContent='Melodic swing ';
  query('.backing-shape>summary').textContent='Texture & voicing';query('.harmony-movement>h3').textContent='Chord extensions';
- const hookHelp=document.createElement('p');hookHelp.id='comping-hook-help';hookHelp.className='practice-help';hookHelp.textContent='Hook length and movement amount apply when a voicing hook is selected.';get('comping-controls').append(hookHelp);
+ const hookHelp=document.createElement('p');hookHelp.id='comping-hook-help';hookHelp.className='practice-help';hookHelp.textContent='The voicing cycle and variation amount apply to whole chords; comping never adds a single-note melody.';get('comping-controls').append(hookHelp);
  get('open-sound-settings').textContent='Instrument sounds & patterns →';
 }

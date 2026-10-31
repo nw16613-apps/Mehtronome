@@ -4,7 +4,7 @@ import {Engine} from '../src/audio/engine.js';
 import {Rhythm} from '../src/audio/rhythm.js';
 import {harmonyAt,CHORDS} from '../src/audio/music.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
-import {COMPING_PATTERNS,COMPING_MOVEMENTS,COMPING_TONES,compingHook} from '../src/audio/comping.js';
+import {COMPING_PATTERNS,COMPING_MOVEMENTS,COMPING_TONES,compingChordVoicings} from '../src/audio/comping.js';
 import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
@@ -33,7 +33,7 @@ test('drum grooves hit sample-clock beats and shuffled offbeats exactly',()=>{
 test('electric piano comping follows the chord with distinct multi-bar rhythms',()=>{
   const signatures=[];
   for(const compingPattern of Object.keys(COMPING_PATTERNS)){
-    const engine=setup({drums:false,bass:false,comping:true,compingVolume:1,compingPattern,chord:'maj9sharp11'});
+    const engine=setup({drums:false,bass:false,comping:true,compingVolume:1,compingMovement:'still',compingPattern,chord:'maj9sharp11'});
     const result=render(engine,32000),events=result.events.filter(event=>event.type==='comping');
     assert.ok(events.length>=2,compingPattern);
     assert.ok(result.dry.some(sample=>Math.abs(sample)>.001),compingPattern);
@@ -55,33 +55,23 @@ test('electric piano tones have distinct bounded attacks and tails',()=>{
   }
 });
 
-test('electric piano movement uses deterministic modal ostinatos',()=>{
-  for(const [mode,colourPc] of [['dorian',6],['phrygian',10],['lydian',6]]){
-    const settings={...new Engine().settings,key:9,mode,chord:mode==='lydian'?'maj9sharp11':mode==='phrygian'?'min11b9':'min13'};
-    const harmony=harmonyAt(settings,0);
-    harmony.characteristicPcs=[(settings.key+colourPc)%12];
-    const hook=compingHook(harmony,harmony,'modal',3);
-    assert.equal(hook.length,3);
-    assert.ok(hook.some(note=>note%12===(settings.key+colourPc)%12));
-    assert.deepEqual(hook,compingHook(harmony,harmony,'modal',3));
-    assert.ok(harmony.chordPcs.includes(hook.at(-1)%12));
+test('comping variation is a deterministic vocabulary of whole modal chords or inversions',()=>{
+ for(const [mode,chord]of [['dorian','min7'],['phrygian','min11b9'],['lydian','maj9sharp11']]){
+  const h=harmonyAt({...new Engine().settings,key:9,mode,chord});
+  for(const movement of Object.keys(COMPING_MOVEMENTS)){
+   const voicings=compingChordVoicings(h,h,movement,4);
+   assert.ok(voicings.length);assert.deepEqual(voicings,compingChordVoicings(h,h,movement,4));
+   for(const notes of voicings){assert.ok(notes.length>=3);assert.ok(notes.every(n=>h.chordPcs.includes(n%12)||movement==='modal'&&h.scalePcs.includes(n%12)));}
   }
-  assert.deepEqual(compingHook({scalePcs:[0,2,4,5,7,9,11]},null,'still',4),[]);
-  assert.equal(Object.keys(COMPING_MOVEMENTS).length,5);
-  const settings={...new Engine().settings,key:9,mode:'dorian',chord:'min13'};
-  const harmony=harmonyAt(settings,0);harmony.characteristicPcs=[6];
-  const hooks=['modal','inner','response','voiceLead'].map(movement=>compingHook(harmony,harmony,movement,3));
-  assert.equal(new Set(hooks.map(hook=>hook.join(','))).size,hooks.length,'each movement retains a distinct three-note contour');
+ }
 });
 
-test('comping hook amount adds repeatable cells without changing chord rhythm',()=>{
-  const quiet=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:0}),32000).events;
-  const active=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:1}),32000).events;
-  assert.equal(quiet.filter(event=>event.type==='comping-hook').length,0);
-  const hooks=active.filter(event=>event.type==='comping-hook');
-  assert.ok(hooks.length>=6);
-  assert.deepEqual(active.filter(event=>event.type==='comping').map(event=>event.sample),quiet.filter(event=>event.type==='comping').map(event=>event.sample));
-  assert.deepEqual(hooks.slice(0,3).map(event=>event.notes[0]),hooks.slice(3,6).map(event=>event.notes[0]));
+test('comping movement changes chord voicings on the existing rhythm without single-note hooks',()=>{
+ const quiet=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:0}),64000).events;
+ const active=render(setup({drums:false,bass:false,comping:true,compingMovementAmount:1}),64000).events;
+ assert.ok(active.length);assert.ok(active.every(event=>event.type==='comping'&&event.notes.length>=3));
+ assert.deepEqual(active.map(e=>e.sample),quiet.map(e=>e.sample));
+ assert.ok(new Set(active.map(e=>e.notes.join(','))).size>1);
 });
 
 test('bass patterns follow actual chord tones and land on the root each bar in every meter',()=>{

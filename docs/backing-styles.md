@@ -24,3 +24,11 @@ The comping track is now named Comping keys. New bright-key, bright-tine and cla
 Style selection persists locally and is included in saved/imported/exported practice setups. Older instrument-based setups infer a matching style from their drum, bass and comping choices while retaining mixer audibility. Explicit saved styles take precedence.
 
 Validation covers catalog bindings, distinct rendered phrase signatures, multiple meters and chord changes, bounded audio, attack/partial/release measurements, shared sample-clock swing, legacy preset migration, persistence, no automatic audio start, preservation of chart/tempo/mix, live engine settings and responsive layouts.
+
+## Chord-only comping
+
+Comping never adds an isolated single-note hook between chord hits. Each attack has at least three simultaneous pitches, on the style's existing chord rhythm. Variation amount chooses among cached complete voicings; it does not add notes or change hit timing. All styles can use inversions. Fusion and neo-soul also use related modal chord colours.
+
+Base voicings retain the selected chord quality and a suitable written extension when present (the exercise seventh-chord limit does not apply to backing). Triads stay triads; two-tone chords use octave doubling without inventing a third or seventh. Compact inversions stay in the keyboard register. Seven-note modal alternatives use complete alternate-note triads sharing a third/seventh guide tone with the backing chord; every note belongs to the current scale. Other collection sizes retain actual chord inversions. Future harmony is not played before its change.
+
+The removed hook generator and single-note event path cannot be reactivated by old saved movement settings. The separate Melodic movement track and its mute, rhythm and note-source behavior are unchanged.

@@ -3,7 +3,7 @@ import {beatStrength, subdivisionAt, progressiveGap} from '../practice/pulse.js'
 import { GuitarStrum } from './guitar.js';
 import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
-import { CompingInstrument, compingHook } from './comping.js';
+import { CompingInstrument, compingChordVoicings } from './comping.js';
 import { Sequence } from './sequence.js';
 import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, characteristicNotes } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
@@ -355,7 +355,7 @@ export class Engine {
     const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,(s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
-    this.compingNotes=compingHook(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
+    this.compingChords=compingChordVoicings(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
     this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
     this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
     this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
@@ -514,8 +514,8 @@ export class Engine {
       const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
       if(s.comping&&rhythmActive){
-        const compNotes=this.compingVoicing;
-        this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.compingNotes||[],this.age,this.step,onRhythm);
+        const compNotes=this.compingChords?.[0]||this.compingVoicing;
+        this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm);
       }
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;
