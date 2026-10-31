@@ -1,6 +1,7 @@
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
+ view.stage='full';
  view.startTone=/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
  if(!['balanced','balanced2','balanced3','balancedcycle','turnaround'].includes(view.phrase))view.phrase='balanced';
  if(view.material==='extensions')view.material='seventh';

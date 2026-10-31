@@ -1,3 +1,4 @@
+import {scaleStartingState} from './scale-start.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {cagedStudy} from '../guitar/exercises.js';
 import {MODES} from '../audio/music.js';
@@ -23,7 +24,10 @@ export function positionalScaleTripletGroups(harmonies,durations,path,options){
  return harmonies.map((harmony,slot)=>{
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape);
   const span=cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes);
-  const first=scaleTripletForm(span,descending),second=scaleTripletForm(span,!descending),cycle=[...first,...second];
+  const entry=scaleStartingState(span,harmony,descending,options.startTone||'default',true);
+  const first=scaleTripletForm(span,descending),second=scaleTripletForm(span,!descending);
+  if(entry.supported&&entry.index>0){const ordered=descending?span.toReversed():span;first.splice(0,12,...ordered.slice(entry.index,entry.index+12));second.splice(second.length-12,12,...ordered.slice(0,12).toReversed());}
+  const cycle=[...first,...second];
   const half=first.length||24,cycleLength=half*2,phaseStart=cursor%cycleLength;
   const capacity=Math.max(1,Math.floor(durations[slot]*3+1e-8));
   const notes=span.length?Array.from({length:capacity},(_,i)=>cycle[(cursor+i)%cycle.length]):[];
@@ -33,7 +37,7 @@ export function positionalScaleTripletGroups(harmonies,durations,path,options){
    cellLengths.push(length);materialCells.push(`${harmony.scaleNames[0]} ${MODES[harmony.mode].name} · ${down?'descending':'ascending'} overlapping run`);offset+=length;
   }
   cursor+=capacity;
-  const warning=span.length?'':`${harmony.name}${harmony.suffix}: no scale pitches are available in this position.`;
+  const warning=span.length?entry.warning:`${harmony.name}${harmony.suffix}: no scale pitches are available in this position.`;
   const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,
    positionalSpan:span,phraseCycleLength:cycleLength,phraseHalfLength:half,phrasePhase:phaseStart,phraseDivision:3,phraseSpanSize:span.length,phraseStyle:'scale-overlap',
    annotation:span.length?`${MODES[harmony.mode].name} · full positional scale in overlapping runs`:'Rest · no scale pitches in this position'};

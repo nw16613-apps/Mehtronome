@@ -5,9 +5,7 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  const label=(id:string)=>find('#'+id).closest('label')!;
  const heading=find('.exercise-heading'),toolbar=find('.exercise-learning-toolbar'),controls=find('.exercise-controls');
  const definition=section('exercise-definition','Exercise');
- controls.prepend(label('exercise-study'));controls.append(label('exercise-stage'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));label('exercise-stage').firstChild!.textContent='Scope ';
- const singleScope=['positional','positionalscale'].includes((find('#exercise-study') as HTMLSelectElement).value)?'One run per chord':'One cell per chord';
- for(const option of Array.from(find('#exercise-stage').querySelectorAll('option')))option.textContent=option.value==='cell'?singleScope:'Continuous pattern';
+ controls.prepend(label('exercise-study'));if(find('#exercise-phrase'))controls.append(label('exercise-phrase'));if(find('#exercise-start-note'))controls.append(label('exercise-start-note'));
  definition.append(controls);heading.after(definition);
  const playback=section('exercise-playback-panel','Playback'),playControls=document.createElement('div');playControls.className='exercise-playback-controls';
  playControls.append(find('#exercise-preview'),find('#exercise-clear-range'),find('.exercise-tempo'),label('exercise-loop'),label('exercise-backing'));const volume=document.createElement('label');volume.className='exercise-guitar-volume';volume.htmlFor='exercise-guitar-volume';volume.innerHTML=`<span>Guitar volume <output id="exercise-guitar-volume-value" for="exercise-guitar-volume">${guitarVolume}%</output></span><input id="exercise-guitar-volume" type="range" min="0" max="100" value="${guitarVolume}">`;playControls.append(volume);playback.append(playControls);

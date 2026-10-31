@@ -56,7 +56,7 @@ test('full-position triplets cover the diagram and alternate directional forms e
 });
 test('triplet phrase control follows the existing menus without moving them',async({page})=>{
  await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.setViewportSize({width:1440,height:1000});
- await page.evaluate(()=>document.fonts.ready);const ids=['exercise-study','exercise-motion','exercise-rhythm','exercise-stage'];
+ await page.evaluate(()=>document.fonts.ready);const ids=['exercise-study','exercise-motion','exercise-rhythm'];
  const geometry=()=>page.evaluate(ids=>{const origin=document.querySelector('.exercise-controls')!.getBoundingClientRect();return ids.map(id=>{const b=document.getElementById(id)!.getBoundingClientRect();return {x:b.x-origin.x,y:b.y-origin.y};});},ids);
  const before=await geometry();await page.locator('#exercise-rhythm').selectOption('triplets');
  const order=await page.locator('.exercise-definition .exercise-controls select:visible').evaluateAll(nodes=>nodes.map(n=>n.id));expect(order).toEqual([...ids,'exercise-phrase','exercise-start-note']);
