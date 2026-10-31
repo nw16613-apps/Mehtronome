@@ -10,9 +10,9 @@ test('positional scale uses the whole shape, both directions and all rhythms wit
   await page.locator('#exercise-motion').selectOption(motion);
   const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),available=[...new Set(fretboardFor(h,geometry[position]).notes.filter(n=>h.scalePcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),ordered=motion==='ascending'?available:available.toReversed(),cycle=[...ordered,...ordered.slice(1,-1).toReversed()];
   const written=(await Promise.all([0,1,2,3].map(slot=>pitches(page,slot)))).flat();expect(written).toEqual(Array.from({length:64},(_,i)=>cycle[i%cycle.length]));
-  for(const caption of await page.locator('.exercise-score .exercise-degree').allTextContents())expect(caption).toContain('Position '+position);
+  for(const caption of await page.locator('.exercise-score .exercise-degree').allTextContents())if(caption!=='Resolution')expect(caption).toContain('Position '+position);
  }
- for(const [rhythm,count]of [['eighths',32],['triplets',48],['sixteenths',64]] as const){await page.locator('#exercise-rhythm').selectOption(rhythm);await expect(page.locator('.exercise-note')).toHaveCount(count);}
+ for(const [rhythm,count]of [['eighths',32],['triplets',48],['sixteenths',64]] as const){await page.locator('#exercise-rhythm').selectOption(rhythm);await expect(page.locator('.exercise-note:not(.resolution-note)')).toHaveCount(count);}
  await page.locator('#exercise-favourite').click();await page.locator('#exercise-study').selectOption('thirds');await page.locator('#exercise-favourites').selectOption('0');await expect(page.locator('#exercise-study')).toHaveValue('positionalscale');
  await page.locator('#exercise-backing').uncheck();await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing[data-group-index="1"]').first()).toBeVisible({timeout:4000});await page.locator('#exercise-preview').click();
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);

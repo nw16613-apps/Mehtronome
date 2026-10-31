@@ -1,3 +1,4 @@
+import {withExerciseResolution,resolutionBackingSettings,singleChordExercisePlan} from './practice/exercise-resolution.js';
 import {scaleStartingState} from './practice/scale-start.js';
 import {arpeggioStartingChoices} from './practice/arpeggio-start.js';
 import {audioContextOptions} from './audio/context-options.js';
@@ -281,7 +282,7 @@ function exerciseGuitarInstrumentOutput(){
 }
 function exerciseBufferRequests(tempo:number){
  const division=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
- return exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({midi:e.note.midi,duration:exerciseNoteDuration(e.duration*60/tempo)})):exercisePlaybackSequence.map(note=>({midi:note.midi,duration:exerciseNoteDuration(60/tempo/division)}));
+ return exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({midi:e.note.midi,duration:exerciseNoteDuration(e.duration*60/tempo,e.resolution)})):exercisePlaybackSequence.map(note=>({midi:note.midi,duration:exerciseNoteDuration(60/tempo/division)}));
 }
 let exercisePlaying=false;
 let exercisePreparing=false,exercisePrepareGeneration=0;
@@ -404,6 +405,8 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else{exercisePlan=null;if(exerciseView.stage==='cell'&&exerciseView.study!=='positionalscale')currentExerciseGroups=shortCell(currentExerciseGroups);}
   if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
+  if(!exercisePlan){const single=singleChordExercisePlan(currentExerciseGroups,info,board,position,exerciseView.study,exerciseView.rhythm,settings.beats);currentExerciseGroups=single.groups;exercisePlan=single.plan;}
+  if(exercisePlan){const resolved=withExerciseResolution(currentExerciseGroups,exercisePlan);currentExerciseGroups=resolved.groups;exercisePlan=resolved.plan;}
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
   const nonDiatonic=exerciseProgression.some((h:any)=>h.scalePcs.length!==7);
@@ -470,7 +473,7 @@ function backingChordAt(beat:number){const config=exerciseBackingConfig(),index=
 function refreshBackingSymbols(baseBeat=0){if(exercisePlan)return;const division=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;updateBackingSymbols(el('caged-exercise'),backingChordAt,division,settings.beats,exercisePlaying?exerciseRange():{start:0,end:currentExercise.length-1},baseBeat);}
 
 function exerciseBackingConfig(){
-  if(settings.progression)return {...settings,trainerEnabled:false,gapEnabled:false,extensionMorph:false};
+  if(settings.progression)return {...resolutionBackingSettings(settings,exercisePlan),trainerEnabled:false,gapEnabled:false,extensionMorph:false};
   if(!studyHarmony)return settings;
   return {...settings,progression:false,key:studyHarmony.chordPcs[0],chord:studyHarmony.chordId,mode:studyHarmony.scalePcs[0]===studyHarmony.chordPcs[0]?studyHarmony.mode:recommendedMode(studyHarmony.chordId),extensionMorph:false};
 }
@@ -482,10 +485,10 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const countIn=scheduledStart===undefined&&settings.countIn?settings.beats*60/exerciseView.tempo:0;
   const start=scheduledStart??context.currentTime+.12+countIn;
   if(exerciseTimelineStart===undefined){exerciseTimelineStart=timelineOrigin??start-countIn;updateExerciseCursor();}
-  const events=exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({note:e.note,accent:e.accent,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
-  if(!exerciseNoteQueue||exerciseNoteQueue.context!==context)exerciseNoteQueue=new ExerciseAudioQueue(context,({note,at,length,accent}:any)=>{
+  const events=exercisePlaybackPlan?exercisePlaybackPlan.events.map((e:any)=>({note:e.note,accent:e.accent,sustain:e.resolution,at:start+e.start*60/exerciseView.tempo,length:e.duration*60/exerciseView.tempo})):sequence.map((note,index)=>({note,at:start+index*noteLength,length:noteLength}));
+  if(!exerciseNoteQueue||exerciseNoteQueue.context!==context)exerciseNoteQueue=new ExerciseAudioQueue(context,({note,at,length,accent,sustain}:any)=>{
     if(!exercisePlaying||!context)return;
-    const duration=exerciseNoteDuration(length),release=Math.min(.045,duration*.3),key=exerciseBufferCache.key(context,note.midi,duration);
+    const duration=exerciseNoteDuration(length,sustain),release=Math.min(.045,duration*.3),key=exerciseBufferCache.key(context,note.midi,duration);
     const buffer=exerciseBuffers.get(key)||exerciseBufferCache.get(context,note.midi,duration);
     const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;
     const offset=Math.max(0,context.currentTime+.005-at),begin=at+offset,end=at+duration;
@@ -527,7 +530,7 @@ async function toggleExercisePreview() {
     exercisePlaybackSequence=selectedExercise();exercisePlaybackPlan=exercisePlan?{...exercisePlan,events:selectedPlanEvents()}:null;
     const prepared=await exerciseBufferCache.prepare(context!,exerciseBufferRequests(exerciseView.tempo),()=>generation!==exercisePrepareGeneration);
     if(!prepared||generation!==exercisePrepareGeneration)return;exerciseBuffers=prepared;
-    exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
+    exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.resolution?0:exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.12:undefined;
     if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
@@ -1372,7 +1375,8 @@ el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
 function syncExerciseRouteCards(){
  el('caged-exercise').querySelectorAll<HTMLButtonElement>('.exercise-position-route [data-inspect-slot]').forEach(button=>{
-  const current=Number(button.dataset.inspectSlot)===exerciseMapSlot;
+  const activeSlot=currentExerciseGroups[exerciseMapSlot]?.resolution?exercisePlan?.slots.at(-2)?.slot:exerciseMapSlot;
+  const current=Number(button.dataset.inspectSlot)===activeSlot;
   button.classList.toggle('current',current);button.setAttribute('aria-pressed',String(current));
   if(current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
   button.disabled=playing||exercisePlaying||exercisePreparing;
@@ -1443,7 +1447,7 @@ async function auditionExerciseNote(index:number){
 }
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;
- if(settings.progression){const actualStep=progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;if(exercisePlaying&&document.body.dataset.workspace==='exercises'){exerciseReferenceDirty=true;renderProgressionReference(step,true);}else{renderMusic(true,group.position);renderProgressionReference(step);}}
+ if(settings.progression){const actualStep=group.resolution?exercisePlan?.slots.at(-1)?.step:progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;if(exercisePlaying&&document.body.dataset.workspace==='exercises'){exerciseReferenceDirty=true;renderProgressionReference(step,true);}else{renderMusic(true,group.position);renderProgressionReference(step);}}
  exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);syncMiniTransport();
 }
 function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying||exercisePreparing)return;

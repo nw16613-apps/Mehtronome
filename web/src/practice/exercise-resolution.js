@@ -1,0 +1,43 @@
+import {progressionStudyPlan} from './progression-timing.js';
+import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
+import {cloneTemplate} from './custom-progression.js';
+import {progressionDefinition} from '../audio/music.js';
+
+/** Add an ending to the displayed/playable study, never to the user's chart or
+ * to the sequence generators. The closest core chord tone stays in the final
+ * assigned CAGED region. An already consonant final pitch can be rearticulated. */
+export function withExerciseResolution(groups,plan){
+ if(!plan?.events.length||plan.resolution)return {groups,plan};
+ const finalSlot=plan.slots.at(-1),last=plan.events.at(-1),harmony=finalSlot?.harmony,board=finalSlot?.board;
+ if(!harmony||!board)return {groups,plan};
+ const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc));
+ const ranked=candidates.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
+  Math.abs(a.midi-last.note.midi)-Math.abs(b.midi-last.note.midi)||
+  Number(a.pc!==core.chordPcs[0])-Number(b.pc!==core.chordPcs[0])||
+  Number(a.string!==last.note.string)-Number(b.string!==last.note.string)||a.midi-b.midi||a.string-b.string);
+ const note=ranked[0];if(!note)return {groups,plan};
+ const slot=groups.length,index=groups.reduce((sum,g)=>sum+g.notes.length,0),start=plan.duration,duration=plan.beats;
+ const group={...groups[finalSlot.slot],slot,notes:[note],pcs:[note.pc],names:[note.name],harmony,board,position:finalSlot.position,chord:finalSlot.chord,
+  globalStart:index,targetIndices:[0],cellLengths:[1],materialCells:['Resolution'],annotation:'Resolution',warning:'',resolution:true};
+ const ending={...finalSlot,slot,start,duration,annotation:'Resolution',resolution:true};
+ return {groups:[...groups,group],plan:{...plan,events:[...plan.events,{index,note,step:ending.step,slot,start,duration,target:true,resolution:true}],
+  slots:[...plan.slots,ending],duration:start+duration,resolution:{start,duration,slot,index}}};
+}
+
+/** A private playback copy holds the final chord during the ending bar and
+ * loops back only after the hold. Original chart/loop settings stay untouched. */
+export function resolutionBackingSettings(settings,plan){
+ if(!settings.progression||!plan?.resolution)return settings;
+ const base=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
+ const steps=plan.slots.map(slot=>({...base.steps[slot.step],beats:slot.duration}));
+ return {...settings,template:'custom',loopEnabled:false,customProgression:{...base,steps,roman:plan.slots.map(slot=>base.roman[slot.step])}};
+}
+
+/** Route a held-chord study through the same duration-aware score/playback path. */
+export function singleChordExercisePlan(groups,harmony,board,position,study,rhythm,beats){
+ const notes=groups.flatMap(g=>g.notes),division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
+ let offset=0;const targetIndices=[];
+ for(const group of groups){targetIndices.push(...(group.targetIndices||(group.targetIndex===undefined?[]:[group.targetIndex])).map(i=>i+offset));offset+=group.notes.length;}
+ const group={slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
+ return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil(notes.length/division/beats))],beats,study,rhythm)};
+}

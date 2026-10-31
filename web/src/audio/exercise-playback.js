@@ -1,5 +1,5 @@
 import {renderJazzGuitarNote} from './jazz-guitar.js';
-export const exerciseNoteDuration=length=>Math.max(.045,Math.min(12,length*.96));
+export const exerciseNoteDuration=(length,sustain=false)=>Math.max(.045,sustain?length:Math.min(12,length*.96));
 const yieldTask=()=>new Promise(resolve=>setTimeout(resolve,0));
 
 // Shared PCM is reusable; AudioBufferSourceNodes are deliberately never reused.

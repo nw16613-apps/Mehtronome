@@ -37,7 +37,7 @@ test('legacy triplet phrases restore as continuous traversals while preserving a
  await page.goto('/');await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-position-navigation').selectOption('all');
  for(const slot of [0,1,2,3]){await page.locator(`.exercise-position-route [data-inspect-slot="${slot}"]`).click();await page.locator('#exercise-position').selectOption('II');}
  for(const [index,start,first]of [[0,'5:0',52],[1,'3:0',48]] as const){
-  await page.locator('#exercise-favourites').selectOption(String(index));await expect(page.locator('#exercise-start-note')).toHaveValue(start);await expect(page.locator('#exercise-phrase')).toHaveCount(0);expect((await pitches(page,0))[0]).toBe(first);await expect(page.locator('.exercise-note')).toHaveCount(48);
+  await page.locator('#exercise-favourites').selectOption(String(index));await expect(page.locator('#exercise-start-note')).toHaveValue(start);await expect(page.locator('#exercise-phrase')).toHaveCount(0);expect((await pitches(page,0))[0]).toBe(first);await expect(page.locator('.exercise-note:not(.resolution-note)')).toHaveCount(48);
  }
  expect((await pitches(page,1)).slice(0,5)).toEqual([69,71,72,74,72]);
 });
