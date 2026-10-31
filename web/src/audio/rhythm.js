@@ -1,3 +1,4 @@
+import {DRUM_KITS} from './instrumentation.js';
 import {backingSubdivision} from './groove-time.js';
 import { SampledBass } from './bass.js';
 import { DRUM_SAMPLE_GROUPS } from './sample-map.js';
@@ -176,7 +177,7 @@ const DRUM_BALANCE = {hat:.55,hatOpen:.58,hatPedal:.55};
 function drumSamples(rate) {
   if (KITS.has(rate)) return KITS.get(rate);
   const kit = {};
-  for (const [name, duration] of [['kick', .45], ['snare', .24], ['hat', .09], ['ride', .55]]) {
+  for (const [name, duration] of [['kick', .45], ['snare', .24], ['hat', .09], ['ride', .55],['tambourine',.2]]) {
     const samples = new Float32Array(Math.ceil(rate * duration));
     let seed = 27, low = 0, phase = 0, peak = 0;
     for (let i = 0; i < samples.length; i++) {
@@ -192,7 +193,7 @@ function drumSamples(rate) {
       } else if (name === 'snare') {
         value = .8 * high * Math.exp(-t / .055) + .25 * Math.sin(2 * Math.PI * 180 * t) * Math.exp(-t / .04);
       } else {
-        const decay = name === 'ride' ? .16 : .023;
+        const decay = name === 'ride' ? .16 :name==='tambourine'?.07:.023;
         value = (.7 * high + .15 * Math.sin(2 * Math.PI * Math.min(4200, rate * .38) * t)) * Math.exp(-t / decay);
       }
       samples[i] = value * Math.min(1, t / .0015);
@@ -219,6 +220,7 @@ export class Rhythm {
     this.bassCursor = 0;
     this.sampleCursors = Object.create(null);
     this.chokeDecay = Math.exp(-1 / (rate * .006));
+    this.kitProfiles=Object.fromEntries(Object.entries(DRUM_KITS).map(([id,profile])=>[id,{...profile,decayFactor:profile.decay?Math.exp(-1/(rate*profile.decay)):1}]));
     this.drumVoices = Array.from({length:24}, () => ({sample:null, position:0, increment:1, gain:0, filter:0, tone:1, choke:1, choking:false, kind:''}));
     this.bassInstrument = new SampledBass(rate,kit);
     this.bassVoices = this.bassInstrument.voices;
@@ -252,7 +254,8 @@ export class Rhythm {
       if (settings.bass) this.playBass(settings, bassGrid % 4, inBar, bar, notes, sample, step, onEvent,nextNotes);
     }
   }
-  hitDrum(name,gain,sample,step,beat,sub,onEvent) {
+  hitDrum(name,gain,sample,step,beat,sub,onEvent,kitName='rock') {
+    const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const group=name==='snare'&&gain<.25&&DRUM_SAMPLE_GROUPS.snareGhost?.some(id=>this.kit[id]?.length)?'snareGhost':name;
     const ids=(DRUM_SAMPLE_GROUPS[group]||[name]).filter(id=>this.kit[id]?.length);
@@ -270,7 +273,7 @@ export class Rhythm {
     const tuning=[1,.997,1.003,.999][cursor%4];
     const tone=name==='kick'?.85:name==='snare'||name==='rim'?.48+.42*Math.min(1,gain/.7):.94;
     const balancedGain=gain*(DRUM_BALANCE[name]??1);
-    Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain:balancedGain,filter:0,tone,choke:1,choking:false,kind:name});
+    Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain:balancedGain,filter:0,tone:Math.min(.98,tone*profile.brightness),envelope:1,decayFactor:profile.decayFactor,choke:1,choking:false,kind:name});
     onEvent({type:name,sample,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
@@ -280,7 +283,8 @@ export class Rhythm {
     const turn=bar%4===3&&lastBeat;
     const jazzRide=groove==='swing'||groove==='modernJazz';
     const latin=groove==='bossa'||groove==='tumbao';
-    const hit=(name,gain)=>this.hitDrum(name,gain,sample,step,beat,sub,onEvent);
+    const hit=(name,gain)=>this.hitDrum(name,gain,sample,step,beat,sub,onEvent,settings.drumKit);
+    if(this.kitProfiles[settings.drumKit]?.tambourine&&sub===0&&beat%2===1)hit('tambourine',.24);
     for(const [offset,name,gain]of GROOVES[groove][phrase]){
       if(offset===cell)hit(name,gain);
     }
@@ -349,7 +353,7 @@ export class Rhythm {
     while(midi>59)midi-=12;
     this.lastBassMidi=midi;
     const seconds=length*60/settings.bpm;
-    this.bassInstrument.noteOn(midi,seconds,gain,pattern);
+    this.bassInstrument.noteOn(midi,seconds,gain,pattern,settings.bassInstrument);
     this.bassCursor=this.bassInstrument.cursor;
     onEvent({type:'bass',sample,step,beat,sub,midi,root,offbeat:sub!==0,gain,approaching,durationBeats:length});
   }
@@ -360,7 +364,8 @@ export class Rhythm {
       const index=voice.position|0,fraction=voice.position-index;
       const raw=voice.sample[index]+((voice.sample[index+1]??0)-voice.sample[index])*fraction;
       voice.filter+=voice.tone*(raw-voice.filter);
-      drums+=voice.filter*voice.gain*voice.choke;
+      drums+=voice.filter*voice.gain*voice.choke*voice.envelope;
+      voice.envelope*=voice.decayFactor;
       voice.position+=voice.increment;
       if(voice.choking)voice.choke*=this.chokeDecay;
       if(voice.position>=voice.sample.length-1||voice.choke<.0001){voice.sample=null;this.activeDrums--;}

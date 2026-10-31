@@ -46,7 +46,7 @@ test('electric piano comping follows the chord with distinct multi-bar rhythms',
 });
 
 test('electric piano tones have distinct bounded attacks and tails',()=>{
-  const rendered=Object.keys(COMPING_TONES).map(compingTone=>render(setup({drums:false,bass:false,comping:true,compingMovement:'still',compingVolume:1,compingTone}),8000).dry);
+  const rendered=['brightKeys','brightTine','clav','warmTine','felt','suitcase','reed'].map(compingTone=>render(setup({drums:false,bass:false,comping:true,compingMovement:'still',compingVolume:1,compingTone}),8000).dry);
   assert.equal(rendered.length,7);
   for(const signal of rendered){assert.ok(signal.some(sample=>Math.abs(sample)>.001));assert.ok(signal.every(sample=>Number.isFinite(sample)&&Math.abs(sample)<1));}
   for(let left=0;left<rendered.length;left++)for(let right=left+1;right<rendered.length;right++){

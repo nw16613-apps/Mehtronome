@@ -51,3 +51,7 @@ The recordings were converted from lossless FLAC/WAV using FFmpeg. All bundled f
 The drum shells use gentle high/low-pass filtering and small body/attack EQ moves. Tails are shortened with smooth fades: kick and snare end within 0.82 seconds, closed hats within 0.28 seconds, and toms within 1.15 seconds. Direct ride/open-hat tails remain long enough to sound acoustic and are still choked by the playback engine. No timing randomization, synthesized transient or runtime gate is applied.
 
 Bass plucks retain the previous 24 Hz high-pass / 7.5 kHz low-pass processing and 3.2-second tail. Small fixed playback-rate corrections bring the measured fundamentals to concert pitch; [sources.json](sources.json) records every correction.
+
+## Genre instrument banks
+
+Piano and guitar: Nicolas Brosowsky / Tone.js instruments (CC BY 3.0), originally Versilian Studios, Karoryfer, and quartertone respectively. Upright bass and tambourine: VSCO 2 CE / Versilian Studios / Sam Gossner (CC0). Shipped attribution: web/public/audio-credits.html. Exact source paths, pinned revisions, pitch centres, format and hashes: [band/sources.json](band/sources.json). Derivatives are trimmed, filtered, normalized and faded mono 32 kHz 16-bit WAV.

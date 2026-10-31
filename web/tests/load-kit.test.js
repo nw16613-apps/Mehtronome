@@ -56,3 +56,12 @@ test('empty and non-finite recordings cannot start a corrupt audio worklet',asyn
     }
   });
 });
+
+test('sample loading limits simultaneous decodes while retaining every bank',async()=>{
+ const original=globalThis.fetch;let running=0,peak=0;
+ globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(2)});
+ try{const audio=context(),load=createSampleLoader(Object.fromEntries(Array.from({length:21},(_,i)=>['sample'+i,'sample.wav'])));
+ const result=await load({...audio,async decodeAudioData(data){running++;peak=Math.max(peak,running);await new Promise(resolve=>setTimeout(resolve,1));const buffer=await audio.decodeAudioData(data);running--;return buffer;}});
+ assert.equal(Object.keys(result).length,21);assert.equal(peak,4);
+ }finally{globalThis.fetch=original;}
+});

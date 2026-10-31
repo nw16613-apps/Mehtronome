@@ -1,5 +1,5 @@
 import {installBackingStyles} from './practice/backing-styles-view.js';
-import {backingStyleForControls} from './practice/backing-styles.js';
+import {backingStyleInstruments,backingStyleForControls} from './practice/backing-styles.js';
 import {withExerciseResolution,resolutionBackingSettings,singleChordExercisePlan} from './practice/exercise-resolution.js';
 import {scaleStartingState} from './practice/scale-start.js';
 import {arpeggioStartingChoices} from './practice/arpeggio-start.js';
@@ -953,7 +953,7 @@ function updateSpace() {
   }
 }
 function update() {
-  if(backingStyleUi)settings.backingStyle=backingStyleUi.sync();
+  if(backingStyleUi){settings.backingStyle=backingStyleUi.sync();Object.assign(settings,backingStyleInstruments(settings.backingStyle));}
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');

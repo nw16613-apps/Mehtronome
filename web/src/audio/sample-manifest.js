@@ -2,6 +2,28 @@
 // are documented in samples/README.md and samples/CREDITS.md.
 // Literal URLs let Vite fingerprint and bundle every recording.
 export const SAMPLE_FILES = {
+  piano55: new URL('./samples/band/piano55.wav', import.meta.url),
+  piano62: new URL('./samples/band/piano62.wav', import.meta.url),
+  piano69: new URL('./samples/band/piano69.wav', import.meta.url),
+  piano76: new URL('./samples/band/piano76.wav', import.meta.url),
+  piano83: new URL('./samples/band/piano83.wav', import.meta.url),
+  electricGuitar57: new URL('./samples/band/electricGuitar57.wav', import.meta.url),
+  electricGuitar63: new URL('./samples/band/electricGuitar63.wav', import.meta.url),
+  electricGuitar69: new URL('./samples/band/electricGuitar69.wav', import.meta.url),
+  electricGuitar75: new URL('./samples/band/electricGuitar75.wav', import.meta.url),
+  electricGuitar81: new URL('./samples/band/electricGuitar81.wav', import.meta.url),
+  nylonGuitar54: new URL('./samples/band/nylonGuitar54.wav', import.meta.url),
+  nylonGuitar61: new URL('./samples/band/nylonGuitar61.wav', import.meta.url),
+  nylonGuitar68: new URL('./samples/band/nylonGuitar68.wav', import.meta.url),
+  nylonGuitar76: new URL('./samples/band/nylonGuitar76.wav', import.meta.url),
+  upright28: new URL('./samples/band/upright28.wav', import.meta.url),
+  upright36: new URL('./samples/band/upright36.wav', import.meta.url),
+  upright42: new URL('./samples/band/upright42.wav', import.meta.url),
+  upright49: new URL('./samples/band/upright49.wav', import.meta.url),
+  upright52: new URL('./samples/band/upright52.wav', import.meta.url),
+  tambourine1: new URL('./samples/band/tambourine1.wav', import.meta.url),
+  tambourine2: new URL('./samples/band/tambourine2.wav', import.meta.url),
+
   kick: new URL('./samples/kick.wav', import.meta.url),
   kick2: new URL('./samples/kick2.wav', import.meta.url),
   snare: new URL('./samples/snare.wav', import.meta.url),

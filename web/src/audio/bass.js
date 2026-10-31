@@ -1,3 +1,4 @@
+import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import { BASS_WAVE, readWave } from './waves.js';
 import { BASS_SAMPLE_ZONES } from './sample-map.js';
 
@@ -52,6 +53,7 @@ export class SampledBass {
       group.samples.push(sample);
     }
     this.zones.sort((a,b)=>a.rootMidi-b.rootMidi);
+    this.banks={electric:this.zones,upright:INSTRUMENT_SAMPLE_ZONES.upright.flatMap(zone=>kit?.[zone.id]?.length?[{rootMidi:zone.rootMidi,samples:[kit[zone.id]]}]:[])};
     this.clear();
   }
 
@@ -64,7 +66,7 @@ export class SampledBass {
     this.roundRobin.clear();
   }
 
-  noteOn(midi, lengthSeconds, gain=1, style='roots') {
+  noteOn(midi, lengthSeconds, gain=1, style='roots',instrument='electric') {
     if (!Number.isFinite(midi) || !Number.isFinite(lengthSeconds) || lengthSeconds<=0) return null;
     const articulation=ARTICULATIONS[style] || ARTICULATIONS.roots;
     const pitch=Math.max(24,Math.min(72,midi));
@@ -74,7 +76,8 @@ export class SampledBass {
     for (const old of this.voices) old.releasing=true;
     const voice=this.voices[this.cursor++%this.voices.length];
     let zone=null;
-    for (const candidate of this.zones) {
+    const zones=this.banks[instrument]?.length?this.banks[instrument]:this.zones;
+    for (const candidate of zones) {
       if (!zone || Math.abs(pitch-candidate.rootMidi)<Math.abs(pitch-zone.rootMidi)) zone=candidate;
     }
     let sample=null;

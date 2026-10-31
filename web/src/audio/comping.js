@@ -1,3 +1,4 @@
+import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision} from './groove-time.js';
 export const COMPING_PATTERNS={
@@ -10,6 +11,7 @@ export const COMPING_MOVEMENTS={
   response:'Chord responses', voiceLead:'Voice-led chords',
 };
 export const COMPING_TONES={
+  acousticPiano:'Acoustic piano',softPiano:'Soft acoustic piano',cleanGuitar:'Clean electric guitar',bluesGuitar:'Blues electric guitar',nylonGuitar:'Nylon-string guitar',
   brightKeys:'Bright percussive keys', brightTine:'Bright electric tine', clav:'Dry clav-style keys',
   warmTine:'Warm tine', felt:'Dark felt electric', suitcase:'Suitcase shimmer', reed:'Reed electric',
 };
@@ -84,8 +86,11 @@ const TONE_SHAPES={
  reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
 };
 
+for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
+
 export class CompingInstrument{
-  constructor(rate){this.rate=rate;this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  constructor(rate){this.rate=rate;this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  installKit(kit){this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent){
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove);
@@ -108,6 +113,8 @@ export class CompingInstrument{
       const voice=this.voices[this.cursor++%this.voices.length];
       const shape=this.shapes[tone]||this.shapes.warmTine;
       Object.assign(voice,{shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
+      voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
     onEvent?.({type,sample,step,notes:pitches,duration,velocity});
@@ -121,6 +128,17 @@ export class CompingInstrument{
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;
       if(voice.age===voice.releaseAt)voice.release=voice.firstRelease;else if(voice.age>voice.releaseAt)voice.release*=shape.releaseFactor;
       const release=voice.release;if(release<.0005)voice.active=false;
+      if(voice.pcm){
+        const position=voice.samplePosition,index=Math.floor(position),pcm=voice.pcm;
+        voice.samplePosition+=voice.sampleIncrement;
+        if(index>=pcm.length-1){voice.active=false;continue;}
+        if(!audible)continue;
+        const value=pcm[index]+(pcm[index+1]-pcm[index])*(position-index);
+        voice.filtered+=voice.filterAlpha*(value-voice.filtered);
+        const wave=shape.drive?Math.tanh(voice.filtered*shape.drive)/Math.tanh(shape.drive):voice.filtered;
+        output+=wave*voice.gain*Math.min(1,voice.age/shape.attackFrames)*release;
+        continue;
+      }
       // Muted voices retain their age, envelope and oscillator phase without
       // allocating tone objects or evaluating inaudible FM oscillators.
       if(!audible)continue;

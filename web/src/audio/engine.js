@@ -11,7 +11,7 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  backingStyle:'popRock', mutedChannels:'', extensionMorph:true, extensionBars:8,
+  backingStyle:'popRock',bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
@@ -166,6 +166,7 @@ export class Engine {
   installDrumKit(kit) {
     this.drumKit = kit;
     this.rhythm.installKit(kit);
+    this.comping.installKit(kit);
   }
 
   reset() {
@@ -176,6 +177,7 @@ export class Engine {
     this.sequence = new Sequence(this.rate);
     this.rhythm = new Rhythm(this.rate, this.drumKit);
     this.comping = new CompingInstrument(this.rate);
+    this.comping.installKit(this.drumKit);
     this.drumsLevel = 0;
     this.meterPeaks = new Float32Array(12);
     this.bassLevel = 0;

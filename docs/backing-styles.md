@@ -32,3 +32,9 @@ Comping never adds an isolated single-note hook between chord hits. Each attack 
 Base voicings retain the selected chord quality and a suitable written extension when present (the exercise seventh-chord limit does not apply to backing). Triads stay triads; two-tone chords use octave doubling without inventing a third or seventh. Compact inversions stay in the keyboard register. Seven-note modal alternatives use complete alternate-note triads sharing a third/seventh guide tone with the backing chord; every note belongs to the current scale. Other collection sizes retain actual chord inversions. Future harmony is not played before its change.
 
 The removed hook generator and single-note event path cannot be reactivated by old saved movement settings. The separate Melodic movement track and its mute, rhythm and note-source behavior are unchanged.
+
+### Genre instruments
+
+Each style also selects its comping instrument, bass bank and acoustic-kit treatment. Pop/rock uses clean electric guitar; blues uses the same recorded guitar with modest drive. Traditional jazz and Latin use acoustic piano; Motown uses clipped piano plus recorded tambourine; bossa uses nylon guitar. Ballad uses softened acoustic piano. Traditional jazz, bossa, Latin and ballad use plucked upright bass; the other styles use fingerstyle electric bass. Fusion and neo-soul retain electric tine keys; funk retains dry clav-style keys.
+
+The drum treatments share the existing acoustic recordings and vary damping/brightness; they are not separate recorded kits. Instrument banks load before transport, with at most four simultaneous decodes, and remain installed across restarts and live style changes. The comping sampler keeps the existing 32-voice bound and ages muted voices. Sample sources and licences ship at `/audio-credits.html`; source hashes and pitch centres are in `web/src/audio/samples/band/sources.json`.

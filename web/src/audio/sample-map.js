@@ -1,5 +1,6 @@
 // Pure metadata shared with the audio worklet, where URL is unavailable.
 export const DRUM_SAMPLE_GROUPS = {
+  tambourine:['tambourine1','tambourine2'],
   "kick": [
     "kick",
     "kick2"

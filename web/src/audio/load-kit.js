@@ -8,7 +8,8 @@ export function createSampleLoader(files) {
     const rate = context.sampleRate;
     let pending = decoded.get(rate);
     if (!pending) {
-      pending = Promise.all(Object.entries(files).map(async ([name, url]) => {
+      const entries=Object.entries(files),results=new Array(entries.length);let cursor=0;
+      const decode=async ([name,url]) => {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Backing samples could not load. Please try Start again.');
         const buffer = await context.decodeAudioData(await response.arrayBuffer());
@@ -28,7 +29,7 @@ export function createSampleLoader(files) {
         let peak = 0;
         for (let i = 0; i < pcm.length; i++) { pcm[i] -= mean; peak = Math.max(peak, Math.abs(pcm[i])); }
         if (peak < 1e-7) throw new Error('A backing sample was empty. Please try Start again.');
-        const gain = (name.startsWith('bass') ? .8 : .85) / peak;
+        const gain = ((name.startsWith('bass')||name.startsWith('upright')) ? .8 : .85) / peak;
         // Short edge fades prevent a cropped recording creating a discontinuity.
         const attack = Math.max(1, Math.round(rate * .0005));
         const release = Math.max(1, Math.round(rate * .012));
@@ -36,7 +37,8 @@ export function createSampleLoader(files) {
           pcm[i] *= gain * Math.min(1, i / attack, (pcm.length - 1 - i) / release);
         }
         return [name, pcm];
-      })).then(entries => Object.fromEntries(entries));
+      };
+      pending=Promise.all(Array.from({length:Math.min(4,entries.length)},async()=>{while(cursor<entries.length){const index=cursor++;results[index]=await decode(entries[index]);}})).then(()=>Object.fromEntries(results));
       decoded.set(rate, pending);
       // A failed first load must be retryable, including after a new context.
       pending.catch(() => { if (decoded.get(rate) === pending) decoded.delete(rate); });
