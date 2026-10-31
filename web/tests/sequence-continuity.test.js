@@ -37,7 +37,11 @@ test('every directional family selects the nearest forward cell through jazz, mo
    const gs=progressionExerciseGroups(hs,hs.map(()=>4),fretboardFor(hs[0],shapes[0]),{study,motion,positionPath});let previous=null,edge=null;direction=motion==='ascending'?1:-1;
    for(const g of gs){
     let source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).filter(c=>c.notes?.length&&Number.isFinite(c.sequenceAnchor));
-    if(previous!==null&&g.sequenceAnchors.length){
+    if(previous!==null&&g.sequenceAnchors.length&&g.cellOffsets?.[0]>0){
+     const prev=gs[g.slot-1],ordinal=g.cellOffsets[0],old=cagedStudy(prev.board,prev.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).find(c=>c.sequenceAnchor===prev.sequenceAnchors.at(-1));
+     const target=old.notes[ordinal].midi,closest=source.map((cell,index)=>({cell,index,distance:Math.abs(cell.notes[ordinal].midi-target)})).sort((a,b)=>a.distance-b.distance||a.index-b.index)[0].cell;
+     assert.equal(g.sequenceAnchors[0],closest.sequenceAnchor);assert.equal(g.notes[0].midi,closest.notes[ordinal].midi);
+    }else if(previous!==null&&g.sequenceAnchors.length){
      const forward=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
      if(!forward.length){previous=edge;direction=-direction;source=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'});}
      const next=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);

@@ -408,6 +408,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='fourths')return scalePatternExercise(board,harmony,motion,[0,3],'4ths');
   if(study==='sixths')return scalePatternExercise(board,harmony,motion,[0,5],'6ths');
   if(study==='digital1324')return scalePatternExercise(board,harmony,motion,[0,2,1,3],'1–3–2–4');
+  if(study==='arpgroups3'||study==='arpgroups4'){const count=study==='arpgroups3'?3:4;return scalePatternExercise(board,{...harmony,scalePcs:harmony.chordPcs,scaleNames:harmony.tones},motion,Array.from({length:count},(_,i)=>i),'arpeggio group of '+count);}
   if(study==='groups3')return scalePatternExercise(board,harmony,motion,[0,1,2],'group of 3');
   if(study==='groups4')return scalePatternExercise(board,harmony,motion,[0,1,2,3],'group of 4');
   if(study==='alternating')return motion==='ascending'?alternatingDiatonic(board,harmony,material):motion==='descending'?alternatingDiatonic(board,harmony,material,true):combinedAlternatingDiatonic(board,harmony,material,motion==='down-up');

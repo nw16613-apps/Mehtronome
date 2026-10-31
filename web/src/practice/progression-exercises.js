@@ -16,7 +16,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  if(study==='positionalscale'&&rhythm==='triplets'&&stage!=='cell')return positionalScaleTripletGroups(harmonies,durations,path,options);
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
- const flowingCells=study==='harmonized'&&stage!=='cell';
+ const flowingCells=['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
@@ -50,7 +50,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     // continuing upward to it from the nearest pitch.
     cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);
    }else if(flowingCells&&cellOffset&&pendingCell&&cells.length){
-    // A change inside a stack adapts its unplayed tones at the same ordinal.
+    // A change inside a group adapts its unplayed tones at the same ordinal.
     // Compare the next structural tone, not a fresh cell's starting note.
     const target=pendingCell.notes[cellOffset].midi;
     cellIndex=cells.map((cell,index)=>({index,distance:Math.abs(cell.notes[cellOffset].midi-target)}))
