@@ -13,7 +13,7 @@ test('CAGED chord-quality shapes render every sounded string and audition the ex
  });
  await page.goto('/');await page.locator('[data-workspace-target="guitar-title"]').click();
  await page.locator('#show-grip').check();
- const golden:{[key:string]:(number|null)[]}={I:[5,7,5,5,5,5],II:[null,null,7,9,8,8],III:[null,12,10,12,10,12],IV:[null,12,14,12,13,12],V:[5,3,2,2,null,3]};
+ const golden:{[key:string]:(number|null)[]}={I:[5,7,5,5,5,5],II:[null,null,7,9,8,8],III:[null,12,10,12,10,12],IV:[null,12,14,12,13,12],V:[5,null,5,5,5,null]};
  for(const [position,frets]of Object.entries(golden)){
   await page.locator(`#position-overview [data-overview-position="${position}"]`).click();
   const card=page.locator('#guitar-diagrams .position-card');

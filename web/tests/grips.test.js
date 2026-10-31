@@ -127,3 +127,17 @@ test('chord alterations outside per-string scale windows display without changin
  assert.equal((svg.match(/class="grip-ring"/g)||[]).length,g.notes.length);
  assert.equal(JSON.stringify(b),before);
 });
+
+ test('G-framework minor seventh uses the practical E/D/G/B grip in every key and compatible mode',()=>{
+  for(const mode of ['dorian','minor','phrygian'])for(let key=0;key<12;key++)for(const chord of ['min7','min9','min11','min13']){
+    const h=harmonyAt({key,mode,chord});
+    const b=POSITIONS.map(p=>fretboardFor(h,p.shape)).find(b=>cagedPositionFor(b).shape==='G');
+    const g=checkGrip(h,b),root=g.notes[0].fret;
+    assert.deepEqual(g.notes.map(n=>n.string),[0,2,3,4]);
+    assert.ok(g.notes.every(n=>n.fret===root));
+    assert.deepEqual(g.intervals,['1','♭7','♭3','5']);
+    assert.deepEqual(g.muted,[1,5]);
+  }
+  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),b=fretboardFor(h,'E');
+  assert.deepEqual(recommendedGrip(h,b).notes.map(n=>[n.string,n.fret]),[[0,5],[2,5],[3,5],[4,5]]);
+ });

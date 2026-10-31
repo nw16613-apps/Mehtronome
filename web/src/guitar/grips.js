@@ -92,6 +92,17 @@ export function recommendedGrip(harmony,board) {
   for(const root of roots){
     const offset=root.fret-skeleton.frets[skeleton.rootString];
     targets=skeleton.frets.map(f=>f===null?null:f+offset);
+    // The full G-family minor-seventh shape is awkward when moved up the
+    // neck. Prefer the familiar root–seventh–third–fifth grip on E/D/G/B,
+    // all at the root fret (Am7: 5 × 5 5 5 ×). Extensions are disclosed as
+    // omissions; altered core tones still use the quality-aware search.
+    if(framework==='G'&&[0,3,7,10].every(interval=>pcs.includes((board.rootPc+interval)%12))){
+      const compact=[0,2,3,4].map(string=>candidates.find(n=>n.string===string&&n.fret===root.fret));
+      if(compact.every(Boolean)){
+        consider(compact);
+        if(best)return best;
+      }
+    }
     search(0,[]);
   }
   return best;
