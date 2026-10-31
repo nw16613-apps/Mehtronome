@@ -199,7 +199,10 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   TUNING.forEach((_, string) => {
     svg += `<line class="guitar-string" style="stroke-width:${2.2-string*.25}" x1="${nut}" x2="440" y1="${y(string)}" y2="${y(string)}"/><text class="string-name" x="15" y="${y(string)+4}" text-anchor="middle">${['E','A','D','G','B','E'][string]}</text>`;
   });
-  for (const note of board.notes) {
+  // Chord-shape alterations may sit outside a scale's per-string fingering.
+  // Display them only with the grip; never change the underlying scale board.
+  const diagramNotes=shownGrip?[...board.notes,...shownGrip.notes.filter(g=>!board.notes.some(n=>n.string===g.string&&n.fret===g.fret))]:board.notes;
+  for (const note of diagramNotes) {
     const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
     const colour = !theory && highlight && note.characteristic;
     const finger = shownGrip?.notes.some(n=>n.string===note.string && n.fret===note.fret);

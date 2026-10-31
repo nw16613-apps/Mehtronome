@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {recommendedGrip} from '../src/guitar/grips.js';
-import {POSITIONS,fretboardFor,diagramSvg,TUNING} from '../src/guitar/fretboard.js';
+import {recommendedGrip,CAGED_GRIP_SHAPES} from '../src/guitar/grips.js';
+import {POSITIONS,fretboardFor,diagramSvg,TUNING,cagedPositionFor} from '../src/guitar/fretboard.js';
 import {CHORDS,MODES,harmonyAt} from '../src/audio/music.js';
 import {Engine} from '../src/audio/engine.js';
 
@@ -9,14 +9,19 @@ function checkGrip(info,board){
   const snapshot=JSON.stringify(board),grip=recommendedGrip(info,board);
   assert.ok(grip,`${info.name}${info.suffix} ${info.mode} ${board.shape}`);
   assert.equal(JSON.stringify(board),snapshot); // Recommendations cannot alter established CAGED fingerings.
-  assert.ok(grip.notes.length>=3&&grip.notes.length<=4);
+  assert.ok(grip.notes.length>=3&&grip.notes.length<=6);
   assert.equal(new Set(grip.notes.map(n=>n.string)).size,grip.notes.length);
   assert.ok(grip.span<=3);
   for(const note of grip.notes){
-    assert.ok(board.notes.some(n=>n.string===note.string&&n.fret===note.fret&&n.midi===note.midi));
+    assert.ok(note.fret>=board.start&&note.fret<=board.end);
     assert.ok(info.chordPcs.includes(note.pc));assert.equal(note.midi,TUNING[note.string]+note.fret);
     assert.ok(Number.isInteger(note.finger)&&note.finger>=1&&note.finger<=4);
   }
+  assert.equal(grip.framework,cagedPositionFor(board).shape);
+  const skeleton=CAGED_GRIP_SHAPES[grip.framework];
+  assert.equal(grip.notes[0].pc,board.rootPc);
+  assert.ok(grip.notes.some(n=>n.string===skeleton.rootString&&n.pc===board.rootPc));
+  assert.ok(grip.notes.every(n=>skeleton.frets[n.string]!==null));
   const played=new Set(grip.notes.map(n=>n.pc));
   assert.deepEqual(grip.omitted,info.tones.filter((_,i)=>!played.has(info.chordPcs[i])));
   assert.equal(grip.muted.length,6-grip.notes.length);
@@ -28,7 +33,7 @@ function checkGrip(info,board){
   return grip;
 }
 
-test('compact playable grips fit every chord, key and corrected CAGED position',()=>{
+test('shape-derived playable grips fit every chord, key and corrected CAGED position',()=>{
   for(const chord of Object.keys(CHORDS))for(let key=0;key<12;key++)for(const p of POSITIONS){
     const info=harmonyAt({key,mode:'major',chord});checkGrip(info,fretboardFor(info,p.shape));
   }
@@ -43,14 +48,13 @@ test('modal and progression grips voice the selected harmony, including parent-m
   }
 });
 
-test('Cmaj9 recommendation retains root, third, seventh and ninth and discloses the omitted fifth',()=>{
+test('Cmaj9 recommendation retains root, third, seventh and ninth and discloses omissions',()=>{
   const info=harmonyAt({key:0,mode:'major',chord:'maj9'}),grip=checkGrip(info,fretboardFor(info,'A'));
-  assert.deepEqual(new Set(grip.notes.map(n=>n.pc)),new Set([0,4,11,2]));
-  assert.deepEqual(grip.omitted,['G']);
+  for(const pc of [0,4,11,2])assert.ok(grip.notes.some(n=>n.pc===pc));
   const svg=diagramSvg(fretboardFor(info,'A'),false,MODES.major.degrees,'Grip',true,grip);
-  assert.equal((svg.match(/class="grip-ring"/g)||[]).length,4);
+  assert.equal((svg.match(/class="grip-ring"/g)||[]).length,grip.notes.length);
   assert.equal((svg.match(/class="grip-finger"/g)||[]).length,0);
-  assert.equal((svg.match(/class="grip-mute"/g)||[]).length,2);
+  assert.equal((svg.match(/class="grip-mute"/g)||[]).length,grip.muted.length);
   assert.ok(svg.includes('recommended chord tone'));
   assert.ok(svg.includes('characteristic-ring'));
   assert.ok(!diagramSvg(fretboardFor(info,'A'),false,MODES.major.degrees,'Scale',true).includes('grip-active'));
@@ -90,4 +94,36 @@ test('acoustic grips strum exact pitches independently of the backing sound and 
     return left;
   };
   assert.deepEqual(render('warm'),render('glass'));
+});
+
+// Golden shapes are independent of the scale-position geometry. In particular,
+// A Dorian's E framework lives in the parent scale's D geometry.
+test('major triads reproduce all five standard movable CAGED skeletons in every key',()=>{
+ for(let key=0;key<12;key++)for(const p of POSITIONS){
+  const h=harmonyAt({key,mode:'major',chord:'major'}),b=fretboardFor(h,p.shape),g=checkGrip(h,b);
+  const skeleton=CAGED_GRIP_SHAPES[g.framework],root=g.notes.find(n=>n.string===skeleton.rootString);
+  const offset=root.fret-skeleton.frets[skeleton.rootString];
+  assert.deepEqual(Array.from({length:6},(_,string)=>g.notes.find(n=>n.string===string)?.fret??null),skeleton.frets.map(f=>f===null?null:f+offset));
+ }
+});
+test('A Dorian chords retain the expected E, A and D quality variations',()=>{
+ const gold={
+  minor:{E:[5,7,7,5,5,5],A:[null,12,14,14,13,12],D:[null,null,7,9,10,8]},
+  min7:{E:[5,7,5,5,5,5],A:[null,12,14,12,13,12],D:[null,null,7,9,8,8]},
+  maj7:{E:[5,7,6,6,5,5],A:[null,12,14,13,14,12],D:[null,null,7,9,9,9]},
+  dom7:{E:[5,7,5,6,5,5],A:[null,12,14,12,14,12],D:[null,null,7,9,8,9]},
+ };
+ for(const [chord,shapes]of Object.entries(gold))for(const [framework,frets]of Object.entries(shapes)){
+  const h=harmonyAt({key:9,mode:'dorian',chord});
+  const b=POSITIONS.map(p=>fretboardFor(h,p.shape)).find(b=>cagedPositionFor(b).shape===framework);
+  const g=checkGrip(h,b);
+  assert.deepEqual(Array.from({length:6},(_,string)=>g.notes.find(n=>n.string===string)?.fret??null),frets);
+ }
+});
+test('chord alterations outside per-string scale windows display without changing the scale',()=>{
+ const h=harmonyAt({key:9,mode:'dorian',chord:'maj7'}),b=fretboardFor(h,'A'),before=JSON.stringify(b);
+ const g=checkGrip(h,b),extra=g.notes.filter(g=>!b.notes.some(n=>n.string===g.string&&n.fret===g.fret));
+ assert.ok(extra.length);const svg=diagramSvg(b,false,MODES.dorian.degrees,'Chord',true,g);
+ assert.equal((svg.match(/class="grip-ring"/g)||[]).length,g.notes.length);
+ assert.equal(JSON.stringify(b),before);
 });

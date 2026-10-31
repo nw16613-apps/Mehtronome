@@ -305,7 +305,7 @@ export class Engine {
     this.auditioning = true;
     this.nextBeat = false;
     this.setChord(step);
-    if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 4 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
+    if (Array.isArray(notes) && notes.length >= 3 && notes.length <= 6 && notes.every(n=>Number.isInteger(n) && n>=40 && n<=88)) {
       this.chordMidi = [...notes];
       this.frequencies = notes.map(note=>440 * 2 ** ((note - 69) / 12));
       this.padVoicing=notes.map((midi,index)=>({midi,role:index?'body':'root',weight:1}));

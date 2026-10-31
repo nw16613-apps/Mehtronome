@@ -1,19 +1,19 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {harmonyAt} from '../src/audio/music.js';
-import {fretboardFor,cagedPositionFor} from '../src/guitar/fretboard.js';
+import {fretboardFor,cagedPositionFor,TUNING} from '../src/guitar/fretboard.js';
 import {notationChordDiagram} from '../src/practice/notation-chord-diagram.js';
 import {progressionStudyPlan} from '../src/practice/progression-timing.js';
 import {progressionNotationSvg} from '../src/practice/progression-notation.js';
 const diagramCount=svg=>(svg.match(/class="notation-chord-diagram"/g)||[]).length;
-test('every plotted grip note belongs to the chord and the assigned CAGED board',()=>{
+test('every plotted grip note belongs to the chord and assigned position fret range',()=>{
  for(let key=0;key<12;key++)for(const shape of ['C','A','G','E','D'])for(const [mode,chord]of [['dorian','min7'],['mixolydian','dom7'],['major','maj7'],['dorian','min13'],['locrian','halfDim']]){
   const h=harmonyAt({key,mode,chord}),board=fretboardFor(h,shape),position=cagedPositionFor(board),svg=notationChordDiagram(h,board,position,100,58);
   assert.ok(svg.includes(`data-position="${position.numeral}"`));assert.ok(svg.includes('role="img"'));
   const dots=[...svg.matchAll(/data-string="(\d+)" data-fret="(\d+)"/g)];
   if(svg.includes('data-grip-available="false"')){assert.equal(dots.length,0);continue;}
   assert.ok(dots.length>=3);assert.equal(new Set(dots.map(d=>d[1])).size,dots.length);
-  for(const dot of dots){const note=board.notes.find(n=>n.string===Number(dot[1])&&n.fret===Number(dot[2]));assert.ok(note);assert.ok(h.chordPcs.includes(note.pc));}
+  for(const dot of dots){const fret=Number(dot[2]);assert.ok(fret>=board.start&&fret<=board.end);assert.ok(h.chordPcs.includes((TUNING[Number(dot[1])]+fret)%12));}
  }
 });
 test('repeated chord symbols remain suppressed while changed positions show their own grips',()=>{
@@ -24,10 +24,9 @@ test('repeated chord symbols remain suppressed while changed positions show thei
  assert.equal(diagramCount(off),0);assert.equal(diagramCount(on),2);
  assert.equal((on.match(/class="notation-chord-symbol"/g)||[]).length,1);
  assert.ok(on.includes('data-position="II"'));assert.ok(on.includes('data-position="III"'));
- // Adjacent CAGED regions can share a valid grip; their position labels
- // still need separate diagrams at the position-change beat.
+ // Position changes retain their own diagrams for fuller or reduced shapes.
  const chunks=on.split('class="notation-chord-diagram"').slice(1);
- for(const chunk of chunks)assert.equal([...chunk.matchAll(/class="notation-grip-dot"/g)].length,4);
+ for(const chunk of chunks)assert.ok([...chunk.matchAll(/class="notation-grip-dot"/g)].length>=3);
 });
 test('an unavailable position grip is explicit instead of substituting another shape',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),svg=notationChordDiagram(h,{notes:[]},{numeral:'III',shape:'C'},0,0);
