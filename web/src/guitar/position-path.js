@@ -25,19 +25,24 @@ function regionCost(candidate,region) {
 
 /**
  * Choose one of the five displayed CAGED positions for every harmony while
- * keeping the route inside the requested region and avoiding needless jumps.
+ * anchoring the opening in the requested region, then favouring continuity.
  */
 export function progressionPositionPath(harmonies,region=FRET_REGIONS.middle) {
   if(!harmonies.length)return [];
   const rows=harmonies.map(candidates);
-  let costs=rows[0].map(candidate=>regionCost(candidate,region));
+  const openingCosts=rows[0].map(candidate=>regionCost(candidate,region));
+  const opening=openingCosts.indexOf(Math.min(...openingCosts));
+  // Later chords must not pull the opening out of the selected starting area.
+  let costs=rows[0].map((_,index)=>index===opening?0:Infinity);
   const previous=rows.map(()=>Array(POSITIONS.length).fill(-1));
   for(let row=1;row<rows.length;row++){
     const next=rows[row].map((candidate,index)=>{
       let best=Infinity,bestIndex=0;
       for(let from=0;from<rows[row-1].length;from++){
-        const movement=Math.abs(candidate.center-rows[row-1][from].center)*.45;
-        const cost=costs[from]+movement+regionCost(candidate,region);
+        const movement=Math.abs(candidate.center-rows[row-1][from].center);
+        // Keep the region as a gentle preference rather than pulling each
+        // change back towards it at the expense of a nearby continuation.
+        const cost=costs[from]+movement+regionCost(candidate,region)*.05;
         if(cost<best){best=cost;bestIndex=from;}
       }
       previous[row][index]=bestIndex;

@@ -704,7 +704,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const featured=settings.progression?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!settings.progression;
   select('position-region').parentElement!.hidden=!following;
-  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic route. Choosing a position below switches this chart slot to manual; other slots keep their positions.':'Manual positions. Choose a chart slot, then its position; other slots stay unchanged.';
+  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic route. The region sets the opening position; later chords follow nearby shapes. Choosing a position below switches this chart slot to manual; other slots keep their positions.':'Manual positions. Choose a chart slot, then its position; other slots stay unchanged.';
   select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
   const info = chordInfo(step);
