@@ -26,16 +26,15 @@ test('all five positions use exactly nine consecutive pitches and repeat the two
   for(const group of gs){assert.equal(group.positionalSpan.length,9);assert.deepEqual(group.notes.map(n=>n.midi),expected);assert.equal(group.phraseCycleLength,16);assert.deepEqual(group.cellLengths,[8,8]);}
  }
 });
-test('every position/chord transition retains phrase phase rather than skipping to a new note index',()=>{
+test('shape default starts each new position at its directional boundary',()=>{
  for(const chord of Object.keys(CHORDS))for(const key of [0,6,9])for(const from of shapes)for(const to of shapes)if(from!==to)for(const motion of ['ascending','descending'])for(const duration of [1,2,4]){
-  const h=harmonyAt({key,mode:recommendedMode(chord),chord}),gs=run([h,h],[from,to],[duration,4],motion);let cursor=0;
+  const h=harmonyAt({key,mode:recommendedMode(chord),chord}),gs=run([h,h],[from,to],[duration,4],motion);
   for(const group of gs){
    const available=[...new Set(group.board.notes.filter(n=>arpeggioHarmony(h).chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),span=group.positionalSpan.map(n=>n.midi),size=Math.min(9,available.length);
    assert.equal(span.length,size);assert.deepEqual(span,motion==='ascending'?available.slice(0,size):available.slice(-size));
-   const cycleLength=Math.max(1,2*(size-1));assert.equal(group.phrasePhase,cursor%cycleLength);
-   for(let i=0;i<group.notes.length;i++){const phase=(cursor+i)%cycleLength,upIndex=phase<size?phase:cycleLength-phase,index=motion==='ascending'?upIndex:size-1-upIndex;assert.equal(group.notes[i].midi,span[index]);}
+   const cycleLength=Math.max(1,2*(size-1));assert.equal(group.phrasePhase,0);
+   for(let i=0;i<group.notes.length;i++){const phase=i%cycleLength,upIndex=phase<size?phase:cycleLength-phase,index=motion==='ascending'?upIndex:size-1-upIndex;assert.equal(group.notes[i].midi,span[index]);}
    if(size<9)assert.ok(group.warning.includes('shorter phrase'));
-   cursor+=group.notes.length;
   }
  }
 });

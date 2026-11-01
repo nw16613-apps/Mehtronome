@@ -16,8 +16,8 @@ export function rangePhrase(span,descending){
  return {cycle,sections};
 }
 
-/** Shape default keeps ordinal phase across changes; explicit degrees re-enter
- * each new harmony/position. Fixed boundary spans prevent pitch proximity from
+/** Shape default enters each new harmony/position at its directional boundary;
+ * explicit degrees re-enter on their chosen tone. Fixed boundary spans prevent pitch proximity from
  * silently skipping the lowest (upward-first) or highest available pitch. */
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
@@ -31,7 +31,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   const patternStart=resolveArpeggioStart(span,harmony,selectedStart==='default'?descending:!nextUp,selectedStart);
   const {cycle,sections}=rangePhrase(span,descending);
   const sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
-  if(selectedStart==='default'&&(explicit||previousStart!==selectedStart))phaseOffset=(sections.find(s=>s.up===nextUp)?.start||0)-cursor;
+  if(selectedStart==='default'&&(explicit||context!==previousContext||previousStart!==selectedStart))phaseOffset=-cursor;
   if(selectedStart!=='default'&&(explicit||context!==previousContext||selectedStart!==previousStart)){
    // A selected degree is an entry instruction for every new harmony/shape.
    // Choose its occurrence in the ongoing direction; unchanged bars continue.
