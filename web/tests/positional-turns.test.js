@@ -31,7 +31,7 @@ test('every position/chord transition retains phrase phase rather than skipping 
   const h=harmonyAt({key,mode:recommendedMode(chord),chord}),gs=run([h,h],[from,to],[duration,4],motion);let cursor=0;
   for(const group of gs){
    const available=[...new Set(group.board.notes.filter(n=>arpeggioHarmony(h).chordPcs.includes(n.pc)).map(n=>n.midi))].sort((a,b)=>a-b),span=group.positionalSpan.map(n=>n.midi),size=Math.min(9,available.length);
-   assert.equal(span.length,size);assert.deepEqual(span,available.slice(available.indexOf(span[0]),available.indexOf(span[0])+size));
+   assert.equal(span.length,size);assert.deepEqual(span,motion==='ascending'?available.slice(0,size):available.slice(-size));
    const cycleLength=Math.max(1,2*(size-1));assert.equal(group.phrasePhase,cursor%cycleLength);
    for(let i=0;i<group.notes.length;i++){const phase=(cursor+i)%cycleLength,upIndex=phase<size?phase:cycleLength-phase,index=motion==='ascending'?upIndex:size-1-upIndex;assert.equal(group.notes[i].midi,span[index]);}
    if(size<9)assert.ok(group.warning.includes('shorter phrase'));
@@ -60,4 +60,11 @@ test('arpeggios with fewer available pitches stay inside the diagram and disclos
  const h=harmonyAt({key:9,mode:'dorian',chord:'minor'}),[g]=run([h],['C'],[4]);
  assert.ok(g.positionalSpan.length<9);assert.ok(g.warning.includes('shorter phrase'));
  assert.ok(g.notes.every(n=>g.board.notes.some(p=>p.midi===n.midi&&p.string===n.string&&p.fret===n.fret)));
+});
+
+test('mixed screenshot shapes enter their lowest span, including the flat seventh rather than skipping to the root',()=>{
+ const hs=[7,10,1,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'})),groups=run(hs,['C','D','E','G'],[8,8,8,8]);
+ assert.deepEqual(groups.map(g=>[g.notes[0].string,g.notes[0].fret,g.notes[0].midi]),[[0,6,46],[0,6,46],[0,7,47],[0,7,47]]);
+ for(const g of groups){assert.equal(g.positionalSpan.length,9);assert.equal(g.notes.length,32);assert.deepEqual(g.notes.slice(0,16),g.notes.slice(16));}
+ const h=harmonyAt({key:7,mode:'dorian',chord:'min7'}),[g]=run([h],['E'],[4]);assert.equal(g.notes[0].fret,13);assert.equal(g.notes[0].name,'F');assert.equal(g.notes[0].chromaticDegree,'♭7');
 });
