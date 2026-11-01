@@ -12,3 +12,5 @@ export function cardStartChoices(harmony){
  return arpeggioHarmony(harmony).intervals.map(interval=>({value:`${interval.match(/\d+/)[0]}:0`,label:interval}));
 }
 export function cardStartLabel(harmony,value){return value==='default'?'Shape default':cardStartChoices(harmony).find(c=>c.value===value)?.label||`Degree ${value[0]}`;}
+
+export function patternStartRouteValue(harmonies,choices){return patternStartRoute(harmonies).value.replace(/:[0-8]+$/,':'+choices.map(v=>v==='inherit'?0:v==='default'?1:Number(v[0])+1).join(''));}

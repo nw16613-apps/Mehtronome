@@ -72,5 +72,7 @@ export function manualPositionPath(harmonies,automatic,stored='',edit=/** @type 
   const choices=valid?[...digits].map(n=>POSITIONS[Number(n)].numeral):automatic.map(p=>p.numeral);
   if(edit&&Number.isInteger(edit.step)&&edit.step>=0&&edit.step<choices.length&&POSITIONS.some(p=>p.numeral===edit.numeral))choices[edit.step]=edit.numeral;
   const path=harmonies.map((h,i)=>candidates(h).find(p=>p.numeral===choices[i]));
-  return {path,value:prefix+choices.map(n=>POSITIONS.findIndex(p=>p.numeral===n)).join('')};
+  return {path,value:manualPositionRoute(harmonies,choices)};
 }
+
+export function manualPositionRoute(harmonies,choices){return `v1:${routeContext(harmonies)}:${choices.map(n=>POSITIONS.findIndex(p=>p.numeral===n)).join('')}`;}
