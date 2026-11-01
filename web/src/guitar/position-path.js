@@ -74,3 +74,8 @@ export function manualPositionPath(harmonies,automatic,stored='',edit=/** @type 
   const path=harmonies.map((h,i)=>candidates(h).find(p=>p.numeral===choices[i]));
   return {path,value:prefix+choices.map(n=>POSITIONS.findIndex(p=>p.numeral===n)).join('')};
 }
+
+/** Resolve saved CAGED identities against the incoming harmony's actual shapes. */
+export function assignedPositionPath(harmonies,automatic,choices){
+ return harmonies.map((h,i)=>candidates(h).find(p=>p.numeral===choices[i])||automatic[i]);
+}
