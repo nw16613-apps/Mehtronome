@@ -9,7 +9,7 @@ The original adapter ended bar 2 on E52 on the A string, then skipped E52 when i
 - Use up to nine consecutive available core chord-tone pitches at every subdivision, retaining their actual physical coordinates, spelling and written intervals. The complete pitch library remains unchanged for the diagram and other generators.
 - Every upward-first context uses the lowest available nine-note span; every downward-first context uses the highest. This boundary rule applies again at every chord/position change, not only the opening.
 - A nine-note span produces the ordinal cycle 0 1 2 3 4 5 6 7 | 8 7 6 5 4 3 2 1 (mirrored for downward-first). There are no duplicated turning notes.
-- Preserve the phrase cursor across bars and changes of position or harmony. Choose the fixed boundary span independently of the preceding pitch; proximity must not shift the span and skip its outer note. Changing spans never skips ahead in the phrase or changes its ordinal phase.
+- Shape default preserves the phrase cursor across bars and changes of position or harmony. Explicit Pattern start re-enters a new harmony/position on the selected chord degree, preserving the ongoing direction when its range permits. Choose the fixed boundary span independently of the preceding pitch; proximity must not shift the span and skip its outer note. Unchanged harmony/position continues its cycle across bar lines; an explicit degree choice changes the entry phase only at a new context.
 - At sixteenths, each eight-note half lasts two beats. Eighths retain nine pitches and make four beats per half. Triplets keep the same eight attacks per half, taking 8/3 beats each way. Turns flow across bar lines; no run restarts or padding notes force the pattern into a whole number of bars.
 - A region with fewer than the requested nine available chord pitches uses its full shorter span and explicitly reports the shorter phrase. It does not invent pitches, leave the selected diagram or silently pad repeated notes.
 - Continuous scope repeats the cycle. One-run scope includes its turning note, then rests for the remaining slot time. Notation, TAB and playback use the same emitted notes and timing.
@@ -22,7 +22,7 @@ The menu calls the exercise Positional arpeggio, avoiding the claim that every o
 
 ## Pattern start and saved settings
 
-Pattern start rotates the same cycle to the selected structural chord-degree occurrence. All subdivisions expose the same available starts. The former triplet Phrase selector, seven-pitch balanced variants, cycling windows and full-position overlapping runs are retired. Older saved phrase values now use the ordinary traversal while preserving explicit starting degrees and direction. No composed triplet sequence is added.
+Pattern start rotates the same cycle to the selected structural chord-degree occurrence at every new chord or assigned CAGED position, rather than adding that rotation to elapsed notes from the previous chord. Repeated bars of the same harmony and position continue without restarting. Descending entries choose the corresponding upper occurrence so the direction can continue. All subdivisions expose the same available starts. The former triplet Phrase selector, seven-pitch balanced variants, cycling windows and full-position overlapping runs are retired. Older saved phrase values now use the ordinary traversal while preserving explicit starting degrees and direction. No composed triplet sequence is added.
 
 ## Verification
 

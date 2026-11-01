@@ -65,7 +65,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
   }
   let startWarning='';
-  if(scaleTraversal&&slot===0&&options.startTone&&options.startTone!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,options.startTone);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
+  if(scaleTraversal&&(slot===0||context!==previousContext)&&options.startTone&&options.startTone!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,options.startTone);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],sequenceAnchors=[],sequenceDirections=[];

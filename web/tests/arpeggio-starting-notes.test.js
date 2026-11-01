@@ -19,11 +19,17 @@ test('every chord-degree occurrence rotates the same sequence in all modes, root
   for(const [start,choice]of choices(base,motion).entries()){const [g]=run([h],[shape],[8],choice,motion);assert.deepEqual(g.positionalSpan,base.positionalSpan);assert.equal(g.phraseCycleLength,base.phraseCycleLength);assert.equal(g.notes[0].midi,ordered[start]);assert.deepEqual(g.notes.map(n=>n.midi),Array.from({length:16},(_,i)=>expected[(start+i)%expected.length]));}
  }
 });
-test('mixed progression follows chord degree while preserving the original spans and elapsed phrase phase',()=>{
+test('mixed progression re-enters each chord on its selected degree while preserving spans and traversal order',()=>{
  const hs=[harmonyAt({key:9,mode:'dorian',chord:'min7'}),harmonyAt({key:2,mode:'mixolydian',chord:'dom13'}),harmonyAt({key:7,mode:'lydian',chord:'maj9sharp11'}),harmonyAt({key:0,mode:'minor_pentatonic',chord:'min7'})],durations=[1,3,2,6];
  for(const motion of ['ascending','descending'])for(const start of ['1:0','3:0','5:0','7:1']){
-  const base=run(hs,['D','A','E','C'],durations,'default',motion),gs=run(hs,['D','A','E','C'],durations,start,motion);let cursor=0;
-  for(const [i,g]of gs.entries()){assert.deepEqual(g.positionalSpan,base[i].positionalSpan);const labels=choices(g,motion),sameDegree=labels.map((label,index)=>({label,index})).filter(x=>x.label.split(':')[0]===start.split(':')[0]),index=labels.includes(start)?labels.indexOf(start):sameDegree.at(-1)?.index||0,span=g.positionalSpan.map(n=>n.midi),ordered=motion==='descending'?span.toReversed():span,cycle=[...ordered,...ordered.slice(1,-1).toReversed()];assert.deepEqual(g.notes.map(n=>n.midi),Array.from({length:durations[i]*2},(_,n)=>cycle[(cursor+index+n)%cycle.length]));cursor+=g.notes.length;}
+  const base=run(hs,['D','A','E','C'],durations,'default',motion),gs=run(hs,['D','A','E','C'],durations,start,motion);
+  for(const [i,g]of gs.entries()){
+   assert.deepEqual(g.positionalSpan,base[i].positionalSpan);
+   const role=note=>g.harmony.intervals[g.harmony.chordPcs.indexOf(note.pc)]?.match(/\d+/)?.[0],degree=start.split(':')[0];
+   if(g.positionalSpan.some(note=>role(note)===degree))assert.equal(role(g.notes[0]),degree);else assert.match(g.warning,/absent/);
+   const span=g.positionalSpan.map(n=>n.midi),ordered=motion==='descending'?span.toReversed():span,cycle=[...ordered,...ordered.slice(1,-1).toReversed()];
+   assert.deepEqual(g.notes.map(n=>n.midi),Array.from({length:durations[i]*2},(_,n)=>cycle[(g.phrasePhase+n)%cycle.length]));
+  }
  }
  const minor=harmonyAt({key:9,mode:'dorian',chord:'min7'}),major=harmonyAt({key:9,mode:'major',chord:'maj7'}),gs=run([minor,major],['C'],[8,8],'3:0');assert.equal(gs[0].notes[0].pc,0);assert.equal(gs[1].notes[0].pc,1);
 });
