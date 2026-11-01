@@ -1,3 +1,4 @@
+import {patternStartRoute,cardStartLabel} from './practice/pattern-start-route.js';
 import {createMasterOutput,MASTER_VOLUME_KEY,DEFAULT_MASTER_VOLUME,masterVolumePercent} from './audio/master-output.js';
 import {BUS_GAINS} from './audio/mix-balance.js';
 import {installBackingStyles} from './practice/backing-styles-view.js';
@@ -192,7 +193,7 @@ app.innerHTML = `
       <div class="guitar-guide guitar-overview">
         <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
-        <input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
+        <input type="hidden" id="pattern-start-route" value=""><input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Show chord voicing</label><p id="grip-toggle-help" class="guitar-help">Show the suggested chord in every CAGED position and across the full fretboard.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Melodic overlay<select id="theory-view" aria-label="Melodic overlay"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Pentatonic source<select id="theory-choice" aria-label="Pentatonic source"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord voicing</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
@@ -254,6 +255,7 @@ let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
 const exerciseView={study:'positional',material:'seventh',motion:'ascending',rhythm:'sixteenths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',startTone:'default',fretboard:true,setupOpen:false,chordDiagrams:false};
 exerciseView.chordDiagrams=localStorage.getItem('mehtronome-notation-chord-diagrams')==='true';
+input('pattern-start-route').value=localStorage.getItem('mehtronome-pattern-start-route')||'';
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
 let studyHarmony:any,studyBoard:any,studyPosition:any;
 let exerciseBackingStep=0;
@@ -392,6 +394,8 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   studyHarmony=info;studyBoard=board;studyPosition=position;
   if(exerciseView.tempoLinked)exerciseView.tempo=settings.bpm;
   if(!settings.progression&&['guidetones','connections'].includes(exerciseView.study))exerciseView.study='harmonized';
+  const chartHarmonies=settings.progression?Array.from({length:progressionDefinition(settings).roman.length},(_,index)=>chordInfo(index)):[info];
+  const startRoute=patternStartRoute(chartHarmonies,input('pattern-start-route').value);
   const exerciseProgression=settings.progression?progressionOrder(settings).map((index:number)=>chordInfo(index)):[info];
   const suggestions=theoryOptions(info);
   if(exerciseView.study==='triadpairs'&&!suggestions.triadPairs.length)exerciseView.study='harmonized';
@@ -410,12 +414,13 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
     exerciseView.autoTempo=false;
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else if(settings.progression){
-    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionPlaybackBeatDurations(settings)[index]),board,{...exerciseView,rhythm:exerciseView.rhythm,source:sourceChoice?.id||'',positionPath});
+    currentExerciseGroups=progressionExerciseGroups(exerciseProgression,progressionOrder(settings).map((index:number)=>progressionPlaybackBeatDurations(settings)[index]),board,{...exerciseView,startTones:progressionOrder(settings).map((index:number)=>startRoute.choices[index]),rhythm:exerciseView.rhythm,source:sourceChoice?.id||'',positionPath});
     exercisePlan=progressionStudyPlan(currentExerciseGroups,progressionOrder(settings),progressionPlaybackBeatDurations(settings).map((duration:number)=>duration/settings.beats),settings.beats,exerciseView.study,exerciseView.rhythm);
   }else{exercisePlan=null;if(exerciseView.stage==='cell'&&exerciseView.study!=='positionalscale')currentExerciseGroups=shortCell(currentExerciseGroups);}
   if(settings.progression&&exerciseView.backing)exerciseView.autoTempo=false;
   if(!exercisePlan){const single=singleChordExercisePlan(currentExerciseGroups,info,board,position,exerciseView.study,exerciseView.rhythm,settings.beats);currentExerciseGroups=single.groups;exercisePlan=single.plan;}
   if(exercisePlan){const resolved=withExerciseResolution(currentExerciseGroups,exercisePlan);currentExerciseGroups=resolved.groups;exercisePlan=resolved.plan;}
+  currentExerciseGroups.forEach((group:any)=>{const value=startRoute.choices[progressionOrder(settings)[group.slot]]||'inherit';group.startOverride=value;group.startBadge=value==='inherit'?'':cardStartLabel(group.harmony,value);});
   currentExercise=flattenExercise(currentExerciseGroups);
   const rhythmName={eighths:'Eighth notes',triplets:'Eighth-note triplets',sixteenths:'Sixteenth notes'}[exerciseView.rhythm] || 'Eighth notes';
   const nonDiatonic=exerciseProgression.some((h:any)=>h.scalePcs.length!==7);
@@ -1422,6 +1427,7 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-position-navigation'){stopExercisePreview();select('featured-position').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position-region'){stopExercisePreview();select('position-region').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position'){const numeral=target.value;stopExercisePreview();chooseOverviewPosition(numeral);el('exercise-position').focus({preventScroll:true});return;}
+  const cardStartValue=target.value;
   exerciseView.setupOpen=el('caged-exercise').querySelector<HTMLDetailsElement>('.exercise-setup')?.open||false;
   stopExercisePreview();
   if(target.id==='exercise-auto-target')exerciseView.ceiling=Math.max(30,Math.min(240,Number(target.value)||160));
@@ -1430,6 +1436,12 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-study')exerciseView.study=target.value;
   if(target.id==='exercise-motion')exerciseView.motion=target.value;
   if(target.id==='exercise-rhythm')exerciseView.rhythm=target.value;
+  if(target.id==='exercise-card-start'){
+    const harmonies=Array.from({length:progressionDefinition(settings).roman.length},(_,index)=>chordInfo(index));
+    input('pattern-start-route').value=patternStartRoute(harmonies,input('pattern-start-route').value,{step,value:cardStartValue}).value;
+    localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);
+    exerciseSelectionStart=null;exerciseSelectionEnd=null;
+  }
   if(target.id==='exercise-start-note'){exerciseView.startTone=target.value;exerciseSelectionStart=null;exerciseSelectionEnd=null;}
   if(target.id==='exercise-source')exerciseView.source=target.value;
   if(target.id==='exercise-pattern')exerciseView.pattern=target.value;
@@ -1466,8 +1478,8 @@ function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying|
  if(group?.harmony)showExerciseGroup(group);
  highlightLearningNote(index,currentExercise,true);void auditionExerciseNote(index);
 }
-function exerciseSnapshot(){return {study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,chordDiagrams:exerciseView.chordDiagrams,stage:exerciseView.stage,startTone:exerciseView.startTone,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked};}
-function restoreExercise(snapshot:any){if(!snapshot)return;exerciseSelectionStart=null;exerciseSelectionEnd=null;Object.assign(exerciseView,{stage:'full',startTone:'default',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
+function exerciseSnapshot(){return {patternStartRoute:input('pattern-start-route').value,study:exerciseView.study,material:exerciseView.material,motion:exerciseView.motion,rhythm:exerciseView.rhythm,source:exerciseView.source,pattern:exerciseView.pattern,display:exerciseView.display,zoom:exerciseView.zoom,chordDiagrams:exerciseView.chordDiagrams,stage:exerciseView.stage,startTone:exerciseView.startTone,tempo:exerciseView.tempo,tempoLinked:exerciseView.tempoLinked};}
+function restoreExercise(snapshot:any){if(!snapshot)return;input('pattern-start-route').value=typeof snapshot.patternStartRoute==='string'?snapshot.patternStartRoute:'';localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);exerciseSelectionStart=null;exerciseSelectionEnd=null;Object.assign(exerciseView,{stage:'full',startTone:'default',application:'cell-space',response:'demo'},snapshot);stopExercisePreview();renderGuitar();}
 function moveExercise(direction:number){
   const options=Array.from(select('exercise-study').options),index=options.findIndex(option=>option.value===exerciseView.study),next=options[index+direction];if(!next)return;
   stopExercisePreview();exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseView.study=next.value;
@@ -2148,6 +2160,8 @@ function restoreControl(id: string, value: unknown) {
   const control = el<HTMLInputElement | HTMLSelectElement>(id);
   if (control instanceof HTMLSelectElement) {
     if (typeof value === 'string' && Array.from(control.options).some(option => option.value === value && !option.disabled)) control.value = value;
+  } else if(id==='pattern-start-route'){
+    if(typeof value==='string'&&(value===''||/^v1:[a-z0-9]+:[0-8]{1,32}$/.test(value)))control.value=value;
   } else if(id==='manual-position-route'){
     if(typeof value==='string'&&(value===''||/^v1:[a-z0-9]+:[0-4]{1,32}$/.test(value)))control.value=value;
   } else if(id==='pulse-accents'){
@@ -2168,7 +2182,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
@@ -2186,6 +2200,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     }
     fillChords();
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
+    localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);
     select('backing-style').value=backingStyleForControls(preset.controls);
     for(const [id,muted] of Object.entries(backingMutesForPreset(preset.controls)))input(id).checked=muted;
     tempo(Number(input('bpm').value));

@@ -22,23 +22,24 @@ export function rangePhrase(span,descending){
 export function positionalProgressionGroups(harmonies,durations,path,options){
  const {motion='ascending',rhythm='eighths',stage='full'}=options,descending=['descending','down-up'].includes(motion);
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2,spanSize=9;
- const selectedStart=options.startTone||'default';
- let cursor=0,globalStart=0,phaseOffset=0,previousContext='',nextUp=!descending;
+ let cursor=0,globalStart=0,phaseOffset=0,previousContext='',previousStart='default',nextUp=!descending;
  return harmonies.map((harmony,slot)=>{
+  const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape),available=positionalArpeggio(board,harmony,'ascending')[0]?.notes||[];
   const size=Math.min(spanSize,available.length),span=descending?available.slice(-size):available.slice(0,size);
   const context=JSON.stringify([harmony.name,harmony.suffix,harmony.mode,harmony.intervals,available.map(n=>[n.midi,n.string,n.fret,n.name])]);
   const patternStart=resolveArpeggioStart(span,harmony,selectedStart==='default'?descending:!nextUp,selectedStart);
   const {cycle,sections}=rangePhrase(span,descending);
   const sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
-  if(selectedStart!=='default'&&context!==previousContext){
+  if(selectedStart==='default'&&(explicit||previousStart!==selectedStart))phaseOffset=(sections.find(s=>s.up===nextUp)?.start||0)-cursor;
+  if(selectedStart!=='default'&&(explicit||context!==previousContext||selectedStart!==previousStart)){
    // A selected degree is an entry instruction for every new harmony/shape.
    // Choose its occurrence in the ongoing direction; unchanged bars continue.
    const entries=cycle.flatMap((note,phase)=>note.midi===patternStart.note?.midi?[phase]:[]);
    phaseOffset=(entries.find(phase=>sectionAt(phase)?.up===nextUp)??entries[0]??0)-cursor;
   }
   const phaseStart=cycle.length?(cursor+phaseOffset)%cycle.length:0;
-  previousContext=context;
+  previousContext=context;previousStart=selectedStart;
   const capacity=Math.max(1,Math.floor(durations[slot]*division));
   // Internal one-run callers may stop at the next endpoint. The UI always
   // streams the traversal through the full chart, across bar lines.

@@ -18,18 +18,19 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
- let globalStart=0,previousContext='',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
+ let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
  const alternating=study==='alternating'||study==='chordtonesalternating'||study==='pentatonic'&&pattern.startsWith('alternating');
  const approachEnds=[];let emittedCells=0,triadReference=60;
  const groups=harmonies.map((harmony,slot)=>{
+  const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
   const position=path[slot],board=fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
   const chosen=sources.find(choice=>choice.id===source)||sources[0],adapted=Boolean(source&&sources.length&&!sources.some(choice=>choice.id===source));
   const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,board.notes.map(n=>[n.string,n.fret,n.pc])]);
   const phaseTurn=scaleTraversal&&scaleRemaining===0;
-  if(context!==previousContext){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
+  if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
    return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference})).filter(cell=>cell.notes?.length);
@@ -65,9 +66,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
   }
   let startWarning='';
-  if(scaleTraversal&&(slot===0||context!==previousContext)&&options.startTone&&options.startTone!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,options.startTone);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
+  if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);}
+  if(scaleTraversal&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
-  previousContext=context;
+  previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],sequenceAnchors=[],sequenceDirections=[];
   while(cells.length&&notes.length<capacity){
    const previousTravel=travel,previousIndex=cellIndex;

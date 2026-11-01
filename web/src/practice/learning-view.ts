@@ -1,3 +1,4 @@
+import {cardStartChoices,cardStartLabel} from './pattern-start-route.js';
 import {organizeExercisePanel} from './exercise-layout.js';
 import {positionRouteCards} from './position-route.js';
 import {FRET_REGIONS} from '../guitar/position-path.js';
@@ -50,6 +51,7 @@ export function learningView(panel:HTMLElement,context:any){
  if(context.progression){
   const route=document.createElement('div');route.className='position-path-guide exercise-position-route';route.innerHTML=`<div class="position-path-heading"><div class="position-path-controls"><label>Position navigation<select id="exercise-position-navigation"><option value="all" ${context.navigation!=='path'?'selected':''}>Choose positions yourself</option><option value="path" ${context.navigation==='path'?'selected':''}>Automatic route</option></select></label>${context.navigation==='path'?`<label>Fretboard region<select id="exercise-position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id===context.region?'selected':''}>${esc(region.name)}</option>`).join('')}</select></label>`:''}</div><p>${context.navigation==='path'?'The region sets the opening position; later chords follow nearby shapes.':'Choose a chord card, then its position · other chords stay unchanged'}</p></div><div class="position-path" aria-label="Choose progression chord">${positionRouteCards(groups.filter((g:any)=>!g.resolution),context.progressionSteps,context.inspectedStep)}</div>`;
   const positionLabel=toolbar.querySelector('#exercise-position')!.closest('label')!;positionLabel.hidden=context.navigation==='path';route.querySelector('.position-path-controls')!.append(positionLabel);
+  if(['positional','positionalscale'].includes(study))route.querySelector('.position-path-controls')!.insertAdjacentHTML('beforeend','<label>Start for this card<select id="exercise-card-start"></select></label>');
   diagram.querySelector('.exercise-map-heading')!.after(route);
  }else{
   const controls=document.createElement('div');controls.className='position-path-controls exercise-diagram-position';
@@ -86,6 +88,13 @@ export function highlightLearningNote(index:number|null,notes:any[],markNotation
 /** Update only the linked diagram at a chord boundary; retain notation,
  * selection, focus and the hide/reveal state. */
 export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
+ const localStart=panel.querySelector<HTMLSelectElement>('#exercise-card-start');
+ if(localStart)localStart.disabled=!!group.resolution;
+ if(localStart&&!group.resolution){
+  const value=group.startOverride||'inherit',choices=cardStartChoices(group.harmony);
+  localStart.innerHTML=`<option value="inherit">Use global default</option><option value="default">Shape default</option>${choices.map((c:any)=>`<option value="${esc(c.value)}">${esc(c.label)}</option>`).join('')}${!['inherit','default',...choices.map((c:any)=>c.value)].includes(value)?`<option value="${esc(value)}">${esc(cardStartLabel(group.harmony,value))} · unavailable; using shape default</option>`:''}`;
+  localStart.value=value;
+ }
  const {board,harmony,position,notes}=group,diagram=panel.querySelector<HTMLElement>('.exercise-map-diagram');if(!diagram)return;
  const augmented={...board,notes:[...board.notes]};
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
