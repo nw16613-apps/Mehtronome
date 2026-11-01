@@ -1,15 +1,21 @@
+import {fretboardFor} from '../guitar/fretboard.js';
+import {progressionPositionPath} from '../guitar/position-path.js';
 import {progressionStudyPlan} from './progression-timing.js';
 import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {cloneTemplate} from './custom-progression.js';
 import {progressionDefinition} from '../audio/music.js';
 
 /** Add an ending to the displayed/playable study, never to the user's chart or
- * to the sequence generators. The closest different core chord tone stays in the final
- * assigned CAGED region; a unison on another string is still the same pitch. */
+ * to the sequence generators. The closest different core tone of the opening chord uses a CAGED
+ * position near the final fret region; a unison on another string is still the same pitch. */
 export function withExerciseResolution(groups,plan){
  if(!plan?.events.length||plan.resolution)return {groups,plan};
- const finalSlot=plan.slots.at(-1),last=plan.events.at(-1),harmony=finalSlot?.harmony,board=finalSlot?.board;
- if(!harmony||!board)return {groups,plan};
+ const firstSlot=plan.slots[0],finalSlot=plan.slots.at(-1),last=plan.events.at(-1),harmony=firstSlot?.harmony;
+ if(!harmony||!finalSlot?.board)return {groups,plan};
+ const identity=h=>JSON.stringify([h?.mode,h?.chordPcs,h?.scalePcs,h?.tones,h?.scaleNames]);
+ const sameHarmony=identity(harmony)===identity(finalSlot.harmony);
+ const position=sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
+ const board=sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
  const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
  const ranked=candidates.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
   Math.abs(a.midi-last.note.midi)-Math.abs(b.midi-last.note.midi)||
@@ -17,14 +23,14 @@ export function withExerciseResolution(groups,plan){
   Number(a.string!==last.note.string)-Number(b.string!==last.note.string)||a.midi-b.midi||a.string-b.string);
  const note=ranked[0];if(!note)return {groups,plan};
  const slot=groups.length,index=groups.reduce((sum,g)=>sum+g.notes.length,0),start=plan.duration,duration=plan.beats;
- const group={...groups[finalSlot.slot],slot,notes:[note],pcs:[note.pc],names:[note.name],harmony,board,position:finalSlot.position,chord:finalSlot.chord,
+ const group={...groups[finalSlot.slot],slot,notes:[note],pcs:[note.pc],names:[note.name],harmony,board,position,chord:firstSlot.chord,
   globalStart:index,targetIndices:[0],cellLengths:[1],materialCells:['Resolution'],annotation:'Resolution',warning:'',resolution:true};
- const ending={...finalSlot,slot,start,duration,annotation:'Resolution',resolution:true};
+ const ending={...finalSlot,step:firstSlot.step,chord:firstSlot.chord,harmony,board,position,slot,start,duration,annotation:'Resolution',resolution:true};
  return {groups:[...groups,group],plan:{...plan,events:[...plan.events,{index,note,step:ending.step,slot,start,duration,target:true,resolution:true}],
   slots:[...plan.slots,ending],duration:start+duration,resolution:{start,duration,slot,index}}};
 }
 
-/** A private playback copy holds the final chord during the ending bar and
+/** A private playback copy returns to the opening chord for the ending bar and
  * loops back only after the hold. Original chart/loop settings stay untouched. */
 export function resolutionBackingSettings(settings,plan){
  if(!settings.progression||!plan?.resolution)return settings;

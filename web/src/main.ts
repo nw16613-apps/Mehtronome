@@ -1386,7 +1386,7 @@ el('position-previous').addEventListener('click',()=>moveOverviewPosition(-1));
 el('position-next').addEventListener('click',()=>moveOverviewPosition(1));
 function syncExerciseRouteCards(){
  el('caged-exercise').querySelectorAll<HTMLButtonElement>('.exercise-position-route [data-inspect-slot]').forEach(button=>{
-  const activeSlot=currentExerciseGroups[exerciseMapSlot]?.resolution?exercisePlan?.slots.at(-2)?.slot:exerciseMapSlot;
+  const activeSlot=currentExerciseGroups[exerciseMapSlot]?.resolution?exercisePlan?.slots[0]?.slot:exerciseMapSlot;
   const current=Number(button.dataset.inspectSlot)===activeSlot;
   button.classList.toggle('current',current);button.setAttribute('aria-pressed',String(current));
   if(current)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');

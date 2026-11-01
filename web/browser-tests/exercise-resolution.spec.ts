@@ -17,15 +17,16 @@ test('every rhythm appends one nearest-different-chord-tone whole-note bar and k
  const downloadPromise=page.waitForEvent('download');await page.locator('#exercise-export').click();const stream=await (await downloadPromise).createReadStream();let svg='';if(stream)for await(const chunk of stream)svg+=chunk.toString();expect(svg).toContain('resolution-note');expect(svg).toContain('Resolution');
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
-test('mixed-chord playback holds the final harmony throughout the resolution and stops after the full bar',async({page})=>{
+test('mixed-chord playback returns to the opening harmony throughout the resolution and stops after the full bar',async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('mehtronome-repertoire-v1',JSON.stringify({version:1,items:[{id:'resolve',name:'Resolve test',key:9,beats:4,progression:{version:2,name:'Resolve test',steps:[{root:0,chord:'min7',mode:'dorian',bars:1,bass:null},{root:3,chord:'maj7',mode:'major',bars:1,bass:null}]}}]})));
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#progression-choice').selectOption('saved:resolve');
  await page.locator('[data-workspace-target=caged-exercise]').click();await page.locator('#exercise-study').selectOption('positionalscale');await page.locator('#exercise-rhythm').selectOption('triplets');
  await expect(page.locator('.exercise-note')).toHaveCount(25);await expect(page.locator('.resolution-note')).toHaveAttribute('data-start-beat','8');
- expect([0,4,7,11]).toContain(pitch((await page.locator('.resolution-note').getAttribute('aria-label'))!)%12);
+ expect([9,0,4,7]).toContain(pitch((await page.locator('.resolution-note').getAttribute('aria-label'))!)%12);
+ await page.locator('#exercise-chord-diagrams').check();await expect(page.locator('.notation-chord-symbol').last()).toHaveAttribute('data-chord','Am7');await expect(page.locator('.notation-chord-diagram').last()).toHaveAttribute('aria-label',/^Am7/);
  await page.locator('#mini-count-in').uncheck();await page.locator('#exercise-tempo').fill('240');await page.locator('#exercise-tempo').dispatchEvent('change');await page.locator('#exercise-loop').uncheck();
- await page.locator('#exercise-preview').click();await expect(page.locator('.resolution-note.playing')).toBeVisible({timeout:7000});await expect(page.locator('#mini-chord')).toHaveText(/^C/);
- await page.waitForTimeout(250);await expect(page.locator('.resolution-note.playing')).toBeVisible();await expect(page.locator('#mini-chord')).toHaveText(/^C/);
+ await page.locator('#exercise-preview').click();await expect(page.locator('.resolution-note.playing')).toBeVisible({timeout:7000});await expect(page.locator('#mini-chord')).toHaveText(/^A/);
+ await page.waitForTimeout(250);await expect(page.locator('.resolution-note.playing')).toBeVisible();await expect(page.locator('#mini-chord')).toHaveText(/^A/);
  await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','false',{timeout:4000});
  await expect(page.locator('.exercise-position-route [data-inspect-slot]')).toHaveCount(2);expect(errors).toEqual([]);
 });
