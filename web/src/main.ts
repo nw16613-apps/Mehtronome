@@ -2050,6 +2050,7 @@ for(const tab of workspaceTabs)tab.addEventListener('click',()=>{
 });
 function showWorkspace(name:string,target?:string) {
   document.body.dataset.workspace=name;
+  if(name==='exercises')reserveChordBands(el('caged-exercise'));
   if(exerciseReferenceDirty&&name!=='exercises'){exerciseReferenceDirty=false;renderMusic(true,currentExerciseGroups[exerciseMapSlot]?.position);}
   selectWorkspaceTab(Object.entries(workspaceNames).find(([,value])=>value===name)?.[0]||'pulse-title');
   try{localStorage.setItem('mehtronome-workspace',name);}catch{/* Session-only. */}

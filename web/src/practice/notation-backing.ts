@@ -4,6 +4,9 @@ const ns='http://www.w3.org/2000/svg';
  * including ledger notes, rather than guessing a fixed top margin. */
 export function reserveChordBands(panel:HTMLElement){
  panel.querySelectorAll<SVGSVGElement>('.exercise-notation').forEach(svg=>{
+  // Hidden workspaces return incomplete SVG bounds (especially text). Keep
+  // the generated page dimensions until the score can be measured on entry.
+  if(!svg.getClientRects().length)return;
   let band=svg.querySelector<SVGGElement>('.notation-chord-band');if(!band){band=document.createElementNS(ns,'g');band.setAttribute('class','notation-chord-band');svg.append(band);}
   svg.querySelectorAll<SVGTextElement>('.notation-chord-symbol').forEach(symbol=>{band!.append(symbol);symbol.setAttribute('y','50');});
   let music=svg.querySelector<SVGGElement>('.notation-music');if(!music){music=document.createElementNS(ns,'g');music.setAttribute('class','notation-music');for(const child of Array.from(svg.children))if(!child.matches('title,.notation-paper,.exercise-title,.notation-backing,.notation-chord-band'))music.append(child);svg.append(music);}
