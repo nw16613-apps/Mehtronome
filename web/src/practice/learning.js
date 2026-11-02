@@ -1,3 +1,4 @@
+import {chordLesson} from './chord-controls.js';
 import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {characteristicNotes} from '../audio/music.js';
 import {recommendedGrip} from '../guitar/grips.js';
@@ -15,8 +16,8 @@ export function gripStudy(board,harmony){
  return [{chord:`Exact grip · ${harmony.name}${harmony.suffix}`,rootName:harmony.name,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),notes,annotation:'Only the sounding strings of the selected grip',targetIndex:notes.length-1}];
 }
 export function gripFacts(grip,harmony){
- if(!grip)return null;const notes=grip.notes.toSorted((a,b)=>a.midi-b.midi),bass=notes[0],index=harmony.chordPcs.indexOf(bass.pc),interval=harmony.intervals[index];
- return {formula:harmony.intervals.join(' · '),voiced:notes.map(n=>`${n.name} (${harmony.intervals[harmony.chordPcs.indexOf(n.pc)]})`).join(' · '),omitted:grip.omitted.join(' · ')||'None',bass:`${bass.name} · ${interval==='1'?'root position':['3','♭3'].includes(interval)?'first inversion':['5','♭5','♯5'].includes(interval)?'second inversion':['7','♭7','♭♭7'].includes(interval)?'third inversion':'extension in bass'}`,strings:Array.from({length:6},(_,i)=>notes.find(n=>n.string===i)?.fret??'×').join(' · ')};
+ if(!grip)return null;const notes=grip.notes.toSorted((a,b)=>a.midi-b.midi),bass=notes[0],index=harmony.chordPcs.indexOf(bass.pc),interval=harmony.intervals[index]||bass.chromaticDegree;
+ return {formula:harmony.intervals.join(' · '),voiced:notes.map(n=>`${n.name} (${harmony.intervals[harmony.chordPcs.indexOf(n.pc)]||n.chromaticDegree})`).join(' · '),omitted:grip.omitted.join(' · ')||'None',bass:`${bass.name} · ${interval==='1'?'root position':['3','♭3'].includes(interval)?'first inversion':['5','♭5','♯5'].includes(interval)?'second inversion':['7','♭7','♭♭7'].includes(interval)?'third inversion':'extension in bass'}`,strings:Array.from({length:6},(_,i)=>notes.find(n=>n.string===i)?.fret??'×').join(' · ')};
 }
 export function overlayDegrees(source,harmony){
  const letters='CDEFGAB',root=harmony.chordPcs[0],rootLetter=letters.indexOf(harmony.name[0]),natural=[0,2,4,5,7,9,11];
@@ -48,6 +49,7 @@ export function overlayPurpose(source,harmony){
  return `${source.groups?'Triads: '+source.groups.map(g=>g.name+' ['+g.names.join(' · ')+']').join(' / ')+'. ':''}Notes: ${source.names.join(' · ')}. Degrees over ${harmony.name}${harmony.suffix}: ${overlayDegrees(source,harmony).join(' · ')}. Characteristic colours omitted: ${missingColours.join(' · ')||'none'}. Chord tones omitted: ${missing.join(' · ')||'none'}. ${source.explanation} Resolve a short idea to ${harmony.tones[1]||harmony.name}, then leave space.`;
 }
 export function exerciseLesson(study,groups,harmony,source,options={}){
+ if(study.startsWith('chord:'))return {trains:'Learn playable chord voicings and hear each voice.',pattern:chordLesson(study.slice(6)),listen:'Listen to the bass, the top voice and the notes that change between grips.',starting:'Choose a voicing family, material and fixed string set. The CAGED position is a reference, not a requirement for across-the-neck studies.',apply:'Keep the rhythm steady, then recall each grip without the diagram.',cells:[],rhythm:'Play each voicing as a chord.'};
  const annotation=groups[0]?.annotation;
  let trains='Hear chords built from the scale and compare them with the backing.',pattern='Stack alternate scale degrees to form the selected triads or seventh chords. Each cell is one arpeggio built by stacking alternate notes of the scale guide; the backing chord symbols above the staff describe the accompaniment.',listen='Hear how each study cell colours the held chord. A cell’s chord can differ from the accompaniment.',apply='Pick three notes, repeat their rhythm, then change the ending and leave space.';
  if(study==='positionalscale'){trains='Learn every scale pitch across the selected CAGED position.';pattern='Move through the available scale pitches in pitch order, turning without repeating endpoints during an unchanged traversal. At a chord, mode or position change, rearticulate a shared boundary pitch when it completes the new shape; otherwise choose the nearest available note ahead. Carry the form’s progress through changes; when the opposite form is due, start at the incoming position’s upper or lower boundary. The whole range flows across bar lines rather than fitting an artificial fixed-length span.';listen='Hear how scale degrees relate to the backing chord as the harmony changes.';apply='Follow one complete ascent and descent, then connect the same movement to another position.';}
