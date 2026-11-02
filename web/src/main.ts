@@ -56,7 +56,7 @@ import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
-import { compatibleScaleGroups,compatibleModeForChord } from './practice/scale-explorer.js';
+import { compatibleScaleGroups,compatibleModeForChord,chordChoicesForMode,compatibleChordForMode } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionPlaybackBeatDurations, progressionTimeline, progressionPositionAtBeat, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
@@ -133,6 +133,7 @@ app.innerHTML = `
         <p id="chart-loop-status" class="practice-help" role="status">Click a chord to edit; hold to hear it. Drag across beats to select an inclusive loop.</p><div id="custom-beat-grid" class="custom-beat-grid" aria-label="Live progression chord sheet"></div><p id="custom-grid-help" class="practice-help"></p>      <div id="loop-controls" class="practice-block" hidden><label class="check"><input id="loop-enabled" type="checkbox">Loop selection</label><button id="chart-loop-clear" type="button" class="practice-button">Clear loop</button><div hidden data-loop-state><div id="loop-range" hidden><label>Selection unit<select id="loop-unit"><option value="chords">Whole chords</option><option value="beats">Beats</option></select></label><div id="loop-chord-fields" class="field-row"><label>Start chord<select id="loop-start"></select></label><label>End chord<select id="loop-end"></select></label></div><div id="loop-beat-fields" class="field-row" hidden><label>Start beat<input id="loop-beat-start" type="number" min="1" value="1" step="1"></label><label>End beat (included)<input id="loop-beat-end" type="number" min="1" value="1" step="1"></label></div><p id="loop-summary" class="practice-help"></p></div></div></div>
 <div id="custom-timeline" class="custom-timeline" role="tablist" aria-label="Custom progression chords"></div>
         <div class="custom-editor"><label>Chart title<input id="custom-name" maxlength="60"></label><label>Start a section at this chord<input id="custom-section" maxlength="32" placeholder="e.g. A, Bridge, Solo"></label>
+          <label class="harmony-workflow-field">Choose first<select id="custom-harmony-workflow"><option value="chord">Chord → suggested modes</option><option value="mode">Mode → compatible chords</option></select></label>
           <label>Chord root<select id="custom-root">${names.map((name,index)=>`<option value="${index}">${name}</option>`).join('')}</select></label>
           <label>Chord type<select id="custom-chord">${chordTypeOptions()}</select></label>
           <label>Scale guide<select id="custom-mode" aria-describedby="custom-mode-help">${modeOptions()}</select></label><p id="custom-mode-help" class="practice-help"></p><p id="custom-edit-selection-status" class="practice-help" role="status" hidden></p>
@@ -679,6 +680,21 @@ function renderPracticeRoadmap(info:any){
   applyStudioIcons(document.querySelector('.practice-roadmap')!);
 }
 
+function modeFirstHarmony(){return select('custom-harmony-workflow').value==='mode';}
+function fillHarmonyChoices(chordId:string,currentMode:string){
+ const reverse=modeFirstHarmony(),chord=select('custom-chord'),mode=select('custom-mode');
+ chord.closest('label')!.firstChild!.textContent=reverse?'Compatible chord ':'Chord type ';
+ mode.closest('label')!.firstChild!.textContent=reverse?'Mode ':'Scale guide ';
+ const root=select('custom-root').closest('label')!;root.after(...(reverse?[mode.closest('label')!,chord.closest('label')!]:[chord.closest('label')!,mode.closest('label')!]));
+ chord.disabled=false;
+ if(!reverse){chord.innerHTML=chordTypeOptions();chord.value=chordId;fillChordScaleOptions(chordId,currentMode);return;}
+ mode.innerHTML=modeOptions();mode.value=currentMode;
+ const choices=chordChoicesForMode(currentMode),suggested=choices.find((c:any)=>c.suggested)?.id||'',ids=choices.map((c:any)=>c.id);
+ const legacy=!ids.includes(chordId)?`<option value="${chordId}" disabled>${escapeHtml(CHORDS[chordId as keyof typeof CHORDS].name)} · outside selected mode</option>`:'';
+ chord.innerHTML=legacy+chordTypeOptions(ids,suggested);chord.value=chordId;
+ for(const option of Array.from(chord.options)){const choice=choices.find((c:any)=>c.id===option.value);if(choice){if(!choice.strict)option.textContent+=' · reduced guide';option.title=choice.explanation;}}
+ el('custom-mode-help').textContent=`${choices.length} compatible chord qualities for this root and mode. Changing the mode keeps compatible qualities and replaces incompatible ones with a suggestion. Pentatonic/blues options marked “reduced guide” can omit written chord tones.`;
+}
 function fillChordScaleOptions(chordId:string,currentMode:string){
   const groups=compatibleScaleGroups(chordId),choices=groups.flatMap((g:any)=>g.choices);
   const known=MODES[currentMode as keyof typeof MODES];
@@ -931,11 +947,11 @@ function renderCustomBuilder(){
     const bass=item.bass===null?'':`/${actualCustomName(item.bass,item.bassLetter)}`;
     return `<button type="button" role="tab" draggable="true" data-custom-step="${index}" aria-selected="${index===customStepIndex}" class="${index===customStepIndex?'current':''}"><span>${index+1}</span><strong>${actualCustomName(item.root,item.letter)}${chord.symbol}${bass}</strong><small>${customProgression.roman[index]} · ${item.beats!==undefined?item.beats+' beat'+(item.beats===1?'':'s'):item.bars+' bar'+(item.bars===1?'':'s')}</small></button>`;
   }).join('');
+  el('custom-compatible-mode').textContent=modeFirstHarmony()?'Use compatible chord':'Use compatible scale guide';
   const guideCheck=scaleCompatibility(harmonyAt({...settings,template:'custom',customProgression},customStepIndex));el('custom-scale-check').textContent=guideCheck;el('custom-scale-check').hidden=!guideCheck;el('custom-compatible-mode').hidden=!guideCheck;
   input('custom-name').value=customProgression.name;input('custom-section').value=current.section||'';
   select('custom-root').value=String(current.root);
-  select('custom-chord').value=current.chord;
-  fillChordScaleOptions(current.chord,current.mode);
+  fillHarmonyChoices(current.chord,current.mode);
   select('custom-bars').value=String(current.bars||1);
   select('custom-duration-unit').value=current.beats!==undefined?'beats':'bars';
   select('custom-beats').value=String(current.beats??Math.min(32,(current.bars||1)*settings.beats));
@@ -957,6 +973,7 @@ function reflectChartEditSelection(){
   const control=select(id),values=new Set(selected.map((s:any)=>s[key]===null?'':String(s[key])));
   if(values.size>1){control.add(new Option('Mixed · choose to change all','mixed'));control.value='mixed';}
  }
+ if(modeFirstHarmony()&&select('custom-mode').value==='mixed'){const menu=select('custom-chord');menu.replaceChildren(new Option('Choose a mode for the selected chords','mixed'));menu.disabled=true;el('custom-mode-help').textContent='Choose one mode to see compatible chord qualities for all selected chord roots.';}
 }
 function chartPracticeChoices(){
  const harmonies=customProgression.steps.map((_:any,i:number)=>chordInfo(i)),auto=progressionPositionPath(harmonies,FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS]);
@@ -970,6 +987,7 @@ function restoreChartPracticeChoices(choices:ReturnType<typeof chartPracticeChoi
 }
 function commitCustomEdit(field:string){
   const control=field?el<HTMLInputElement|HTMLSelectElement>(field):null;if(control?.value==='mixed')return;
+  if(modeFirstHarmony()&&field==='custom-chord'&&!chordChoicesForMode(select('custom-mode').value).some((c:any)=>c.id===select('custom-chord').value))return;
   const practiceChoices=chartPracticeChoices();rememberCustomEdit();
   const harmonic=['custom-root','custom-chord','custom-mode','custom-bass'].includes(field);
   const targets=harmonic&&chartEditSteps.length?chartEditSteps:[customStepIndex];
@@ -978,8 +996,8 @@ function commitCustomEdit(field:string){
   for(const index of targets){
    const item=customProgression.steps[index];if(!item)continue;
    if(field==='custom-root'){const root=Number(select('custom-root').value);if(item.root!==root)delete item.letter;item.root=root;}
-   if(field==='custom-chord'){item.chord=select('custom-chord').value;item.mode=compatibleModeForChord(item.chord,item.mode,recommendedMode(item.chord));}
-   if(field==='custom-mode')item.mode=compatibleModeForChord(item.chord,select('custom-mode').value,recommendedMode(item.chord));
+   if(field==='custom-chord'){item.chord=select('custom-chord').value;item.mode=modeFirstHarmony()?select('custom-mode').value:compatibleModeForChord(item.chord,item.mode,recommendedMode(item.chord));}
+   if(field==='custom-mode'){const mode=select('custom-mode').value;if(modeFirstHarmony()){item.chord=compatibleChordForMode(mode,item.chord);item.mode=mode;}else item.mode=compatibleModeForChord(item.chord,mode,recommendedMode(item.chord));}
    if(field==='custom-bass'){const bass=select('custom-bass').value===''?null:Number(select('custom-bass').value);if(item.bass!==bass)delete item.bassLetter;item.bass=bass;}
    if(['custom-duration-unit','custom-bars','custom-beats'].includes(field)){
     if(select('custom-duration-unit').value==='beats'){item.beats=Number(select('custom-beats').value);delete item.bars;}else{item.bars=Number(select('custom-bars').value);delete item.beats;}
@@ -1888,8 +1906,10 @@ el('custom-timeline').addEventListener('drop',event=>{
   chartEditSteps=[];const [item]=customProgression.steps.splice(draggedCustomStep,1);customProgression.steps.splice(destination,0,item);customStepIndex=destination;draggedCustomStep=null;
   saveCustomProgression('Chord reordered.');fillLoopOptions(true);update();
 });
+try{if(localStorage.getItem('mehtronome-harmony-workflow')==='mode')select('custom-harmony-workflow').value='mode';}catch{}
+el('custom-harmony-workflow').addEventListener('input',()=>{stopPreview();localStorage.setItem('mehtronome-harmony-workflow',select('custom-harmony-workflow').value);renderCustomBuilder();applyStudioIcons(el('custom-progression-builder'));});
 for(const id of ['custom-root','custom-mode','custom-bars','custom-beats','custom-duration-unit','custom-bass'])el(id).addEventListener('input',()=>commitCustomEdit(id));
-el('custom-compatible-mode').addEventListener('click',()=>{stopPreview();stopExercisePreview();select('custom-mode').value=recommendedMode(customProgression.steps[customStepIndex].chord);commitCustomEdit('custom-mode');});
+el('custom-compatible-mode').addEventListener('click',()=>{stopPreview();stopExercisePreview();if(!modeFirstHarmony())select('custom-mode').value=recommendedMode(customProgression.steps[customStepIndex].chord);commitCustomEdit('custom-mode');});
 el('custom-chord').addEventListener('input',()=>commitCustomEdit('custom-chord'));
 for(const id of ['custom-name','custom-section'])el(id).addEventListener('change',()=>{const value=input(id).value.trim(),previous=id==='custom-name'?customProgression.name:customProgression.steps[customStepIndex].section||'';if((id==='custom-name'?value||'My progression':value)!==previous)commitCustomEdit(id);});
 el('custom-undo').addEventListener('click',()=>restoreCustomEdit(true));

@@ -47,7 +47,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  sheet.querySelector('.eyebrow')!.textContent='CHORD SHEET';
  const editor=query('.custom-editor'),chordGroup=group('Selected chord','chart-chord-group'),timeGroup=group('Duration','chart-time-group');
  chordGroup.querySelector('h3')!.id='selected-chord-heading';editor.setAttribute('aria-labelledby','selected-chord-heading');
- move(chordGroup,label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-edit-selection-status'),get('custom-scale-check'),get('custom-compatible-mode'));
+ move(chordGroup,label('custom-harmony-workflow'),label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-edit-selection-status'),get('custom-scale-check'),get('custom-compatible-mode'));
  move(timeGroup,label('custom-duration-unit'),get('custom-bars-label'),get('custom-beats-label'));
  const mark=document.createElement('details');mark.className='chart-rehearsal-option';mark.innerHTML='<summary>Rehearsal mark</summary>';move(mark,label('custom-section'));timeGroup.append(mark);
  const actions=query('.custom-actions');actions.setAttribute('role','group');actions.setAttribute('aria-label','Selected chord actions');

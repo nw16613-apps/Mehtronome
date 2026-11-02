@@ -45,3 +45,21 @@ export function compatibleModeForChord(chordId,preferred,fallback){
  const choices=compatibleScaleGroups(chordId).flatMap(group=>group.choices);
  return choices.find(c=>c.id===preferred)?.id||choices.find(c=>c.id===fallback)?.id||choices[0]?.id||'';
 }
+
+const modeChordCache=new Map();
+/** The reciprocal of chord-first suggestions, with the same reduced-guide rules. */
+export function chordChoicesForMode(modeId){
+ if(!MODES[modeId])return [];
+ if(!modeChordCache.has(modeId)){
+  const choices=Object.entries(CHORDS).flatMap(([id,chord])=>{
+   const guide=scaleChoicesForChord(id).find(choice=>choice.id===modeId&&choice.compatible);
+   return guide?[{id,name:chord.name,symbol:chord.symbol,strict:guide.strict,suggested:MODES[modeId].chord===id,explanation:guide.explanation}]:[];
+  }).sort((a,b)=>Number(b.suggested)-Number(a.suggested)||Number(b.strict)-Number(a.strict)||a.name.localeCompare(b.name));
+  modeChordCache.set(modeId,choices);
+ }
+ return modeChordCache.get(modeId);
+}
+export function compatibleChordForMode(modeId,current){
+ const choices=chordChoicesForMode(modeId);
+ return choices.some(choice=>choice.id===current)?current:choices.find(choice=>choice.suggested)?.id||choices[0]?.id||'';
+}
