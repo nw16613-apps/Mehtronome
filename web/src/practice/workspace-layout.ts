@@ -36,7 +36,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(tonality,label('key'),label('quality'),label('chord'));
  move(setupFields,query('.progression-chooser'),label('custom-name'),tonality,get('single-chord-chart'));
  move(progression,setupFields,query('.chart-save-actions'),get('repertoire-status'));
- const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Edits are kept as a working draft in this browser. Save chart creates a named copy; Update saved chart replaces the selected saved copy.';progression.append(draftHelp);
+ const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Save chart keeps a named copy. Chart actions contains Update, Delete, Import and Export.';const setupHelp=document.createElement('details');setupHelp.className='chart-setup-help';setupHelp.innerHTML='<summary>About saving charts</summary>';setupHelp.append(draftHelp);progression.append(setupHelp);
  const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart reference sets transposition and Roman numerals. Changing it transposes the whole chart. Each scale guide has its own modal tonic; chord root edits the selected chord.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
  const hiddenTemplates=document.createElement('div');hiddenTemplates.hidden=true;move(hiddenTemplates,get('mode-template'),label('template'));progression.append(hiddenTemplates);
  heading.after(get('active-musical-context'));get('active-musical-context').after(progression);
@@ -54,6 +54,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  actions.prepend(sheet.querySelector('#custom-add')!,get('custom-duplicate'),sheet.querySelector('#custom-delete')!);
  editor.append(chordGroup,timeGroup,actions);
  const workspace=document.createElement('div');workspace.className='chart-editing-workspace';move(workspace,sheet,editor);builder.prepend(workspace);
+ get('custom-add').textContent='Insert after selection';
  query('.custom-share summary').textContent='Copy progression as text';
  get('custom-status').textContent='Working draft ready.';
  const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';

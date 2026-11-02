@@ -19,5 +19,5 @@ test('mouse-drag selection edits exactly its chord entries and preserves all oth
 });
 test('backwards selection, single held chord, and clearing the selection use the expected edit scope',async({page})=>{
  await chart(page);await drag(page,12,5);await page.locator('#custom-chord').selectOption('minor');expect((await page.evaluate(working)).steps.map((s:any)=>s.chord)).toEqual(['min7','minor','minor','maj7']);
- await page.locator('#chart-loop-clear').click();await expect(page.locator('#custom-edit-selection-status')).toBeHidden();await page.locator('#custom-chord').selectOption('min7');expect((await page.evaluate(working)).steps.map((s:any)=>s.chord)).toEqual(['min7','min7','minor','maj7']);
+ await page.locator('#chart-clear-selection').click();await expect(page.locator('#custom-edit-selection-status')).toBeHidden();await page.locator('#custom-chord').selectOption('min7');expect((await page.evaluate(working)).steps.map((s:any)=>s.chord)).toEqual(['min7','min7','minor','maj7']);
 });

@@ -78,6 +78,7 @@ export const CHORDS = {
   dom7: { name: 'Dominant 7', symbol: '7', intervals: [0,4,7,10] },
   dom9: { name: 'Dominant 9', symbol: '9', intervals: [0,4,7,10,14] },
   dom13: { name: 'Dominant 13', symbol: '13', intervals: [0,4,7,10,14,21] },
+  dom7b13: { name: 'Dominant 7 ♭13 (no 9)', symbol: '7♭13', intervals: [0,4,7,10,20] },
   dom9b13: { name: 'Dominant 9 ♭13', symbol: '9♭13', intervals: [0,4,7,10,14,20] },
   dom7b9b13: { name: 'Dominant 7 ♭9 ♭13', symbol: '7♭9♭13', intervals: [0,4,7,10,13,20] },
   sus2: { name: 'Suspended 2', symbol: 'sus2', intervals: [0,2,7] },

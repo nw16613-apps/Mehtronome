@@ -2,6 +2,7 @@ import {CHORDS,MODES,harmonyAt,ROOT_NAMES,spellPitch} from '../audio/music.js';
 
 const DEGREE_NAMES=['I','♭II','II','♭III','III','IV','♭V','V','♭VI','VI','♭VII','VII'];
 const LETTERS=[0,1,1,2,2,3,4,4,5,5,6,6];
+export const MAX_CHART_STEPS=128;
 const ALLOWED_BARS=new Set([1,2,4,8]);
 
 export const CUSTOM_PROGRESSION_KEY='mehtronome-custom-progression-v1';
@@ -29,6 +30,7 @@ export function recommendedMode(chord){
   if(chord==='halfDim11')return 'locrian';
   if(chord==='augmented'||chord==='augMaj7'||chord==='augMaj9')return 'lydian_augmented';
   if(chord==='dom9sharp11')return 'lydian_dominant';
+  if(chord==='dom7b13')return 'mixolydian_b6';
   if(chord==='dom9b13')return 'mixolydian_b6';
   if(chord==='dom7b9b13')return 'phrygian_dominant';
   if(chord==='maj7sharp9sharp11')return 'lydian_sharp2';
@@ -72,7 +74,7 @@ export function romanForStep(step){
 export function normalizeCustomProgression(value){
   if(value?.version!==undefined&&![1,2].includes(value.version))throw new Error('Unsupported custom progression version.');
   const source=Array.isArray(value?.steps)?value.steps:[];
-  const steps=source.slice(0,32).map(raw=>{
+  const steps=source.slice(0,MAX_CHART_STEPS).map(raw=>{
     const root=Math.max(0,Math.min(11,Math.floor(Number(raw.root)||0)));
     const chord=typeof raw.chord==='string'&&CHORDS[raw.chord]?raw.chord:'min7';
     const mode=typeof raw.mode==='string'&&MODES[raw.mode]?raw.mode:recommendedMode(chord);
@@ -90,7 +92,9 @@ export function normalizeCustomProgression(value){
     const originalPrevious=source[index-1];
     if(current.letter===originalPrevious?.letter&&(current.root-previous.root+12)%12===5)current.letter=(previous.letter+3)%7;
   }
-  return {version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
+  const sourceNotes=typeof value?.sourceNotes==='string'?value.sourceNotes.slice(0,1600):'';
+  const sources=Array.isArray(value?.sources)?value.sources.filter(s=>typeof s?.url==='string'&&/^https?:\/\//.test(s.url)).slice(0,6).map(s=>({label:String(s.label||'Source').slice(0,100),url:s.url.slice(0,2048)})):[];
+  return {...(sourceNotes?{sourceNotes}:{}),...(sources.length?{sources}:{}),version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
 }
 
 export function progressionText(progression,chordSymbol=id=>id){

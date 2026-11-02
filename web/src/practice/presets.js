@@ -25,7 +25,7 @@ export function readPresets(raw) {
     && typeof item.name === 'string' && item.name.trim() && item.controls && typeof item.controls === 'object')
     .map(item => ({id:item.id,name:item.name.trim().slice(0,60),progression:item.progression === true,
       controls:Object.fromEntries(PRESET_CONTROLS.filter(id => typeof item.controls[id] === 'boolean'
-        || typeof item.controls[id] === 'string' && item.controls[id].length <= 120).map(id => [id,item.controls[id]])),
+        || typeof item.controls[id] === 'string' && item.controls[id].length <= (['manual-position-route','pattern-start-route'].includes(id)?160:120)).map(id => [id,item.controls[id]])),
       ...(item.customProgression&&typeof item.customProgression==='object'?{customProgression:normalizeCustomProgression(item.customProgression)}:{})}));
 }
 export function writePresets(storage, items) {
@@ -51,7 +51,7 @@ function transferItems(items) {
     for (const id of PRESET_CONTROLS) {
       if (!Object.hasOwn(item.controls, id)) continue;
       const value = item.controls[id];
-      if (typeof value !== 'boolean' && !(typeof value === 'string' && value.length <= 120)) throw invalid();
+      if (typeof value !== 'boolean' && !(typeof value === 'string' && value.length <= (['manual-position-route','pattern-start-route'].includes(id)?160:120))) throw invalid();
       controls[id] = value;
     }
     if (!Object.keys(controls).length) throw invalid();

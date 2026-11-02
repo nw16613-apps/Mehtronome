@@ -17,8 +17,8 @@ test('custom progressions normalize, label and recommend useful scale guides',()
   assert.equal(recommendedMode('dom7alt'),'altered');
   assert.equal(recommendedMode('halfDim'),'locrian_natural2');
   assert.match(progressionText(custom,id=>id),/i7.*IV7.*♭IIImaj7♯11/);
-  const bounded=normalizeCustomProgression({steps:Array.from({length:40},()=>({root:99,bars:3}))});
-  assert.equal(bounded.steps.length,32);assert.equal(bounded.steps[0].root,11);assert.equal(bounded.steps[0].bars,1);
+  const bounded=normalizeCustomProgression({steps:Array.from({length:140},()=>({root:99,bars:3}))});
+  assert.equal(bounded.steps.length,128);assert.equal(bounded.steps[0].root,11);assert.equal(bounded.steps[0].bars,1);
 });
 
 test('custom harmony transposes, follows durations and exposes slash bass',()=>{
