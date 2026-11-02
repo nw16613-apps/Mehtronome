@@ -5,6 +5,20 @@ export function installChartTools({view,render,getChart,clearSelection,sectionAc
  const tools=document.createElement('div');tools.className='chart-tools';tools.innerHTML=`<div class="chart-pointer-tools" role="group" aria-label="Chart drag action"><button class="practice-button" data-chart-tool="select" aria-pressed="true">Select chords</button><button class="practice-button" data-chart-tool="loop" aria-pressed="false">Set loop</button><button class="practice-button" id="chart-clear-selection">Clear selection</button></div><label>Bars per line<select id="chart-bars"><option value="4">4</option><option value="2">2</option></select></label><label>Labels<select id="chart-labels"><option value="chords">Chord names</option><option value="roman">Roman numerals</option><option value="both">Both</option></select></label><label class="check"><input type="checkbox" id="chart-annotations">Mode & position</label><label class="check"><input type="checkbox" id="chart-repeat-bars">Repeat-bar symbols</label><button class="practice-button" id="chart-read-view" aria-pressed="false">Read view</button><button class="practice-button" id="chart-print">Print chart</button>`;
  const display=document.createElement('details');display.className='chart-display-options';display.innerHTML='<summary>Display options</summary><div></div>';for(const id of ['chart-bars','chart-labels','chart-annotations','chart-repeat-bars'])display.querySelector('div')!.append(tools.querySelector('#'+id)!.closest('label')!);tools.querySelector('#chart-read-view')!.before(display);
  panel.querySelector('#chart-loop-status')!.before(tools);
+ const displayPanel=display.querySelector<HTMLElement>('div')!;
+ function positionDisplayOptions(){
+  if(!display.open)return;
+  const anchor=display.querySelector('summary')!.getBoundingClientRect(),width=Math.min(420,window.innerWidth-24);
+  displayPanel.style.width=width+'px';
+  const height=displayPanel.getBoundingClientRect().height,left=Math.max(12,Math.min(anchor.left,window.innerWidth-width-12));
+  const below=anchor.bottom+8,above=anchor.top-height-8,top=below+height<=window.innerHeight-12?below:above>=12?above:Math.max(12,Math.min(below,window.innerHeight-height-12));
+  displayPanel.style.left=left+'px';displayPanel.style.top=top+'px';
+ }
+ display.addEventListener('toggle',positionDisplayOptions);
+ window.addEventListener('resize',positionDisplayOptions);window.addEventListener('scroll',positionDisplayOptions,true);
+ document.addEventListener('pointerdown',event=>{if(display.open&&event.target instanceof Node&&!display.contains(event.target))display.open=false;});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&display.open){event.preventDefault();display.open=false;display.querySelector('summary')!.focus({preventScroll:true});}});
+
  const sections=document.createElement('div');sections.className='chart-section-tools';sections.innerHTML='<label>Section<select id="chart-section-choice"></select></label><button class="practice-button" data-section-action="loop">Loop section</button><button class="practice-button" data-section-action="duplicate">Duplicate section</button><button class="practice-button" data-section-action="previous">Move section ←</button><button class="practice-button" data-section-action="next">Move section →</button>';
  const details=document.createElement('details');details.className='chart-section-details';details.innerHTML='<summary>Section actions</summary>';details.append(sections);panel.append(details);
  const sources=document.createElement('details');sources.className='chart-source-notes';sources.innerHTML='<summary>Chart version & sources</summary><div></div>';panel.append(sources);
