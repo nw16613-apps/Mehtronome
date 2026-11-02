@@ -37,7 +37,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(setupFields,query('.progression-chooser'),label('custom-name'),tonality,get('single-chord-chart'));
  move(progression,setupFields,query('.chart-save-actions'),get('repertoire-status'));
  const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Edits are kept as a working draft in this browser. Save chart creates a named copy; Update saved chart replaces the selected saved copy.';progression.append(draftHelp);
- const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart key transposes the whole chart; chord root edits one chord.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
+ const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart reference sets transposition and Roman numerals. Changing it transposes the whole chart. Each scale guide has its own modal tonic; chord root edits the selected chord.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
  const hiddenTemplates=document.createElement('div');hiddenTemplates.hidden=true;move(hiddenTemplates,get('mode-template'),label('template'));progression.append(hiddenTemplates);
  heading.after(get('active-musical-context'));get('active-musical-context').after(progression);
  for(const row of Array.from(harmony.querySelectorAll(':scope>.field-row')))if(!row.children.length)row.remove();

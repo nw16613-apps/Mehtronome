@@ -575,7 +575,7 @@ function renderProgressionReference(activeStep=step,exerciseOnly=false) {
     element.innerHTML=`<div class="reference-heading"><div><p class="eyebrow">HARMONY REFERENCE</p><h4>${escapeHtml(title)}</h4></div><span class="reference-meter">${settings.beats} beats / bar${settings.progression?` · ${settings.template==='custom'||settings.loopUnit==='beats'?order.reduce((sum:number,index:number)=>sum+progressionPlaybackBeatDurations(settings)[index],0)+'-beat loop':order.reduce((sum:number,index:number)=>sum+durations[index],0)+'-bar loop'}`:''}</span></div><ol class="reference-chords">${cards}</ol><p class="reference-preview-help">While stopped, hold a chord to hear it. Release to stop.</p><div class="reference-current"><span><b>Current:</b> ${escapeHtml(label(active))} · ${escapeHtml(info.tones.join(' · '))}</span><span><b>Scale guide:</b> ${escapeHtml(scale(info))}</span>${settings.progression?`<span><b>Next:</b> ${escapeHtml(label(next))}</span>`:''}</div>`;
     const compatibility=scaleCompatibility(info);if(compatibility&&element.getAttribute('aria-label')!=='Fretboard progression reference')element.insertAdjacentHTML('beforeend',`<p class="context-check">${escapeHtml(compatibility)}</p>`);
     const context=musicalContext(settings,activeStep);
-    if(element.classList.contains('compact-reference')){element.querySelector('ol')?.remove();element.querySelector('.reference-preview-help')?.remove();element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Tonic:</b> ${escapeHtml(context.tonic)}</span>`);}
+    if(element.classList.contains('compact-reference')){element.querySelector('ol')?.remove();element.querySelector('.reference-preview-help')?.remove();element.querySelector('.reference-heading')?.remove();element.querySelector('.reference-current')?.insertAdjacentHTML('afterbegin',`<span><b>Modal tonic:</b> ${escapeHtml(context.current.scaleNames[0])}</span>`);}
     if(settings.progression&&settings.template==='custom')element.insertAdjacentHTML('beforeend',sectionControls());
     applyStudioIcons(element);
   });
@@ -1117,7 +1117,7 @@ function update() {
   select('chord').parentElement!.hidden = jazz || diatonic || modal || custom;
   el('mode-tip').hidden = jazz || custom;
   select('chord').disabled = jazz || diatonic || modal || custom;
-  el('root-label').textContent = jazz || custom ? 'Chart key' : settings.progression ? 'Starting root' : 'Root note';
+  el('root-label').textContent = jazz || custom ? 'Chart reference' : settings.progression ? 'Starting root' : 'Root note';
   el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
   renderCustomBuilder();
   settings.subdivision = Number(select('subdivision').value);
@@ -2003,19 +2003,24 @@ function syncMiniTransport() {
   const transportStep=exercisePlaying?exerciseBackingStep:step;
   const info = harmonyAt(transportSettings,transportStep);
   const active=musicalContext(transportSettings,transportStep);
-  el('active-musical-context').innerHTML=`<div><small>Chart tonic / key</small><strong>${escapeHtml(active.tonic)}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div><p>${exercisePlaying?'Exercise audition is shown here; the main transport setup below is retained. ':''}${progressionOrder(transportSettings).length===1?'Single-chord chart: explore the scale guide over the repeating chord.':'Scale guides follow the chords in the chart.'} ${transportSettings.extensionMorph?'Extensions are evolving; switch them off for a stable listening reference.':''}</p>`;
-  select('mini-key').setAttribute('aria-label',settings.progression?'Progression tonic':'Pedal root');
+  el('active-musical-context').innerHTML=`<div><small>Modal tonic</small><strong>${escapeHtml(info.scaleNames[0])}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div><p>${exercisePlaying?'Exercise audition is shown here; the main transport setup below is retained. ':''}${progressionOrder(transportSettings).length===1?'Single-chord chart: explore the scale guide over the repeating chord.':'Scale guides follow the chords in the chart.'} ${transportSettings.extensionMorph?'Extensions are evolving; switch them off for a stable listening reference.':''}</p>`;
+  select('mini-key').setAttribute('aria-label',settings.progression?'Selected chord root':'Pedal root');
+  select('mini-key').disabled=settings.progression&&(playing||exercisePlaying||exercisePreparing||busy||stopping);
   select('mini-mode-select').parentElement!.hidden=select('quality').parentElement!.hidden;
   select('mini-chord-select').parentElement!.hidden=select('chord').parentElement!.hidden;
-  el('mini-mode').title=`Tonic ${active.tonic} · next ${active.nextChord}`;
+  const parent=parentMajorFor(info);el('mini-mode').title=`Modal tonic ${info.scaleNames[0]}${parent?.family==='Major scale'?' · Parent major: '+parent.name+' major':''} · next ${active.nextChord}`;
   el('mini-chord').textContent = info.name+info.suffix;
   syncWorkspaceStates();
   const sessionChord=document.getElementById('session-chord'),sessionMode=document.getElementById('session-mode');
   if(sessionChord)sessionChord.textContent=info.name+info.suffix;
   if(sessionMode)sessionMode.textContent=active.scale;
   el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
-  el('mini-root-purpose').textContent=settings.progression?'Tonic':'Root';
-  select('mini-key').value=select('key').value;
+  el('mini-root-purpose').textContent=settings.progression?'Chord root':'Root';
+  const rootMenu=select('mini-key');rootMenu.querySelector('option[value="mixed"]')?.remove();
+  const mixedRoots=settings.progression&&settings.template==='custom'&&!playing&&!exercisePlaying&&step===customStepIndex&&new Set(chartEditSteps.map(i=>customProgression.steps[i]?.root)).size>1;
+  if(mixedRoots)rootMenu.add(new Option('Mixed','mixed'));
+  rootMenu.value=mixedRoots?'mixed':String(settings.progression?info.chordPcs[0]:settings.key);
+  rootMenu.title=settings.progression?`Edits the selected chord${chartEditSteps.length>1?'s':''}. Chart reference: ${names[settings.key]} (change it in Harmony).`:'Root of the repeating chord';
   select('mini-mode-select').value=select('quality').value;
   select('mini-chord-select').innerHTML=select('chord').innerHTML;
   select('mini-chord-select').value=select('chord').value;
@@ -2058,7 +2063,15 @@ el('mini-more').addEventListener('click',()=>{
   el('mini-more').textContent=expanded?'Done':'Controls';
 });
 input('mini-bpm').addEventListener('change',()=>{ tempo(Number(input('mini-bpm').value)); input('mini-bpm').value=String(settings.bpm); });
-select('mini-key').addEventListener('input',()=>{select('key').value=select('mini-key').value;update();});
+select('mini-key').addEventListener('input',()=>{
+ const value=select('mini-key').value;if(value==='mixed')return;
+ if(settings.progression){
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
+  const selectedStep=step;if(settings.template!=='custom')el<HTMLButtonElement>('customize-progression').click();
+  if(customStepIndex!==selectedStep){customStepIndex=selectedStep;chartEditSteps=[];renderCustomBuilder();}
+  select('custom-root').value=String((Number(value)-settings.key+12)%12);commitCustomEdit('custom-root');
+ }else{select('key').value=value;update();}
+});
 select('mini-mode-select').addEventListener('input',()=>{
   select('quality').value=select('mini-mode-select').value;
   if(select('template').value.startsWith('modal_'))select('template').value=`modal_${select('quality').value}`;
