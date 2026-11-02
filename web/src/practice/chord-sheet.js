@@ -2,9 +2,13 @@ import {escapeChordText as esc,chordHtml} from './chord-symbol.js';
 /** Beat-accurate chart; presentation never changes the playback timeline. */
 export function chordSheet(chords,durations,beats,{title='My progression',key='',marks=/** @type {string[]} */ ([]),selected=0,selectedSteps=/** @type {number[]} */ ([]),limit=2048,loopSteps=/** @type {number[]} */ ([]),loopBeats=/** @type {number[]} */ ([]),barsPerLine=4,labels='chords',romans=/** @type {string[]} */ ([]),annotations=/** @type {string[]} */ ([]),repeatBars=false}={}){
  const steps=[];let total=0;durations.forEach((duration,index)=>{steps.push({index,start:total,end:total+duration,chord:chords[index]});total+=duration;});
+ const beatSteps=Array.from({length:total},(_,beat)=>steps.find(step=>beat>=step.start&&beat<step.end));
  const selectedSet=new Set(selectedSteps.length?selectedSteps:[selected]),visible=Math.min(total,limit),measures=[];
  for(let start=0;start<visible;start+=beats){
-  const count=Math.min(beats,visible-start),last=start+count===total,held=steps.find(s=>start>=s.start&&start<s.end),repeat=repeatBars&&held&&held.start<start&&held.end>=start+count;
+  const count=Math.min(beats,visible-start),last=start+count===total,repeat=repeatBars&&start>=beats&&count===beats&&Array.from({length:beats},(_,offset)=>{
+   const current=beatSteps[start+offset],previous=beatSteps[start-beats+offset];
+   return current.chord===previous.chord&&(labels==='chords'||romans[current.index]===romans[previous.index])&&annotations[current.index]===annotations[previous.index];
+  }).every(Boolean);
   const cells=Array.from({length:count},(_,offset)=>{
    const beat=start+offset,step=steps.find(s=>beat>=s.start&&beat<s.end),change=beat===step.start||offset===0,isSelected=selectedSet.has(step.index);
    const symbol=labels==='roman'?esc(romans[step.index]||''):chordHtml(step.chord);
