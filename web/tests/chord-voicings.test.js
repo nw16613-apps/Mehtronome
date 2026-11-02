@@ -61,3 +61,15 @@ test('inversion cycles ascend or descend in sounding register even with a low CA
  const h=harmony(),p={...cagedPositionFor(fretboardFor(h,'D')),geometryShape:'D'};
  for(const motion of ['ascending','descending']){const {plan}=chordStudyPlan([h],[4],[p],{study:'inversions',family:'drop2',strings:'4321',region:'neck',rhythm:'quarter',motion});assert.equal(plan.events.length,4);const bass=plan.events.map(e=>e.note.midi);for(let i=1;i<4;i++)assert.ok(motion==='ascending'?bass[i]>bass[i-1]:bass[i]<bass[i-1]);}
 });
+test('custom chord scales transpose interval formulas through every mode degree',async()=>{
+ const {parseChordFormula,referenceChord}=await import('../src/guitar/chord-library.js');const {normalizedChordOptions}=await import('../src/practice/chord-controls.js');
+ const h=harmony(0,'maj7','major');
+ for(let degree=0;degree<7;degree++){
+  const c=scaleChord(h,degree,'triad','root95');assert.deepEqual(new Set(c.chordPcs),new Set([0,1,4].map(i=>h.scalePcs[(degree+i)%7])));assert.ok(c.intervals.some(i=>i.endsWith('9')));
+  const custom=scaleChord(h,degree,'triad','custom','1,9,5');assert.deepEqual(custom.chordPcs,c.chordPcs);
+  assert.ok(chordVoicings(custom,fretboardFor(h,'C'),{family:'spread',region:'neck'}).length);
+  assert.deepEqual(referenceChord(h,{explore:'scale',construction:'root95',degree,material:'triad'}).chordPcs,c.chordPcs);
+ }
+ assert.deepEqual(parseChordFormula('1, 9, 5'),[1,9,5]);for(const bad of ['1,1,5','1,2,9','1,0,5','1,14,5','1','1,3,5,7,9','oops'])assert.equal(parseChordFormula(bad),null,bad);
+ assert.equal(normalizedChordOptions({construction:'custom',formula:'3,7',family:'drop2'}).family,'close');assert.equal(normalizedChordOptions({construction:'root95',family:'drop3'}).family,'spread');
+});

@@ -2,7 +2,7 @@ import {chordMaterial,chordVoicings,scaleChord,voiceLeadingCost} from '../guitar
 import {fretboardFor} from '../guitar/fretboard.js';
 import {harmonyAt} from '../audio/music.js';
 import {recommendedMode} from './custom-progression.js';
-export const CHORD_STUDIES={inversions:'Inversion cycle',scale:'Chord scale',sequence:'Chord-scale sequence',progression:'Progression changes',voiceleading:'Voice-leading route',transform:'Voicing transformations',comping:'Rhythmic comping'};
+export const CHORD_STUDIES={progression:'Chord changes',scale:'Chord scale',inversions:'Inversions',sequence:'Chord-scale sequence',voiceleading:'Voice-leading route',transform:'Voicing transformations',comping:'Rhythmic comping'};
 export function chordAttacks(duration,beats,rhythm){
  if(rhythm==='held')return [{at:0,duration}];
  const entries=[];for(let bar=0;bar<duration;bar+=beats){const positions=rhythm==='offbeats'?Array.from({length:beats},(_,i)=>i+.5):rhythm==='syncopated'?[0,1.5,2.5]:Array.from({length:beats},(_,i)=>i);
@@ -23,7 +23,7 @@ export function chordStudyPlan(harmonies,durations,path,options={}){
     const n=harmony.scalePcs.length,step={step:1,thirds:2,fourths:3,fifths:4}[movement]||1;
     degree=study==='sequence'?(Math.floor(cursor/4)*2+[0,2,1,3][cursor%4])%n:cursor*step%n;
     if(motion==='descending')degree=n-1-degree;
-    target=scaleChord(harmony,degree,material,construction);
+    target=scaleChord(harmony,degree,material,construction,options.formula);
     if(target&&['shell','rootless','guide','extensions'].includes(material))target=chordMaterial(target,material);
    }else if(study==='transform'){
     const chord=['major','maj7','dom7','minor','min7'][cursor%5],h=harmonyAt({key:harmony.chordPcs[0],chord,mode:recommendedMode(chord)});target=chordMaterial(h,['major','minor'].includes(chord)?'triad':material);
@@ -36,7 +36,7 @@ export function chordStudyPlan(harmonies,durations,path,options={}){
    }
    if(family!=='caged'&&study!=='inversions'&&target&&fixedSet==='auto'){
     const all=chordVoicings(target,board,{...options,strings:'auto',inversion:requested}),sets=[...new Set(all.map(g=>g.stringSet))];
-    const targets=(study==='scale'||study==='sequence')?harmony.scalePcs.map((_,degree)=>{let h=scaleChord(harmony,degree,material,construction);if(h&&['shell','rootless','guide','extensions'].includes(material))h=chordMaterial(h,material);return {h,board};}):harmonies.map((h,i)=>({h:chordMaterial(h,material),board:fretboardFor(h,path[i].geometryShape)}));
+    const targets=(study==='scale'||study==='sequence')?harmony.scalePcs.map((_,degree)=>{let h=scaleChord(harmony,degree,material,construction,options.formula);if(h&&['shell','rootless','guide','extensions'].includes(material))h=chordMaterial(h,material);return {h,board};}):harmonies.map((h,i)=>({h:chordMaterial(h,material),board:fretboardFor(h,path[i].geometryShape)}));
     const coverage=new Map(sets.map(set=>[set,targets.filter(t=>t.h&&chordVoicings(t.h,t.board,{...options,strings:set,inversion:requested}).length).length]));
     fixedSet=sets.toSorted((a,b)=>coverage.get(b)-coverage.get(a)||all.find(g=>g.stringSet===a).score-all.find(g=>g.stringSet===b).score)[0]||'auto';
    }

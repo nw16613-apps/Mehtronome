@@ -32,14 +32,19 @@ export function chordMaterial(harmony,material='seventh'){
  result.studyLabel=material==='guide'?harmony.name+harmony.suffix+' · guide tones':material==='rootless'?harmony.name+harmony.suffix+' · rootless':material==='shell'?harmony.name+harmony.suffix+' · shell':material==='extensions'?harmony.name+harmony.suffix: symbolFor(harmony.name,order.map(t=>t.offset),harmony.suffix);
  return result;
 }
-export function scaleChord(harmony,degree=0,material='seventh',construction='thirds'){
- const count=material==='triad'?3:material==='extensions'?5:4,skip={thirds:2,fourths:3,fifths:4}[construction]||2,n=harmony.scalePcs.length;
- const selected=Array.from({length:count},(_,i)=>(degree+i*skip)%n),root=harmony.scalePcs[degree],name=harmony.scaleNames[degree];
+export function parseChordFormula(text){
+ const values=String(text).trim().split(/[ ,–-]+/).map(Number);
+ return values.length>=2&&values.length<=4&&values.every(n=>Number.isInteger(n)&&n>=1&&n<=13)&&new Set(values.map(n=>(n-1)%7)).size===values.length?values:null;
+}
+export function scaleChord(harmony,degree=0,material='seventh',construction='thirds',formula='1,9,5'){
+ const custom=construction==='root95'?[1,9,5]:construction==='custom'?parseChordFormula(formula):null;if(construction==='custom'&&!custom)return null;
+ const count=custom?custom.length:material==='triad'?3:material==='extensions'?5:4,skip={thirds:2,fourths:3,fifths:4}[construction]||2,n=harmony.scalePcs.length;
+ const selected=Array.from({length:count},(_,i)=>(degree+(custom?(custom[i]-1)%7:i*skip))%n),root=harmony.scalePcs[degree],name=harmony.scaleNames[degree];
  const ordered=[...new Set(selected)].map(i=>({pc:harmony.scalePcs[i],name:harmony.scaleNames[i]})).sort((a,b)=>mod(a.pc-root)-mod(b.pc-root));
  if(new Set(ordered.map(t=>t.pc)).size!==count)return null;
  const intervals=ordered.map(t=>mod(t.pc-root)),scalePcs=harmony.scalePcs.map((_,i)=>harmony.scalePcs[(degree+i)%n]),scaleNames=harmony.scaleNames.map((_,i)=>harmony.scaleNames[(degree+i)%n]),relative=scalePcs.map(pc=>mod(pc-root));
  const mode=Object.keys(MODES).find(id=>MODES[id].intervals.length===n&&MODES[id].intervals.every((v,i)=>v===relative[i]))||harmony.mode;
- return {...harmony,rootPc:root,name,mode,scalePcs,scaleNames,suffix:'',chordId:'study',chordPcs:ordered.map(t=>t.pc),tones:ordered.map(t=>t.name),intervals:ordered.map(t=>construction==='thirds'&&selected.indexOf(harmony.scalePcs.indexOf(t.pc))===4?degreeName(name,t.name,mod(t.pc-root)).replace(/2$/,'9'):degreeName(name,t.name,mod(t.pc-root))),midi:intervals.map(i=>48+root+i),studyLabel:construction==='thirds'?symbolFor(name,intervals,' stack'):name+(construction==='fourths'?' · quartal':' · quintal')};
+ return {...harmony,rootPc:root,name,mode,scalePcs,scaleNames,suffix:'',chordId:'study',chordPcs:ordered.map(t=>t.pc),tones:ordered.map(t=>t.name),intervals:ordered.map(t=>custom?degreeName(name,t.name,mod(t.pc-root)).replace(/\d+$/,String(custom[selected.indexOf(harmony.scalePcs.indexOf(t.pc))])):construction==='thirds'&&selected.indexOf(harmony.scalePcs.indexOf(t.pc))===4?degreeName(name,t.name,mod(t.pc-root)).replace(/2$/,'9'):degreeName(name,t.name,mod(t.pc-root))),midi:intervals.map(i=>48+root+i),studyLabel:construction==='thirds'?symbolFor(name,intervals,' stack'):name+(custom?' · '+custom.join('–'):construction==='fourths'?' · quartal':' · quintal')};
 }
 /** Transform a close voicing; voices are counted from the top, before sorting. */
 export function dropVoices(close,family){
@@ -78,8 +83,8 @@ export function chordVoicings(harmony,board,options={}){
 }
 export function voiceLeadingCost(a,b){if(!a)return b.score||0;const byString=new Map(a.notes.map(n=>[n.string,n.midi]));return b.notes.reduce((sum,n)=>sum+(byString.has(n.string)?Math.abs(n.midi-byString.get(n.string)):8),0)+(b.score||0)*.03;}
 export function referenceChord(harmony,options){
- if(!options.construction||options.construction==='thirds')return chordMaterial(harmony,options.material);
- let target=scaleChord(harmony,Math.max(0,harmony.scalePcs.indexOf(harmony.chordPcs[0])),options.material,options.construction);
+ if(options.explore!=='scale'&&(!options.construction||options.construction==='thirds'))return chordMaterial(harmony,options.material);
+ let target=scaleChord(harmony,options.explore==='scale'?(Number(options.degree)||0)%harmony.scalePcs.length:Math.max(0,harmony.scalePcs.indexOf(harmony.chordPcs[0])),options.material,options.construction,options.formula);
  if(target&&['guide','shell','rootless','extensions'].includes(options.material))target=chordMaterial(target,options.material);
  return target;
 }
