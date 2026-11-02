@@ -799,12 +799,14 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     const title = `${guitarCategory==='chords'?(libraryHarmony?.studyLabel||chord):chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>${escapeHtml(chord)} · Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:grip.notes}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
-  const fullBoard=fullFretboardFor(info,1,17,selectedTheory?false:select('exercise').value==='arpeggio');
+  const fullChordHarmony=guitarCategory==='chords'?referenceChord(info,fretChordOptions):null,fullEnd=guitarCategory==='chords'?20:17;
+  const fullBoard=fullFretboardFor(fullChordHarmony||info,1,fullEnd,selectedTheory?false:select('exercise').value==='arpeggio');
+  if(fullChordHarmony){fullBoard.rootPc=fullChordHarmony.rootPc??info.chordPcs[0];fullBoard.notes=fullBoard.notes.map((n:any)=>({...n,root:n.pc===fullBoard.rootPc,scaleIndex:-1,chromaticDegree:fullChordHarmony.intervals[fullChordHarmony.chordPcs.indexOf(n.pc)]||n.chromaticDegree}));}
   const fullFretboardGrips=showGrip&&!selectedTheory?displayedPositions.map(position=>{
     const grip=guitarCategory==='chords'?(position.numeral===selectedPosition.numeral?positionGrips.get(position.geometryShape):null):recommendedGrip(info,position.board);
     return grip?{numeral:position.numeral!,notes:grip.notes}:null;
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
-  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
+  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${fullChordHarmony?.studyLabel||chord}, full fretboard, frets 1 to ${fullEnd}`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   reflectFullFretboard();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);
   const guitarRouteGroups=progressionOrder(settings).map((i:number)=>({chord:harmonies[i]?.name+harmonies[i]?.suffix,position:path[i],board:harmonies[i]?fretboardFor(harmonies[i],path[i].geometryShape):null}));
