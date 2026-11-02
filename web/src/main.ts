@@ -2376,7 +2376,7 @@ const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-f
 installRepertoire({
  templates:[
   {name:'Single chord',options:[{id:'single',name:'Single-chord chart · 4 bars'}]},
-  ...[['Jazz','jazz'],['Modal','modal'],['Parallel movements','parallel']].map(([name,kind])=>({name,options:Object.entries(PROGRESSIONS).filter(([,p])=>p.kind===kind).map(([id,p])=>({id,name:p.name}))})),
+  ...[['Jazz','jazz'],['Common progressions','common'],['Modal','modal'],['Parallel movements','parallel']].map(([name,kind])=>({name,options:Object.entries(PROGRESSIONS).filter(([,p])=>('group' in p?p.group:p.kind)===kind).map(([id,p])=>({id,name:p.name}))})),
   {name:'Diatonic',options:[{id:'diatonic',name:'Diatonic seventh chords'}]}
  ],
  draft:()=>({key:settings.key,beats:settings.beats,progression:normalizeCustomProgression(customProgression)}),

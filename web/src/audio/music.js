@@ -271,6 +271,14 @@ export const PROGRESSIONS = {
     { root: 7, letter: 4, chord: 'dom7alt', mode: 'altered', bars: 1 },
   ] },
   diatonic: { name: 'Diatonic seventh I–vi–IV–V · 1 bar per chord', bars: 1, kind: 'diatonic', roman: ['Imaj7','vi7','IVmaj7','V7'] },
+  major1625: {name:'Major I–vi–ii–V turnaround · 4 bars',bars:1,kind:'jazz',roman:['Imaj7','vi7','ii7','V7'],steps:[{root:0,letter:0,chord:'maj7',mode:'major',bars:1},{root:9,letter:5,chord:'min7',mode:'minor',bars:1},{root:2,letter:1,chord:'min7',mode:'dorian',bars:1},{root:7,letter:4,chord:'dom7',mode:'mixolydian',bars:1}]},
+  minor1625: {name:'Minor i–♭VI–iiø–V turnaround · 4 bars',bars:1,kind:'jazz',roman:['i7','♭VImaj7','iiø7','V7♭9'],steps:[{root:0,letter:0,chord:'min7',mode:'minor',bars:1},{root:8,letter:5,chord:'maj7',mode:'lydian',bars:1},{root:2,letter:1,chord:'halfDim',mode:'locrian',bars:1},{root:7,letter:4,chord:'dom7b9',mode:'phrygian_dominant',bars:1}]},
+  backdoor: {name:'Backdoor iv–♭VII–I cadence · 4 bars',bars:1,kind:'jazz',roman:['iv7','♭VII7','Imaj7'],steps:[{root:5,letter:3,chord:'min7',mode:'dorian',bars:1},{root:10,letter:6,chord:'dom7',mode:'mixolydian',bars:1},{root:0,letter:0,chord:'maj7',mode:'major',bars:2}]},
+  tritone251: {name:'Tritone substitute ii–♭II–I · 4 bars',bars:1,kind:'jazz',roman:['ii7','♭II7','Imaj7'],steps:[{root:2,letter:1,chord:'min7',mode:'dorian',bars:1},{root:1,letter:1,chord:'dom7',mode:'lydian_dominant',bars:1},{root:0,letter:0,chord:'maj7',mode:'major',bars:2}]},
+  major1564: {name:'Major I–V–vi–IV · 4 bars',bars:1,kind:'jazz',group:'common',roman:['I','V','vi','IV'],steps:[{root:0,letter:0,chord:'major',mode:'major',bars:1},{root:7,letter:4,chord:'major',mode:'mixolydian',bars:1},{root:9,letter:5,chord:'minor',mode:'minor',bars:1},{root:5,letter:3,chord:'major',mode:'lydian',bars:1}]},
+  major6415: {name:'Major vi–IV–I–V · 4 bars',bars:1,kind:'jazz',group:'common',roman:['vi','IV','I','V'],steps:[{root:9,letter:5,chord:'minor',mode:'minor',bars:1},{root:5,letter:3,chord:'major',mode:'lydian',bars:1},{root:0,letter:0,chord:'major',mode:'major',bars:1},{root:7,letter:4,chord:'major',mode:'mixolydian',bars:1}]},
+  minor1637: {name:'Minor i–♭VI–♭III–♭VII · 4 bars',bars:1,kind:'jazz',group:'common',roman:['i','♭VI','♭III','♭VII'],steps:[{root:0,letter:0,chord:'minor',mode:'minor',bars:1},{root:8,letter:5,chord:'major',mode:'lydian',bars:1},{root:3,letter:2,chord:'major',mode:'major',bars:1},{root:10,letter:6,chord:'major',mode:'mixolydian',bars:1}]},
+  andalusian: {name:'Andalusian i–♭VII–♭VI–V · 4 bars',bars:1,kind:'jazz',group:'common',roman:['i','♭VII','♭VI','V7♭9'],steps:[{root:0,letter:0,chord:'minor',mode:'minor',bars:1},{root:10,letter:6,chord:'major',mode:'mixolydian',bars:1},{root:8,letter:5,chord:'major',mode:'lydian',bars:1},{root:7,letter:4,chord:'dom7b9',mode:'phrygian_dominant',bars:1}]},
   ...MODAL_PROGRESSIONS,
 };
 export function progressionDefinition(settings) {
