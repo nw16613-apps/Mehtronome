@@ -3,10 +3,10 @@ import {recommendedGrip} from '../guitar/grips.js';
 
 /** An actual grip inside the selected CAGED board, never a generic open shape.
  * Low E is at the left; dots identify frets, not prescribed finger numbers. */
-export function notationChordDiagram(harmony,board,position,x,y){
- const grip=harmony&&board?recommendedGrip(harmony,board):null;
+export function notationChordDiagram(harmony,board,position,x,y,voicing=null){
+ const grip=voicing||(harmony&&board?recommendedGrip(harmony,board):null);
  const label=`Position ${position?.numeral||'—'}${position?.shape?' · '+position.shape+' shape':''}`;
- const title=`${harmony? harmony.name+harmony.suffix:''} · ${label}`;
+ const title=`${harmony? harmony.studyLabel||harmony.name+harmony.suffix:''} · ${label}`;
  let svg=`<g class="notation-chord-diagram" data-position="${esc(position?.numeral||'')}" data-grip-available="${Boolean(grip)}" transform="translate(${x} ${y}) scale(0.7)" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
  // Inline styling keeps diagrams readable in exported SVGs and printed scores.
  const text=(value,tx,ty,size=8,anchor='middle')=>`<text x="${tx}" y="${ty}" text-anchor="${anchor}" style="font:${size}px system-ui;fill:#17201d">${esc(value)}</text>`;

@@ -27,7 +27,7 @@ function fingersFor(notes) {
   };
 }
 
-/** @typedef {{notes:Array<{string:number,fret:number,midi:number,pc:number,name:string,finger:number}>,barres:Array<{finger:number,fret:number,from:number,to:number}>,framework:string,span:number,omitted:string[],intervals:string[],muted:number[]}} Grip */
+/** @typedef {{notes:Array<{string:number,fret:number,midi:number,pc:number,name:string,finger:number}>,barres:Array<{finger:number,fret:number,from:number,to:number}>,framework:string,inversion?:number,stringSet?:string,span:number,omitted:string[],intervals:string[],muted:number[]}} Grip */
 /** @returns {Grip | null} */
 export function recommendedGrip(harmony,board) {
   const pcs=[...new Set(harmony.chordPcs)];
