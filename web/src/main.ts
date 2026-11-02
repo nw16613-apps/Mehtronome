@@ -56,7 +56,7 @@ import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
-import { compatibleScaleGroups,compatibleModeForChord,chordChoicesForMode,compatibleChordForMode } from './practice/scale-explorer.js';
+import { compatibleScaleGroups,compatibleModeForChord,chordChoicesForMode,compatibleChordForMode,modeChordGroups } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionPlaybackBeatDurations, progressionTimeline, progressionPositionAtBeat, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
@@ -691,9 +691,9 @@ function fillHarmonyChoices(chordId:string,currentMode:string){
  mode.innerHTML=modeOptions();mode.value=currentMode;
  const choices=chordChoicesForMode(currentMode),suggested=choices.find((c:any)=>c.suggested)?.id||'',ids=choices.map((c:any)=>c.id);
  const legacy=!ids.includes(chordId)?`<option value="${chordId}" disabled>${escapeHtml(CHORDS[chordId as keyof typeof CHORDS].name)} · outside selected mode</option>`:'';
- chord.innerHTML=legacy+chordTypeOptions(ids,suggested);chord.value=chordId;
+ chord.innerHTML=legacy+modeChordGroups(currentMode).map((group:any)=>`<optgroup label="${escapeHtml(group.label)}">${group.choices.map((choice:any)=>`<option value="${choice.id}">${escapeHtml(choice.name)}${choice.id===suggested?' · suggested':''}</option>`).join('')}</optgroup>`).join('');chord.value=chordId;
  for(const option of Array.from(chord.options)){const choice=choices.find((c:any)=>c.id===option.value);if(choice){if(!choice.strict)option.textContent+=' · reduced guide';option.title=choice.explanation;}}
- el('custom-mode-help').textContent=`${choices.length} compatible chord qualities for this root and mode. Changing the mode keeps compatible qualities and replaces incompatible ones with a suggestion. Pentatonic/blues options marked “reduced guide” can omit written chord tones.`;
+ el('custom-mode-help').textContent=`${choices.length} compatible chord qualities on the selected root, grouped by structure. Changing the mode keeps compatible qualities and replaces incompatible ones with a suggestion. Pentatonic/blues options marked “reduced guide” can omit written chord tones.`;
 }
 function fillChordScaleOptions(chordId:string,currentMode:string){
   const groups=compatibleScaleGroups(chordId),choices=groups.flatMap((g:any)=>g.choices);

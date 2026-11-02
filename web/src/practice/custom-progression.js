@@ -9,6 +9,9 @@ export const CUSTOM_PROGRESSION_KEY='mehtronome-custom-progression-v1';
 export function customPitchName(key,offset,letter=LETTERS[offset]){return spellPitch(key,letter,offset,ROOT_NAMES[key]);}
 
 export function recommendedMode(chord){
+  if(chord==='addSharp11')return 'lydian';
+  if(chord==='min7b13')return 'minor';
+  if(chord==='min7sharp11')return 'dorian_sharp4';
   if(chord==='dom13b9')return 'mixolydian_b2';
   if(['dom7sharp9','dom7b9sharp11'].includes(chord))return 'diminished_half_whole';
   if(chord==='dimMaj7')return 'diminished_whole_half';

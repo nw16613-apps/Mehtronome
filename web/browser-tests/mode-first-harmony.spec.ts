@@ -23,3 +23,11 @@ test('reduced guides are labelled and workflow preference survives reload on pho
  await page.setViewportSize({width:390,height:844});await chart(page);await page.locator('#custom-harmony-workflow').selectOption('mode');await page.locator('#custom-mode').selectOption('major_pentatonic');await expect(page.locator('#custom-chord option[value=maj7]')).toContainText('reduced guide');await page.locator('#custom-chord').selectOption('maj7');await expect(page.locator('#custom-mode')).toHaveValue('major_pentatonic');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.locator('#custom-progression-builder').screenshot({path:'/workspace/mode-first-mobile.png'});
  await page.reload();await page.locator('[data-workspace-target=harmony-title]').click();await expect(page.locator('#custom-harmony-workflow')).toHaveValue('mode');
 });
+test('mode-first groups chord structures and offers added modal colours without changing roots',async({page})=>{
+ await chart(page);await page.locator('#custom-harmony-workflow').selectOption('mode');await page.locator('#custom-mode').selectOption('lydian');
+ for(const label of ['Triads','Sevenths','Sixths & added tones','Extensions & alterations'])await expect(page.locator(`#custom-chord optgroup[label="${label}"]`)).toHaveCount(1);
+ await expect(page.locator('#custom-chord optgroup[label="Sixths & added tones"] option[value=addSharp11]')).toHaveCount(1);
+ await page.locator('#custom-chord').selectOption('addSharp11');await expect(page.locator('#custom-mode')).toHaveValue('lydian');expect((await page.evaluate(draft)).steps.map((s:any)=>s.root)).toEqual([0,5,10]);
+ await page.locator('#custom-mode').selectOption('minor');await page.locator('#custom-chord').selectOption('min7b13');await expect(page.locator('#custom-mode')).toHaveValue('minor');
+ await page.locator('#custom-mode').selectOption('major_pentatonic');await expect(page.locator('#custom-chord optgroup[label="Reduced guides · sevenths"] option[value=maj7]')).toHaveCount(1);
+});

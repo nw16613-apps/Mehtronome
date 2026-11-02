@@ -125,6 +125,10 @@ export const CHORDS = {
   dom13b9: { name:'Dominant 13 ♭9 (no natural 9)',symbol:'13♭9',intervals:[0,4,7,10,13,21] },
   dom7b9sharp11: { name:'Dominant 7 ♭9 ♯11',symbol:'7♭9♯11',intervals:[0,4,7,10,13,18] },
   dimMaj7: { name:'Diminished major 7',symbol:'dim(maj7)',intervals:[0,3,6,11] },
+  addSharp11: { name: 'Major add♯11', symbol: 'add♯11', intervals: [0,4,7,18] },
+  min7b13: { name: 'Minor 7 ♭13 (no 9)', symbol: 'm7(add♭13)', intervals: [0,3,7,10,20] },
+  min7sharp11: { name: 'Minor 7 ♯11 (no 9)', symbol: 'm7(add♯11)', intervals: [0,3,7,10,18] },
+  dom7add11: { name: 'Dominant 7 add11 (no 9)', symbol: '7(add11)', intervals: [0,4,7,10,17] },
   fifth: { name: 'Open fifth', symbol: '5', intervals: [0,7,12] },
 };
 export const SOUNDS = {

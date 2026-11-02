@@ -63,3 +63,20 @@ export function compatibleChordForMode(modeId,current){
  const choices=chordChoicesForMode(modeId);
  return choices.some(choice=>choice.id===current)?current:choices.find(choice=>choice.suggested)?.id||choices[0]?.id||'';
 }
+
+// Structure groups keep a long mode-first list navigable without hiding qualities.
+export function modeChordGroups(modeId){
+ const choices=chordChoicesForMode(modeId);
+ const structure=id=>{
+  const intervals=CHORDS[id].intervals,pcs=pcSet(intervals);
+  if(id==='fifth'||(!pcs.has(3)&&!pcs.has(4)))return 'Suspended & open fifths';
+  if(intervals.length===3)return 'Triads';
+  if(intervals.every(n=>n<12)&&(pcs.has(10)||pcs.has(11)||id==='dim7'))return 'Sevenths';
+  if(!pcs.has(10)&&!pcs.has(11)&&id!=='dim7')return 'Sixths & added tones';
+  return 'Extensions & alterations';
+ };
+ return [true,false].flatMap(strict=>['Triads','Sevenths','Sixths & added tones','Extensions & alterations','Suspended & open fifths'].map(label=>({
+  label:strict?label:`Reduced guides · ${label.toLowerCase()}`,
+  choices:choices.filter(c=>c.strict===strict&&structure(c.id)===label)
+ }))).filter(group=>group.choices.length);
+}
