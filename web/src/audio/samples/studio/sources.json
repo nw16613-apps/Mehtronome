@@ -1,0 +1,297 @@
+{
+  "repository": "sfzinstruments/karoryfer.big-rusty-drums",
+  "revision": "f07ce00df34a46b6b08375be56fe116cf15782bc",
+  "license": "CC0-1.0",
+  "format": "mono 32000 Hz PCM16",
+  "processing": "Onset silence trimmed; gentle high/low pass; peak normalization; 20ms tail fade.",
+  "files": [
+    {
+      "id": "studioKick1",
+      "source": "Samples/kick_24/kick/kick/k_vl8_rr1.flac",
+      "sourceSha256": "6ceac70ec47243b86201889371724315336937ad5c11b2380ccad3f686ea60de",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "42caa2bc731cb47e9ecc11a050505223759a20215332ea6639783802a9f26e93",
+      "bytes": 41644
+    },
+    {
+      "id": "studioKick2",
+      "source": "Samples/kick_24/kick/kick/k_vl8_rr2.flac",
+      "sourceSha256": "3022cbddbff314116434e8d4405c5f0fb58c0dec0c0c06dbc32faa55107d3212",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "acfaa90c7df98a60baa31035771e3636f3a378937cd93eace9fd6ae92486bd65",
+      "bytes": 41644
+    },
+    {
+      "id": "studioKick3",
+      "source": "Samples/kick_24/kick/kick/k_vl8_rr3.flac",
+      "sourceSha256": "f1d57b873097e91fa581e50214e3ab86356221c1a7fa7a58515697136c46b128",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "387102cc599b487611e3c246273964159e462f72093ef37697ce9f53625d3f74",
+      "bytes": 41644
+    },
+    {
+      "id": "studioKickSoft1",
+      "source": "Samples/kick_24/kick/kick/k_vl4_rr1.flac",
+      "sourceSha256": "2bdce9dd3e3b1df95cfb4de0e5613fb0e9f0b6f45946748f69535776314a377d",
+      "onsetTrimFrames": 0,
+      "duration": 0.6,
+      "sha256": "dd2f6daf6ba24ccb204247962a590e0f9c087b6112de2aa349260877ac09fd44",
+      "bytes": 38444
+    },
+    {
+      "id": "studioKickSoft2",
+      "source": "Samples/kick_24/kick/kick/k_vl4_rr2.flac",
+      "sourceSha256": "67c5a725b8a0a88aea84e7377f94d06ebc4481dc5ffbeec0e80c28f1b5743730",
+      "onsetTrimFrames": 0,
+      "duration": 0.6,
+      "sha256": "da77e4c6a715457021a64c485746df959e6dbef12bfaa48ae92152028f915d0b",
+      "bytes": 38444
+    },
+    {
+      "id": "studioSnare1",
+      "source": "Samples/snare_14/center/top/sn_center_vl8_rr1.flac",
+      "sourceSha256": "9b9996fd46e2d9c208a1080f53311db324423641a28c8657292242cbf99cce57",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "0737a8e6dd25795e46ce83315f0f12fb78fbfa1fcc620261bd75082d5862b9a1",
+      "bytes": 41644
+    },
+    {
+      "id": "studioSnare2",
+      "source": "Samples/snare_14/center/top/sn_center_vl8_rr2.flac",
+      "sourceSha256": "b3e7d98ffae41f48cd10c05d8acd5c8741abca9c58a61b8f9fbdf56b5c65a506",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "e19fd8e9eaa56ac01b9929a191b559c1170cc59abcb6f7e6334f094ff8f6e7ab",
+      "bytes": 41644
+    },
+    {
+      "id": "studioSnare3",
+      "source": "Samples/snare_14/center/top/sn_center_vl8_rr3.flac",
+      "sourceSha256": "eb50e7e0b779e9a3d3daa624fd84ca37e92bc4ad0da57e611ab48ef113b210af",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "8e966472edcaf64714fa7f2984ba2b27cff2744d683326fd941522d6cfce2e29",
+      "bytes": 41644
+    },
+    {
+      "id": "studioSnareSoft1",
+      "source": "Samples/snare_14/center/top/sn_center_vl4_rr1.flac",
+      "sourceSha256": "3f3b87ca3173a82c3da737ab3ece1186cd34b0c6625a04fcf384b1e1591729f9",
+      "onsetTrimFrames": 0,
+      "duration": 0.5,
+      "sha256": "4229e3a2a1feaa3c43179a4842bcc71e3c8524c861e13011f7e8b8e437dbad90",
+      "bytes": 32044
+    },
+    {
+      "id": "studioSnareSoft2",
+      "source": "Samples/snare_14/center/top/sn_center_vl4_rr2.flac",
+      "sourceSha256": "db0611d4f47e612e7ceb04170ec4d7a21f501a80140d6bce59cef5239bdd317b",
+      "onsetTrimFrames": 0,
+      "duration": 0.5,
+      "sha256": "5117f9b7a8e35ff5111d9ad5b9bc2959caf97d008a326786274b99d7b7457197",
+      "bytes": 32044
+    },
+    {
+      "id": "studioSnareGhost1",
+      "source": "Samples/snare_14/center/top/sn_center_vl1_rr1.flac",
+      "sourceSha256": "c1a4583d12ddc647dce96fd2286018888590d063717611e51b34bb6818e80492",
+      "onsetTrimFrames": 0,
+      "duration": 0.38,
+      "sha256": "e040722830845c0f3ad6ad0c27eac2b1691ad86492cb9274503262719d0bfed7",
+      "bytes": 24364
+    },
+    {
+      "id": "studioSnareGhost2",
+      "source": "Samples/snare_14/center/top/sn_center_vl1_rr2.flac",
+      "sourceSha256": "e5e3754bd81b8555b687dcd170647ee55469c2142c55daec29f26140a24219e1",
+      "onsetTrimFrames": 0,
+      "duration": 0.38,
+      "sha256": "fe522a1a0bc74f067f30ee6677f809cfb553e30542dbb0a4b959f351c57cb600",
+      "bytes": 24364
+    },
+    {
+      "id": "studioHat1",
+      "source": "Samples/hihat_14/cl/cl/ht_cl_vl3_rr1.flac",
+      "sourceSha256": "ce3d062d8de07cb3f273e84fbb8b9387fe951e21284cdceb8a0ec1e71cbc6bdc",
+      "onsetTrimFrames": 0,
+      "duration": 0.24,
+      "sha256": "68c82a677082aa7f752165d3bf015a3be5b70c86e2411e75c5a297e74f077fb1",
+      "bytes": 15404
+    },
+    {
+      "id": "studioHat2",
+      "source": "Samples/hihat_14/cl/cl/ht_cl_vl3_rr2.flac",
+      "sourceSha256": "bc4661e4178f068a6a5dfc623a591761da1f98a9041e36d7ad0a8d2bac246ad8",
+      "onsetTrimFrames": 0,
+      "duration": 0.24,
+      "sha256": "3f5de97a4780edeb8abd7c76a6b92b8402fb8d5fceedbbaaa7c99215b60b54d9",
+      "bytes": 15404
+    },
+    {
+      "id": "studioHat3",
+      "source": "Samples/hihat_14/cl/cl/ht_cl_vl3_rr3.flac",
+      "sourceSha256": "72eb162b27af1c25d771885cb224a24b507b0d59446a21758b47391f365618c0",
+      "onsetTrimFrames": 0,
+      "duration": 0.24,
+      "sha256": "23cc2e61a9e170d4c6a7ef58c0abc969c90cdf9c9a319b811797236a50003d90",
+      "bytes": 15404
+    },
+    {
+      "id": "studioHatOpen1",
+      "source": "Samples/hihat_14/ho/cl/ht_ho_vl2_rr1.flac",
+      "sourceSha256": "a6bfaf7ee0e707d0b09e32d6d9a18871d09c75ad23da50ec9bfc4b13880572c9",
+      "onsetTrimFrames": 0,
+      "duration": 0.8,
+      "sha256": "64bcfef7ae7701cfa5c18eddff03277b35a5b7d2bb5423a5d89fef9e9e579cad",
+      "bytes": 51244
+    },
+    {
+      "id": "studioHatOpen2",
+      "source": "Samples/hihat_14/ho/cl/ht_ho_vl2_rr2.flac",
+      "sourceSha256": "3b4ba7dc0a980a36fc07b4c446b8553cb4b563167851ad3914370ac5adefe060",
+      "onsetTrimFrames": 0,
+      "duration": 0.8,
+      "sha256": "9385754364a772d4e336109a2993506545d236dd4188d49c77c870994ef62b52",
+      "bytes": 51244
+    },
+    {
+      "id": "studioHatPedal1",
+      "source": "Samples/hihat_14/chik/cl/ht_chik_vl2_rr1.flac",
+      "sourceSha256": "b9fd36504bac335580efe080e056656bb252e1cbf68a5638734c5fcd6b99d058",
+      "onsetTrimFrames": 0,
+      "duration": 0.35,
+      "sha256": "2b64cec5bd88a64ca405566db69967e505ef8f88b6860e760de4dd557bddfa8f",
+      "bytes": 22444
+    },
+    {
+      "id": "studioHatPedal2",
+      "source": "Samples/hihat_14/chik/cl/ht_chik_vl2_rr2.flac",
+      "sourceSha256": "7aa5d565109efe8e56c066b0aa6f720eb642c9139c43bc3b351786de9d34c91d",
+      "onsetTrimFrames": 0,
+      "duration": 0.35,
+      "sha256": "626161ebc63c2d50c6fccc7354245faf8a23867d62f38f354992a201030c198c",
+      "bytes": 22444
+    },
+    {
+      "id": "studioRide1",
+      "source": "Samples/ride_22/rd/cl/rd_vl2_rr1.flac",
+      "sourceSha256": "0e468ab4d380302892a06b88db0af921e02613d93395b36d899da76ac32112ed",
+      "onsetTrimFrames": 0,
+      "duration": 2.7,
+      "sha256": "8eaec8d6dc04172d7aac8ea794e9b82ebcffbcfa15f8f611f9d4d080de6edde0",
+      "bytes": 172844
+    },
+    {
+      "id": "studioRide2",
+      "source": "Samples/ride_22/rd/cl/rd_vl2_rr2.flac",
+      "sourceSha256": "3a08548eb914b1faf420bfa9df407b0524d1f17eaccfaf5b10456a31695db320",
+      "onsetTrimFrames": 0,
+      "duration": 2.7,
+      "sha256": "a659721e6dcf6f770b84169793a95efb2d5296e7aaea4ca9975131677b2ff9d1",
+      "bytes": 172844
+    },
+    {
+      "id": "studioRide3",
+      "source": "Samples/ride_22/rd/cl/rd_vl2_rr3.flac",
+      "sourceSha256": "a30dc9513de588b294c5225447b0370295723e777092e224d92dd96e771bebe8",
+      "onsetTrimFrames": 0,
+      "duration": 2.7,
+      "sha256": "5a36cf099c2aeba3514fa7859b39ab2406305f1bfb563c9868c1fe11b783de31",
+      "bytes": 172844
+    },
+    {
+      "id": "studioRideBell1",
+      "source": "Samples/ride_22/bl/cl/rd_bl_vl2_rr1.flac",
+      "sourceSha256": "53ecee1d14df1ff9f3abaf383d743308194fa6a0bab45acdf088a48d89cee06a",
+      "onsetTrimFrames": 0,
+      "duration": 2.0,
+      "sha256": "404d2e87b78757936491d86217c1bf0552c15cdd5669311f910902abe5ef740c",
+      "bytes": 128044
+    },
+    {
+      "id": "studioRideBell2",
+      "source": "Samples/ride_22/bl/cl/rd_bl_vl2_rr2.flac",
+      "sourceSha256": "6207915248ce2ba61f8500820d839ac2102b3574669722a9361f4ffc909f4477",
+      "onsetTrimFrames": 0,
+      "duration": 2.0,
+      "sha256": "6ffbdf47d105d6007213fb9f1105ea53529c96a01ab2551bc825ea9a83c8f10e",
+      "bytes": 128044
+    },
+    {
+      "id": "studioRim1",
+      "source": "Samples/snare_14/sc/top/sn_sc_vl2_rr1.flac",
+      "sourceSha256": "702f44e3b10b0d9f17b09b2927a0c0294426cc64b286cfbd939fa630078c701f",
+      "onsetTrimFrames": 0,
+      "duration": 0.35,
+      "sha256": "933da330edf8a89bd172517020f41a9c159662f2c2cc0b8a4735a26be16feea0",
+      "bytes": 22444
+    },
+    {
+      "id": "studioRim2",
+      "source": "Samples/snare_14/sc/top/sn_sc_vl2_rr2.flac",
+      "sourceSha256": "30da096084ad86b46951dbc835a190cc2e155385883b0257ccdcbb6cb880bcbe",
+      "onsetTrimFrames": 0,
+      "duration": 0.35,
+      "sha256": "8d13973c351ba1aa2f2dc5ffca9a050f16acae3419d6790735221450b3147c25",
+      "bytes": 22444
+    },
+    {
+      "id": "studioTomHigh1",
+      "source": "Samples/tom_15/center/cl/t15_vl4_rr1.flac",
+      "sourceSha256": "48c8b595c2e25a02a6c52d4ef43fd5f3228f36a60d0911fa281d5caa7e0ca5ac",
+      "onsetTrimFrames": 0,
+      "duration": 0.75,
+      "sha256": "7be6ac35d2445bcda41fe2a611b3c6c21d3d37eac84b2dd8fb4e3f74ec64561f",
+      "bytes": 48044
+    },
+    {
+      "id": "studioTomHigh2",
+      "source": "Samples/tom_15/center/cl/t15_vl4_rr2.flac",
+      "sourceSha256": "99bf7de3b39d1ee0b2e1b35c7ac2eaf15d6433e4137f1a2a935440ba5ae12f92",
+      "onsetTrimFrames": 0,
+      "duration": 0.75,
+      "sha256": "034802363a3344d79cd27dbbddd4e58c72acf04ae731f5a024d0ee1621be88fd",
+      "bytes": 48044
+    },
+    {
+      "id": "studioTomLow1",
+      "source": "Samples/tom_18/center/cl/t18_vl4_rr1.flac",
+      "sourceSha256": "e1594020fdea85b03fd208837c626e4a511206227bf952cedd758100a6eca67e",
+      "onsetTrimFrames": 0,
+      "duration": 0.95,
+      "sha256": "05fd2f623903e8360c5d8e79efe23bb3f82c7587e4e652cc12f7a4f3fccf1581",
+      "bytes": 60844
+    },
+    {
+      "id": "studioTomLow2",
+      "source": "Samples/tom_18/center/cl/t18_vl4_rr2.flac",
+      "sourceSha256": "840200ed9a962f43c6ba7e268404c56edb2be5566f15ab3c0bd1d5cdd730adf6",
+      "onsetTrimFrames": 0,
+      "duration": 0.95,
+      "sha256": "c05dd836af2b5effb109ebb97e1499618cf8b465d6e1c1d4e076cd6556130e0a",
+      "bytes": 60844
+    },
+    {
+      "id": "studioCrash1",
+      "source": "Samples/crash_17/cr/cl/cr_vl2_rr1.flac",
+      "sourceSha256": "fd12e7b81497ddd0ab40d69a4f0150b1eb945680d6e338770406ff1f1959583b",
+      "onsetTrimFrames": 0,
+      "duration": 2.6,
+      "sha256": "087dd790eba7fc72259f553be44b9528bfed5d9e11072eb76ea097fb9eb04bdc",
+      "bytes": 166444
+    },
+    {
+      "id": "studioCrash2",
+      "source": "Samples/crash_17/cr/cl/cr_vl2_rr2.flac",
+      "sourceSha256": "946414e0bfc57b7001f12d3aeecf13d9eced8c002fa8232e7107f185c14746b2",
+      "onsetTrimFrames": 0,
+      "duration": 2.6,
+      "sha256": "18b31649d0cab796d5c7edf5bd2a366a396c36401eda0edc0e9228576bad7a20",
+      "bytes": 166444
+    }
+  ]
+}

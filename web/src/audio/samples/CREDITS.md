@@ -1,6 +1,6 @@
 # Recording credits
 
-The Wilkinson drum recordings are released under **Creative Commons Attribution 4.0 International**; the Virtuosity jazz drums and bass recordings are released under **CC0 1.0 Universal**. The complete local license copies are [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0) and [LICENSE](LICENSE). Retrieved 2026-10-21.
+The Wilkinson drum recordings are released under **Creative Commons Attribution 4.0 International**; the Virtuosity jazz drums, Big Rusty studio drums and bass recordings are released under **CC0 1.0 Universal**. The complete local license copies are [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0) and [LICENSE](LICENSE). Retrieved 2026-10-21.
 
 ## Tight acoustic drums
 
@@ -65,3 +65,9 @@ Piano and guitar: Nicolas Brosowsky / Tone.js instruments (CC BY 3.0), originall
 [Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums/tree/9f04cf9a734527edfbb0a4eee1f674e45bbf71bc), Versilian Studios with Karoryfer Samples, performed by Austin McMahon at Virtuosity Musical Instruments, Boston. CC0 1.0; pinned revision `9f04cf9a734527edfbb0a4eee1f674e45bbf71bc`. The complete licence is in `jazz/LICENSE`; source paths, source and derivative SHA-256 hashes, and durations are in `jazz/sources.json`.
 
 38 selected acoustic recordings: light and medium kicks, three snare dynamic ranges, overhead rides/flat ride, hats, cross-stick, toms and a soft crash. These are stick recordings, not brushes. `web/scripts/prepare-jazz-drums.py` reproduces the mono 32 kHz PCM16 derivatives with FFmpeg: gentle high/low-pass, leading silence trimmed, peak normalization and edge fades. The existing Wilkinson bank remains for louder styles. New hits receive bounded sample-clock onset delays and touch variations; the exact metronome remains independent.
+
+## Warm studio drum replacement
+
+[Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/tree/f07ce00df34a46b6b08375be56fe116cf15782bc), Karoryfer Samples, CC0 1.0. Pinned revision `f07ce00df34a46b6b08375be56fe116cf15782bc`. Full licence: `studio/LICENSE`. Source filenames, original/derivative SHA-256 and processing: `studio/sources.json`.
+
+32 moderate-strength, close-microphone recordings replace Wilkinson for pop/rock, blues, fusion jazz and Motown only. Kick/snare have quieter dynamic layers and multiple takes; cymbals, hats, toms and cross-stick also alternate takes. `web/scripts/prepare-studio-drums.py` reproduces the 1.91 MiB mono 32 kHz PCM16 bank with FFmpeg: gentle high-pass/12.5 kHz low-pass, leading silence removal, normalization and fades. Funk retains Wilkinson; the other existing kit assignments remain unchanged.

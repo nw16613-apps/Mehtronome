@@ -19,7 +19,7 @@ function render(engine,length){
 
 test('drum grooves hit sample-clock beats and shuffled offbeats exactly',()=>{
   const straight=render(setup({bass:false}),16000);
-  assert.deepEqual(straight.events.filter(e=>e.type==='kick').map(e=>e.sample),[0,6000,8000,11000]);
+  assert.deepEqual(straight.events.filter(e=>e.type==='kick').map(e=>e.sample),[0,8000]);
   assert.deepEqual(straight.events.filter(e=>e.type==='snare'&&e.gain>.5).map(e=>e.sample),[4000,12000]);
   assert.deepEqual(straight.events.filter(e=>e.type==='hat').map(e=>e.sample),[0,2000,4000,6000,8000,10000,12000,14000]);
   const shuffle=render(setup({bass:false,drumGroove:'shuffle'}),8000);
@@ -131,7 +131,7 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
 });
 
 test('drum and bass styles produce distinct event patterns and articulations',()=>{
-  assert.equal(Object.keys(DRUM_GROOVES).length,11);
+  assert.equal(Object.keys(DRUM_GROOVES).length,12);
   assert.equal(Object.keys(BASS_PATTERNS).length,13);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
   assert.equal(new Set(drumSignatures).size,Object.keys(DRUM_GROOVES).length);

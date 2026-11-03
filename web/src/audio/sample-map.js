@@ -75,3 +75,7 @@ export const JAZZ_DRUM_GROUPS={
  ride:['jazzRide1','jazzRide2','jazzRide3','jazzRide4'],rideAccent:['jazzRideAccent1','jazzRideAccent2','jazzRideAccent3','jazzRideAccent4'],flatRide:['jazzFlatRide1','jazzFlatRide2'],rideBell:['jazzRideBell1','jazzRideBell2'],
  hat:['jazzHat1','jazzHat2','jazzHat3'],hatOpen:['jazzHatOpen1','jazzHatOpen2'],hatPedal:['jazzHatPedal1','jazzHatPedal2'],rim:['jazzRim1','jazzRim2'],tomHigh:['jazzTomHigh1','jazzTomHigh2'],tomLow:['jazzTomLow1','jazzTomLow2'],crash:['jazzCrash1']
 };
+
+export const STUDIO_DRUM_GROUPS={
+ kick:['studioKick1','studioKick2','studioKick3'],kickSoft:['studioKickSoft1','studioKickSoft2'],snare:['studioSnare1','studioSnare2','studioSnare3'],snareSoft:['studioSnareSoft1','studioSnareSoft2'],snareGhost:['studioSnareGhost1','studioSnareGhost2'],hat:['studioHat1','studioHat2','studioHat3'],hatOpen:['studioHatOpen1','studioHatOpen2'],hatPedal:['studioHatPedal1','studioHatPedal2'],ride:['studioRide1','studioRide2','studioRide3'],rideBell:['studioRideBell1','studioRideBell2'],rim:['studioRim1','studioRim2'],tomHigh:['studioTomHigh1','studioTomHigh2'],tomLow:['studioTomLow1','studioTomLow2'],crash:['studioCrash1','studioCrash2']
+};
