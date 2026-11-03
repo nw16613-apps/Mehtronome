@@ -1,6 +1,6 @@
 # Recording credits
 
-The drum recordings are released under **Creative Commons Attribution 4.0 International**; the bass recordings are released under **CC0 1.0 Universal**. The complete local license copies are [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0) and [LICENSE](LICENSE). Retrieved 2026-10-21.
+The Wilkinson drum recordings are released under **Creative Commons Attribution 4.0 International**; the Virtuosity jazz drums and bass recordings are released under **CC0 1.0 Universal**. The complete local license copies are [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0) and [LICENSE](LICENSE). Retrieved 2026-10-21.
 
 ## Tight acoustic drums
 
@@ -59,3 +59,9 @@ Piano and guitar: Nicolas Brosowsky / Tone.js instruments (CC BY 3.0), originall
 ### Soft upright bass replacement
 
 [Meatbass](https://github.com/sfzinstruments/karoryfer.meatbass/tree/ac9e859564bda286ab5ec672d00ff1aa2fef2895) replaces the previous VSCO contrabass bank. It is a 1958 Otto Rubner double bass played by Drogomir Smolken and recorded by Ludwik Zamenhof, copyright 2016 Karoryfer Lecolds, released under [CC0](https://github.com/sfzinstruments/karoryfer.meatbass/blob/ac9e859564bda286ab5ec672d00ff1aa2fef2895/LICENSE). Only softest-velocity, single-pluck samples are used; no layered, detuned or multi-voice SFZ programs. Source pitches C2, E-flat2, A2, C3 and G-flat3 map to sounding MIDI 36, 39, 45, 48 and 54. These soft plucks were selected for a dominant fundamental. Pitch corrections, a 20 Hz high-pass and a gentle two-pole low-pass at three times each fundamental are applied offline, along with 1 ms/50 ms edge fades. No added oscillators or real-time effects are used. This also replaces the low sample whose upper harmonics dominated its fundamental. The existing electric bass is unchanged.
+
+## Club jazz drum bank
+
+[Virtuosity Drums](https://github.com/sfzinstruments/virtuosity_drums/tree/9f04cf9a734527edfbb0a4eee1f674e45bbf71bc), Versilian Studios with Karoryfer Samples, performed by Austin McMahon at Virtuosity Musical Instruments, Boston. CC0 1.0; pinned revision `9f04cf9a734527edfbb0a4eee1f674e45bbf71bc`. The complete licence is in `jazz/LICENSE`; source paths, source and derivative SHA-256 hashes, and durations are in `jazz/sources.json`.
+
+38 selected acoustic recordings: light and medium kicks, three snare dynamic ranges, overhead rides/flat ride, hats, cross-stick, toms and a soft crash. These are stick recordings, not brushes. `web/scripts/prepare-jazz-drums.py` reproduces the mono 32 kHz PCM16 derivatives with FFmpeg: gentle high/low-pass, leading silence trimmed, peak normalization and edge fades. The existing Wilkinson bank remains for louder styles. New hits receive bounded sample-clock onset delays and touch variations; the exact metronome remains independent.

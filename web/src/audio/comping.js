@@ -2,7 +2,7 @@ import {COMPING_TRIMS} from './mix-balance.js';
 import {extensionChoices} from './extensions.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
-import {backingSubdivision} from './groove-time.js';
+import {backingSubdivision,performanceTouch} from './groove-time.js';
 export const COMPING_PATTERNS={
   popRock:'Pop / rock stabs', fusion:'Fusion accents', blues:'Blues shuffle responses', motown:'Motown offbeats', funk:'Funk stabs', latin:'Latin chord accents',
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
@@ -122,36 +122,37 @@ export class CompingInstrument{
   installKit(kit){this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent){
-    const grid=beat*4+backingSubdivision(phase,settings.drumGroove);
+    const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
-    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[bar%pattern.length];
+    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%pattern.length]:bar%pattern.length];
     for(const [position,duration,velocity]of cell)if(position===offset){
       const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));
       const vary=settings.compingMovement!=='still'&&voicings.length>1&&amount>0&&position!==cell[0][0]&&this.hits%4<amount*4;
       const index=vary?1+Math.floor(this.hits/4)%(voicings.length-1):0;
       const chord=Array.isArray(voicings[index])?voicings[index]:notes;
       // All comping attacks are full chords on the style's existing rhythm.
-      if(chord.length>=3)this.strike(chord,duration,velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone);
+      if(chord.length>=3){const touch=performanceTouch(settings,'comping',bar,offset,this.rate);this.strike(chord,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone,touch.delayFrames);}
       this.hits++;
     }
   }
-  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys'){
+  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       const shape=this.shapes[tone]||this.shapes.warmTine;
-      Object.assign(voice,{shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      Object.assign(voice,{delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
       voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
-    onEvent?.({type,sample,step,notes:pitches,duration,velocity});
+    onEvent?.({type,sample:sample+delayFrames,gridSample:sample,delayFrames,step,notes:pitches,duration,velocity});
   }
   render(audible=true){
     let output=0;
     for(const voice of this.voices){
       if(!voice.active)continue;
+      if(voice.delay>0){voice.delay--;continue;}
       const increment=voice.increment,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;

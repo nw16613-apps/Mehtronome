@@ -6,13 +6,13 @@ import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { CompingInstrument, compingChordVoicings } from './comping.js';
 import { Sequence } from './sequence.js';
-import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, characteristicNotes } from './music.js';
+import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, progressionTimeline, characteristicNotes } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  backingStyle:'popRock',bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
+  backingStyle:'popRock',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
@@ -261,7 +261,7 @@ export class Engine {
     if (!previousBass && s.bass) this.rhythm.clearBass();
     if (!previousComping && s.comping) this.comping.clear();
     if (previousDrums!==s.drums || previousBass!==s.bass || previousGroove!==s.drumGroove) {
-      this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate),s.drumGroove) : -1;
+      this.rhythm.lastBassGrid=this.beat>=this.remainingCount ? this.rhythm.bassGridAt(this.beat-this.remainingCount,this.phase/(60*this.rate),s.drumGroove,this.currentBpm) : -1;
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     this.muted=new Set(String(s.mutedChannels||'').split(','));
@@ -287,6 +287,15 @@ export class Engine {
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
+    const timeline=s.progression?progressionTimeline(s):[];
+    let formBeat=0;this.backingFormEnds=[];
+    for(let i=0;i<timeline.length;i++){
+      formBeat+=timeline[i].duration;
+      const next=timeline[(i+1)%timeline.length];
+      if(i===timeline.length-1||s.customProgression?.steps?.[next.step]?.section)this.backingFormEnds.push(formBeat);
+    }
+    this.backingFormLength=formBeat;
+
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = subdivisionAt(this.phase/(60*this.rate),s.subdivision,s.clickSwing);
     if(previousPoly!==`${s.polyBeats}/${s.polyBase}`){
       this.lastPoly=this.beat>=this.remainingCount?Math.floor(((this.beat-this.remainingCount)+this.phase/(60*this.rate))*s.polyBeats/s.polyBase+1e-10):-1;
@@ -465,6 +474,8 @@ export class Engine {
         this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
         this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
+        const nextBarBeat=(bar+1)*s.beats,formPosition=nextBarBeat%this.backingFormLength||this.backingFormLength;
+        this.clockSettings.backingTurnaround=this.backingFormLength>=s.beats*4&&this.backingFormEnds.includes(formPosition);
         this.clickAge = 0;
         const strength=beatStrength(s,this.beat%s.beats,counting);
         this.clickFrequency = strength===2 ? 1500 : 1000;
@@ -519,7 +530,7 @@ export class Engine {
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
       if(s.comping&&rhythmActive){
         const compNotes=this.compingChords?.[0]||this.compingVoicing;
-        this.comping.tick(s,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm);
+        this.comping.tick(this.clockSettings,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm);
       }
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;

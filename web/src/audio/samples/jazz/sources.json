@@ -1,0 +1,351 @@
+{
+  "repository": "sfzinstruments/virtuosity_drums",
+  "revision": "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc",
+  "license": "CC0-1.0",
+  "format": "mono 32000 Hz PCM16",
+  "processing": "Onset silence trimmed; gentle high/low pass; peak normalization; 20ms tail fade.",
+  "files": [
+    {
+      "id": "jazzKickSoft1",
+      "source": "Samples/kickmic/kick/kickmic_kick_snon_vl1_rr1.flac",
+      "sourceSha256": "147f81717c3821008f63b16708a3c97c0935271807868c742f83c14ed9899dec",
+      "onsetTrimFrames": 137,
+      "duration": 0.65,
+      "sha256": "348172d75a5f96c1d4b8e3acb552fa88b627bcd062f015c659062b79b643cfaf",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzKickSoft2",
+      "source": "Samples/kickmic/kick/kickmic_kick_snon_vl1_rr2.flac",
+      "sourceSha256": "2a31c5a2394dfd9ded175ab930d53a1614c9638efadf1a79c505d6ff47f164b5",
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "sha256": "e31031defd4a0339c7752bb4adddc4fa6664563a2715f9ad7de89e86062d0bd5",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzKick1",
+      "source": "Samples/kickmic/kick/kickmic_kick_snon_vl2_rr1.flac",
+      "sourceSha256": "5f816bb152f879e09399edb86b8862509360702103a1f9c08ef794a2296c2290",
+      "onsetTrimFrames": 90,
+      "duration": 0.65,
+      "sha256": "828d6249b97e9e91fb10b892e68108f9cd6cf260c25ef44d8857701114109180",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzKick2",
+      "source": "Samples/kickmic/kick/kickmic_kick_snon_vl2_rr2.flac",
+      "sourceSha256": "c2cbc978e6271f3029ba79a7829dd90ae8404533483e68d611385f5ca358b7d4",
+      "onsetTrimFrames": 110,
+      "duration": 0.65,
+      "sha256": "f4e95617ab88af3b2ba629018e8a6a63b128218cee76e3cde753cd57b79b0e9e",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzSnareGhost1",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl4.flac",
+      "sourceSha256": "615a9805ec8c36c574503a3d6e91a6f00497f3ea163064999719ed1986030e40",
+      "onsetTrimFrames": 148,
+      "duration": 0.55,
+      "sha256": "2e74533d4f5c2998b34bbd8947e32f995ab381057f9b3f477c30a22759a40b53",
+      "bytes": 35244
+    },
+    {
+      "id": "jazzSnareGhost2",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl6.flac",
+      "sourceSha256": "bc67e86781c1c0d3e8560e441ad471ab7d3a4c80513906778cda709d0c92f9c0",
+      "onsetTrimFrames": 152,
+      "duration": 0.55,
+      "sha256": "b41b60646e83bf64ccdd639cc3a88727a6869c36b0c567e1ef96cbeda9b7b347",
+      "bytes": 35244
+    },
+    {
+      "id": "jazzSnareSoft1",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl10.flac",
+      "sourceSha256": "a598988d1331050c16332290826538951893f2261a5f73b6c4e15e372d48856a",
+      "onsetTrimFrames": 165,
+      "duration": 0.8,
+      "sha256": "df9147e53440b314f2070d9dff4ed8ddd95e572874c86f386ae3450cecb83057",
+      "bytes": 51244
+    },
+    {
+      "id": "jazzSnareSoft2",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl12.flac",
+      "sourceSha256": "7b31072ff17b74785fadf3039c990da577b988f183d7bb8da50ee4e3f074a764",
+      "onsetTrimFrames": 166,
+      "duration": 0.8,
+      "sha256": "59568591d4ec5eda9db2820eebde2092aebf59963e7a01a0bf99fd32e322773c",
+      "bytes": 51244
+    },
+    {
+      "id": "jazzSnareSoft3",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl14.flac",
+      "sourceSha256": "a9918e1387646ce3669af61d64ad47b8d62c033ed2ed7718c14838fd0ac8ca79",
+      "onsetTrimFrames": 156,
+      "duration": 0.8,
+      "sha256": "56c0042764a1415b765fb6c0932cd54871a8aa826187a16a2c0b7b3b2b6d98ba",
+      "bytes": 51244
+    },
+    {
+      "id": "jazzSnare1",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl20.flac",
+      "sourceSha256": "5b490c1ab2bdbe8270199d6a21140dee5b359a67f2fcb6da66fd4f4962c6252d",
+      "onsetTrimFrames": 172,
+      "duration": 0.9,
+      "sha256": "b4c52cd2772b18bb83422f8885c812606fd92f7e5d084445fef79332a3ad2b5c",
+      "bytes": 57644
+    },
+    {
+      "id": "jazzSnare2",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl22.flac",
+      "sourceSha256": "f7232a78d57f03a603f219518ba7a5921fb3f15fa2eb2f0a4048b4e98396ec37",
+      "onsetTrimFrames": 183,
+      "duration": 0.9,
+      "sha256": "428a64ed64aa6e05091d5b6469b0eb6f00cfa6a8a10f107ede6ec2ff5cf85539",
+      "bytes": 57644
+    },
+    {
+      "id": "jazzSnare3",
+      "source": "Samples/snaremic/snare/snaremic_snare_center_vl24.flac",
+      "sourceSha256": "dba6bb99b96907a681bdc85e86d2d3651c4294d8a22700cfdaa4832937428c2f",
+      "onsetTrimFrames": 184,
+      "duration": 0.9,
+      "sha256": "56f5a28cf603d399062708e8e01cb13c8bbc22acc61a145b47971284e4cb8567",
+      "bytes": 57644
+    },
+    {
+      "id": "jazzRide1",
+      "source": "Samples/oh/ride/oh_ride_ride_vl1_rr1.flac",
+      "sourceSha256": "df47cd9bee89a98afa6626e38a7363c36ac6091e9964f113693807d0675fd0ab",
+      "onsetTrimFrames": 122,
+      "duration": 3.8,
+      "sha256": "3076f06f16fdafff8a7e0e516d9927a7d42e2702fc7aa32e54de76e9808594ee",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRide2",
+      "source": "Samples/oh/ride/oh_ride_ride_vl1_rr2.flac",
+      "sourceSha256": "b94e95308c3c2c88001426dc57a4f92745a3bad9021171fe6bc0c0f8992c6d7c",
+      "onsetTrimFrames": 0,
+      "duration": 3.8,
+      "sha256": "57c6d82e2c6ea76b2458bdcfba9138a6a517097680e6773b63b1aa330040d114",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRide3",
+      "source": "Samples/oh/ride/oh_ride_ride_vl1_rr3.flac",
+      "sourceSha256": "0782c66ad47fa8ae88bdb8e451894a6aac329b993c529832deb937fa49195f64",
+      "onsetTrimFrames": 130,
+      "duration": 3.8,
+      "sha256": "291fb8f16d7a4d2917802ccaeb805abf126fae5dbadc62fc635f8747c786dd9b",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRide4",
+      "source": "Samples/oh/ride/oh_ride_ride_vl1_rr4.flac",
+      "sourceSha256": "8e83e55dce3532a6ea45db8edc402c36350207745266f81bc8fd75d80d8095ce",
+      "onsetTrimFrames": 130,
+      "duration": 3.8,
+      "sha256": "934acfd62c7e550f3f60f9d77c77e84890a035721b7e31469b8fb3fb3c7a0e6c",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRideAccent1",
+      "source": "Samples/oh/ride/oh_ride_ride_vl2_rr1.flac",
+      "sourceSha256": "56481c1109ac7baba9ab4b049cacfbc5050cf29d59951c654e7316595385eeaa",
+      "onsetTrimFrames": 123,
+      "duration": 3.8,
+      "sha256": "a547e21a3c518c8808a8a731e94c3a07c28502cf71f1e0c6c95dfcc53632b961",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRideAccent2",
+      "source": "Samples/oh/ride/oh_ride_ride_vl2_rr2.flac",
+      "sourceSha256": "5cec02ecdc875cfc5fde8d2cd7f5be23cc8e0b1ad35e4bcdef222328f6fbb6ab",
+      "onsetTrimFrames": 114,
+      "duration": 3.8,
+      "sha256": "cfe0b81260334228f11b3736f0c32ed352f2eb58b6432af83143ee127c545a5e",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRideAccent3",
+      "source": "Samples/oh/ride/oh_ride_ride_vl2_rr3.flac",
+      "sourceSha256": "266eeb7eb4de6f0a3eba2c038d7d6d8422e995a293de342cfb9f8b72d879b44b",
+      "onsetTrimFrames": 114,
+      "duration": 3.8,
+      "sha256": "6071c1d46050c5d9c1bc03fbfb566cfdab003d500df37b3c9f50dd70fabd71af",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRideAccent4",
+      "source": "Samples/oh/ride/oh_ride_ride_vl2_rr4.flac",
+      "sourceSha256": "5e3bd343cb961508b11117fa115644ea107c31049c44c27770b804eedb44ac1f",
+      "onsetTrimFrames": 117,
+      "duration": 3.8,
+      "sha256": "d4c247c6f25451b15d3b1f01eff5ada59c2e8d2887a0ccc88d9fa69fa5191beb",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzFlatRide1",
+      "source": "Samples/oh/flatride/oh_flatride_ride_vl1_rr1.flac",
+      "sourceSha256": "5886cdb0cfcbad9ecfec7c2f0bddfc84984812400cd324593bc1a94ff2ee2cf3",
+      "onsetTrimFrames": 146,
+      "duration": 3.8,
+      "sha256": "36890852c466c7aef414670ce3b1e2c9693f318a4a3b5fe2623b257359ba7ca3",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzFlatRide2",
+      "source": "Samples/oh/flatride/oh_flatride_ride_vl1_rr2.flac",
+      "sourceSha256": "391b5b1e42a0a235b5ad505bfbc83232ece4f2d9316ca4860559fbc698a844c1",
+      "onsetTrimFrames": 131,
+      "duration": 3.8,
+      "sha256": "5d016a7c125cc1d17f759915a3d0814e46544241d3e47cc19a7da76ce09c5435",
+      "bytes": 243244
+    },
+    {
+      "id": "jazzRideBell1",
+      "source": "Samples/oh/ride/oh_ride_bell_vl1_rr1.flac",
+      "sourceSha256": "c1d4a6d958fe778cda3c534c3343e1072da5a69b2853a2ae0b1805e6643080e0",
+      "onsetTrimFrames": 148,
+      "duration": 2.8,
+      "sha256": "ace7e1f25ae97b29264d34c6c1478a7d672c73183d87080e5e0560a71c984069",
+      "bytes": 179244
+    },
+    {
+      "id": "jazzRideBell2",
+      "source": "Samples/oh/ride/oh_ride_bell_vl1_rr2.flac",
+      "sourceSha256": "0995af72e6736f11caa8b6a341b8dcd4e4a0d9b5bfa57b2ca20e4e880e0a9577",
+      "onsetTrimFrames": 148,
+      "duration": 2.8,
+      "sha256": "d6726078a5ebe3c50bbb0a26a9c9efda47719b28726e51fa2a00fdda7c910c44",
+      "bytes": 179244
+    },
+    {
+      "id": "jazzHat1",
+      "source": "Samples/oh/hh/oh_hh_closed_vl1_rr1.flac",
+      "sourceSha256": "8e23666927c51d04c0e70085f746778fbac0f76638bde06ff54d88c70031c0dc",
+      "onsetTrimFrames": 177,
+      "duration": 0.35,
+      "sha256": "bd2c7b53bcd8680afde7974580ab1c0100cd7d05e533d8411dfd92658b39a6d0",
+      "bytes": 22444
+    },
+    {
+      "id": "jazzHat2",
+      "source": "Samples/oh/hh/oh_hh_closed_vl1_rr2.flac",
+      "sourceSha256": "c8a05ec78f11f7ac4bdc00bbbdb6df445e45106f0adb4eb882ac42fdb0606234",
+      "onsetTrimFrames": 150,
+      "duration": 0.35,
+      "sha256": "7645469b9015bce30be44ffe635847a4fa16ff4e7332e36563a27e9afa2dedee",
+      "bytes": 22444
+    },
+    {
+      "id": "jazzHat3",
+      "source": "Samples/oh/hh/oh_hh_closed_vl1_rr3.flac",
+      "sourceSha256": "bf5bd60af5ce8f90b66994a46fa878dc0b447f66f5f2dd297b950970cd87d7eb",
+      "onsetTrimFrames": 171,
+      "duration": 0.35,
+      "sha256": "9036f986532f632cc8cc08e5e4dc15d7a72f75d84601fc5580545850a59de4e9",
+      "bytes": 22444
+    },
+    {
+      "id": "jazzHatOpen1",
+      "source": "Samples/oh/hh/oh_hh_open_vl1_rr1.flac",
+      "sourceSha256": "bce174c48b9ab905bb48e36ecd5023f6f507d5210d220c7f2a00c21dca670121",
+      "onsetTrimFrames": 146,
+      "duration": 1.5,
+      "sha256": "e9b7e2ba584fd4f50b5f46872d2d84225a09ad04f8695af2a61b0f88ea17060e",
+      "bytes": 96044
+    },
+    {
+      "id": "jazzHatOpen2",
+      "source": "Samples/oh/hh/oh_hh_open_vl1_rr2.flac",
+      "sourceSha256": "15bef7db238fddb5675c1d294613970a739da9fe2346c53d0732ad4a6889cfa7",
+      "onsetTrimFrames": 140,
+      "duration": 1.5,
+      "sha256": "4b08dae37b9fef60bc658e384aee4cfd202b1e9bab828bbe6a693eb63920da6a",
+      "bytes": 96044
+    },
+    {
+      "id": "jazzHatPedal1",
+      "source": "Samples/oh/hh/oh_hh_pedal_vl1_rr1.flac",
+      "sourceSha256": "914fdab7847eacf82f016d48959ddd286c8dff9626ba9a4873a600b3d5d8f6d0",
+      "onsetTrimFrames": 860,
+      "duration": 0.6,
+      "sha256": "810b1c76dda01e8d8a0c08550c575d5da1a0ebfd4dc15b738cde900c4ff291b2",
+      "bytes": 38444
+    },
+    {
+      "id": "jazzHatPedal2",
+      "source": "Samples/oh/hh/oh_hh_pedal_vl1_rr2.flac",
+      "sourceSha256": "f8f93f771893a14f292d12f7bebbcb421200d6d45e899f286517c9ce0dfc6ad0",
+      "onsetTrimFrames": 0,
+      "duration": 0.6,
+      "sha256": "f015e8816c6e2b40d37a77d1f19915cec3bffd4e0c148259495e48dfe8680f6b",
+      "bytes": 38444
+    },
+    {
+      "id": "jazzRim1",
+      "source": "Samples/snaremic/snare/snaremic_snare_crossstick_vl12.flac",
+      "sourceSha256": "dbc095af2eb7b58d2fd93cbbdc1e5e7cffc3eadd95bacde213e9f1d2035bfdb3",
+      "onsetTrimFrames": 104,
+      "duration": 0.65,
+      "sha256": "4d6f4dd6d28e3053f2de2786c4cb3f109b0036ebd4649ad84bb50f761f4b8a6a",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzRim2",
+      "source": "Samples/snaremic/snare/snaremic_snare_crossstick_vl16.flac",
+      "sourceSha256": "2211228b897b87dd133e3bc88295b1ea7b31ba03b9a7db3a66a477d999775e2d",
+      "onsetTrimFrames": 120,
+      "duration": 0.65,
+      "sha256": "1ce3739f3448e0be302134f24a3b33b81eb8b1b600fde8e0f194512b1fdda914",
+      "bytes": 41644
+    },
+    {
+      "id": "jazzTomHigh1",
+      "source": "Samples/oh/htom/oh_htom_center_vl10.flac",
+      "sourceSha256": "f9c27dd5539353283dddc7305d2cf270923732279fc96a83468193bc00a63ab7",
+      "onsetTrimFrames": 194,
+      "duration": 1.15,
+      "sha256": "2d56d0a171b50b129e7ada31d1caa5d75f7f89a5336f89cca39f0e0029c44946",
+      "bytes": 73644
+    },
+    {
+      "id": "jazzTomHigh2",
+      "source": "Samples/oh/htom/oh_htom_center_vl14.flac",
+      "sourceSha256": "767b825f16c4ecef0d6892307fec691fd946edc52b3f9e30293dcb11ceabe755",
+      "onsetTrimFrames": 155,
+      "duration": 1.15,
+      "sha256": "07201dd901113014aaf92a5329fb26b78ee508651c3a84d3720e272db09a39a9",
+      "bytes": 73644
+    },
+    {
+      "id": "jazzTomLow1",
+      "source": "Samples/oh/ltom/oh_ltom_center_vl10.flac",
+      "sourceSha256": "6edddb5c17cdff3668c720ec54b561c0b27ba01708901afec161472169e69cc3",
+      "onsetTrimFrames": 191,
+      "duration": 1.4,
+      "sha256": "61f0f4d6be57ccaccda48ba9d2a8442b5ab61f90050d9867b7c3aae1a4a18983",
+      "bytes": 89644
+    },
+    {
+      "id": "jazzTomLow2",
+      "source": "Samples/oh/ltom/oh_ltom_center_vl14.flac",
+      "sourceSha256": "0fbe3d0b63418a0a3641e1ed21e815931c47ef966eead407d1fcdd1d9ecb9287",
+      "onsetTrimFrames": 169,
+      "duration": 1.4,
+      "sha256": "306777ee4f60069e6d2d06754b1a2f33b0da7a8e83e8fdc1cb9a6fc936249bbb",
+      "bytes": 89644
+    },
+    {
+      "id": "jazzCrash1",
+      "source": "Samples/oh/crash/oh_crash_crash_vl1_rr1.flac",
+      "sourceSha256": "3307ad060004db51990b81b80badc0d26c90dae87e7b0f9b9ebcf099224fd823",
+      "onsetTrimFrames": 128,
+      "duration": 4.0,
+      "sha256": "6b31f9276337ba2f687ff39e63183465e7bf6841977ddfcf59db4ab093bf6ad3",
+      "bytes": 256044
+    }
+  ]
+}

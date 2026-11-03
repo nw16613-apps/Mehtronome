@@ -67,3 +67,11 @@ export const BASS_SAMPLE_ZONES = [
   {id:'bass52',rootMidi:52},
   {id:'bass52b',rootMidi:52},
 ];
+
+// A separate, velocity-layered CC0 club-jazz kit, not a filtered rock-kit preset.
+export const JAZZ_DRUM_GROUPS={
+ kick:['jazzKick1','jazzKick2'],kickSoft:['jazzKickSoft1','jazzKickSoft2'],
+ snare:['jazzSnare1','jazzSnare2','jazzSnare3'],snareSoft:['jazzSnareSoft1','jazzSnareSoft2','jazzSnareSoft3'],snareGhost:['jazzSnareGhost1','jazzSnareGhost2'],
+ ride:['jazzRide1','jazzRide2','jazzRide3','jazzRide4'],rideAccent:['jazzRideAccent1','jazzRideAccent2','jazzRideAccent3','jazzRideAccent4'],flatRide:['jazzFlatRide1','jazzFlatRide2'],rideBell:['jazzRideBell1','jazzRideBell2'],
+ hat:['jazzHat1','jazzHat2','jazzHat3'],hatOpen:['jazzHatOpen1','jazzHatOpen2'],hatPedal:['jazzHatPedal1','jazzHatPedal2'],rim:['jazzRim1','jazzRim2'],tomHigh:['jazzTomHigh1','jazzTomHigh2'],tomLow:['jazzTomLow1','jazzTomLow2'],crash:['jazzCrash1']
+};

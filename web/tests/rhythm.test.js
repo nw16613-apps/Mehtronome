@@ -9,7 +9,7 @@ import {SAMPLE_FILES,DRUM_SAMPLE_GROUPS} from '../src/audio/sample-manifest.js';
 const noop=()=>{};
 function setup(settings={}){
   const engine=new Engine(8000);
-  engine.configure({countIn:false,click:0,harmony:0,bpm:120,drums:true,bass:true,...settings});engine.reset();return engine;
+  engine.configure({countIn:false,click:0,harmony:0,bpm:120,drums:true,bass:true,backingHumanize:0,backingVariation:0,...settings});engine.reset();return engine;
 }
 function render(engine,length){
   const click=new Float32Array(length),pad=new Float32Array(length),right=new Float32Array(length),dry=new Float32Array(length),events=[];
