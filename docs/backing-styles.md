@@ -94,3 +94,11 @@ No changes were made to the groove or fill vocabulary, humanisation, bass/compin
 ### Tighter live kick
 
 Only the five live kick WAVs were refined after the user requested less boom: reduced sub/bass resonance and a shorter smooth tail, with the recorded attack and reference peak retained. The full-strength kicks now reach 95% of their energy in about 59–63 ms (previously 126–140 ms); soft kicks in about 102–105 ms (previously 176–203 ms). Snare, hats, cymbals, toms, patterns, fills, FX and instrument balances remain unchanged. All processing is offline, adding no mobile runtime work.
+
+## Faster first play and on-demand recordings
+
+First play no longer fetches/decodes all 127 recordings. The audible mix determines the exact bank: synthesized metronome/harmony/melodic tracks require no WAVs; a full pop/rock drum-bass-guitar band needs 49 rather than 127. Muted tracks, zero-volume tracks and other styles are excluded. Selecting sounds while idle can fetch their encoded bytes quietly before play, without creating an AudioContext or decoding. Worklet module preparation and required-sample preparation run in parallel.
+
+The loader caches encoded files per sample and decoded PCM per sample/rate, deduplicates overlapping requests, and caps network and decode work at four concurrent tasks each. New contexts reuse downloads; transfers receive fresh PCM copies. Failed requests can retry. Switching style or unmuting waits for the required recordings before applying that audio configuration; stale requests cannot overwrite newer selections. New banks merge into the worklet without resetting active voices or the playback clock. Previously loaded banks remain installed for immediate reuse. No background bank decoding is performed during playback unless the user requests new sounds.
+
+Checks cover no-WAV first playback, selective instrument requests, repeated-start reuse, transfer safety, retries, concurrency and active-voice preservation, plus live mixer/style changes, FX and mobile playback. In the browser fixture, default playback requested zero WAVs, unmuting pop/rock comping requested its five guitar samples, and a subsequent stop/start requested no additional WAVs.

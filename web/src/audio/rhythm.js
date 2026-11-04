@@ -243,12 +243,11 @@ export class Rhythm {
     this.drums = 0;
     this.bass = 0;
   }
-  installKit(kit) {
+  installKit(kit,clear=true) {
     this.kit = kit || drumSamples(this.rate);
     this.prepareGroups();
-    this.clearDrums();
-    this.sampleCursors = Object.create(null);
-    this.bassInstrument.installKit(kit);
+    if(clear){this.clearDrums();this.sampleCursors=Object.create(null);}
+    this.bassInstrument.installKit(kit,clear);
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));

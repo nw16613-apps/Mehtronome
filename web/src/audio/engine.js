@@ -170,6 +170,11 @@ export class Engine {
     this.comping.installKit(kit);
   }
 
+  mergeDrumKit(kit){
+    this.drumKit={...this.drumKit,...kit};
+    this.rhythm.installKit(this.drumKit,false);this.comping.installKit(this.drumKit,false);
+  }
+
   reset() {
     this.auditioning = false;
     this.guitar = null;

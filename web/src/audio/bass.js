@@ -41,7 +41,7 @@ export class SampledBass {
     this.installKit(kit);
   }
 
-  installKit(kit) {
+  installKit(kit,clear=true) {
     this.kit = kit;
     // Replacing samples stops existing voices rather than reading old buffers
     // at a different rate. Grouping is setup work, never part of render().
@@ -55,7 +55,7 @@ export class SampledBass {
     }
     this.zones.sort((a,b)=>a.rootMidi-b.rootMidi);
     this.banks={electric:this.zones,upright:INSTRUMENT_SAMPLE_ZONES.upright.flatMap(zone=>kit?.[zone.id]?.length?[{rootMidi:zone.rootMidi,samples:[kit[zone.id]]}]:[])};
-    this.clear();
+    if(clear)this.clear();
   }
 
   clear() {

@@ -30,7 +30,7 @@ test('sample bank is prepared once per rate and fresh buffers survive worklet tr
     assert.equal(requests.length,2);
     second.kick.fill(0);
     assert.deepEqual(await load(context()),copy);
-    await load(context(44100));assert.equal(requests.length,4);
+    await load(context(44100));assert.equal(requests.length,2);
   });
 });
 
@@ -64,4 +64,11 @@ test('sample loading limits simultaneous decodes while retaining every bank',asy
  const result=await load({...audio,async decodeAudioData(data){running++;peak=Math.max(peak,running);await new Promise(resolve=>setTimeout(resolve,1));const buffer=await audio.decodeAudioData(data);running--;return buffer;}});
  assert.equal(Object.keys(result).length,21);assert.equal(peak,4);
  }finally{globalThis.fetch=original;}
+});
+
+test('selective overlapping loads share each fetch/decode and empty playback loads nothing',async()=>{
+ await mockedFetch(async requests=>{let decodes=0;const c=context(),audio={...c,async decodeAudioData(data){decodes++;return c.decodeAudioData(data);}},load=createSampleLoader({kick:'kick.wav',snare:'snare.wav',ride:'ride.wav'});assert.deepEqual(await load(audio,[]),{});assert.equal(requests.length,0);const [a,b]=await Promise.all([load(audio,['kick','snare']),load(audio,['snare'])]);assert.deepEqual(Object.keys(a),['kick','snare']);assert.equal(requests.length,2);assert.equal(decodes,2);assert.notEqual(a.snare,b.snare);await load(audio,['ride']);assert.equal(requests.length,3);});
+});
+test('prefetch fetches selected bytes without decoding or starting audio, then reuses them',async()=>{
+ await mockedFetch(async requests=>{const load=createSampleLoader({kick:'kick.wav',unused:'unused.wav'});await load.prefetch(['kick']);assert.deepEqual(requests,['kick.wav']);await load(context(),['kick']);assert.equal(requests.length,1);});
 });

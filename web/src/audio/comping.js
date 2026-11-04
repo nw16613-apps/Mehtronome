@@ -119,7 +119,7 @@ for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0
 
 export class CompingInstrument{
   constructor(rate){this.rate=rate;this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
-  installKit(kit){this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
+  installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true){
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);

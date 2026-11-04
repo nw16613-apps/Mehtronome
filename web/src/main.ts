@@ -39,6 +39,7 @@ import { theoryOptions } from './guitar/superimposition.js';
 import { recommendedGrip } from './guitar/grips.js';
 import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets, exportPresets, importPresets, MAX_PRESET_FILE_BYTES } from './practice/presets.js';
 import { SEQUENCE_PATTERNS, SEQUENCE_SOURCES, SEQUENCE_ROLES, SEQUENCE_DEVELOPMENTS, SEQUENCE_INTERACTIONS } from './audio/sequence.js';
+import {sampleNamesForSettings} from './audio/sample-requirements.js';
 import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
@@ -242,6 +243,7 @@ let context: AudioContext | undefined;
 let ambientMeters:AnalyserNode[]=[];
 const ambientSamples=new Float32Array(256);
 let node: AudioWorkletNode | undefined;
+let installedSampleNames=new Set<string>(),sampleSettingsGeneration=0;
 let stopping = false;
 let guitarDegrees = true;
 let previewHold: string | null = null;
@@ -535,7 +537,7 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
     const remaining=nextStart-context.currentTime;
     if(!exerciseView.loop&&remaining>0){exerciseTimer=setTimeout(complete,Math.max(10,remaining*1000+60));return;}
 
-    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart-(settings.countIn?settings.beats*60/exerciseView.tempo:0);syncMiniTransport();node?.port.postMessage({type:'settings',settings:{...exerciseBackingConfig(),bpm:exerciseView.tempo}});}scheduleExercise(nextStart);}else stopExercisePreview();
+    if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart-(settings.countIn?settings.beats*60/exerciseView.tempo:0);syncMiniTransport();queueAudioSettings({...exerciseBackingConfig(),bpm:exerciseView.tempo});}scheduleExercise(nextStart);}else stopExercisePreview();
   };
   exerciseTimer=setTimeout(complete,Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
@@ -1151,7 +1153,7 @@ function update() {
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
   settings.mutedChannels=mixerMuteMask();
   reflectMixerChannels();
-  node?.port.postMessage({ type: 'settings', settings });
+  queueAudioSettings(settings);
   syncMixerDetails();
   updateSpace();
   renderMusic();
@@ -1164,7 +1166,7 @@ function tempo(value: number) {
   input('bpm').value = input('tempo').value = String(settings.bpm);
   syncMiniTransport();
   syncTrainerStatus();
-  node?.port.postMessage({ type: 'settings', settings });
+  queueAudioSettings(settings);
 }
 function reflectPlayback() {
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
@@ -1224,21 +1226,35 @@ function stopPreview() {
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
   }
 }
-async function prepareAudio(){
-  audioPreparation??=initialiseAudio().finally(()=>{audioPreparation=undefined;});
-  return audioPreparation;
+async function prepareAudio(requested:any=exercisePreparing?exerciseAudioSettings():settings){
+  audioPreparation??=initialiseAudio(requested).finally(()=>{audioPreparation=undefined;});
+  await audioPreparation;await ensureSamples(requested);
 }
-async function initialiseAudio() {
+async function ensureSamples(requested:any){
+ const audio=context,target=node;if(!audio||!target||audio.state==='closed')return;
+ const names=sampleNamesForSettings(requested).filter(name=>!installedSampleNames.has(name));if(!names.length)return;
+ const bank:Record<string,Float32Array>=await loadDrumKit(audio,names);if(audio!==context||target!==node||String(audio.state)==='closed')return;
+ const fresh:Record<string,Float32Array>=Object.fromEntries(Object.entries(bank).filter(([name])=>!installedSampleNames.has(name)));
+ if(Object.keys(fresh).length){target.port.postMessage({type:'drum-kit',kit:fresh,merge:true},Object.values(fresh).map(pcm=>pcm.buffer));for(const name of Object.keys(fresh))installedSampleNames.add(name);}
+}
+function queueAudioSettings(requested:any){
+ const names=sampleNamesForSettings(requested),generation=++sampleSettingsGeneration,target=node;
+ if(!target||!context||context.state==='closed'){void loadDrumKit.prefetch(names).catch(()=>{});return;}
+ if(names.every(name=>installedSampleNames.has(name))){target.port.postMessage({type:'settings',settings:requested});return;}
+ const snapshot=structuredClone(requested);
+ void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node)target.port.postMessage({type:'settings',settings:snapshot});}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
+}
+async function initialiseAudio(requested:any=settings) {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
     context = createPlaybackContext(AudioContext,navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContext;
     reverb = undefined;fxBuses=undefined;
-    await context.audioWorklet.addModule(workletUrl);
+    installedSampleNames=new Set();
     let kit: Record<string, Float32Array>;
-    try { kit = await loadDrumKit(context); }
+    try { [,kit]=await Promise.all([context.audioWorklet.addModule(workletUrl),loadDrumKit(context,sampleNamesForSettings(requested))]); }
     catch (error) { await context.close(); throw error; }
     node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 9, outputChannelCount: [2, 2, 2, 1, 1, 1, 1, 2, 2] });
-    node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));
+    node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));installedSampleNames=new Set(Object.keys(kit));
     master = context.createGain();
     master.gain.value = 0;
     masterOutput=createMasterOutput(context,masterVolume);
@@ -1764,7 +1780,7 @@ function reflectMixerChannels(){
   el<HTMLButtonElement>('mixer-clear-solos').disabled=soloChannels.size===0;
 }
 function sendMixerSettings(){
-  node?.port.postMessage({type:'settings',settings:exercisePlaying?exerciseAudioSettings():settings});
+  queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);
 }
 function updateMixerLevels(){
   for(const id of BACKING_CHANNELS)input(id).checked=true;
@@ -2432,3 +2448,5 @@ document.addEventListener('keydown',event=>{
  event.preventDefault();const count=customProgression.steps.length,index=event.key==='Home'?0:event.key==='End'?count-1:Math.max(0,Math.min(count-1,customStepIndex+(event.key==='ArrowRight'?1:-1)));
  el('custom-beat-grid').querySelector<HTMLButtonElement>(`[data-grid-step="${index}"]`)?.click();
 });
+
+setTimeout(()=>{void loadDrumKit.prefetch(sampleNamesForSettings(settings)).catch(()=>{});},300);

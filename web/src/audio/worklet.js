@@ -16,7 +16,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     this.port.onmessage = ({ data }) => {
       if(data.type==='fx-sends'){this.fxChannels=new Set(data.channels||[]);this.stemsEnabled=STEM_CHANNELS.some(([, , ,id])=>this.fxChannels.has(id));return;}
       if (data.type === 'drum-kit') {
-        this.engine.installDrumKit(data.kit);
+        if(data.merge)this.engine.mergeDrumKit(data.kit);else this.engine.installDrumKit(data.kit);
       } else if (data.type === 'start') {
         this.engine.configure(data.settings);
         this.engine.reset();
