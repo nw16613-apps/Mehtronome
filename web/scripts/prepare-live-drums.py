@@ -30,10 +30,14 @@ def prepare(spec):
    raw=subprocess.check_output(['ffmpeg','-v','error','-i',str(src),'-ac','1','-ar','32000','-af',f'highpass=f={high},lowpass=f=14500','-f','f32le','-']);values=array.array('f');values.frombytes(raw);peak=max(map(abs,values));channels.append((values,weight/peak));sources.append({'path':path,'sha256':hashlib.sha256(data).hexdigest(),'weight':weight})
   length=max(len(a) for a,w in channels);values=array.array('f',(sum(a[i]*w for a,w in channels if i<len(a)) for i in range(length)));peak=max(map(abs,values));onset=next((i for i,x in enumerate(values) if abs(x)>peak*.003),0);start=max(0,onset-16);values=values[start:start+round(tail*32000)];peak=max(map(abs,values))
   pcm=array.array('h',(round(x*.85/peak*32767*min(1,i/16,(len(values)-1-i)/960)) for i,x in enumerate(values)));dest=ROOT/(name+'.wav')
+  kick_filter='highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235'
+  if 'Kick' in name:
+   raw=subprocess.check_output(['ffmpeg','-v','error','-f','s16le','-ar','32000','-ac','1','-i','pipe:0','-af',kick_filter,'-f','f32le','-'],input=pcm.tobytes());shaped=array.array('f');shaped.frombytes(raw);peak=max(map(abs,shaped));pcm=array.array('h',(round(x*.85/peak*32767) for x in shaped))
+
   with wave.open(str(dest),'wb') as out:out.setnchannels(1);out.setsampwidth(2);out.setframerate(32000);out.writeframes(pcm.tobytes())
-  return {'id':name,'sources':sources,'onsetTrimFrames':start,'duration':len(values)/32000,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest()}
+  return {'id':name,'sources':sources,'onsetTrimFrames':start,'duration':len(pcm)/32000,'bytes':dest.stat().st_size,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest(),**({'kickTreatment':kick_filter} if 'Kick' in name else {})}
 ROOT.mkdir(exist_ok=True)
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:files=list(pool.map(prepare,specs))
 (ROOT/'LICENSE').write_bytes(urllib.request.urlopen(BASE+'LICENSE').read().rstrip()+b'\n')
-(ROOT/'sources.json').write_text(json.dumps({'repository':'sfzinstruments/DrumGizmo.DRSKit','revision':REV,'license':'CC-BY-4.0','attribution':'DRSKit by Lars Muldjord, Bent Bisballe Nyeng and Jes Eiler / DRSDrums; SFZ/FLAC port by kinwie.','format':'mono 32000 Hz PCM16','processing':'Close/overhead microphone selection and mixing, gentle high/low pass, leading silence removal, peak normalization and edge fades. Original tuning and natural decay retained; no synthetic reinforcement or exponential gating.','files':files},indent=2)+'\n')
+(ROOT/'sources.json').write_text(json.dumps({'repository':'sfzinstruments/DrumGizmo.DRSKit','revision':REV,'license':'CC-BY-4.0','attribution':'DRSKit by Lars Muldjord, Bent Bisballe Nyeng and Jes Eiler / DRSDrums; SFZ/FLAC port by kinwie.','format':'mono 32000 Hz PCM16','processing':'Close/overhead microphone selection and mixing, gentle high/low pass, leading silence removal, peak normalization and edge fades. Original tuning and natural decay retained; no synthetic reinforcement or exponential gating. Kick-only refinement: 44 Hz high-pass, 4 dB cut at 85 Hz, smooth decay from 55 ms to 235 ms; other hits unchanged.','files':files},indent=2)+'\n')
 print(f'Prepared {len(files)} live acoustic hits, {sum(f["bytes"] for f in files)/1024/1024:.2f} MiB')

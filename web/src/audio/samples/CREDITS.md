@@ -83,3 +83,7 @@ This is an editorial sound-design pass, not a different recording session: short
 Current pop/rock, blues, fusion jazz, Motown and funk use [DRSKit v1.0](https://github.com/sfzinstruments/DrumGizmo.DRSKit/tree/b01448990a31f722542f1812e56159a97a6a2a82), by Lars Muldjord / Bent Bisballe Nyeng (DrumGizmo) and Jes Eiler / DRSDrums, SFZ/FLAC port by kinwie. CC BY 4.0; full licence in `live/LICENSE`. Original source/microphone paths, weights and SHA-256 hashes, source revision and derivative hashes are in `live/sources.json`.
 
 `web/scripts/prepare-live-drums.py` reproduces 32 mono 32 kHz PCM16 derivatives (1.97 MiB). It selects distinct real velocity layers and takes, mixes kick microphones and some cymbal overheads, applies gentle high/low-pass, trims leading silence and applies edge fades/normalization. Source tuning and natural decay remain, with no synthesized kick/snare layers or exponential gating. The user’s Snarky Puppy reference guided the live-fusion direction; these are DRSKit recordings, not samples from that artist or an official artist kit. The earlier beats, fills, FX settings and mobile audio optimisations are unchanged.
+
+### Kick-only refinement
+
+The five live kick takes now receive a 44 Hz high-pass, a 4 dB cut at 85 Hz and a smooth release from 55 to 235 ms. Peak normalization retains attack level. Other live samples are byte-for-byte unchanged. `prepare-live-drums.py` reproduces this treatment; source/derivative hashes and filter details remain in `live/sources.json`.

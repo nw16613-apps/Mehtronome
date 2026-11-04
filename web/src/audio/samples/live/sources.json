@@ -4,7 +4,7 @@
   "license": "CC-BY-4.0",
   "attribution": "DRSKit by Lars Muldjord, Bent Bisballe Nyeng and Jes Eiler / DRSDrums; SFZ/FLAC port by kinwie.",
   "format": "mono 32000 Hz PCM16",
-  "processing": "Close/overhead microphone selection and mixing, gentle high/low pass, leading silence removal, peak normalization and edge fades. Original tuning and natural decay retained; no synthetic reinforcement or exponential gating.",
+  "processing": "Close/overhead microphone selection and mixing, gentle high/low pass, leading silence removal, peak normalization and edge fades. Original tuning and natural decay retained; no synthetic reinforcement or exponential gating. Kick-only refinement: 44 Hz high-pass, 4 dB cut at 85 Hz, smooth decay from 55 ms to 235 ms; other hits unchanged.",
   "files": [
     {
       "id": "liveKick1",
@@ -21,9 +21,10 @@
         }
       ],
       "onsetTrimFrames": 0,
-      "duration": 0.65,
-      "bytes": 41644,
-      "sha256": "504d1babb75ededd5ae6a39e6f7e376aa73a3c52556dbc8c4686974b0f8c0c2d"
+      "duration": 0.235,
+      "bytes": 15084,
+      "sha256": "f88941bb0a579a599ad46c711b292920b53bd69ea7b3203a02f7838ae20a3e92",
+      "kickTreatment": "highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235"
     },
     {
       "id": "liveKick2",
@@ -40,9 +41,10 @@
         }
       ],
       "onsetTrimFrames": 0,
-      "duration": 0.65,
-      "bytes": 41644,
-      "sha256": "8c87d994f2bb4957adb9d3578a1ebd1544a9865576e1f9210dd817af9dab529e"
+      "duration": 0.235,
+      "bytes": 15084,
+      "sha256": "e23a87b1f94770a1f0ffbfd951c76a5b2d49c46f694dc602f6847bf41a4d918d",
+      "kickTreatment": "highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235"
     },
     {
       "id": "liveKick3",
@@ -59,9 +61,10 @@
         }
       ],
       "onsetTrimFrames": 0,
-      "duration": 0.65,
-      "bytes": 41644,
-      "sha256": "c80d0da56377899ab85c27af799e278b4c2577e9cb3451585546ffa1cb3458ff"
+      "duration": 0.235,
+      "bytes": 15084,
+      "sha256": "22b3865d28452124b1357047ce6b85282aa0a6719d1080a9235cb3f74ce6211a",
+      "kickTreatment": "highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235"
     },
     {
       "id": "liveKickSoft1",
@@ -78,9 +81,10 @@
         }
       ],
       "onsetTrimFrames": 0,
-      "duration": 0.4539375,
-      "bytes": 29096,
-      "sha256": "45ceea5885956a091abaeea8a61867e4d0f687682739772fc79849e344e8773e"
+      "duration": 0.235,
+      "bytes": 15084,
+      "sha256": "c66f930a06d04e2873f443e38e69ca63febc572988ef930e0bb216151428a128",
+      "kickTreatment": "highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235"
     },
     {
       "id": "liveKickSoft2",
@@ -97,9 +101,10 @@
         }
       ],
       "onsetTrimFrames": 0,
-      "duration": 0.6,
-      "bytes": 38444,
-      "sha256": "5b80130591a14e77db19ff9a680a0661921638f1cad1b32e8125152bbc6a7758"
+      "duration": 0.235,
+      "bytes": 15084,
+      "sha256": "38b909cfa546786cf22c542ec8b68d0246009e08350c66abaab7bae762b9639a",
+      "kickTreatment": "highpass=f=44,equalizer=f=85:t=q:w=1:g=-4,afade=t=out:st=0.055:d=0.18,atrim=duration=0.235"
     },
     {
       "id": "liveSnare1",

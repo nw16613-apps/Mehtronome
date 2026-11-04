@@ -18,6 +18,6 @@ test('new grooves state genre-specific pulse, backbeat and orchestration instead
 test('live kit retains acoustic body and cymbal decay without the former hybrid gating',()=>{
  const metadata=JSON.parse(readFileSync(new URL('../src/audio/samples/live/sources.json',import.meta.url)));
  assert.match(metadata.processing,/Original tuning and natural decay retained/);
- const get=id=>metadata.files.find(f=>f.id===id);assert.ok(get('liveSnare1').duration>=.3);assert.ok(get('liveRide1').duration>=2);assert.ok(get('liveKick1').duration>=.4);
+ const get=id=>metadata.files.find(f=>f.id===id);assert.ok(get('liveSnare1').duration>=.3);assert.ok(get('liveRide1').duration>=2);assert.ok(get('liveKick1').duration<=.25);assert.ok(get('liveKick1').duration>=.18);
  const snare=kit.liveSnare1;assert.ok(snare.subarray(800,3200).some(value=>Math.abs(value)>.001));
 });
