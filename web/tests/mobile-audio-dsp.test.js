@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {CompingInstrument} from '../src/audio/comping.js';import {Engine} from '../src/audio/engine.js';import {audioContextOptions} from '../src/audio/context-options.js';
+import {CompingInstrument} from '../src/audio/comping.js';import {Engine} from '../src/audio/engine.js';import {audioContextOptions,createPlaybackContext} from '../src/audio/context-options.js';
 const tones={warmTine:{attack:.012,release:.28,decay:.42,fm:.24,second:.09,third:.025,tremolo:.018},felt:{attack:.02,release:.34,decay:.34,fm:.1,second:.035,third:.012,tremolo:.012},suitcase:{attack:.006,release:.24,decay:.52,fm:.4,second:.15,third:.045,tremolo:.055},reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025}};
 test('cached piano coefficients preserve the original electric-piano waveform and release',()=>{
  for(const rate of [8000,48000])for(const [tone,shape]of Object.entries(tones)){
@@ -23,5 +23,13 @@ test('click-only mixer skips pad waveform reads and retains the sample clock and
  state.configure({mutedChannels:''});state.render(new Float32Array(1024));assert.ok(reads>0);
 });
 test('phones request output buffering without forcing a resampling rate',()=>{
- assert.deepEqual(audioContextOptions('Mozilla/5.0 (Android 13; OnePlus9Pro) Gecko/20100101 Firefox/143.0'),{latencyHint:'playback'});assert.deepEqual(audioContextOptions('desktop',true),{latencyHint:'playback'});assert.deepEqual(audioContextOptions('desktop'),{latencyHint:'balanced'});
+ assert.deepEqual(audioContextOptions('Mozilla/5.0 (Android 13; OnePlus9Pro) Gecko/20100101 Firefox/143.0'),{latencyHint:'playback',sampleRate:32000});assert.deepEqual(audioContextOptions('desktop',true),{latencyHint:'playback',sampleRate:32000});assert.deepEqual(audioContextOptions('desktop'),{latencyHint:'balanced'});
+});
+
+test('a phone that rejects a requested rate falls back to supported playback buffering',()=>{
+ const calls=[];class Context{constructor(options){calls.push(options);if(options.sampleRate)throw new Error('Unsupported rate');this.options=options;}}
+ const context=createPlaybackContext(Context,'iPhone');assert.deepEqual(calls,[{latencyHint:'playback',sampleRate:32000},{latencyHint:'playback'}]);assert.equal(context.options.latencyHint,'playback');
+});
+test('muted backing schedules no inaudible attacks and resumes on the continuing grid',()=>{
+ const e=new Engine(8000);e.configure({bpm:120,countIn:false,drums:true,bass:true,comping:true,mutedChannels:'harmony,drums,bass,comping,sequence'});e.reset();const events=[];e.render(new Float32Array(16000),undefined,null,null,undefined,new Float32Array(16000),event=>events.push(event));assert.deepEqual(events,[]);assert.equal(e.rhythm.activeDrums,0);assert.equal(e.beat,3);e.configure({mutedChannels:'harmony,sequence'});e.render(new Float32Array(8000),undefined,null,null,undefined,new Float32Array(8000),event=>events.push(event));assert.ok(events.some(event=>event.type==='kick'&&event.sample===16000));assert.ok(events.some(event=>event.type==='bass'&&event.sample===16000));
 });

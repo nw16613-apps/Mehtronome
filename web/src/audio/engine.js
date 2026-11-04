@@ -6,7 +6,7 @@ import { WAVES, WAVE_LAYERS, SINE, readWave, bandFor } from './waves.js';
 import { Rhythm } from './rhythm.js';
 import { CompingInstrument, compingChordVoicings } from './comping.js';
 import { Sequence } from './sequence.js';
-import { pedalNotes, SOUNDS, harmonyAt, progressionStepAtBeat, progressionTimeline, characteristicNotes } from './music.js';
+import { pedalNotes, SOUNDS, harmonyAt, progressionTimeline, characteristicNotes } from './music.js';
 import { modalPentatonicPcs } from '../guitar/superimposition.js';
 const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
@@ -288,13 +288,21 @@ export class Engine {
     this.clockSettings = this.clockSettings || {};
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
     const timeline=s.progression?progressionTimeline(s):[];
+    const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
+    if(harmonyKey!==this.harmonyCacheKey){
+      this.harmonyCacheKey=harmonyKey;this.cachedHarmonies=new Map();this.cachedComping=new Map();
+      const indices=s.progression?[...new Set(timeline.map(segment=>segment.step))]:[0];
+      for(const index of indices){const harmony=harmonyAt(s,index);harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);this.cachedHarmonies.set(index,harmony);this.cachedComping.set(index,compingChordVoicings(harmony,harmony,s.compingMovement,s.compingHookLength));}
+    }
+    this.customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.beats}:${item.bass}`).join(','):'';
+
     let formBeat=0;this.backingFormEnds=[];
     for(let i=0;i<timeline.length;i++){
       formBeat+=timeline[i].duration;
       const next=timeline[(i+1)%timeline.length];
       if(i===timeline.length-1||s.customProgression?.steps?.[next.step]?.section)this.backingFormEnds.push(formBeat);
     }
-    this.backingFormLength=formBeat;
+    this.backingFormLength=formBeat;this.playbackTimeline=timeline;
 
     if (previousSubdivision !== s.subdivision) this.lastSubdivision = subdivisionAt(this.phase/(60*this.rate),s.subdivision,s.clickSwing);
     if(previousPoly!==`${s.polyBeats}/${s.polyBase}`){
@@ -307,7 +315,7 @@ export class Engine {
     }
     const bar = Math.floor(Math.max(0, this.beat - this.remainingCount) / s.beats);
     this.gapMuted = !this.auditioning && this.beat >= this.remainingCount && gapAt(s,bar);
-    this.setChord(this.auditioning ? this.step : s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0);
+    this.setChord(this.auditioning ? this.step : s.progression ? this.playbackStep(Math.max(0,this.beat-this.remainingCount)) : 0);
     if(previousBassMuted!==this.muted.has('bass'))this.applyPadDepthState(this.depthMotionState);
   }
 
@@ -328,15 +336,22 @@ export class Engine {
     }
   }
 
+  playbackStep(beat){
+    if(!this.playbackTimeline?.length||!this.backingFormLength)return 0;
+    let position=Math.max(0,beat)%this.backingFormLength;
+    for(const segment of this.playbackTimeline){if(position<segment.duration)return segment.step;position-=segment.duration;}
+    return this.playbackTimeline[0].step;
+  }
+  harmonyFor(step){return this.cachedHarmonies?.get(step)||harmonyAt(this.settings,step);}
   setChord(step) {
     this.step = step;
     const s = this.settings;
-    const customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.beats}:${item.bass}`).join(','):'';
+    const customSignature=this.customSignature;
     const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${s.extensionMorph}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
-    const harmony=harmonyAt(this.settings,step);
+    const harmony=this.harmonyFor(step);
     this.chordMidi = this.settings.progression ? harmony.midi : pedalNotes(this.settings);
     this.rhythmChordMidi = Number.isFinite(harmony.bassMidi)?[harmony.bassMidi,...this.chordMidi]:this.chordMidi;
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
@@ -364,10 +379,10 @@ export class Engine {
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
     this.assignPadVoices(this.depthMotionState);
-    const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,(s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
+    const nextHarmony=s.progression ? this.harmonyFor(this.playbackStep((s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmony;
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
-    this.compingChords=compingChordVoicings(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
+    this.compingChords=(s.compingMovement!=='voiceLead'&&this.cachedComping?.get(step))||compingChordVoicings(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
     this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
     this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
     this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
@@ -419,7 +434,7 @@ export class Engine {
     }
   }
 
-  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP) {
+  render(output, onBeat = NOOP, harmonyOutput = null, harmonyRight = null, onSequence = NOOP, rhythmOutput = null, onRhythm = NOOP, gapOutput = null, onPulse = NOOP, stems = null) {
     const s = this.settings;
     const {click:clickGain,harmony:harmonyGain,drums:drumGain,bass:bassGain,comping:compingGain,sequence:sequenceGain}=BUS_GAINS;
     const clickVolume=this.muted.has('click')?0:s.click;
@@ -427,6 +442,7 @@ export class Engine {
     const drumsVolume=this.muted.has('drums')?0:s.drumsVolume,bassVolume=this.muted.has('bass')?0:s.bassVolume;
     const compingVolume=this.muted.has('comping')?0:s.compingVolume,sequenceVolume=this.muted.has('sequence')?0:s.sequenceVolume;
     if (this.guitar) {
+      if(stems)for(const key in stems)stems[key]?.fill(0);
       // Guitar bypasses pad layers and echoes, but feeds the shared room reverb.
       for (let i = 0; i < output.length; i++) {
         this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
@@ -437,6 +453,8 @@ export class Engine {
         if (harmonyOutput) harmonyOutput[i] = value;
         if (harmonyRight) harmonyRight[i] = value;
         if (rhythmOutput) rhythmOutput[i] = 0;
+        if(stems?.harmonyLeft)stems.harmonyLeft[i]=value;
+        if(stems?.harmonyRight)stems.harmonyRight[i]=value;
         if (gapOutput) gapOutput[i] = 1;
       }
       return;
@@ -468,9 +486,9 @@ export class Engine {
           this.clockSettings.bpm = this.currentBpm;
           this.trainerNextBar = bar + s.trainerBars;
         }
-        const step = s.progression ? progressionStepAtBeat(s,Math.max(0,this.beat-this.remainingCount)) : 0;
+        const step = s.progression ? this.playbackStep(Math.max(0,this.beat-this.remainingCount)) : 0;
         this.setChord(step);
-        const nextHarmony=s.progression ? harmonyAt(s,progressionStepAtBeat(s,(s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : harmonyAt(s,this.step);
+        const nextHarmony=s.progression ? this.harmonyFor(this.playbackStep((s.template==='custom'||(s.loopEnabled&&s.loopUnit==='beats'))?Math.max(0,this.beat-this.remainingCount)+1:(bar+1)*s.beats)) : this.harmonyFor(this.step);
         this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
         this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
         this.nextSequenceNotes=melodicNotePool(s.sequenceSource,nextHarmony,this.nextChordMidi);
@@ -527,10 +545,10 @@ export class Engine {
       this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
       const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
-      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi);
+      if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi,drumsVolume>0,bassVolume>0);
       if(s.comping&&rhythmActive){
         const compNotes=this.compingChords?.[0]||this.compingVoicing;
-        this.comping.tick(this.clockSettings,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm);
+        this.comping.tick(this.clockSettings,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm,compingVolume>0);
       }
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;
@@ -689,6 +707,15 @@ export class Engine {
       peak[8]=Math.max(peak[8],compPeak);peak[9]=Math.max(peak[9],compPeak);
       peak[10]=Math.max(peak[10],Math.abs(gate*sequenceGain*this.sequenceLevel*this.sequence.left));
       peak[11]=Math.max(peak[11],Math.abs(gate*sequenceGain*this.sequenceLevel*this.sequence.right));
+      if(stems){
+        if(stems.drums)stems.drums[i]=gate*drumGain*this.drumsLevel*this.rhythm.drums;
+        if(stems.bass)stems.bass[i]=gate*bassGain*this.bassLevel*this.rhythm.bass;
+        if(stems.comping)stems.comping[i]=gate*compingGain*this.compingLevel*comping;
+        if(stems.sequenceLeft)stems.sequenceLeft[i]=gate*sequenceGain*this.sequenceLevel*this.sequence.left;
+        if(stems.sequenceRight)stems.sequenceRight[i]=gate*sequenceGain*this.sequenceLevel*this.sequence.right;
+        if(stems.harmonyLeft)stems.harmonyLeft[i]=gate*harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking;
+        if(stems.harmonyRight)stems.harmonyRight[i]=gate*harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking;
+      }
       if (gapOutput) gapOutput[i] = backingGate;
       const backingSample=this.level*left*backingGate;
       const rightSample=this.level*right*backingGate;

@@ -71,3 +71,9 @@ Piano and guitar: Nicolas Brosowsky / Tone.js instruments (CC BY 3.0), originall
 [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/tree/f07ce00df34a46b6b08375be56fe116cf15782bc), Karoryfer Samples, CC0 1.0. Pinned revision `f07ce00df34a46b6b08375be56fe116cf15782bc`. Full licence: `studio/LICENSE`. Source filenames, original/derivative SHA-256 and processing: `studio/sources.json`.
 
 32 moderate-strength, close-microphone recordings replace Wilkinson for pop/rock, blues, fusion jazz and Motown only. Kick/snare have quieter dynamic layers and multiple takes; cymbals, hats, toms and cross-stick also alternate takes. `web/scripts/prepare-studio-drums.py` reproduces the 1.91 MiB mono 32 kHz PCM16 bank with FFmpeg: gentle high-pass/12.5 kHz low-pass, leading silence removal, normalization and fades. Funk retains Wilkinson; the other existing kit assignments remain unchanged.
+
+## Modern tight bank
+
+The current pop/rock, blues, fusion jazz, Motown **and funk** profiles use `modern/`, 32 newly processed one-shots (0.69 MiB) derived from the CC0 Big Rusty takes above. `web/scripts/prepare-modern-drums.py` reproduces them from the retained `studio/` source WAVs without downloading anything. `modern/sources.json` records both upstream and source-derivative hashes, filtering, pitch ratios, decay times and output hashes; `modern/LICENSE` retains CC0.
+
+This is an editorial sound-design pass, not a different recording session: short smooth envelopes remove ringing, surgical EQ reduces boxy low-mid content, snare/toms are tuned up, soft saturation firms the attack, and original synthesized kick/snare body layers reinforce the recorded hits. Closed hats end within 120 ms, kick within 240 ms, snare within 180 ms; most energy decays much earlier. Prior studio and Wilkinson recordings remain in source for reproducibility/compatibility but are not selected by any of these five styles.

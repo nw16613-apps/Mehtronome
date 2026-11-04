@@ -1,9 +1,10 @@
+import {FX_PRESET_CONTROLS} from '../audio/fx-buses.js';
 import {MIX_CHANNELS} from './mixer.js';
 import {normalizeCustomProgression} from './custom-progression.js';
 
 export const PRESET_KEY = 'mehtronome-practice-presets-v1';
 export const PRESET_CONTROLS = [
-  'backing-style',
+  'backing-style',...FX_PRESET_CONTROLS,
   ...MIX_CHANNELS.map(channel=>'mute-'+channel.id),'extension-morph','extension-bars',
   'pulse-accents','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max',
   'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness','chord','template',

@@ -7,7 +7,7 @@ import {backingStyleInstruments,backingStyleForControls} from './practice/backin
 import {withExerciseResolution,resolutionBackingSettings,singleChordExercisePlan} from './practice/exercise-resolution.js';
 import {scaleStartingState} from './practice/scale-start.js';
 import {arpeggioStartingChoices} from './practice/arpeggio-start.js';
-import {audioContextOptions} from './audio/context-options.js';
+import {createPlaybackContext} from './audio/context-options.js';
 import {ExerciseBufferCache,ExerciseAudioQueue,exerciseNoteDuration} from './audio/exercise-playback.js';
 import {ARPEGGIO_STUDIES,arpeggioHarmony} from './guitar/arpeggio-harmony.js';
 import {MODE_FAMILIES} from './audio/music.js';
@@ -32,6 +32,8 @@ import {harmonizedSevenths} from './practice/harmonized-sevenths.js';
 import {MIX_CHANNELS,BACKING_CHANNELS,backingMutesForPreset} from './practice/mixer.js';
 import {extensionChoices} from './audio/extensions.js';
 import {tapBpm, beatStrength, formatTime} from './practice/pulse.js';
+import {createFxBuses,FX_PRESET_CONTROLS} from './audio/fx-buses.js';
+import {installFxControls} from './practice/fx-view.js';
 import { roomImpulse } from './audio/ambience.js';
 import { theoryOptions } from './guitar/superimposition.js';
 import { recommendedGrip } from './guitar/grips.js';
@@ -228,6 +230,8 @@ let masterVolume=DEFAULT_MASTER_VOLUME;
 try{masterVolume=masterVolumePercent(localStorage.getItem(MASTER_VOLUME_KEY));}catch{}
 let wet: GainNode | undefined;
 let reverbGate: GainNode | undefined;
+let fxBuses: ReturnType<typeof createFxBuses> | undefined;
+let fxUi: ReturnType<typeof installFxControls> | undefined;
 let reverb: ConvolverNode | undefined;
 let reverbSleepTimer:ReturnType<typeof setTimeout>|undefined;
 let impulse: AudioBuffer | undefined;
@@ -1021,6 +1025,7 @@ function updateSpace() {
   }
 }
 function update() {
+  fxUi?.sync();
   if(backingStyleUi){settings.backingStyle=backingStyleUi.sync();Object.assign(settings,backingStyleInstruments(settings.backingStyle));}
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
@@ -1226,13 +1231,13 @@ async function prepareAudio(){
 async function initialiseAudio() {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
-    context = new AudioContext(audioContextOptions(navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContextOptions);
-    reverb = undefined;
+    context = createPlaybackContext(AudioContext,navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContext;
+    reverb = undefined;fxBuses=undefined;
     await context.audioWorklet.addModule(workletUrl);
     let kit: Record<string, Float32Array>;
     try { kit = await loadDrumKit(context); }
     catch (error) { await context.close(); throw error; }
-    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 4, outputChannelCount: [2, 2, 2, 1] });
+    node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 9, outputChannelCount: [2, 2, 2, 1, 1, 1, 1, 2, 2] });
     node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));
     master = context.createGain();
     master.gain.value = 0;
@@ -1255,6 +1260,7 @@ async function initialiseAudio() {
     ambientMeters.forEach((meter,index)=>{meter.fftSize=256;meterSplit.connect(meter,index);});
     node.port.onmessage = ({ data }) => {
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
+      if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
       if(!playing&&exercisePlaying&&data.type==='session-complete'){stopExercisePreview();return;}
       if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number'&&exerciseBackingStep!==data.step){exerciseBackingStep=data.step;syncMiniTransport();}
       if (!playing) return;
@@ -1270,7 +1276,7 @@ async function initialiseAudio() {
       if (data.type === 'harmony') { step = data.step; renderMusic(); return; }
       // Instrument note notifications are not transport beat messages.
       if(!Number.isInteger(data.beat)||!Number.isFinite(data.bpm))return;
-      currentBpm = data.bpm;
+      currentBpm = data.bpm;fxBuses?.setTempo(currentBpm);
       syncMiniTransport();
       syncTrainerStatus();
       if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'passing between colours'} · ${settings.extensionBars}-bar cycle`;
@@ -1307,6 +1313,9 @@ async function initialiseAudio() {
   reverb.buffer = !input('mute-space').checked&&Number(input('space').value)>0?impulse!:null;
   node!.connect(reverb, 1);
   reverb.connect(wet!);if(exerciseGuitarGain?.context===context)exerciseGuitarGain.connect(reverb);
+  if(!fxBuses)fxBuses=createFxBuses(context,master!,{click:{node:node!,output:0},harmony:{node:node!,output:8},drums:{node:node!,output:4},bass:{node:node!,output:5},comping:{node:node!,output:6},sequence:{node:node!,output:7},space:{node:reverbGate!,output:0}},fxUi?.read());
+  node!.port.postMessage({type:'fx-sends',channels:activeFxChannels(fxUi!.read())});
+  fxBuses.set(fxUi!.read());fxBuses.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);fxBuses.reset();
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
 }
 async function previewChord(index: number, hold: string, retainExercise=false) {
@@ -2267,6 +2276,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
       el(id).setAttribute('aria-pressed',String(selected));
     }
     fillChords();
+    for(const id of FX_PRESET_CONTROLS)if(preset.controls[id]===undefined)restoreControl(id,id==='fx-reverb-type'?'room':id==='fx-delay-division'?'eighth':id.endsWith('-return')?'25':'0');
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
     localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);
     select('backing-style').value=backingStyleForControls(preset.controls);
@@ -2309,6 +2319,9 @@ installConsole(()=>{
   if(!context||context.state!=='running'||!master||master.gain.value<.00001)return [0,0];
   return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
 });
+
+function activeFxChannels(value:any){return Object.keys(value.sends).filter(id=>value.sends[id].reverb>0&&value.reverbReturn>0||value.sends[id].delay>0&&value.delayReturn>0);}
+fxUi=installFxControls(value=>{node?.port.postMessage({type:'fx-sends',channels:activeFxChannels(value)});fxBuses?.set(value);fxBuses?.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);});
 
 input('master-volume').value=String(masterVolume);
 el('master-volume-value').textContent=masterVolume+'%';

@@ -104,10 +104,15 @@ export class SampledBass {
     return voice;
   }
 
-  render() {
+  render(audible=true) {
     let output=0;
     for (const voice of this.voices) {
       if (!Number.isFinite(voice.age) || voice.envelope<SILENCE) continue;
+      if(!audible){
+        if(voice.sample){voice.position+=voice.increment;if(voice.position>=voice.sample.length-1){voice.age=Infinity;voice.envelope=0;voice.sample=null;continue;}}
+        else{voice.phase+=voice.increment;voice.phase-=Math.floor(voice.phase);}
+        if(voice.age>=voice.gate)voice.releasing=true;voice.envelope*=voice.releasing?voice.releaseDecay:voice.decay;voice.age++;continue;
+      }
       let value;
       if (voice.sample) {
         const index=voice.position|0;

@@ -1,7 +1,7 @@
 import {DRUM_KITS} from './instrumentation.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
 import { SampledBass } from './bass.js';
-import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, STUDIO_DRUM_GROUPS } from './sample-map.js';
+import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, MODERN_DRUM_GROUPS } from './sample-map.js';
 
 export const DRUM_GROOVES = {
   straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
@@ -252,7 +252,7 @@ export class Rhythm {
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));
-    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.studioGroups=available(STUDIO_DRUM_GROUPS);
+    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.modernGroups=available(MODERN_DRUM_GROUPS);
   }
   gridAt(settings, beat, phase) {
     return beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
@@ -260,29 +260,29 @@ export class Rhythm {
   bassGridAt(beat,phase,groove='straight',bpm=120){return beat*4+backingSubdivision(phase,groove,bpm);}
   clearDrums() { for (const voice of this.drumVoices) voice.sample = null; this.activeDrums=0; }
   clearBass() { this.bassInstrument.clear();this.bassCursor=0;this.lastBassMidi=null; }
-  tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes) {
+  tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes,drumsAudible=true,bassAudible=true) {
     const grid = this.gridAt(settings, beat, phase);
     const bassGrid = this.bassGridAt(beat, phase,settings.drumGroove,settings.bpm);
     const inBar = beat % settings.beats;
     const bar = Math.floor(beat / settings.beats);
     if (grid !== this.lastGrid) {
       this.lastGrid = grid;
-      if (settings.drums) this.playDrums(settings, grid % 4, inBar, bar, sample, step, onEvent);
+      if (settings.drums&&drumsAudible) this.playDrums(settings, grid % 4, inBar, bar, sample, step, onEvent);
     }
     if (bassGrid !== this.lastBassGrid) {
       this.lastBassGrid = bassGrid;
-      if (settings.bass) this.playBass(settings, bassGrid % 4, inBar, bar, notes, sample, step, onEvent,nextNotes);
+      if (settings.bass&&bassAudible) this.playBass(settings, bassGrid % 4, inBar, bar, notes, sample, step, onEvent,nextNotes);
     }
   }
   hitDrum(name,gain,sample,step,beat,sub,onEvent,kitName='rock',delayFrames=0) {
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const jazz=profile.bank==='jazz'&&this.jazzGroups.ride.length;
-    const studio=profile.bank==='studio'&&this.studioGroups.kick.length,layered=jazz||studio;
-    const groups=jazz?this.jazzGroups:studio?this.studioGroups:this.groups;
-    const group=name==='snare'?(gain<(jazz ? .17 : studio ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
+    const modern=profile.bank==='modern'&&this.modernGroups.kick.length,layered=jazz||modern;
+    const groups=jazz?this.jazzGroups:modern?this.modernGroups:this.groups;
+    const group=name==='snare'?(gain<(jazz ? .17 : modern ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
     const ids=groups[group]||groups[name]||this.groups[group]||this.groups[name]||[];
-    const cursorKey=(jazz?'jazz:':studio?'studio:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
+    const cursorKey=(jazz?'jazz:':modern?'modern:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
     const id=ids.length?ids[cursor%ids.length]:fallback;
     const pcm=this.kit[id];
     if(!pcm?.length)return;
@@ -405,6 +405,7 @@ export class Rhythm {
     if(this.activeDrums)for(const voice of this.drumVoices){
       if(!voice.sample)continue;
       if(voice.delay>0){voice.delay--;continue;}
+      if(!drumsActive){voice.position+=voice.increment;voice.envelope*=voice.decayFactor;if(voice.choking)voice.choke*=this.chokeDecay;if(voice.position>=voice.sample.length-1||voice.choke<.0001){voice.sample=null;this.activeDrums--;}continue;}
       const index=voice.position|0,fraction=voice.position-index;
       const raw=voice.sample[index]+((voice.sample[index+1]??0)-voice.sample[index])*fraction;
       voice.filter+=voice.tone*(raw-voice.filter);
@@ -417,7 +418,7 @@ export class Rhythm {
     this.drums=drumsActive?drums:0;
     // Muted voices still age, so restoring a mixer fader never replays a pile
     // of frozen attacks or an old bass note.
-    const bass=this.bassInstrument.render();
+    const bass=this.bassInstrument.render(bassActive);
     this.bass=bassActive?bass:0;
   }
 }

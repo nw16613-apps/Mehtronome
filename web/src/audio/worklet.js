@@ -2,6 +2,7 @@ import { Engine } from './engine.js';
 
 // Native output arrays already cover the entire steady-state quantum. Create
 // subarray views only for the first, partially delayed start block.
+const STEM_CHANNELS=[['drums',4,0,'drums'],['bass',5,0,'bass'],['comping',6,0,'comping'],['sequenceLeft',7,0,'sequence'],['sequenceRight',7,1,'sequence'],['harmonyLeft',8,0,'harmony'],['harmonyRight',8,1,'harmony']];
 const channelView=(outputs,index,channel,offset)=>{const data=outputs[index]?.[channel];return offset?data?.subarray(offset):data;};
 
 class HarmonyProcessor extends AudioWorkletProcessor {
@@ -9,9 +10,11 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     super();
     this.engine = new Engine(sampleRate);
     this.active = false;
+    this.stems={};this.fxChannels=new Set();this.stemsEnabled=false;
     this.meterFrames = 0;
     this.onBeat = event => this.port.postMessage(event);
     this.port.onmessage = ({ data }) => {
+      if(data.type==='fx-sends'){this.fxChannels=new Set(data.channels||[]);this.stemsEnabled=STEM_CHANNELS.some(([, , ,id])=>this.fxChannels.has(id));return;}
       if (data.type === 'drum-kit') {
         this.engine.installDrumKit(data.kit);
       } else if (data.type === 'start') {
@@ -38,11 +41,12 @@ class HarmonyProcessor extends AudioWorkletProcessor {
       if(this.startFrame!==null&&currentFrame+channels[0].length<=this.startFrame)return true;
       const offset=this.startFrame===null?0:Math.max(0,this.startFrame-currentFrame);
       this.startFrame=null;
-      this.engine.render(offset?channels[0].subarray(offset):channels[0], this.onBeat, channelView(outputs,1,0,offset), channelView(outputs,1,1,offset), undefined, channelView(outputs,2,0,offset), undefined, channelView(outputs,3,0,offset), this.onBeat);
+      if(this.stemsEnabled)for(const [key,index,channel,id]of STEM_CHANNELS)this.stems[key]=this.fxChannels.has(id)?channelView(outputs,index,channel,offset):undefined;
+      this.engine.render(offset?channels[0].subarray(offset):channels[0], this.onBeat, channelView(outputs,1,0,offset), channelView(outputs,1,1,offset), undefined, channelView(outputs,2,0,offset), undefined, channelView(outputs,3,0,offset), this.onBeat,this.stemsEnabled?this.stems:null);
       if (outputs[2]?.length > 1) outputs[2][1].set((offset?outputs[2][0].subarray(offset):outputs[2][0]),offset);
       for (let i = 1; i < channels.length; i++) channels[i].set((offset?channels[0].subarray(offset):channels[0]),offset);
       this.meterFrames+=channels[0].length;
-      if(this.meterFrames>=sampleRate/20){
+      if(this.meterFrames>=sampleRate/(sampleRate<=32000?10:20)){
         this.port.postMessage({type:'meters',peaks:Array.from(this.engine.meterPeaks)});
         this.engine.meterPeaks.fill(0);this.meterFrames=0;
       }
