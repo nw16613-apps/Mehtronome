@@ -1,0 +1,533 @@
+{
+  "repository": "sfzinstruments/DrumGizmo.DRSKit",
+  "revision": "b01448990a31f722542f1812e56159a97a6a2a82",
+  "license": "CC-BY-4.0",
+  "attribution": "DRSKit by Lars Muldjord, Bent Bisballe Nyeng and Jes Eiler / DRSDrums; SFZ/FLAC port by kinwie.",
+  "format": "mono 32000 Hz PCM16",
+  "processing": "Close/overhead microphone selection and mixing, gentle high/low pass, leading silence removal, peak normalization and edge fades. Original tuning and natural decay retained; no synthetic reinforcement or exponential gating.",
+  "files": [
+    {
+      "id": "liveKick1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/11-Kdrum_with_contact-Kdrum_front.flac",
+          "sha256": "0e85f22e266cf79b0a0c9a8b3f91bfea401398d7d23956524ef6202ec2f7e747",
+          "weight": 0.7
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/11-Kdrum_with_contact-Kdrum_back.flac",
+          "sha256": "4bfaf534be13ee0c16d2d2018ef3b8d80ba4480f975e80d92021d01a222bd358",
+          "weight": 0.3
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "bytes": 41644,
+      "sha256": "504d1babb75ededd5ae6a39e6f7e376aa73a3c52556dbc8c4686974b0f8c0c2d"
+    },
+    {
+      "id": "liveKick2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/12-Kdrum_with_contact-Kdrum_front.flac",
+          "sha256": "e03301dbbf18e5debe1b657a98a48d355ce642122d4ba85b2026f0cf5593f62e",
+          "weight": 0.7
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/12-Kdrum_with_contact-Kdrum_back.flac",
+          "sha256": "e55acf26462ef90fa037d2d3e3d823f6363bb21fdcc0aeb43cda5bdedb345120",
+          "weight": 0.3
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "bytes": 41644,
+      "sha256": "8c87d994f2bb4957adb9d3578a1ebd1544a9865576e1f9210dd817af9dab529e"
+    },
+    {
+      "id": "liveKick3",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/13-Kdrum_with_contact-Kdrum_front.flac",
+          "sha256": "9f1547094a7d854dfcfbba09b343f60d90e2f3ace957d6c7cf8398a60792906e",
+          "weight": 0.7
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/13-Kdrum_with_contact-Kdrum_back.flac",
+          "sha256": "a47ec0bedeb766388155074f9886576832c31237f2dba67bcf2764703f81c038",
+          "weight": 0.3
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.65,
+      "bytes": 41644,
+      "sha256": "c80d0da56377899ab85c27af799e278b4c2577e9cb3451585546ffa1cb3458ff"
+    },
+    {
+      "id": "liveKickSoft1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/4-Kdrum_with_contact-Kdrum_front.flac",
+          "sha256": "066b9ac03cd0f991e1987b850d1e8ef3f74b98c76a58bd783d704554647e5b74",
+          "weight": 0.7
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/4-Kdrum_with_contact-Kdrum_back.flac",
+          "sha256": "ba646a82562f049a295ad2925de2d8c775e6bee1bb6b7cfc6045f3b631607aff",
+          "weight": 0.3
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.4539375,
+      "bytes": 29096,
+      "sha256": "45ceea5885956a091abaeea8a61867e4d0f687682739772fc79849e344e8773e"
+    },
+    {
+      "id": "liveKickSoft2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/5-Kdrum_with_contact-Kdrum_front.flac",
+          "sha256": "4f012dd4850ddc8094f85d5cb89f56e801076541c44d41fd41b7b4c61dc0dbed",
+          "weight": 0.7
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Kdrum_with_contact/5-Kdrum_with_contact-Kdrum_back.flac",
+          "sha256": "e80db434785b86acd0819b7f9026c86659e3a988a1e50d70f5ec5a1c617e97bb",
+          "weight": 0.3
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.6,
+      "bytes": 38444,
+      "sha256": "5b80130591a14e77db19ff9a680a0661921638f1cad1b32e8125152bbc6a7758"
+    },
+    {
+      "id": "liveSnare1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/32-Snare-Snare_top.flac",
+          "sha256": "c00cbf1ee1c993d6b5f27745a2ec5a72b4c94b321c482f48223717e58695dccf",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.4451875,
+      "bytes": 28536,
+      "sha256": "e2940194ce1d293b8e77972f4e2388dab11405d6fe2f1ddc5df58628058385e5"
+    },
+    {
+      "id": "liveSnare2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/33-Snare-Snare_top.flac",
+          "sha256": "c754756e5ee0302ba694569bff11267a9348b223b05adfc68bf99e8f7c1ecfd6",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.64628125,
+      "bytes": 41406,
+      "sha256": "40c5ab2b3adbf73c0055d8cf3a2d2f1ed3df7fda19bf2e68fcdf9d9dbbd4c78d"
+    },
+    {
+      "id": "liveSnare3",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/34-Snare-Snare_top.flac",
+          "sha256": "b8ca05d8ddae4272280bb92ec436601ca263f18e5bab6eb90afe37248b2deec0",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.6645625,
+      "bytes": 42576,
+      "sha256": "3dbb24593953b5b97b5a8e7d0d525efb4e1644b0fad172836844a8b21cbf1068"
+    },
+    {
+      "id": "liveSnareSoft1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/14-Snare-Snare_top.flac",
+          "sha256": "22cb7a603a585a8851ed4aa60b1cf5dfb2092af53d5005283921b25b3a6f10c0",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.34034375,
+      "bytes": 21826,
+      "sha256": "b99c4d9958bfe770a3dd947d6f1a27d834a0ad6a55ff046854c7effee6e5ded9"
+    },
+    {
+      "id": "liveSnareSoft2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/15-Snare-Snare_top.flac",
+          "sha256": "21855e7cf843664a391c4a324914acdb013bb5b03316b0c0a39e6508169bf290",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.3850625,
+      "bytes": 24688,
+      "sha256": "de3746fd78e603072d641e34165b544613e55d36187ff84de57212ea45bc279d"
+    },
+    {
+      "id": "liveSnareGhost1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/1-Snare-Snare_top.flac",
+          "sha256": "3b022546c9b896d832480154f137cf64999ad59dc7b2e24b7fd69abc70b11042",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.24471875,
+      "bytes": 15706,
+      "sha256": "b6a4c9868a65524548bda588a144228418e50d0ad8c69e47fe50af31ed0bbbdf"
+    },
+    {
+      "id": "liveSnareGhost2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare/2-Snare-Snare_top.flac",
+          "sha256": "243a1eb09035dd5aab8c1a19d5b2fe12535e8dae1a27a9a2c34de716b33c87b9",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.24940625,
+      "bytes": 16006,
+      "sha256": "72c713d621a122c5dbad3b3bebbd7816d7977e0a82e2ede8622561cda42e86ec"
+    },
+    {
+      "id": "liveHat1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_closed/7-Hihat_closed-Hihat.flac",
+          "sha256": "7811efc1495dc4fff9b2541b5e85386d7693d43c9e0a8d1079adaf08e0a82495",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.3,
+      "bytes": 19244,
+      "sha256": "4b397fe4edb1f82850ff71e9745f957216d106c7873707378a5c6c3128c0b462"
+    },
+    {
+      "id": "liveHat2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_closed/8-Hihat_closed-Hihat.flac",
+          "sha256": "6f23ef102a70e960606dda3fd27755f4ea5303075f76a28f5a8e1dbca7ae5283",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.22075,
+      "bytes": 14172,
+      "sha256": "a7b14c663f03c056268396afb2b2c1825c54dcf5b82bc5a1d1c971be4f1b4807"
+    },
+    {
+      "id": "liveHat3",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_closed/9-Hihat_closed-Hihat.flac",
+          "sha256": "7619c023b59244a7ef64ef98a845638a8181593cee7b80728fb94cae1946a923",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.2438125,
+      "bytes": 15648,
+      "sha256": "98f83fd756c946a10dd82ceac72c02645fb0ab828df41e2183198bdce9d9717b"
+    },
+    {
+      "id": "liveHatOpen1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_semi_open/5-Hihat_semi_open-Hihat.flac",
+          "sha256": "efb275f69cbee62ad02098db5a5afc42c7a598f4f2b05719f1370e1cf1ea79eb",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.0,
+      "bytes": 64044,
+      "sha256": "9059bc8ee99cf498fbcd7ed31cc09a9fd4a4c46ce48574f0446f131c0d5e8a5f"
+    },
+    {
+      "id": "liveHatOpen2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_semi_open/6-Hihat_semi_open-Hihat.flac",
+          "sha256": "ed2bc572339f24e37339d52dabb94033d612e1220196e7bfa98cfa6ddabeb179",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.0,
+      "bytes": 64044,
+      "sha256": "390c6dd442abb10dce773dc36725d8ac4157083c9a728dd457ea39f7f9f7d258"
+    },
+    {
+      "id": "liveHatPedal1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_foot/3-Hihat_foot-OHL.flac",
+          "sha256": "b89cc29bc3ab6083c98a383247a7a65cb432c9a730a4fb68b3f6bfc8a663e2b6",
+          "weight": 0.5
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_foot/3-Hihat_foot-OHR.flac",
+          "sha256": "3a5f7b3420b319465c23f43b086e508e549211d486f59082108864c12da2a3bd",
+          "weight": 0.5
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.221375,
+      "bytes": 14212,
+      "sha256": "58faf75fd29ffebf4bab1e75605f045a090d913826652879b0e40a39e3d17287"
+    },
+    {
+      "id": "liveHatPedal2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_foot/4-Hihat_foot-OHL.flac",
+          "sha256": "f04e7e032d49584e47870b9478dfb9fb834c8ec03f6d09730f2c3dec971f7bc9",
+          "weight": 0.5
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Hihat_foot/4-Hihat_foot-OHR.flac",
+          "sha256": "c305f312dbb272e5e824874c9c49defd5c4c62f81955cfaa2d02381e94c190b1",
+          "weight": 0.5
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.232125,
+      "bytes": 14900,
+      "sha256": "76409f4e8e7d9ee661c1281c1e6e30591660add709c5a1a8c6f8cc84ea9a4ec4"
+    },
+    {
+      "id": "liveRide1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/5-Ride_tip-Ride.flac",
+          "sha256": "02ea94cab0249b2fb57c15856697b302d331f0ade7b42b4db6b4f4c5822e2a93",
+          "weight": 0.6
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/5-Ride_tip-OHL.flac",
+          "sha256": "5537fedef0fbda3578c47ca6b43dda8a58353b95d53cc53f8bccf16a0a5d087b",
+          "weight": 0.2
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/5-Ride_tip-OHR.flac",
+          "sha256": "c9c5072cdce461e5119fd53f6e6d15bfd1a38dd14433f507f7b28d382812a8ad",
+          "weight": 0.2
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.8,
+      "bytes": 179244,
+      "sha256": "6d1af82f5ad4dfa4e9aafb71d5002815a10c8596b6073760e6809ded2af83917"
+    },
+    {
+      "id": "liveRide2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/6-Ride_tip-Ride.flac",
+          "sha256": "c94cee27b0449ca4b175daff790e952670a6bd998d59080dec81c82a5392abfd",
+          "weight": 0.6
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/6-Ride_tip-OHL.flac",
+          "sha256": "fcec5be8d10bae7c2a5cbfb04621a22e698bb7aea9e7c730c9e309d095d1db4b",
+          "weight": 0.2
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/6-Ride_tip-OHR.flac",
+          "sha256": "59574f8a258e4f043d5e87e07addb0f18dbc083a6d25832e6e7075ff420261d7",
+          "weight": 0.2
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.8,
+      "bytes": 179244,
+      "sha256": "39ee778b4a76e322a5f9b8c771443588df2b5d43f2e1877b07a0fe6d986c7d64"
+    },
+    {
+      "id": "liveRide3",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/7-Ride_tip-Ride.flac",
+          "sha256": "3a25b95585bbd3b2ed9d9e77b468018b91860992039aadfe650ad088f2407931",
+          "weight": 0.6
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/7-Ride_tip-OHL.flac",
+          "sha256": "2965946bf0e01433646ca57078edd393272eeef1088b791ce05b6d9268e57508",
+          "weight": 0.2
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip/7-Ride_tip-OHR.flac",
+          "sha256": "84deeeab963eced013a59af2e9ff1fafd290f9a52383b4da9683cf19b33e78fa",
+          "weight": 0.2
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.8,
+      "bytes": 179244,
+      "sha256": "4cf51734a2c7daaa0e8d6929637f7b53f8d8e8929eb3d5badf9027015747cdf4"
+    },
+    {
+      "id": "liveRideBell1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip_bell/5-Ride_tip_bell-Ride.flac",
+          "sha256": "2260d8b70ba09ff30655472ad5d79f9f3098bbd859e5113684c5e12e95efc9d8",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.2,
+      "bytes": 140844,
+      "sha256": "c12651e05d52028587664af51557d6a145bbe777c0569cff95f682194a93758c"
+    },
+    {
+      "id": "liveRideBell2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Ride_tip_bell/6-Ride_tip_bell-Ride.flac",
+          "sha256": "e4ebd4a01dd7ad35092ec00fff8103f4c45a3352abd818ffa08863dfd6ff84e7",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.2,
+      "bytes": 140844,
+      "sha256": "43daf06e32aa2dfd363662ee83107afc57608839c049db42b9ebbd81414f2ccb"
+    },
+    {
+      "id": "liveRim1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare_rim/5-Snare_rim-Snare_top.flac",
+          "sha256": "db4a34ee7d9fabb19d260178dc17c644e084b36bca3bf5329919177a30552b6e",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.19203125,
+      "bytes": 12334,
+      "sha256": "7a8aafe2c4f4308f57a80155b3c32f5143e4182981753569d9da09b8c38a67b9"
+    },
+    {
+      "id": "liveRim2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Snare_rim/6-Snare_rim-Snare_top.flac",
+          "sha256": "7de644d2f183b935933c6c5b6d0236ebeba87b355362b73154d0230989604fe0",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 0.19209375,
+      "bytes": 12338,
+      "sha256": "7af6c1d20e1481bdb0f553aa6f393562fb75aed3dbb5c21eb01c1493e9cd7f80"
+    },
+    {
+      "id": "liveTomHigh1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Tom1/13-Tom1-Tom1.flac",
+          "sha256": "e65f4e35d0cd6d066b0f7867ef3fdf7119c69765cfc1b4bc50dcb1a5ad52c86b",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.0,
+      "bytes": 64044,
+      "sha256": "0b5d83db1e78dfe6fe7c7267b175d53f2160f4c45a83d5b4ebeec6aca3e37ec2"
+    },
+    {
+      "id": "liveTomHigh2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Tom1/14-Tom1-Tom1.flac",
+          "sha256": "b978ee9e3fa3217d57be9ad9764d15659f3ffcdc4283574bfc5adb1a03475c8e",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.0,
+      "bytes": 64044,
+      "sha256": "edc33ac27b178dbe8d05de6d8f04b939d0ebe3d124ca7d130422ae860157b335"
+    },
+    {
+      "id": "liveTomLow1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Tom2/10-Tom2-Tom2.flac",
+          "sha256": "95a2a640a1eddde06321f261bfaf7916e4c8f16515735e487b6f85e89cc486da",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.2,
+      "bytes": 76844,
+      "sha256": "18b50f93eedf9f9db19fb35e3e691ab8f39e544c15f40cae5c27e47f6f91170d"
+    },
+    {
+      "id": "liveTomLow2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Tom2/11-Tom2-Tom2.flac",
+          "sha256": "9e9e07a9acbbacb6005a313f3456fd00d98d0c52da0bd049533036d2bf729d33",
+          "weight": 1
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 1.2,
+      "bytes": 76844,
+      "sha256": "c72ab617a490cd5c02e788e8ef59bd38cc84c50c6ec1ec68d3b4afe679df4497"
+    },
+    {
+      "id": "liveCrash1",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Crash_left_tip/5-Crash_left_tip-OHL.flac",
+          "sha256": "90a5590a7876fe3c9b516bae5c6481cabd0cd6bec406bb65609af8362ee2c3bb",
+          "weight": 0.5
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Crash_left_tip/5-Crash_left_tip-OHR.flac",
+          "sha256": "29057f73927ed0d35a7673646d19a69cc8f40afa64701aec70b9eef17ff04ce4",
+          "weight": 0.5
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.693125,
+      "bytes": 172404,
+      "sha256": "8eef73fd76ee070eaba08354b2da2bb24ff5b5b645944badb3aeb8e6d3353eb1"
+    },
+    {
+      "id": "liveCrash2",
+      "sources": [
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Crash_left_tip/6-Crash_left_tip-OHL.flac",
+          "sha256": "a2c29e1f1fae5e1a31f58a71732c6424c1c69d0b043a6b649274321db5b64e5d",
+          "weight": 0.5
+        },
+        {
+          "path": "DrumGizmo/DRSKit/Samples/Crash_left_tip/6-Crash_left_tip-OHR.flac",
+          "sha256": "9c3bb94ec4067d7a0750b1c2b0c10a3c9ee71bb6d999dbc677b88dd92c95b3a1",
+          "weight": 0.5
+        }
+      ],
+      "onsetTrimFrames": 0,
+      "duration": 2.8,
+      "bytes": 179244,
+      "sha256": "c7fd1c29f36d553fd901257fcf95b6781f25d7cf261ce9adaaf1e9a8165f5d2c"
+    }
+  ]
+}

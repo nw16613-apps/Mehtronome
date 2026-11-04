@@ -1,7 +1,7 @@
 import {DRUM_KITS} from './instrumentation.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
 import { SampledBass } from './bass.js';
-import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, MODERN_DRUM_GROUPS } from './sample-map.js';
+import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, LIVE_DRUM_GROUPS } from './sample-map.js';
 
 export const DRUM_GROOVES = {
   straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
@@ -252,7 +252,7 @@ export class Rhythm {
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));
-    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.modernGroups=available(MODERN_DRUM_GROUPS);
+    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);
   }
   gridAt(settings, beat, phase) {
     return beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
@@ -278,11 +278,11 @@ export class Rhythm {
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const jazz=profile.bank==='jazz'&&this.jazzGroups.ride.length;
-    const modern=profile.bank==='modern'&&this.modernGroups.kick.length,layered=jazz||modern;
-    const groups=jazz?this.jazzGroups:modern?this.modernGroups:this.groups;
-    const group=name==='snare'?(gain<(jazz ? .17 : modern ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
+    const live=profile.bank==='live'&&this.liveGroups.kick.length,layered=jazz||live;
+    const groups=jazz?this.jazzGroups:live?this.liveGroups:this.groups;
+    const group=name==='snare'?(gain<(jazz ? .17 : live ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
     const ids=groups[group]||groups[name]||this.groups[group]||this.groups[name]||[];
-    const cursorKey=(jazz?'jazz:':modern?'modern:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
+    const cursorKey=(jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
     const id=ids.length?ids[cursor%ids.length]:fallback;
     const pcm=this.kit[id];
     if(!pcm?.length)return;

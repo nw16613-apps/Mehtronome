@@ -76,6 +76,6 @@ export const JAZZ_DRUM_GROUPS={
  hat:['jazzHat1','jazzHat2','jazzHat3'],hatOpen:['jazzHatOpen1','jazzHatOpen2'],hatPedal:['jazzHatPedal1','jazzHatPedal2'],rim:['jazzRim1','jazzRim2'],tomHigh:['jazzTomHigh1','jazzTomHigh2'],tomLow:['jazzTomLow1','jazzTomLow2'],crash:['jazzCrash1']
 };
 
-export const MODERN_DRUM_GROUPS={
- kick:['modernKick1','modernKick2','modernKick3'],kickSoft:['modernKickSoft1','modernKickSoft2'],snare:['modernSnare1','modernSnare2','modernSnare3'],snareSoft:['modernSnareSoft1','modernSnareSoft2'],snareGhost:['modernSnareGhost1','modernSnareGhost2'],hat:['modernHat1','modernHat2','modernHat3'],hatOpen:['modernHatOpen1','modernHatOpen2'],hatPedal:['modernHatPedal1','modernHatPedal2'],ride:['modernRide1','modernRide2','modernRide3'],rideBell:['modernRideBell1','modernRideBell2'],rim:['modernRim1','modernRim2'],tomHigh:['modernTomHigh1','modernTomHigh2'],tomLow:['modernTomLow1','modernTomLow2'],crash:['modernCrash1','modernCrash2']
+export const LIVE_DRUM_GROUPS={
+ kick:['liveKick1','liveKick2','liveKick3'],kickSoft:['liveKickSoft1','liveKickSoft2'],snare:['liveSnare1','liveSnare2','liveSnare3'],snareSoft:['liveSnareSoft1','liveSnareSoft2'],snareGhost:['liveSnareGhost1','liveSnareGhost2'],hat:['liveHat1','liveHat2','liveHat3'],hatOpen:['liveHatOpen1','liveHatOpen2'],hatPedal:['liveHatPedal1','liveHatPedal2'],ride:['liveRide1','liveRide2','liveRide3'],rideBell:['liveRideBell1','liveRideBell2'],rim:['liveRim1','liveRim2'],tomHigh:['liveTomHigh1','liveTomHigh2'],tomLow:['liveTomLow1','liveTomLow2'],crash:['liveCrash1','liveCrash2']
 };
