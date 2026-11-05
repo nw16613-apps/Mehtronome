@@ -4,9 +4,9 @@ import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
 export const COMPING_PATTERNS={
-  popRock:'Pop / rock stabs', fusion:'Fusion accents', blues:'Blues shuffle responses', motown:'Motown offbeats', funk:'Funk stabs', latin:'Latin chord accents',
+  popRock:'Pop / rock chord part', fusion:'Fusion chord vamp', blues:'Blues shuffle chord riff', motown:'Motown piano figure', funk:'Funk clav ostinato', latin:'Son piano ostinato',
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
-  bossa:'Electric piano · bossa', ballad:'Electric piano · ambient ballad',
+  bossa:'Bossa guitar pattern', ballad:'Sustained ballad chords',
 };
 export const COMPING_MOVEMENTS={
   still:'Still chords', extensions:'Chord extensions & inversions', modal:'Modal chord colours', inner:'Chord inversions',
@@ -93,16 +93,16 @@ export function compingChordVoicings(harmony,nextHarmony,movement='inner',length
 // a phrase with one or two supportive attacks per bar and room for a soloist.
 const CELLS={
   popRock:[[[0,1.35,.72],[8,1.1,.7]],[[0,1.7,.7]],[[0,1.35,.73],[10,.7,.57]],[[6,.8,.5]]],
-  fusion:[[[0,.32,.7],[10,.38,.68]],[[1,.24,.52]],[[0,.34,.7],[13,.22,.5]],[[7,.27,.6]]],
-  blues:[[[0,.36,.67],[8,.36,.65]],[[6,.27,.56]],[[0,.35,.68],[10,.26,.57]],[[8,.34,.65]]],
-  motown:[[[2,.23,.57],[10,.23,.57]],[[6,.22,.62],[14,.22,.65]],[[0,.3,.65]],[[6,.23,.62]]],
-  funk:[[[4,.21,.66],[10,.19,.6]],[[0,.23,.68],[14,.18,.6]],[[4,.2,.65]],[[6,.18,.58],[12,.2,.65]]],
-  latin:[[[2,.3,.62],[10,.3,.59]],[[6,.35,.56]],[[2,.3,.62],[10,.3,.59]],[[6,.35,.56]]],
+  fusion:[[[0,.85,.7],[10,.65,.68]],[[7,.9,.6]],[[0,.85,.7],[10,.65,.68]],[[7,.9,.6]]],
+  blues:[[[0,.6,.67],[8,.5,.65]],[[6,.6,.56]],[[0,.6,.67],[8,.5,.65]],[[6,.6,.56]]],
+  motown:[[[2,.3,.57],[10,.3,.57]],[[6,.3,.62]],[[2,.3,.57],[10,.3,.57]],[[6,.3,.62]]],
+  funk:[[[4,.3,.66],[10,.25,.6]],[[6,.28,.6]],[[4,.3,.66],[10,.25,.6]],[[6,.28,.6]]],
+  latin:[[[2,1.1,.62],[10,.8,.59]],[[6,1.2,.56]],[[2,1.1,.62],[10,.8,.59]],[[6,1.2,.56]]],
   sparse:[[[0,1.45,.72]],[[12,1.2,.7]],[[0,1.1,.7]],[[5,.65,.52]]],
-  jazz:[[[2,.55,.62],[11,.68,.65]],[[6,.4,.48]],[[3,.5,.58],[13,.48,.52]],[[6,.62,.62]]],
-  neoSoul:[[[0,.85,.68],[10,.75,.64]],[[9,.72,.65]],[[0,.9,.7]],[[5,.55,.54]]],
-  bossa:[[[0,.6,.60],[6,.4,.55]],[[10,.55,.59]],[[0,.6,.60],[6,.4,.55]],[[10,.55,.59]]],
-  ballad:[[[0,2.6,.65]],[[0,1.8,.62]],[[0,2.4,.66]],[[4,1.35,.54]]],
+  jazz:[[[2,.9,.62],[11,1.1,.65]],[[6,1.2,.48]],[[3,1.1,.58],[13,.7,.52]],[[6,1.3,.62]]],
+  neoSoul:[[[0,2,.68],[10,1.2,.64]],[[9,1.5,.65]],[[0,2.4,.7]],[[5,2.2,.54]]],
+  bossa:[[[0,1.15,.60],[6,.6,.55]],[[10,1.4,.59]],[[0,1.15,.60],[6,.6,.55]],[[10,1.4,.59]]],
+  ballad:[[[0,3.2,.65]],[[0,2.8,.62]],[[0,3.2,.66]],[[4,2.8,.54]]],
 };
 
 const TONE_SHAPES={
@@ -128,7 +128,7 @@ export class CompingInstrument{
     // Leave the last beat of larger drum answers clear; existing chords can ring.
     if(settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
 
-    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[!['latin','bossa'].includes(settings.compingPattern)&&settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%pattern.length]:bar%pattern.length];
+    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[!['latin','bossa','funk','motown','fusion','blues'].includes(settings.compingPattern)&&settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%pattern.length]:bar%pattern.length];
     for(const [position,duration,velocity]of cell)if(position===offset){
       const chordSignature=notes.join(','),firstChord=chordSignature!==this.lastChord;
       const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));

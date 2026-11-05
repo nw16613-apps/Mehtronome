@@ -6,3 +6,11 @@ test('all styles leave space with one or two full-chord attacks per bar at rough
 test('comping leaves the final beat of the eight-bar drum answer clear without cutting off its chord voices',()=>{
  for(const style of Object.keys(BACKING_STYLES)){const events=play(style);assert.ok(!events.some(e=>e.gridSample>=124000&&e.gridSample<128000),style);}
 });
+
+test('accompaniment includes ringing chord holds and repeating style ostinatos without adding attacks',()=>{
+ for(const style of ['fusionJazz','blues','motown','funk','latin','bossa']){
+  const events=play(style),signature=bar=>events.filter(e=>Math.floor(e.gridSample/16000)===bar).map(e=>[e.gridSample%16000,e.duration,e.velocity]);
+  assert.deepEqual(signature(0),signature(2),style+' repeats its first bar');assert.deepEqual(signature(1),signature(3),style+' repeats its second bar');
+ }
+ assert.ok(play('neoSoul').some(e=>e.duration>=2));assert.ok(play('ballad').every(e=>e.duration>=2.8));assert.ok(play('traditionalJazz').every(e=>e.duration>=.7));
+});

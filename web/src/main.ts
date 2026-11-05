@@ -2292,7 +2292,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
       el(id).setAttribute('aria-pressed',String(selected));
     }
     fillChords();
-    for(const id of FX_PRESET_CONTROLS)if(preset.controls[id]===undefined)restoreControl(id,id==='fx-reverb-type'?'room':id==='fx-delay-division'?'eighth':id.endsWith('-return')?'25':'0');
+    for(const id of FX_PRESET_CONTROLS)if(preset.controls[id]===undefined)restoreControl(id,id==='fx-reverb-type'?'room':id==='fx-reverb-b-type'?'plate':id==='fx-delay-division'?'eighth':'0');
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
     localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);
     select('backing-style').value=backingStyleForControls(preset.controls);
@@ -2336,7 +2336,7 @@ installConsole(()=>{
   return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
 });
 
-function activeFxChannels(value:any){return Object.keys(value.sends).filter(id=>value.sends[id].reverb>0&&value.reverbReturn>0||value.sends[id].delay>0&&value.delayReturn>0);}
+function activeFxChannels(value:any){return Object.keys(value.sends).filter(id=>value.sends[id].reverb>0||value.sends[id].reverbB>0||value.sends[id].delay>0);}
 fxUi=installFxControls(value=>{node?.port.postMessage({type:'fx-sends',channels:activeFxChannels(value)});fxBuses?.set(value);fxBuses?.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);});
 
 input('master-volume').value=String(masterVolume);

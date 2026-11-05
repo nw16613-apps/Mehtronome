@@ -1,39 +1,65 @@
 export const FX_CHANNELS=['click','harmony','drums','bass','comping','sequence','space'];
-export const FX_PRESET_CONTROLS=['fx-reverb-type','fx-delay-division','fx-reverb-return','fx-delay-return',...FX_CHANNELS.flatMap(id=>['send-reverb-'+id,'send-delay-'+id])];
+export const FX_BUSES=['reverb','reverbB','delay'];
+export const REVERB_TYPES={room:'Short room',chamber:'Chamber',plate:'Plate',hall:'Hall'};
+export const DELAY_DIVISIONS={sixteenth:'Sixteenth notes',dottedSixteenth:'Dotted sixteenths',eighthTriplet:'Eighth-note triplets',eighth:'Eighth notes',dotted:'Dotted eighths',quarterTriplet:'Quarter-note triplets',quarter:'Quarter notes',dottedQuarter:'Dotted quarters',half:'Half notes',whole:'Whole notes · one 4/4 bar'};
+const DELAY_BEATS={sixteenth:.25,dottedSixteenth:.375,eighthTriplet:1/3,eighth:.5,dotted:.75,quarterTriplet:2/3,quarter:1,dottedQuarter:1.5,half:2,whole:4};
+export const FX_PRESET_CONTROLS=['fx-reverb-type','fx-reverb-b-type','fx-delay-division',...FX_CHANNELS.flatMap(id=>FX_BUSES.map(bus=>'send-'+bus+'-'+id))];
 const percent=(value,fallback=0)=>Number.isFinite(Number(value))?Math.max(0,Math.min(100,Number(value))):fallback;
 export function normalizeFxSettings(value={}){
- return {reverbType:value.reverbType==='plate'?'plate':'room',delayDivision:value.delayDivision==='dotted'?'dotted':'eighth',reverbReturn:percent(value.reverbReturn??25,25),delayReturn:percent(value.delayReturn??25,25),sends:Object.fromEntries(FX_CHANNELS.map(id=>[id,{reverb:percent(value.sends?.[id]?.reverb),delay:percent(value.sends?.[id]?.delay)}]))};
+ return {reverbType:Object.hasOwn(REVERB_TYPES,value.reverbType)?value.reverbType:'room',reverbBType:Object.hasOwn(REVERB_TYPES,value.reverbBType)?value.reverbBType:'plate',delayDivision:Object.hasOwn(DELAY_DIVISIONS,value.delayDivision)?value.delayDivision:'eighth',reverbReturn:100,reverbBReturn:100,delayReturn:100,sends:Object.fromEntries(FX_CHANNELS.map(id=>[id,Object.fromEntries(FX_BUSES.map(bus=>[bus,percent(value.sends?.[id]?.[bus])]))]))};
 }
-export function fxDelaySeconds(bpm,division){return 60/Math.max(30,Math.min(300,Number(bpm)||90))*(division==='dotted'?.75:.5);}
+export function fxDelaySeconds(bpm,division){return 60/Math.max(30,Math.min(300,Number(bpm)||90))*(DELAY_BEATS[division]??.5);}
+const REVERB_SHAPES={room:{duration:.75,pre:.008,tone:6000},chamber:{duration:1.3,pre:.012,tone:5200},plate:{duration:2.1,pre:.018,tone:6000},hall:{duration:3.2,pre:.028,tone:4300}};
 export function fxImpulse(rate,kind){
- const duration=kind==='plate'?2.1:.75,pre=Math.round(rate*(kind==='plate'?.018:.008)),length=Math.ceil(rate*duration);
- return [0,1].map(channel=>{const pcm=new Float32Array(length);let seed=271+channel*193,low=0;const alpha=1-Math.exp(-2*Math.PI*6000/rate);
+ const {duration,pre:preSeconds,tone}=REVERB_SHAPES[kind]||REVERB_SHAPES.room,pre=Math.round(rate*preSeconds),length=Math.ceil(rate*duration);
+ return [0,1].map(channel=>{const pcm=new Float32Array(length);let seed=271+channel*193,low=0;const alpha=1-Math.exp(-2*Math.PI*tone/rate);
   for(let i=pre;i<length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const noise=seed/2147483648-1;low+=alpha*(noise-low);const t=(i-pre)/rate;pcm[i]=low*Math.exp(-t/(duration/7))*Math.min(1,t/.008)*Math.min(1,(length-i)/(rate*.025));}
   return pcm;});
 }
-// Both buses are 100% wet. Each source retains its existing dry route.
+// Three independent, fully wet buses. Returns stay at unity; source dry paths
+// are untouched. Native nodes are created only while a bus has audible sends.
 export function createFxBuses(context,destination,sources,initial={}){
- let state=normalizeFxSettings(initial),bpm=90,reverb,delay,feedback,tone,reverbKind='';
- const reverbInput=context.createGain(),delayInput=context.createGain(),reverbReturn=context.createGain(),delayReturn=context.createGain();
- const highpass=context.createBiquadFilter();highpass.type='highpass';highpass.frequency.value=150;reverbInput.connect(highpass);
- const delayHighpass=context.createBiquadFilter();delayHighpass.type='highpass';delayHighpass.frequency.value=180;delayInput.connect(delayHighpass);
- reverbReturn.gain.value=0;delayReturn.gain.value=0;reverbReturn.connect(destination);delayReturn.connect(destination);
- const sends=Object.fromEntries(FX_CHANNELS.map(id=>{const source=sources[id],r=context.createGain(),d=context.createGain();r.gain.value=0;d.gain.value=0;source.node.connect(r,source.output||0);source.node.connect(d,source.output||0);r.connect(reverbInput);d.connect(delayInput);return [id,{reverb:r,delay:d}];}));
- const voices=new Map(),buffers=new Map();let reverbSleep,delaySleep,signature='';
+ let state=normalizeFxSettings(initial),bpm=90,delay,feedback,tone,lfo,depth,delaySleep,signature='';
  const ramp=(param,value)=>param.setTargetAtTime(value,context.currentTime,.02);
- function dropReverb(){highpass.disconnect();for(const [node,gain]of voices){node.disconnect();node.buffer=null;gain.disconnect();}voices.clear();reverb=undefined;reverbKind='';}
- function dropDelay(){delayHighpass.disconnect();for(const node of [delay,feedback,tone])node?.disconnect();delay=undefined;}
- function buildReverb(){const old=reverb,oldGain=voices.get(old);reverb=context.createConvolver();let buffer=buffers.get(state.reverbType);if(!buffer){const pcm=fxImpulse(context.sampleRate,state.reverbType);buffer=context.createBuffer(2,pcm[0].length,context.sampleRate);pcm.forEach((values,i)=>buffer.getChannelData(i).set(values));buffers.set(state.reverbType,buffer);}reverb.buffer=buffer;const gain=context.createGain();gain.gain.value=0;highpass.connect(reverb).connect(gain).connect(reverbReturn);voices.set(reverb,gain);ramp(gain.gain,1);reverbKind=state.reverbType;if(oldGain){ramp(oldGain.gain,0);setTimeout(()=>{if(!voices.has(old))return;highpass.disconnect(old);old.disconnect();old.buffer=null;oldGain.disconnect();voices.delete(old);},120);}}
-
- function buildDelay(){dropDelay();delay=context.createDelay(2);delay.delayTime.value=fxDelaySeconds(bpm,state.delayDivision);tone=context.createBiquadFilter();tone.type='lowpass';tone.frequency.value=4800;feedback=context.createGain();feedback.gain.value=.28;delayHighpass.connect(delay).connect(tone);tone.connect(delayReturn);tone.connect(feedback).connect(delay);}
- function set(next){const clean=normalizeFxSettings(next),key=JSON.stringify(clean);if(key===signature)return;signature=key;state=clean;
-  const r=state.reverbReturn>0&&FX_CHANNELS.some(id=>state.sends[id].reverb>0),d=state.delayReturn>0&&FX_CHANNELS.some(id=>state.sends[id].delay>0);
-  if(r){clearTimeout(reverbSleep);if(!reverb||reverbKind!==state.reverbType)buildReverb();}else if(reverb){clearTimeout(reverbSleep);reverbSleep=setTimeout(dropReverb,2300);}
-  if(d){clearTimeout(delaySleep);if(!delay)buildDelay();}else if(delay){clearTimeout(delaySleep);delaySleep=setTimeout(dropDelay,4500);}
-  for(const id of FX_CHANNELS)for(const bus of ['reverb','delay'])ramp(sends[id][bus].gain,state.sends[id][bus]/100);
-  ramp(reverbReturn.gain,state.reverbReturn/100*.6);ramp(delayReturn.gain,state.delayReturn/100*.6);if(delay)ramp(delay.delayTime,fxDelaySeconds(bpm,state.delayDivision));
+ const buffers=new Map();
+ function bufferFor(kind){let buffer=buffers.get(kind);if(!buffer){const pcm=fxImpulse(context.sampleRate,kind);buffer=context.createBuffer(2,pcm[0].length,context.sampleRate);pcm.forEach((values,i)=>buffer.getChannelData(i).set(values));buffers.set(kind,buffer);}return buffer;}
+ function makeReverb(){
+  const input=context.createGain(),highpass=context.createBiquadFilter(),output=context.createGain(),voices=new Map();
+  highpass.type='highpass';highpass.frequency.value=150;input.connect(highpass);output.gain.value=1;output.connect(destination);
+  let current,kind='',sleep;
+  function drop(){highpass.disconnect();for(const [node,gain]of voices){node.disconnect();node.buffer=null;gain.disconnect();}voices.clear();current=undefined;kind='';}
+  function set(nextKind,active){
+   clearTimeout(sleep);
+   if(!active){if(current)sleep=setTimeout(drop,(REVERB_SHAPES[kind].duration+.25)*1000);return;}
+   if(current&&kind===nextKind)return;
+   const old=current,oldGain=voices.get(old);current=context.createConvolver();current.buffer=bufferFor(nextKind);
+   const gain=context.createGain();gain.gain.value=0;highpass.connect(current).connect(gain).connect(output);voices.set(current,gain);ramp(gain.gain,1);kind=nextKind;
+   if(oldGain){ramp(oldGain.gain,0);setTimeout(()=>{if(!voices.has(old))return;highpass.disconnect(old);old.disconnect();old.buffer=null;oldGain.disconnect();voices.delete(old);},120);}
+  }
+  return {input,output,set,reset(){clearTimeout(sleep);drop();}};
  }
- function setTempo(value){if(value===bpm)return;bpm=value;if(delay)ramp(delay.delayTime,fxDelaySeconds(bpm,state.delayDivision));}
- function reset(){clearTimeout(reverbSleep);clearTimeout(delaySleep);dropReverb();dropDelay();signature='';set(state);}
- set(state);return {set,setTempo,reset,sends,reverbReturn,delayReturn};
+ const a=makeReverb(),b=makeReverb(),delayInput=context.createGain(),delayHighpass=context.createBiquadFilter(),delayReturn=context.createGain();
+ delayHighpass.type='highpass';delayHighpass.frequency.value=180;delayInput.connect(delayHighpass);delayReturn.gain.value=1;delayReturn.connect(destination);
+ const inputs={reverb:a.input,reverbB:b.input,delay:delayInput};
+ const sends=Object.fromEntries(FX_CHANNELS.map(id=>[id,Object.fromEntries(FX_BUSES.map(bus=>{const gain=context.createGain();gain.gain.value=0;sources[id].node.connect(gain,sources[id].output||0);gain.connect(inputs[bus]);return [bus,gain];}))]));
+ function dropDelay(){delayHighpass.disconnect();if(lfo){lfo.stop();lfo.disconnect();}for(const node of [delay,feedback,tone,depth])node?.disconnect();delay=undefined;lfo=undefined;}
+ function buildDelay(){
+  delay=context.createDelay(9);delay.delayTime.value=fxDelaySeconds(bpm,state.delayDivision);
+  tone=context.createBiquadFilter();tone.type='lowpass';tone.frequency.value=4800;
+  feedback=context.createGain();feedback.gain.value=.28;
+  delayHighpass.connect(delay).connect(tone);tone.connect(delayReturn);tone.connect(feedback).connect(delay);
+  // Slow +/-2.5 ms drift gives the repeats movement without a second dry signal.
+  lfo=context.createOscillator();lfo.type='sine';lfo.frequency.value=.3;depth=context.createGain();depth.gain.value=.0025;
+  lfo.connect(depth).connect(delay.delayTime);lfo.start();
+ }
+ function set(next){const clean=normalizeFxSettings(next),key=JSON.stringify(clean);if(key===signature)return;signature=key;state=clean;
+  a.set(state.reverbType,FX_CHANNELS.some(id=>state.sends[id].reverb>0));b.set(state.reverbBType,FX_CHANNELS.some(id=>state.sends[id].reverbB>0));
+  const active=FX_CHANNELS.some(id=>state.sends[id].delay>0);clearTimeout(delaySleep);
+  if(active){if(!delay)buildDelay();}else if(delay)delaySleep=setTimeout(dropDelay,(fxDelaySeconds(bpm,state.delayDivision)*6+.4)*1000);
+  for(const id of FX_CHANNELS)for(const bus of FX_BUSES)ramp(sends[id][bus].gain,state.sends[id][bus]/100);
+  if(delay)ramp(delay.delayTime,fxDelaySeconds(bpm,state.delayDivision));
+ }
+ function setTempo(value){if(value===bpm)return;bpm=value;if(delay){ramp(delay.delayTime,fxDelaySeconds(bpm,state.delayDivision));if(!FX_CHANNELS.some(id=>state.sends[id].delay>0)){clearTimeout(delaySleep);delaySleep=setTimeout(dropDelay,(fxDelaySeconds(bpm,state.delayDivision)*6+.4)*1000);}}}
+ function reset(){clearTimeout(delaySleep);a.reset();b.reset();dropDelay();signature='';set(state);}
+ set(state);return {set,setTempo,reset,sends,reverbReturn:a.output,reverbBReturn:b.output,delayReturn};
 }

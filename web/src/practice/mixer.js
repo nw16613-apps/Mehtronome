@@ -6,7 +6,7 @@ export const MIX_CHANNELS=[
   {id:'bass',label:'Bass',control:'bass-volume',output:'bass-volume-value',value:MIX_REFERENCE_PERCENT},
   {id:'comping',label:'Comping',control:'comping-volume',output:'comping-volume-value',value:MIX_REFERENCE_PERCENT},
   {id:'sequence',label:'Melodic movement',control:'sequence-volume',output:'sequence-volume-value',value:MIX_REFERENCE_PERCENT},
-  {id:'space',label:'Ambient space',control:'space',output:'space-value',value:MIX_REFERENCE_PERCENT},
+  {id:'space',label:'Harmony room',control:'space',output:'space-value',value:MIX_REFERENCE_PERCENT},
 ];
 
 export const BACKING_CHANNELS=['drums','bass','comping','sequence'];
