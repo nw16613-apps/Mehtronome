@@ -1,10 +1,9 @@
-import {accompanimentCell} from './accompaniment.js';
+import {accompanimentPhrase} from './accompaniment.js';
 import {COMPING_TRIMS} from './mix-balance.js';
 import {extensionChoices} from './extensions.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
-const CYCLIC_ACCOMPANIMENT=new Set(['latin','bossa']);
 export const COMPING_PATTERNS={
   popRock:'Pop / rock chord part', fusion:'Fusion chord vamp', blues:'Blues shuffle chord riff', motown:'Motown piano figure', funk:'Funk clav ostinato', latin:'Son piano ostinato',
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
@@ -151,9 +150,7 @@ export class CompingInstrument{
       this.partSignature=part.signature;this.partOption=0;
       if(moving&&this.partLastVoicing){let best=Infinity;for(let index=0;index<part.options.length;index++){const chord=part.options[index].chord,score=chord.reduce((sum,note,i)=>sum+Math.abs(note-this.partLastVoicing[Math.min(i,this.partLastVoicing.length-1)]),0)/chord.length;if(score<best){best=score;this.partOption=index;}}}
     }
-    // Leave space for phrase answers, while keeping the Cuban/Brazilian cycle intact.
-    if(!CYCLIC_ACCOMPANIMENT.has(part.style)&&settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
-    const cell=accompanimentCell(part.style,bar);
+    const phrase=accompanimentPhrase(part.style,bar,settings.backingVariation>0,settings.backingTurnaround),cell=phrase.cell;
     // Pitch colours change between two-bar phrases, never halfway through the riff.
     if(offset===0&&!changed&&moving&&bar%2===0)this.partOption=Math.floor(bar/2)%Math.max(1,Math.ceil(part.options.length*amount));
     const option=part.options[(moving?this.partOption:0)%part.options.length];
@@ -161,7 +158,7 @@ export class CompingInstrument{
       const pitches=option[role];if(!pitches?.length)continue;
       const touch=performanceTouch(settings,'comping',bar,offset,this.rate);
       this.strike(pitches,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,touch.delayFrames,group||role);
-      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,role});
+      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,variant:phrase.variant,role});
       this.partLastVoicing=option.chord;this.hits++;
     }
   }

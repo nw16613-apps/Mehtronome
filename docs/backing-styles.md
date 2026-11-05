@@ -139,3 +139,11 @@ Independent voice groups allow an inner note to change without retriggering or r
 When a riff part is audible, Melodic movement leaves the earlier bars to that part and provides a short answer near the phrase end. Muting Comping restores the melodic track’s broader phrase activity. Both tracks retain their own mixer fader, mute/solo and FX sends.
 
 Validation covers every chord quality across roots, pitch ranges, octave/dyad/single-note content, repeating contours, independent held voices, current-harmony notes, block-size identity, cached pitch maps, melodic interaction, live style and exercise settings, unchanged sample loading, and native output headroom. Solo Comping to hear the part clearly.
+
+## Written part variations
+
+Every style now has five related parts: the main figure, development, thinner response, answering phrase and turnaround. These contain different written note roles, register choices, chord fragments and rhythmic figures; timing/velocity humanisation and voicing variation can both be disabled without removing those musical differences. New prepared roles include lower thirds, upper fifths, inverted guide dyads and additional independent inner-voice targets.
+
+A cached 32-bar arrangement selects whole two-bar phrases, revisits the theme and introduces space and answers between developments. Jazz also revisits both halves of its four-bar theme. Chart-ending cues select a turnaround. Bossa and Cuban son retain their first/second-bar orientation and thumb/octave anchors in every part; the drum/clave patterns are untouched. Each variant is bounded to at most seven attacks per bar, and the thinner parts use fewer notes. Turnarounds can contain a deliberate pickup instead of suppressing all accompaniment on the last beat.
+
+The new choices reuse the existing harmonic pitch maps, instrument samples, mixer and FX settings. Phrase cells are prepared once, and selection does not allocate pattern arrays or use random note decisions in the audio callback. Disabling `backingVariation` retains the original stable figure. Tests verify actual note/rhythm changes with humanisation and voicing movement off, thinner sections, current-mode pitches, preserved Latin/Brazilian anchors, deterministic restarts, chart-ending cues and native audio headroom.
