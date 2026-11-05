@@ -1,3 +1,5 @@
+> Historical checkpoint notes. These describe successive earlier interfaces, including tools that have since been removed. Use the current app and docs/ui-cleanup.md for the current workflow.
+
 # Interactive branch preview
 
 ## Current simplification

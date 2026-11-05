@@ -1,3 +1,5 @@
+> Current kit assignments: DRSKit for pop/rock, blues, fusion jazz, Motown and funk; Virtuosity for the other styles, plus VCSL Latin percussion. Earlier replacement sections below record processing history, not current assignments.
+
 # Recording credits
 
 The Wilkinson drum recordings are released under **Creative Commons Attribution 4.0 International**; the Virtuosity jazz drums, Big Rusty studio drums and bass recordings are released under **CC0 1.0 Universal**. The complete local license copies are [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0) and [LICENSE](LICENSE). Retrieved 2026-10-21.
@@ -66,15 +68,15 @@ Piano and guitar: Nicolas Brosowsky / Tone.js instruments (CC BY 3.0), originall
 
 38 selected acoustic recordings: light and medium kicks, three snare dynamic ranges, overhead rides/flat ride, hats, cross-stick, toms and a soft crash. These are stick recordings, not brushes. `web/scripts/prepare-jazz-drums.py` reproduces the mono 32 kHz PCM16 derivatives with FFmpeg: gentle high/low-pass, leading silence trimmed, peak normalization and edge fades. The existing Wilkinson bank remains for louder styles. New hits receive bounded sample-clock onset delays and touch variations; the exact metronome remains independent.
 
-## Warm studio drum replacement
+## Warm studio drum replacement (superseded)
 
 [Big Rusty Drums](https://github.com/sfzinstruments/karoryfer.big-rusty-drums/tree/f07ce00df34a46b6b08375be56fe116cf15782bc), Karoryfer Samples, CC0 1.0. Pinned revision `f07ce00df34a46b6b08375be56fe116cf15782bc`. Full licence: `studio/LICENSE`. Source filenames, original/derivative SHA-256 and processing: `studio/sources.json`.
 
 32 moderate-strength, close-microphone recordings replace Wilkinson for pop/rock, blues, fusion jazz and Motown only. Kick/snare have quieter dynamic layers and multiple takes; cymbals, hats, toms and cross-stick also alternate takes. `web/scripts/prepare-studio-drums.py` reproduces the 1.91 MiB mono 32 kHz PCM16 bank with FFmpeg: gentle high-pass/12.5 kHz low-pass, leading silence removal, normalization and fades. Funk retains Wilkinson; the other existing kit assignments remain unchanged.
 
-## Modern tight bank
+## Modern tight bank (superseded)
 
-The current pop/rock, blues, fusion jazz, Motown **and funk** profiles use `modern/`, 32 newly processed one-shots (0.69 MiB) derived from the CC0 Big Rusty takes above. `web/scripts/prepare-modern-drums.py` reproduces them from the retained `studio/` source WAVs without downloading anything. `modern/sources.json` records both upstream and source-derivative hashes, filtering, pitch ratios, decay times and output hashes; `modern/LICENSE` retains CC0.
+At this historical checkpoint, pop/rock, blues, fusion jazz, Motown **and funk** profiles used `modern/`, 32 newly processed one-shots (0.69 MiB) derived from the CC0 Big Rusty takes above. `web/scripts/prepare-modern-drums.py` reproduces them from the retained `studio/` source WAVs without downloading anything. `modern/sources.json` records both upstream and source-derivative hashes, filtering, pitch ratios, decay times and output hashes; `modern/LICENSE` retains CC0.
 
 This is an editorial sound-design pass, not a different recording session: short smooth envelopes remove ringing, surgical EQ reduces boxy low-mid content, snare/toms are tuned up, soft saturation firms the attack, and original synthesized kick/snare body layers reinforce the recorded hits. Closed hats end within 120 ms, kick within 240 ms, snare within 180 ms; most energy decays much earlier. Prior studio and Wilkinson recordings remain in source for reproducibility/compatibility but are not selected by any of these five styles.
 

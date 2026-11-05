@@ -9,11 +9,11 @@ test('one style menu replaces instrument controls and changes the whole arrangem
  for(const id of ['drum-groove','bass-pattern','comping-tone','comping-pattern','comping-movement','sequence-role','sequence-pattern','sound','pad-movement'])await expect(page.locator('#'+id)).not.toBeVisible();
  await expect(page.locator('#pulse-sound')).toBeVisible();await expect(page.locator('#extension-morph')).toBeVisible();
  for(const [style,values]of Object.entries(matrix)){
-  await page.locator('#backing-style').selectOption(style);for(const [i,id]of ['drum-groove','bass-pattern','comping-pattern','comping-tone'].entries())await expect(page.locator('#'+id)).toHaveValue(values[i]);
+  await page.locator('#backing-style').selectOption(style);await expect(page.locator('#legacy-backing-controls')).toHaveCount(0);
   expect(await mix(page)).toEqual(before);await expect(page.locator('#backing-style-description')).not.toBeEmpty();await expect(page.locator('.backing-style-parts>div')).toHaveCount(4);
  }
  expect(await page.evaluate(()=>(window as any).__contexts)).toBe(0);
- await page.locator('#backing-style').selectOption('motown');await page.reload();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('motown');await expect(page.locator('#comping-tone')).toHaveValue('acousticPiano');
+ await page.locator('#backing-style').selectOption('motown');await page.reload();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('motown');await expect(page.locator('.backing-style-parts')).toContainText('Acoustic piano');
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
 test('style selection survives saved setups and older jazz setups migrate to a matching band style',async({page})=>{
@@ -22,7 +22,7 @@ test('style selection survives saved setups and older jazz setups migrate to a m
  await page.goto('/');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-list').selectOption('legacy-jazz');await page.locator('#preset-load').click();
  await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('traditionalJazz');await expect(page.locator('#mute-comping')).toBeChecked();await expect(page.locator('#comping-volume')).toHaveValue('22');
  await page.locator('#backing-style').selectOption('fusionJazz');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-name').fill('Fusion band');await page.locator('#preset-save').click();const id=await page.locator('#preset-list').inputValue();
- await page.locator('[data-workspace-target=sound-settings-title]').click();await page.locator('#backing-style').selectOption('blues');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-list').selectOption(id);await page.locator('#preset-load').click();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('fusionJazz');await expect(page.locator('#comping-pattern')).toHaveValue('fusion');expect(errors).toEqual([]);
+ await page.locator('[data-workspace-target=sound-settings-title]').click();await page.locator('#backing-style').selectOption('blues');await page.locator('[data-workspace-target=progress-title]').click();await page.locator('#preset-list').selectOption(id);await page.locator('#preset-load').click();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#backing-style')).toHaveValue('fusionJazz');await expect(page.locator('.backing-style-parts')).toContainText('Electric');expect(errors).toEqual([]);
 });
 test('styles reach the audio engine during playback while mute and solo choices remain intact',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));

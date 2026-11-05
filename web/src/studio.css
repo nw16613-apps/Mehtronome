@@ -37,8 +37,8 @@ html:root[data-palette][data-theme] {
  .segmented {background:var(--page);padding:5px;border:1px solid var(--studio-edge);box-shadow:inset 0 2px 4px #0003}
  .segmented button.selected {background:linear-gradient(color-mix(in srgb,var(--accent) 85%,var(--ink)),var(--accent));border-radius:4px;box-shadow:inset 0 1px var(--studio-sheen),0 1px 3px #0003}
  .progression-reference {background:linear-gradient(color-mix(in srgb,var(--field) 65%,var(--panel)),var(--panel));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen)}
- .reference-chords>li,.progression-strip>button {background:linear-gradient(var(--field),color-mix(in srgb,var(--field) 50%,var(--panel)));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),0 2px 4px #0002}
- .reference-chords>li.current,.progression-strip>button.current {box-shadow:inset 0 -2px var(--accent),inset 0 1px var(--studio-sheen);border-color:var(--accent)}
+ .reference-chords>li {background:linear-gradient(var(--field),color-mix(in srgb,var(--field) 50%,var(--panel)));border-color:var(--studio-edge);box-shadow:inset 0 1px var(--studio-sheen),0 2px 4px #0002}
+ .reference-chords>li.current {box-shadow:inset 0 -2px var(--accent),inset 0 1px var(--studio-sheen);border-color:var(--accent)}
  .scale-note {background:linear-gradient(var(--field),color-mix(in srgb,var(--field) 60%,var(--panel)))!important;box-shadow:inset 0 1px var(--studio-sheen),0 2px 3px #0002;border-color:var(--studio-edge)}
  .scale-note.chord-tone {background:linear-gradient(color-mix(in srgb,var(--scale) 85%,var(--ink)),var(--scale))!important}
  .seventh-layer {background:linear-gradient(var(--page),color-mix(in srgb,var(--page) 55%,var(--panel)));box-shadow:inset 0 2px 5px #0003,0 1px var(--studio-sheen);border-color:var(--studio-edge)}

@@ -34,9 +34,6 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]){
   .segmented button.selected{background:var(--accent);color:var(--on-accent);box-shadow:none}
   #chord-name,.guitar-guide h3,.position-heading h4{color:var(--ink)}
   #chord-notes{color:var(--muted)}
-  .progression-strip>button{background:var(--field);color:var(--ink)}
-  .progression-strip>button.current{border-color:var(--accent);background:var(--scale)}
-  .progression-strip small{color:var(--muted)}
   .note{background:var(--field);border-color:var(--line)}
   .note.chord-tone{background:var(--scale);border-color:var(--chord)}
   .note strong,.note.chord-tone strong{color:var(--ink)}

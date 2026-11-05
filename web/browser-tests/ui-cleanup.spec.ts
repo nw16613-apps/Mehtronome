@@ -1,0 +1,17 @@
+import {test,expect} from '@playwright/test';
+const tab=async(page:any,id:string)=>page.locator(`[data-workspace-target=${id}]`).click();
+for(const width of [1440,390])test(`current pages show clear guidance without retired interfaces at ${width}px`,async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width,height:900});await page.goto('/');
+ for(const id of ['pulse-title','harmony-title','guitar-title','caged-exercise','progress-title','sound-settings-title']){await tab(page,id);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:`/workspace/cleanup-${id}-${width}.png`,fullPage:true});}
+ await expect(page.locator('#legacy-backing-controls,#progression-strip,#custom-timeline,#space-volume')).toHaveCount(0);await expect(page.locator('.backing-style-parts [data-sound-state]')).toHaveCount(4);await expect(page.locator('.backing-style-parts [data-sound-state=comping]')).toHaveText('Muted in mixer');
+ await page.locator('.sound-settings .section-heading button').click();await page.locator('[data-mute-channel=comping]:visible').click();await expect(page.locator('.backing-style-parts [data-sound-state=comping]')).toHaveText('In mix');await page.locator('#floating-mixer-close').click();
+ await tab(page,'harmony-title');await expect(page.locator('#root-label')).toHaveText('Chart key');await expect(page.locator('.harmony-reference>summary')).toHaveText('Chord & scale reference');await expect(page.locator('#notes-title')).toHaveText('Scale degrees & seventh chords');
+ await tab(page,'progress-title');await page.locator('#practice-goal').selectOption('jazz');await page.locator('#start-guided-goal').click();await expect(page.locator('#guided-session-tip')).toContainText('harmonized exercise');await expect(page.locator('#guided-session-tip')).not.toContainText('Explore the position');
+ await page.locator('#exercise-study').selectOption('inversions');await page.locator('.exercise-lesson>summary').click();await expect(page.locator('.exercise-lesson')).toContainText('up to three or four');await expect(page.locator('.exercise-lesson')).not.toContainText('five written');expect(errors).toEqual([]);
+});
+test('chart copy feedback is visible when clipboard access is unavailable',async({page})=>{
+ await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{throw new Error('Unavailable');}},configurable:true}));await page.goto('/');await tab(page,'harmony-title');await page.locator('.custom-share>summary').click();await page.locator('#custom-copy').click();await expect(page.locator('#custom-status')).toBeVisible();await expect(page.locator('#custom-status')).toHaveText('The progression text is selected. Copy it with your keyboard.');
+});
+test('theme gallery shows palette previews and selects themes without historical screenshot assets',async({page})=>{
+ await page.goto('/themes.html');await expect(page.locator('.card')).toHaveCount(4);await expect(page.locator('img')).toHaveCount(0);await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.getByRole('link',{name:'Use Soft Stone'}).click();await expect(page.locator('html')).toHaveAttribute('data-palette','soft-stone');await expect(page.locator('#palette')).toHaveValue('soft-stone');
+});

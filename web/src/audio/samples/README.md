@@ -1,4 +1,8 @@
-# Recorded rhythm bank
+# Recorded rhythm banks
+
+Current styles use DRSKit live drums for pop/rock, blues, fusion jazz, Motown and funk, and Virtuosity drums for the other styles, with VCSL Latin percussion where appropriate. The Wilkinson, studio and modern banks below are historical sources; they are not the current style assignments. See [recording credits](CREDITS.md) for licences and processing history.
+
+## Original bank (historical)
 
 A tight acoustic rock kit and warm fingerstyle electric bass, bundled with the browser app. The drums are **CC BY 4.0** and the bass is **CC0 1.0**; see [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0), [LICENSE](LICENSE), and the full [recording credits](CREDITS.md).
 

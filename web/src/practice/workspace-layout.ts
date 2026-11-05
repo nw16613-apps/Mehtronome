@@ -37,14 +37,14 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(setupFields,query('.progression-chooser'),label('custom-name'),tonality,get('single-chord-chart'));
  move(progression,setupFields,query('.chart-save-actions'),get('repertoire-status'));
  const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Save chart keeps a named copy. Chart actions contains Update, Delete, Import and Export.';const setupHelp=document.createElement('details');setupHelp.className='chart-setup-help';setupHelp.innerHTML='<summary>About saving charts</summary>';setupHelp.append(draftHelp);progression.append(setupHelp);
- const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart reference sets transposition and Roman numerals. Changing it transposes the whole chart. Each scale guide has its own modal tonic; chord root edits the selected chord.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
+ const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart key transposes the whole chart. Use Chord root in the editor to change selected chords.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
  const hiddenTemplates=document.createElement('div');hiddenTemplates.hidden=true;move(hiddenTemplates,get('mode-template'),label('template'));progression.append(hiddenTemplates);
  heading.after(get('active-musical-context'));get('active-musical-context').after(progression);
  for(const row of Array.from(harmony.querySelectorAll(':scope>.field-row')))if(!row.children.length)row.remove();
  const builder=get('custom-progression-builder');progression.after(builder);
  const sheet=document.createElement('section');sheet.className='chart-sheet-panel';sheet.setAttribute('aria-label','Chord sheet');
- move(sheet,query('.custom-builder-heading'),get('chart-loop-status'),get('custom-beat-grid'),get('custom-grid-help'),get('loop-controls'),get('custom-timeline'));
- sheet.querySelector('.eyebrow')!.textContent='CHORD SHEET';
+ move(sheet,query('.custom-builder-heading'),get('chart-loop-status'),get('custom-beat-grid'),get('custom-grid-help'),get('loop-controls'));
+ sheet.querySelector('.eyebrow')!.textContent='CHORD SHEET';get('custom-status').textContent='';sheet.append(get('custom-status'));
  const editor=query('.custom-editor'),chordGroup=group('Selected chord','chart-chord-group'),timeGroup=group('Duration','chart-time-group');
  chordGroup.querySelector('h3')!.id='selected-chord-heading';editor.setAttribute('aria-labelledby','selected-chord-heading');
  move(chordGroup,label('custom-harmony-workflow'),label('custom-root'),label('custom-chord'),label('custom-mode'),label('custom-bass'),get('custom-mode-help'),get('custom-edit-selection-status'),get('custom-scale-check'),get('custom-compatible-mode'));
@@ -56,14 +56,13 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const workspace=document.createElement('div');workspace.className='chart-editing-workspace';move(workspace,sheet,editor);builder.prepend(workspace);
  get('custom-add').textContent='Insert after selection';
  query('.custom-share summary').textContent='Copy progression as text';
- get('custom-status').textContent='Working draft ready.';
- const map=query('.harmony-learning');get('notes-title').textContent='Chord & scale reference';
+ const map=query('.harmony-learning');get('notes-title').textContent='Scale degrees & seventh chords';
  const reference=document.createElement('details');reference.className='harmony-reference';reference.innerHTML='<summary>Chord & scale reference</summary>';builder.after(reference);reference.append(map);
  const highlightLabel=label('exercise');highlightLabel.firstChild!.textContent='Highlight ';
  const referenceHighlight=get('exercise') as HTMLSelectElement;referenceHighlight.options[0].textContent='Scale';referenceHighlight.options[1].textContent='Chord tones';
  const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));reference.append(help);
  get('preview-controls').hidden=true;
- const movement=group('Harmony movement','harmony-movement');move(movement,query('.extension-morph'));query('.pad-settings').append(movement);
+ const movement=group('Chord extensions','harmony-movement');move(movement,query('.extension-morph'));query('.sound-settings').append(movement);
  // Fretboard: chart slots first, then position, display and the active diagram.
  const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!,legend=query('.guitar-legend');
  guitarHelp.querySelector('summary')!.textContent='Fretboard reference';
@@ -98,28 +97,6 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Checklist items'}));
  get('practice-roadmap-reset').textContent='Reset this checklist';
  const reset=document.createElement('div');reset.className='roadmap-reset';reset.append(get('practice-roadmap-reset'));roadmap.append(reset);
- // Sound Settings: each instrument owns its sounds; audibility belongs to the shared mixer.
- const settings=query('.sound-settings');settings.querySelector(':scope>p')!.textContent='Choose sounds and patterns by instrument. Unmute backing tracks in the mixer to hear them; balance levels and solo there too.';
- const mixerLink=document.createElement('button');mixerLink.type='button';mixerLink.className='practice-button';mixerLink.textContent='Open mixer';mixerLink.onclick=()=>{if(get('floating-mixer').hidden)get('mini-mixer').click();else get('floating-mixer-close').focus();};settings.querySelector('.section-heading')!.append(mixerLink);
- const instrumentGrid=document.createElement('div');instrumentGrid.className='instrument-settings';
- for(const [id,title] of [['drums','Drums'],['bass','Bass'],['comping','Electric piano']] as const){
-  const instrument=group(title,'instrument-setting instrument-'+id),toggle=label(id);get(id).hidden=true;instrument.append(get(id));toggle.remove();move(instrument,get(id+'-controls'));instrumentGrid.append(instrument);
- }
- const sequence=query('.sound-settings .sequence'),sequenceToggle=label('sequence');get('sequence').hidden=true;sequence.append(get('sequence'));sequenceToggle.remove();sequence.classList.add('workspace-group','instrument-setting','instrument-sequence');
- const oldRhythm=query('.sound-settings .rhythm');oldRhythm.remove();query('.sound-settings-grid').before(instrumentGrid);settings.append(sequence);query('.sound-settings-grid').remove();
- // Keep every settings option expanded by default, as requested.
- settings.querySelectorAll('details').forEach(node=>node.open=true);
- const soundSections=[['click',query('.metronome-sound-settings'),'Metronome'],['harmony',query('.pad-settings'),'Sustained harmony'],['drums',query('.instrument-drums'),'Drums'],['bass',query('.instrument-bass'),'Bass'],['comping',query('.instrument-comping'),'Electric piano'],['sequence',sequence,'Melodic movement']] as const;
- const jump=document.createElement('nav');jump.className='sound-jump-nav';jump.setAttribute('aria-label','Instrument settings');
- for(const [channel,card,title] of soundSections){card.id='sound-'+channel;card.classList.add('sound-instrument-card');const heading=card.querySelector<HTMLElement>(':scope>h3')!;heading.tabIndex=-1;
-  const row=document.createElement('div');row.className='sound-section-heading';const badge=document.createElement('span');badge.dataset.soundState=channel;badge.className='sound-channel-state';row.append(heading,badge);card.prepend(row);
-  const button=document.createElement('button');button.type='button';button.className='practice-button';button.dataset.soundTarget=channel;button.textContent=title;button.onclick=()=>{heading.focus({preventScroll:true});card.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};jump.append(button);
- }
- settings.querySelector(':scope>p')!.after(jump);
- label('pad-movement').firstChild!.textContent='Texture motion ';query('label[for=pad-depth-amount]').firstChild!.textContent='Depth motion amount ';
- label('comping-movement').firstChild!.textContent='Voicing movement ';query('label[for=comping-movement-amount]').firstChild!.textContent='Chord variation amount ';
- label('sequence-rate').firstChild!.textContent='Note rate ';query('label[for=sequence-swing]').firstChild!.textContent='Melodic swing ';
- query('.backing-shape>summary').textContent='Texture & voicing';query('.harmony-movement>h3').textContent='Chord extensions';
- const hookHelp=document.createElement('p');hookHelp.id='comping-hook-help';hookHelp.className='practice-help';hookHelp.textContent='The voicing cycle and variation amount apply to whole chords; comping never adds a single-note melody.';get('comping-controls').append(hookHelp);
- get('open-sound-settings').textContent='Instrument sounds & patterns →';
+ // Sound Settings uses the backing-style model; mixer controls own audibility.
+ const settings=query('.sound-settings'),mixerLink=document.createElement('button');mixerLink.type='button';mixerLink.className='practice-button';mixerLink.textContent='Open mixer';mixerLink.onclick=()=>{if(get('floating-mixer').hidden)get('mini-mixer').click();else get('floating-mixer-close').focus();};settings.querySelector('.section-heading')!.append(mixerLink);
 }

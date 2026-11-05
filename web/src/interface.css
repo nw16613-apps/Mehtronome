@@ -66,7 +66,7 @@ html:root[data-palette][data-theme] {
     .mix-level-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:0; padding:12px 6px; border:1px solid var(--line,#b5c0af); border-radius:8px; background:var(--pulse,var(--practice-panel)); }
     .mix-channel { padding:5px 6px; border:0; border-right:1px solid var(--line,#b5c0af); border-radius:0; gap:12px; background:transparent; }
     .mix-channel:last-child { border-right:0; }
-    .mix-channel[data-mix-channel=space] { border-left:1px solid var(--line,#b5c0af); }
+
     .mix-channel-header { gap:5px; min-height:80px; align-content:start; }
     .mix-channel-header label { min-height:30px; font-size:10px; font-weight:600; line-height:1.4; }
     .mix-channel-header output { font-size:11px; margin:0 0 7px; color:var(--muted,var(--practice-muted,#64735f)); }
