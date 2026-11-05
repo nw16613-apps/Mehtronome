@@ -231,10 +231,6 @@ html:root[data-palette][data-theme] {
   .practice-roadmap-heading h2 { font-size:18px; letter-spacing:-.3px; }
   .practice-roadmap-context { font-size:12px; }
   .practice-roadmap-list { gap:14px; }
-  .practice-roadmap-list fieldset { border-radius:6px; padding:12px; }
-  .practice-roadmap-list legend { font-size:10px; letter-spacing:1px; }
-  .practice-roadmap-task { font-size:12px; padding:10px 0; gap:9px; }
-  .practice-roadmap-task small { font-size:10px; }
   .practice-library summary { font-size:12px; }
   .sound-settings .section-heading { margin-bottom:20px; }
   .sound-settings h3 { font-size:16px; font-weight:600; letter-spacing:-.2px; }
@@ -258,7 +254,6 @@ html:root[data-palette][data-theme] {
     .practice-button,.panel-action,.channel-mute,.channel-solo { min-height:44px; }
     :is(.field-row,.template-field,.guitar-controls,.preset-fields,.exercise-controls,.exercise-display,.sound-settings) select { min-height:44px; }
     .practice-roadmap-tools { gap:12px; }
-    .practice-roadmap-task { padding:12px 0; }
     .exercise-actions { gap:8px; }
     .sound-settings-grid { gap:24px; }
     .mini-transport .practice-button { min-height:44px; }

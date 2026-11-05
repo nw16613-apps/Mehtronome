@@ -2,10 +2,12 @@ import {test,expect} from '@playwright/test';
 const tab=async(page:any,id:string)=>page.locator(`[data-workspace-target=${id}]`).click();
 test('four compact cards have inset headings on desktop and phone in every theme',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await tab(page,'progress-title');await expect(page.locator('.practice-step')).toHaveCount(4);await expect(page.locator('#practice-roadmap-list fieldset,#practice-roadmap-list legend,#practice-roadmap-duration,#practice-roadmap-today')).toHaveCount(0);
+ await page.locator('.checklist-completion').evaluateAll(nodes=>nodes.forEach(node=>(node as HTMLDetailsElement).open=true));
  await expect(page.locator('.practice-step h3')).toHaveText(['Hear the sound','Practise positions','Connect positions','Apply an idea']);
  for(const width of [1440,390])for(const palette of ['midnight','plum','evergreen','soft-stone']){
   await page.setViewportSize({width,height:900});await page.locator('#palette').selectOption(palette);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const boxes=await page.locator('.practice-step').evaluateAll(nodes=>nodes.map(card=>{const a=card.getBoundingClientRect(),b=card.querySelector('h3')!.getBoundingClientRect();return {inset:b.top>a.top+5&&b.left>a.left+5&&b.right<a.right-5&&b.bottom<a.bottom-5};}));expect(boxes.every(b=>b.inset)).toBe(true);
+  const chips=await page.locator('.checklist-chips label').evaluateAll(nodes=>nodes.map(label=>{const a=label.getBoundingClientRect(),b=label.querySelector('input')!.getBoundingClientRect(),c=label.querySelector('span')!.getBoundingClientRect();return {gap:c.left-b.right,left:b.left-a.left,right:a.right-c.right,clipped:label.querySelector('span')!.scrollWidth>label.querySelector('span')!.clientWidth+1};}));expect(chips.every(c=>c.gap>=9&&c.left>=11&&c.right>=11&&!c.clipped)).toBe(true);
  }
  await page.setViewportSize({width:1440,height:1000});await page.locator('#palette').selectOption('midnight');await page.locator('.practice-roadmap').screenshot({path:'/workspace/compact-checklist-desktop.png'});await page.setViewportSize({width:390,height:844});await page.locator('.practice-roadmap').screenshot({path:'/workspace/compact-checklist-phone.png'});expect(errors).toEqual([]);
 });
