@@ -835,7 +835,7 @@ function fillLoopOptions(reset = false) {
 }
 let customStepIndex=0;
 let chartEditSteps:number[]=[];
-const chartView={tool:'select',barsPerLine:4,labels:'chords',annotations:false,repeatBars:false,read:false};
+const chartView={tool:'select',barsPerLine:4,labels:'chords',annotations:false,repeatBars:true,read:false};
 const customUndo:any[]=[],customRedo:any[]=[];
 function rememberCustomEdit(){customUndo.push({progression:structuredClone(customProgression),index:customStepIndex,selection:[...chartEditSteps],positionRoute:input('manual-position-route').value,startRoute:input('pattern-start-route').value,key:settings.key,beats:settings.beats,featured:select('featured-position').value,region:select('position-region').value});if(customUndo.length>50)customUndo.shift();customRedo.length=0;}
 async function restoreCustomEdit(undo:boolean){
