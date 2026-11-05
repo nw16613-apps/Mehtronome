@@ -40,7 +40,7 @@ test('electric piano comping follows the chord with distinct multi-bar rhythms',
     assert.ok(result.dry.every(sample=>Number.isFinite(sample)&&Math.abs(sample)<1),compingPattern);
     const chordPcs=new Set(engine.chordMidi.map(note=>note%12));
     assert.ok(events.every(event=>event.notes.every(note=>chordPcs.has(note%12))),compingPattern);
-    signatures.push(events.map(event=>event.sample).join(','));
+    signatures.push(JSON.stringify(events.map(event=>[event.sample,event.duration,event.velocity])));
   }
   assert.equal(new Set(signatures).size,Object.keys(COMPING_PATTERNS).length);
 });

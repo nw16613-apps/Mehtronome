@@ -1,3 +1,4 @@
+import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
 import {beatStrength, subdivisionAt, progressiveGap} from '../practice/pulse.js';
@@ -293,11 +294,11 @@ export class Engine {
     this.clockSettings = this.clockSettings || {};
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
     const timeline=s.progression?progressionTimeline(s):[];
-    const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
+    const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){
-      this.harmonyCacheKey=harmonyKey;this.cachedHarmonies=new Map();this.cachedComping=new Map();
+      this.harmonyCacheKey=harmonyKey;this.cachedHarmonies=new Map();this.cachedComping=new Map();this.cachedAccompaniment=new Map();
       const indices=s.progression?[...new Set(timeline.map(segment=>segment.step))]:[0];
-      for(const index of indices){const harmony=harmonyAt(s,index);harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);this.cachedHarmonies.set(index,harmony);this.cachedComping.set(index,compingChordVoicings(harmony,harmony,s.compingMovement,s.compingHookLength));}
+      for(const index of indices){const harmony=harmonyAt(s,index);harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);this.cachedHarmonies.set(index,harmony);this.cachedComping.set(index,compingChordVoicings(harmony,harmony,s.compingMovement,s.compingHookLength));this.cachedAccompaniment.set(index,prepareAccompaniment(harmony,this.cachedComping.get(index),s.accompanimentStyle));}
     }
     this.customSignature=s.template==='custom'?s.customProgression?.steps?.map(item=>`${item.root}:${item.chord}:${item.mode}:${item.bars}:${item.beats}:${item.bass}`).join(','):'';
 
@@ -388,6 +389,7 @@ export class Engine {
     harmony.characteristicPcs=characteristicNotes(harmony).map(note=>note.pc);
     nextHarmony.characteristicPcs=characteristicNotes(nextHarmony).map(note=>note.pc);
     this.compingChords=(s.compingMovement!=='voiceLead'&&this.cachedComping?.get(step))||compingChordVoicings(harmony,nextHarmony,s.compingMovement,s.compingHookLength);
+    this.accompanimentPool=this.cachedAccompaniment?.get(step);
     this.nextChordMidi = s.progression ? nextHarmony.midi : this.chordMidi;
     this.nextRhythmChordMidi = Number.isFinite(nextHarmony.bassMidi)?[nextHarmony.bassMidi,...this.nextChordMidi]:this.nextChordMidi;
     this.sequenceNotes=melodicNotePool(s.sequenceSource,harmony,this.chordMidi);
@@ -553,7 +555,7 @@ export class Engine {
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi,drumsVolume>0,bassVolume>0);
       if(s.comping&&rhythmActive){
         const compNotes=this.compingChords?.[0]||this.compingVoicing;
-        this.comping.tick(this.clockSettings,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm,compingVolume>0);
+        this.comping.tick(this.clockSettings,musicalBeat,musicalPhase,compNotes,this.compingChords||[],this.age,this.step,onRhythm,compingVolume>0,this.accompanimentPool);
       }
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;

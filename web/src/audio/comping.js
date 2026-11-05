@@ -1,8 +1,10 @@
+import {accompanimentCell} from './accompaniment.js';
 import {COMPING_TRIMS} from './mix-balance.js';
 import {extensionChoices} from './extensions.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import {voicingTones} from '../guitar/voicings.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
+const CYCLIC_ACCOMPANIMENT=new Set(['latin','bossa']);
 export const COMPING_PATTERNS={
   popRock:'Pop / rock chord part', fusion:'Fusion chord vamp', blues:'Blues shuffle chord riff', motown:'Motown piano figure', funk:'Funk clav ostinato', latin:'Son piano ostinato',
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
@@ -118,13 +120,14 @@ const TONE_SHAPES={
 for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
 
 export class CompingInstrument{
-  constructor(rate,voiceCount=32){this.rate=rate;this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  constructor(rate,voiceCount=32){this.rate=rate;this.transitionFactor=Math.exp(-1/(rate*.025));this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
   installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
-  clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';}
-  tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true){
+  clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
+  tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true,part=null){
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
+    if(part){this.playPart(settings,beat,bar,offset,part,sample,step,onEvent);return;}
     // Leave the last beat of larger drum answers clear; existing chords can ring.
     if(settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
 
@@ -140,12 +143,36 @@ export class CompingInstrument{
       this.lastChord=chordSignature;this.hits++;
     }
   }
-  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0){
+  playPart(settings,beat,bar,offset,part,sample,step,onEvent){
+    const changed=this.partSignature!==part.signature,amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0)),moving=settings.compingMovement!=='still'&&amount>0;
+    if(changed){
+      const newStyle=this.partSignature&&!this.partSignature.startsWith(part.style+':');
+      for(const voice of this.voices)if(voice.active&&(newStyle||!part.allowed.has(voice.midi%12)))this.releaseVoice(voice);
+      this.partSignature=part.signature;this.partOption=0;
+      if(moving&&this.partLastVoicing){let best=Infinity;for(let index=0;index<part.options.length;index++){const chord=part.options[index].chord,score=chord.reduce((sum,note,i)=>sum+Math.abs(note-this.partLastVoicing[Math.min(i,this.partLastVoicing.length-1)]),0)/chord.length;if(score<best){best=score;this.partOption=index;}}}
+    }
+    // Leave space for phrase answers, while keeping the Cuban/Brazilian cycle intact.
+    if(!CYCLIC_ACCOMPANIMENT.has(part.style)&&settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
+    const cell=accompanimentCell(part.style,bar);
+    // Pitch colours change between two-bar phrases, never halfway through the riff.
+    if(offset===0&&!changed&&moving&&bar%2===0)this.partOption=Math.floor(bar/2)%Math.max(1,Math.ceil(part.options.length*amount));
+    const option=part.options[(moving?this.partOption:0)%part.options.length];
+    for(const [position,role,duration,velocity,group]of cell)if(position===offset){
+      const pitches=option[role];if(!pitches?.length)continue;
+      const touch=performanceTouch(settings,'comping',bar,offset,this.rate);
+      this.strike(pitches,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,touch.delayFrames,group||role);
+      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,role});
+      this.partLastVoicing=option.chord;this.hits++;
+    }
+  }
+  releaseVoice(voice){if(voice.delay>0){voice.active=false;return;}voice.releaseAt=voice.age+1;voice.firstRelease=voice.release;voice.releaseFactor=this.transitionFactor;}
+  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0,group=null){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
+    if(group)for(const voice of this.voices)if(voice.active&&(group==='inner'?voice.group==='inner':pitches.includes(voice.midi)))this.releaseVoice(voice);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       const shape=this.shapes[tone]||this.shapes.warmTine;
-      Object.assign(voice,{delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      Object.assign(voice,{group,releaseFactor:shape.releaseFactor,delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
       voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
@@ -160,7 +187,7 @@ export class CompingInstrument{
       const increment=voice.increment,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;
-      if(voice.age===voice.releaseAt)voice.release=voice.firstRelease;else if(voice.age>voice.releaseAt)voice.release*=shape.releaseFactor;
+      if(voice.age===voice.releaseAt)voice.release=voice.firstRelease;else if(voice.age>voice.releaseAt)voice.release*=voice.releaseFactor;
       const release=voice.release;if(release<.0005)voice.active=false;
       if(voice.pcm){
         const position=voice.samplePosition,index=Math.floor(position),pcm=voice.pcm;

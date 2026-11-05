@@ -1,3 +1,4 @@
+import {ACCOMPANIMENT_PARTS} from '../audio/accompaniment.js';
 import {COMPING_TONES} from '../audio/comping.js';
 import {BASS_INSTRUMENTS,DRUM_KITS} from '../audio/instrumentation.js';
 // One musical arrangement owns the backing voices; the mixer owns audibility.
@@ -17,9 +18,10 @@ export const BACKING_STYLES={
 };
 const melodicParts={popRock:'Clean guitar · short chord-tone answers',traditionalJazz:'Acoustic piano · swung third/seventh phrases',fusionJazz:'Electric tine · displaced modal motif',blues:'Blues guitar · shuffled pentatonic call and answer',motown:'Clean guitar · clipped eighth-note hook',funk:'Clav · short syncopated single-note figures',neoSoul:'Electric tine · spacious stepwise counterline',bossa:'Nylon guitar · two-bar melodic answers',latin:'Acoustic piano · two-bar guajeo fragments',ballad:'Soft piano · long notes with wide rests'};
 for(const [id,arrangement]of Object.entries(BACKING_STYLES)){
- arrangement.settings.sequenceStyle=id;
+ arrangement.settings.sequenceStyle=id;arrangement.settings.accompanimentStyle=id;
  arrangement.settings.sequenceTone=id==='motown'?'cleanGuitar':arrangement.settings.compingTone;
  arrangement.parts['Melodic movement']=melodicParts[id];
+ arrangement.parts.Comping=COMPING_TONES[arrangement.settings.compingTone]+' · '+ACCOMPANIMENT_PARTS[id].name;
 }
 export const STYLE_CONTROLS={drumGroove:'drum-groove',bassPattern:'bass-pattern',compingPattern:'comping-pattern',compingTone:'comping-tone',compingMovement:'comping-movement',compingHookLength:'comping-hook-length',compingMovementAmount:'comping-movement-amount',sequenceRole:'sequence-role',sequencePhraseBars:'sequence-phrase',sequenceDevelopment:'sequence-development',sequenceInteraction:'sequence-interaction',sequenceSource:'sequence-source',sequenceRegister:'sequence-register',sequencePattern:'sequence-pattern',sequenceRate:'sequence-rate',sequenceSwing:'sequence-swing',sequenceDensity:'sequence-density',sound:'sound',padMovement:'pad-movement',padDepth:'pad-depth',padDepthMotion:'pad-depth-motion',padDepthAmount:'pad-depth-amount',padBrightness:'pad-brightness'};
 export const STYLE_PERCENT_FIELDS=new Set(['compingMovementAmount','sequenceSwing','sequenceDensity','padDepthAmount']);
@@ -30,4 +32,4 @@ export function backingStyleForControls(controls){
  return Object.entries(BACKING_STYLES).map(([id,style],index)=>({id,index,score:fields.reduce((sum,[control,field,weight])=>sum+(controls?.[control]===style.settings[field]?weight:0),0)})).sort((a,b)=>b.score-a.score||a.index-b.index)[0].id;
 }
 
-export function backingStyleInstruments(id){const {bassInstrument,drumKit}=BACKING_STYLES[backingStyleId(id)].settings;return {bassInstrument,drumKit,sequenceStyle:backingStyleId(id),sequenceTone:BACKING_STYLES[backingStyleId(id)].settings.sequenceTone};}
+export function backingStyleInstruments(id){const {bassInstrument,drumKit}=BACKING_STYLES[backingStyleId(id)].settings;return {bassInstrument,drumKit,accompanimentStyle:backingStyleId(id),sequenceStyle:backingStyleId(id),sequenceTone:BACKING_STYLES[backingStyleId(id)].settings.sequenceTone};}

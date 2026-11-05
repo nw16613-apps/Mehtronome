@@ -4,16 +4,16 @@ Sound Settings presents a single Style selector instead of per-instrument sound,
 
 | Style | Drums | Bass | Comping |
 | --- | --- | --- | --- |
-| Pop / rock | Straight backbeat | Root/fifth | Bright chord stabs |
-| Traditional jazz | Swing ride | Walking chord tones | Crisp jazz syncopation |
-| Fusion jazz | Syncopated fusion | Displaced sixteenths | Bright electric-tine accents |
-| Blues | Shuffle | Chord-aware shuffle figure | Short swung responses |
-| Motown | Driving backbeat | Melodic eighths | Clipped offbeat piano |
-| Funk | Syncopated pocket | Funk chord-tone figures | Dry sixteenth-note stabs |
-| Neo-soul | Spacious pocket | Spacious bass phrases | Articulate electric-key chords |
-| Bossa nova | Light cross-stick | Syncopated root/fifth | Bossa chord rhythm |
-| Latin | Latin groove | Anticipated tumbao | Interlocking chord accents |
-| Ballad | Sparse drums | Gentle counterline | Longer, spacious chords |
+| Pop / rock | Straight backbeat | Root/fifth | Picked guitar figure |
+| Traditional jazz | Swing ride | Walking chord tones | Piano comping and guide voices |
+| Fusion jazz | Syncopated fusion | Displaced sixteenths | Electric-key vamp |
+| Blues | Shuffle | Chord-aware shuffle figure | Shuffle guitar riff |
+| Motown | Driving backbeat | Melodic eighths | Offbeat piano figure |
+| Funk | Syncopated pocket | Funk chord-tone figures | Interlocking clav riff |
+| Neo-soul | Spacious pocket | Spacious bass phrases | Held keys with a moving inner voice |
+| Bossa nova | Light cross-stick | Syncopated root/fifth | Thumb-and-chord guitar pattern |
+| Latin | Latin groove | Anticipated tumbao | Two-bar piano montuno |
+| Ballad | Sparse drums | Gentle counterline | Spacious broken piano chords |
 
 Each arrangement also selects a repeatable melodic role/source, phrase length, register, density, development and interaction, plus a sustained harmony texture. The optional melodic track remains under mixer mute control. Patterns follow the current chord and scale guide rather than fixing pitches or replacing the user's chart. Related four-bar cells create answers instead of one identical bar repeated indefinitely.
 
@@ -25,13 +25,11 @@ Style selection persists locally and is included in saved/imported/exported prac
 
 Validation covers catalog bindings, distinct rendered phrase signatures, multiple meters and chord changes, bounded audio, attack/partial/release measurements, shared sample-clock swing, legacy preset migration, persistence, no automatic audio start, preservation of chart/tempo/mix, live engine settings and responsive layouts.
 
-## Chord-only comping
+## Harmony and part voicings
 
-Comping never adds an isolated single-note hook between chord hits. Each attack has at least three simultaneous pitches, on the style's existing chord rhythm. Variation amount chooses among cached complete voicings; it does not add notes or change hit timing. All styles use chord-extension variations and inversions. Fusion and neo-soul also use related modal chord colours.
+Comping uses a style-specific accompaniment figure with single notes, octave pairs, dyads, chord fragments and complete chords. The part follows the current written chord and mode. Compact chord/extension vocabularies remain the harmonic source for its full voicings and upper fragments. Legacy direct-engine pattern settings retain the previous block-chord behavior; normal style selection explicitly selects the new part engine.
 
-Base voicings retain the selected chord quality and a suitable written extension when present (the exercise seventh-chord limit does not apply to backing). Triads stay triads; two-tone chords use octave doubling without inventing a third or seventh. Compact inversions stay in the keyboard register. Seven-note modal alternatives use complete alternate-note triads sharing a third/seventh guide tone with the backing chord; every note belongs to the current scale. Other collection sizes retain actual chord inversions and only their available modal extensions. Future harmony is not played before its change.
-
-The removed hook generator and single-note event path cannot be reactivated by old saved movement settings. The separate Melodic movement track and its mute, rhythm and note-source behavior are unchanged.
+Base voicings retain the selected chord quality and suitable written extensions. Two-tone chords use their actual pitch classes; no missing third or seventh is invented. Fragments can omit chord members while the rest of the figure supplies the harmony. Pitches are prepared per harmony/voicing before rendering. At a chart change, incompatible ringing notes fade over 25 ms; common tones can continue. Subsequent notes use the new chord without shifting the riff’s rhythmic position. Voicing changes favor nearby shapes and colour changes happen between two-bar phrases.
 
 ### Genre instruments
 
@@ -107,9 +105,9 @@ The loader caches encoded files per sample and decoded PCM per sample/rate, dedu
 
 Checks cover no-WAV first playback, selective instrument requests, repeated-start reuse, transfer safety, retries, concurrency and active-voice preservation, plus live mixer/style changes, FX and mobile playback. In the browser fixture, default playback requested zero WAVs, unmuting pop/rock comping requested its five guitar samples, and a subsequent stop/start requested no additional WAVs.
 
-## Sparser comping
+## Space in the accompaniment
 
-All comping patterns now use one or two selected chord attacks per four-beat bar, rather than the previous three-to-five attacks in most styles. Sparse/ballad patterns use one attack per bar. Offbeat placements and chord lengths retain each genre’s feel; existing sounds, velocities, voicings, extensions and mixer levels remain in place. The final beat of an eight-bar answer or marked-section turnaround is left free of new comping attacks, allowing drum fills and the soloist more space. Chords already sounding are allowed to decay normally. Drums, fills and bass patterns are unchanged.
+The new parts keep chord attacks restrained and use individual voices to create the figure. They range from sparse held piano to a more active Cuban montuno, with lower note velocities for the denser figures. Repeated two-bar contours include rests. Non-Latin parts leave the final beat of a larger phrase answer clear; Cuban and Brazilian cycles retain their orientation. The instrument uses the existing 32-voice bound and shared sample clock, with no additional samples or first-play downloads.
 
 ## Style-specific ensemble phrases
 
@@ -134,4 +132,10 @@ Sixteen acoustic VCSL percussion recordings add about 327 KiB. Only audible Lati
 
 ## Accompaniment parts and ostinatos
 
-The Comping track is a style accompaniment part rather than an automatic series of staccato stabs. It retains one or two chord attacks per bar. Pop/rock guitar rings; jazz piano has more spacious note lengths; neo-soul and ballad chords can sustain across multiple beats. Fusion, blues, Motown, funk, bossa and son have recognisable repeating two-bar chord vamps/riffs instead of four unrelated cells being reordered. Their articulation remains style-specific: funk clav and Motown piano stay clipped, while bossa guitar and son piano ring longer. Voicing colours can still develop through the pattern and all harmony follows the chart. Melodic movement remains the separate supporting line.
+`audio/accompaniment.js` defines actual note-role figures for all ten styles. Pop/rock picks ringing guitar notes over a lower dyad. Jazz mixes spaced piano voicings, shells and guide notes. Fusion has a displaced electric-key vamp, blues a shuffled double-stop riff, Motown an offbeat piano figure, and funk a single-note/dyad clav motif. Bossa alternates lower thumb notes and upper chords; Cuban son alternates octaves, guide dyads and single-note turns in a fixed two-bar montuno. Ballad piano spreads the chord over separate attacks. Neo-soul holds a backing layer for most of the bar while a separate inner voice moves to a nearby mode-compatible colour and returns.
+
+Independent voice groups allow an inner note to change without retriggering or releasing the backing chord. Repeated notes release their preceding copy smoothly. Parts retain their contour through transposition and chord changes, with all pitches drawn from the current harmony/mode. Shorter meters clip/repeat the 4/4 vocabulary. The Sound Settings part descriptions name the actual figure.
+
+When a riff part is audible, Melodic movement leaves the earlier bars to that part and provides a short answer near the phrase end. Muting Comping restores the melodic track’s broader phrase activity. Both tracks retain their own mixer fader, mute/solo and FX sends.
+
+Validation covers every chord quality across roots, pitch ranges, octave/dyad/single-note content, repeating contours, independent held voices, current-harmony notes, block-size identity, cached pitch maps, melodic interaction, live style and exercise settings, unchanged sample loading, and native output headroom. Solo Comping to hear the part clearly.

@@ -26,12 +26,12 @@ test('written ninths and thirteenths remain available to comping rather than inh
   const h=harmonyAt({key:0,mode:recommendedMode(chord),chord});assert.ok(compingChordVoicings(h,h,'still')[0].some(n=>n%12===colour),chord);
  }
 });
-test('all band styles produce chord attacks only, retain their rhythmic hits and vary their voicings across chord changes',()=>{
+test('style figures retain their rhythm across voicing settings and combine chord fragments over changes',()=>{
  for(const [id,style]of Object.entries(BACKING_STYLES)){
   const render=amount=>{const e=new Engine(8000);e.configure({...DEFAULTS,...style.settings,comping:true,drums:false,bass:false,sequence:false,click:0,harmony:0,countIn:false,bpm:120,key:9,mode:'dorian',chord:'min7',progression:true,template:'major251essential',compingMovementAmount:amount});e.reset();const events=[];e.render(new Float32Array(64000),undefined,null,null,undefined,new Float32Array(64000),v=>events.push(v));return events;};
-  const still=render(0),moving=render(1);assert.ok(moving.length,id);assert.ok(moving.every(e=>e.type==='comping'&&e.notes.length>=3),id);
+  const still=render(0),moving=render(1);assert.ok(moving.length,id);assert.ok(moving.every(e=>e.type==='comping'&&e.notes.length>=1&&e.notes.length<=4),id);
   assert.deepEqual(moving.map(e=>[e.sample,e.duration,e.velocity,e.step]),still.map(e=>[e.sample,e.duration,e.velocity,e.step]),id);
-  assert.ok(moving.some((e,i)=>e.notes.join(',')!==still[i].notes.join(',')),id);
+  assert.ok(moving.some(e=>e.notes.length<3),id+' includes individual voices/fragments');
  }
 });
 test('a legacy single-note hook array cannot produce any one-note comping event',()=>{
