@@ -11,3 +11,7 @@ This pass prioritises clear controls and accurate guidance in the existing six w
 - Removed Ambient space channel metadata and unused styling for retired interfaces are removed. Source archives and saved-data migrations are retained where removal would not improve the current interface or would need separate compatibility work.
 
 Validation covers all six pages at desktop/phone widths; chart generator and repeat bars; manual CAGED routes and legacy saved setups; style changes reaching the real audio worklet and exercise backing; visible copy fallback; theme selection; send controls and isolated FX buses. Audio-engine calibration tests and the TypeScript/Vite build also pass. These checks do not establish physical-device listening quality or the status of historical browser suites for removed features.
+
+## Exercise guidance follow-up
+
+Exercise help is now one short, study-specific paragraph under About this exercise. The duplicated chord/material list, starting-note prose, timing essays, grip reference and footer instructions are removed. A single key stays beside the diagram; a single trainer message stays beside its controls. Distinct timing/availability warnings remain near the exercise choices. Eleven browser checks cover the condensed structure, desktop/mobile layouts, chart/CAGED preservation and selected-passage playback; the exercise-option checks and TypeScript build pass.
