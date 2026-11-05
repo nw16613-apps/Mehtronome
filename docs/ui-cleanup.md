@@ -33,3 +33,9 @@ The cards link to Harmony, a chosen fretboard position, position navigation, an 
 The shared CAGED router now selects each chord's closest-fitting shapes to the requested region before minimising movement between tied candidates. The region applies throughout generated, template and edited charts in Fretboard and Exercises. Complete fingerings may extend beyond a region where no exact fit exists. Explicit manual choices and saved routes keep their existing behaviour.
 
 The reported Amaj7–Dbmaj7–Fmaj7 Lydian cycle around frets 7–11 now repeats II/D (6–11), I/E (8–12), IV/A (7–11). Unit coverage checks region fit across all roots, nine modes and five regions, plus smooth tie-breaking. Twenty-three targeted route/timing/exercise checks, ten browser workflows and TypeScript/build pass.
+
+## Generator automatic cycle length
+
+With full root coverage off, automatic chord count now follows one complete interval cycle: major thirds produce three chords, minor thirds four, whole steps six and tritones two. Alternating intervals close when both pitch and pattern phase return. Random order uses one selected-root pass; full coverage still visits all selected roots, and explicit counts retain longer repeating drills. The automatic option now names its behaviour and is selected explicitly on initialisation.
+
+Eight generator unit checks, six generator/region browser workflows and TypeScript/build pass, including preview/apply/undo, filtered roots and manual-position preservation.

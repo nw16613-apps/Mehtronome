@@ -33,3 +33,22 @@ test('position selection stays independent and preserves a custom route across a
  assert.deepEqual(generatorPositions({},8,['I','IV','V']),['I','IV','V','I','IV','V','I','IV']);assert.equal(generatorPositions({},8),null);assert.deepEqual(generatorPositions({position:'III'},4),['III','III','III','III']);
  const selected=generatorPositions({position:'selected',positionSet:['II','V']},12,null,37);assert.ok(selected.every(n=>['II','V'].includes(n)));assert.ok(selected.every((n,i)=>!i||n!==selected[i-1]));assert.throws(()=>generatorPositions({position:'selected',positionSet:[]},4),/position/);
 });
+
+test('automatic length uses one interval cycle when full root coverage is off',()=>{
+ const base={approach:'fixed',key:9,chord:'maj7',mode:'lydian',count:'all',coverage:false,bars:2};
+ for(const direction of [1,-1])for(const [order,length]of Object.entries({chromatic:12,whole:6,minorThird:4,majorThird:3,fourths:12,fifths:12,tritone:2,alternating:24})){
+  const chart=generateProgression({...base,order,direction},2);assert.equal(chart.progression.steps.length,length,order);assert.equal(chart.positions,null);
+  assert.equal(chart.progression.steps[0].root,0);assert.notEqual(chart.progression.steps.at(-1).root,0,order);
+ }
+ const major=generateProgression({...base,order:'majorThird'},2);assert.deepEqual(major.progression.steps.map(s=>s.root),[0,4,8]);assert.ok(major.progression.steps.every(s=>s.chord==='maj7'&&s.mode==='lydian'&&s.bars===2));
+ const longer=generateProgression({...base,order:'majorThird',count:12},2);assert.deepEqual(longer.progression.steps.map(s=>s.root),[0,4,8,0,4,8,0,4,8,0,4,8]);
+ const covered=generateProgression({...base,order:'majorThird',coverage:true},2);assert.equal(covered.progression.steps.length,12);assert.equal(new Set(covered.progression.steps.map(s=>s.root)).size,12);
+});
+test('automatic random drills use one selected-root pass and interval cycles respect root filters',()=>{
+ for(const approach of ['fixed','random']){
+  const random=generateProgression({approach,key:9,chord:'min7',mode:'dorian',order:'random',roots:[9,0,3,6],count:'all',coverage:false},7);assert.equal(random.progression.steps.length,4);assert.equal(new Set(random.progression.steps.map(s=>s.root)).size,4);
+  const cycle=generateProgression({approach,key:9,chord:'min7',mode:'dorian',order:'minorThird',roots:[9,0,3,6],count:'all',coverage:false},7);assert.deepEqual(cycle.progression.steps.map(s=>s.root),[0,3,6,9]);
+  assert.throws(()=>generateProgression({approach,key:9,chord:'min7',mode:'dorian',order:'minorThird',roots:[9,0,3],count:'all',coverage:false},7),/interval cycle leaves/);
+ }
+ const musical=generateProgression({approach:'musical',key:9,count:'all',coverage:false},5);assert.equal(musical.progression.steps.length,8);
+});

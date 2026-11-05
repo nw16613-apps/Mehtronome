@@ -54,12 +54,22 @@ export function generatorPositions({position='keep',positionSet=['I','II','III',
  const selected=position==='selected'?names.filter(n=>positionSet.includes(n)):names;if(!selected.length)throw new Error('Select at least one CAGED position.');
  const random=seededRandom(seed^0x9e3779b9),out=[];while(out.length<count){const deck=shuffle(selected,random);if(deck.length>1&&out.at(-1)===deck[0])[deck[0],deck[1]]=[deck[1],deck[0]];out.push(...deck);}return out.slice(0,count);
 }
+// A cycle closes when both the pitch and the alternating-step phase return.
+// Single intervals close after 12 / gcd(12, interval) roots; mixed patterns may
+// revisit a pitch at a different phase before the complete pattern closes.
+function intervalCycleLength(order){
+ const steps=INTERVALS[order];if(!steps)return null;
+ let pitch=0,phase=0,length=0;
+ do{pitch=mod(pitch+steps[phase]);phase=(phase+1)%steps.length;length++;}while(pitch!==0||phase!==0);
+ return length;
+}
 export function generateProgression(config={},seed=1){
  const random=seededRandom(seed),approach=['musical','random','fixed'].includes(config.approach)?config.approach:'fixed';
  const roots=config.roots||Array.from({length:12},(_,i)=>i),keyRoots=approach==='musical'?Array.from({length:12},(_,i)=>i):roots,key=config.key==='random'?keyRoots[Math.floor(random()*keyRoots.length)]:Number(config.key??9);
  if(!Number.isInteger(key)||key<0||key>11)throw new Error('Choose a valid starting root.');
  if(approach!=='musical'&&!roots.includes(key))throw new Error('Include the starting root in the selected roots.');
- const slots=config.count==='all'?(approach==='musical'?8:roots.length):Math.max(4,Math.min(64,Number(config.count)||8)),count=approach!=='musical'&&config.coverage!==false?Math.max(slots,roots.length):slots;
+ const automaticCount=approach==='musical'?8:config.coverage===false?(intervalCycleLength(config.order)||roots.length):roots.length;
+ const slots=config.count==='all'?automaticCount:Math.max(4,Math.min(64,Number(config.count)||8)),count=approach!=='musical'&&config.coverage!==false?Math.max(slots,roots.length):slots;
  const bars=[1,2,4,8].includes(Number(config.bars))?Number(config.bars):1,vocabulary=Object.hasOwn(GENERATOR_VOCABULARIES,config.vocabulary)?config.vocabulary:'sevenths';let steps=[],name;
  if(approach==='musical'){
   const modeId=config.tonality==='minor'?'minor':config.tonality==='modal'?(config.modalMode||'dorian'):'major';
