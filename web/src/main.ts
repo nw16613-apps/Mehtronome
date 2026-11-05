@@ -1,3 +1,4 @@
+import {checklistCards} from './practice/checklist-view.js';
 import {installProgressionGenerator} from './practice/progression-generator-view.js';
 import {chordStepsInRange} from './practice/chart-edit-selection.js';
 import {patternStartRoute,patternStartRouteValue,cardStartLabel} from './practice/pattern-start-route.js';
@@ -56,7 +57,7 @@ import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js
 import workletUrl from './audio/worklet.js?worker&url';
 import { DEFAULTS } from './audio/engine.js';
 import { MAX_CHART_STEPS, CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
-import { PRACTICE_TASKS, curriculumKey, completedCount, practicePlan, modeProgress } from './practice/curriculum.js';
+import { PRACTICE_TASKS, curriculumKey, completedCount, modeProgress } from './practice/curriculum.js';
 import { compatibleScaleGroups,compatibleModeForChord,chordChoicesForMode,compatibleChordForMode,modeChordGroups } from './practice/scale-explorer.js';
 import { barAlignedDuration } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionPlaybackBeatDurations, progressionTimeline, progressionPositionAtBeat, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
@@ -176,8 +177,7 @@ app.innerHTML = `
     <section class="practice-roadmap panel workspace-page workspace-progress" aria-labelledby="practice-roadmap-title">
       <div class="practice-roadmap-heading"><div><p class="eyebrow">METHODICAL PRACTICE</p><h2 id="practice-roadmap-title">Learning path</h2><p id="practice-roadmap-context" class="guitar-help"></p></div><div class="practice-roadmap-progress"><strong id="practice-roadmap-percent">0%</strong><span id="practice-roadmap-count">0 of 0 complete</span></div></div>
       <div class="practice-roadmap-bar" aria-hidden="true"><i id="practice-roadmap-fill"></i></div>
-      <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
-      <div id="practice-roadmap-today" class="practice-roadmap-today"></div>
+      <button id="practice-roadmap-reset" type="button" class="practice-button">Reset this checklist</button>
       <div id="practice-roadmap-list" class="practice-roadmap-list"></div>
       <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Highest checklist completion for each mode at this root.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
     </section>
@@ -640,15 +640,19 @@ function practiceContext(info:any){return {root:info.scaleNames[0],mode:info.mod
 function savePracticeProgress(){try{localStorage.setItem(PRACTICE_PROGRESS_KEY,JSON.stringify(practiceProgress));}catch{/* Keep progress for this session. */}}
 function renderPracticeRoadmap(info:any){
   const context=practiceContext(info),key=curriculumKey(context),completed=practiceProgress[key]||[],done=new Set(completed);
-  const count=completedCount(completed),percent=Math.round(count/PRACTICE_TASKS.length*100),duration=Number(select('practice-roadmap-duration').value),today=practicePlan(completed,duration);
+  const count=completedCount(completed),percent=Math.round(count/PRACTICE_TASKS.length*100);
   const mode=MODES[info.mode as keyof typeof MODES];
   el('practice-roadmap-context').textContent=`${context.root} ${mode.name} · ${context.chord} · ${'family' in mode?mode.family:'Major scale'}`;
   el('practice-roadmap-percent').textContent=`${percent}%`;
   el('practice-roadmap-count').textContent=`${count} of ${PRACTICE_TASKS.length} checked`;
   (el('practice-roadmap-fill') as HTMLElement).style.width=`${percent}%`;
-  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Suggested ${duration}-minute session · ${today.minutes} min estimated</strong><span>Start with the first ${today.tasks.length} unchecked items below.</span>`:'<strong>Checklist complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
-  const stages=[...new Set(PRACTICE_TASKS.map(task=>task.stage))];
-  el('practice-roadmap-list').innerHTML=stages.map(stage=>`<fieldset><legend>${stage}</legend>${PRACTICE_TASKS.filter(task=>task.stage===stage).map(task=>`<label class="practice-roadmap-task${done.has(task.id)?' complete':''}"><input type="checkbox" data-practice-task="${task.id}" ${done.has(task.id)?'checked':''}><span>${escapeHtml(task.label)}</span><small>${task.minutes} min</small></label>`).join('')}</fieldset>`).join('');
+  const list=el('practice-roadmap-list'),open=new Set(Array.from(list.querySelectorAll<HTMLDetailsElement>('details[open]')).map(node=>node.dataset.checklistGroup));
+  const focused=(document.activeElement as HTMLInputElement)?.dataset.practiceTask;
+  const position=(document.getElementById('checklist-position') as HTMLSelectElement|null)?.value||overviewPosition;
+  const previousIdea=(document.getElementById('checklist-idea') as HTMLSelectElement|null)?.value||'arpeggio',ideas=checklistIdeas(info);
+  const idea=ideas.some(item=>item.id===previousIdea)?previousIdea:'arpeggio',colour=characteristicNotes(info)[0];
+  list.innerHTML=checklistCards({completed,chord:context.chord,mode:mode.name,colour:colour?`${colour.name} (${colour.degree})`:null,position,ideas,idea,open,locked:playing||exercisePlaying||exercisePreparing});
+  if(focused)list.querySelector<HTMLInputElement>(`[data-practice-task="${focused}"]`)?.focus({preventScroll:true});
   const root=context.root;
   el('practice-mode-library').innerHTML=Object.entries(MODES).map(([id,item]:any)=>{
     const value=modeProgress(practiceProgress,root,id),modePercent=Math.round(value/PRACTICE_TASKS.length*100);
@@ -1341,7 +1345,26 @@ el('practice-roadmap-list').addEventListener('input',event=>{
   if(checkbox.checked)completed.add(task);else completed.delete(task);
   practiceProgress[key]=[...completed];savePracticeProgress();renderPracticeRoadmap(info);
 });
-select('practice-roadmap-duration').addEventListener('input',()=>renderPracticeRoadmap(chordInfo(step)));
+function checklistIdeas(info:any){
+ const options=theoryOptions(info),pentatonic=options.pentatonics.find((item:any)=>item.id===exerciseView.source)||options.pentatonics[0],pair=options.triadPairs.find((item:any)=>item.id===exerciseView.source)||options.triadPairs[0];
+ const ideas=[{id:'arpeggio',label:`Arpeggio · ${info.name}${info.suffix}`,source:''}];
+ if(pentatonic)ideas.push({id:'pentatonic',label:`Pentatonic · ${pentatonic.name}`,source:pentatonic.id});
+ if(pair)ideas.push({id:'triads',label:`Triad pair · ${pair.name}`,source:pair.id});
+ if(!['positional','pentatonic','triadpairs'].includes(exerciseView.study))ideas.push({id:'exercise',label:'Current notation exercise',source:''});
+ ideas.push({id:'gaps',label:'Improvisation with gaps',source:''});return ideas;
+}
+el('practice-roadmap-list').addEventListener('click',event=>{
+ const action=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-checklist-action]')?.dataset.checklistAction;
+ if(!action||playing||exercisePlaying||exercisePreparing||busy||stopping)return;
+ if(focusView)setFocusView(false);
+ if(action==='hear'){showWorkspace('harmony','harmony-title');return;}
+ if(action==='positions'){const position=select('checklist-position').value;if(position!==overviewPosition)chooseOverviewPosition(position);showWorkspace('guitar','position-overview');return;}
+ if(action==='connect'){showWorkspace('guitar','position-path-guide');select('featured-position').focus({preventScroll:true});return;}
+ const idea=checklistIdeas(chordInfo(step)).find(item=>item.id===select('checklist-idea').value);if(!idea)return;
+ if(idea.id==='gaps'){showWorkspace('practice','gap-enabled');input('gap-enabled').focus({preventScroll:true});return;}
+ stopPreview();if(idea.id!=='exercise'){exerciseView.study=idea.id==='arpeggio'?'positional':idea.id==='triads'?'triadpairs':'pentatonic';if(idea.source)exerciseView.source=idea.source;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();}
+ showWorkspace('exercises','caged-exercise');
+});
 el('practice-roadmap-reset').addEventListener('click',()=>{
   const info=chordInfo(step),key=curriculumKey(practiceContext(info));
   delete practiceProgress[key];savePracticeProgress();renderPracticeRoadmap(info);
@@ -1863,7 +1886,7 @@ function syncTrainerStatus() {
 function syncWorkspaceStates(){
  const context=document.getElementById('setup-current-context');if(context)context.textContent=`Current setup: ${names[settings.key]} · ${settings.bpm} BPM · ${progressionDefinition(settings).name}`;
  const locked=playing||exercisePlaying||exercisePreparing;
- document.querySelectorAll<HTMLInputElement>('[data-practice-task]').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
+ document.querySelectorAll<HTMLInputElement|HTMLButtonElement|HTMLSelectElement>('[data-practice-task],[data-checklist-action],#checklist-position,#checklist-idea').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
  const checklist=document.getElementById('practice-checklist-help');if(checklist)checklist.textContent=locked?'Stop playback before updating the checklist.':'Tick completed items for the current root, scale and chord.';
  for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
 }

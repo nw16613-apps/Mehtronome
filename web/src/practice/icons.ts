@@ -46,7 +46,7 @@ export function applyStudioIcons(root:ParentNode=document){
  root.querySelectorAll('.preset-fields button,.preset-transfer button').forEach(el=>{const t=(el.textContent||'').toLowerCase();add(el,t.includes('export')?'export':t.includes('import')?'import':t.includes('load')?'folder':t.includes('delete')?'trash':t.includes('update')?'refresh':'save');});
  root.querySelectorAll('.progression-reference .eyebrow').forEach(el=>add(el,'harmony'));
  root.querySelectorAll('.full-fretboard-toolbar strong,.position-heading h4').forEach(el=>add(el,'chord'));
- root.querySelectorAll('.practice-roadmap fieldset legend').forEach(el=>{const text=(el.textContent||'').toLowerCase();add(el,text.includes('hear')?'listen':text.includes('map')?'chord':text.includes('connect')?'link':text.includes('apply')?'target':'notes');});
+ root.querySelectorAll('.practice-step h3').forEach((el,i)=>add(el,['listen','chord','link','target'][i%4]));
  root.querySelectorAll('.pulse-tool>summary').forEach(el=>{const t=(el.textContent||'').toLowerCase();add(el,t.includes('swing')?'swing':t.includes('timer')?'timer':'poly');});
  root.querySelectorAll('.learn-more>summary').forEach(el=>add(el,'info'));
 };

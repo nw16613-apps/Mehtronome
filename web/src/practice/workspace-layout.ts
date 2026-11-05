@@ -92,9 +92,8 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  get('preset-export').textContent='Export setups';get('preset-import').textContent='Import setups';
  const presetBackup=group('Backup & transfer','preset-backup');move(presetBackup,query('.preset-transfer'));presets.append(presetBackup);
  presets.after(goals);const checklistLink=goals.querySelector<HTMLButtonElement>('[data-learning-nav]')!;checklistLink.removeAttribute('data-learning-nav');checklistLink.textContent='View checklist';checklistLink.onclick=()=>{get('practice-roadmap-title').focus({preventScroll:true});get('practice-roadmap-title').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
- const roadmap=query('.practice-roadmap'),plan=group('Suggested session','roadmap-plan');get('practice-roadmap-title').textContent='Practice checklist';get('practice-roadmap-title').tabIndex=-1;roadmap.querySelector('.eyebrow')!.textContent='SELF-REPORTED PROGRESS';label('practice-roadmap-duration').firstChild!.textContent='Time budget ';
+ const roadmap=query('.practice-roadmap');get('practice-roadmap-title').textContent='Practice checklist';get('practice-roadmap-title').tabIndex=-1;roadmap.querySelector('.eyebrow')!.textContent='SELF-REPORTED PROGRESS';
  const checklistHelp=document.createElement('p');checklistHelp.id='practice-checklist-help';checklistHelp.className='practice-help';checklistHelp.textContent='Tick completed items for the current root, scale and chord.';roadmap.querySelector('.practice-roadmap-bar')!.after(checklistHelp);
- move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Checklist items'}));
  get('practice-roadmap-reset').textContent='Reset this checklist';
  const reset=document.createElement('div');reset.className='roadmap-reset';reset.append(get('practice-roadmap-reset'));roadmap.append(reset);
  // Sound Settings uses the backing-style model; mixer controls own audibility.

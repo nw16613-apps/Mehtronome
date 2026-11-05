@@ -27,3 +27,11 @@ export function modeProgress(records,root,mode){
   for(const [key,completed] of Object.entries(records||{}))if(key.startsWith(prefix))best=Math.max(best,completedCount(completed));
   return best;
 }
+
+// Group the original completion IDs without changing existing saved progress.
+export const PRACTICE_GROUPS=[
+ {id:'hear',title:'Hear the sound',items:[{id:'listen',label:'Sing the root and modal colour'},{id:'colour',label:'Improvise with chord tones and modal colour'}]},
+ {id:'positions',title:'Practise positions',items:['I','II','III','IV','V'].map(n=>({id:`position-${n}`,label:`Position ${n}`}))},
+ {id:'connect',title:'Connect positions',items:[['12','I–II'],['23','II–III'],['34','III–IV'],['45','IV–V']].map(([id,label])=>({id:`connect-${id}`,label}))},
+ {id:'apply',title:'Apply an idea',items:[{id:'arpeggio',label:'Chord-tone phrase'},{id:'pentatonic',label:'Pentatonic idea'},{id:'triads',label:'Triad-pair line'},{id:'sequence',label:'Notation exercise'},{id:'progression',label:'Follow a chart'},{id:'improvise',label:'Improvise through gaps'}]},
+];
