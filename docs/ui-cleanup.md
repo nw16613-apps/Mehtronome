@@ -27,3 +27,9 @@ Twenty scoped browser workflows pass across the text review, generator, shared r
 The five repeated stage lists are replaced by four cards: Hear the sound, Practise positions, Connect positions and Apply an idea. Normal headings sit inside each card instead of overlapping the fieldset border. Individual completion controls live under Mark progress, with position/pair chips and compact activity labels. All 17 historical completion IDs and the root/mode/chord storage key are preserved.
 
 The cards link to Harmony, a chosen fretboard position, position navigation, an available named pentatonic/triad-pair source or gap-training controls. Links do not start playback; explicit position choices affect only the inspected chord. The time-budget/suggested-session interface and per-task minute estimates are removed. Fourteen browser workflows pass, including heading bounds at desktop/phone widths in all four themes, saved progress and source/position links, plus the existing CAGED regressions. Three curriculum checks and TypeScript/build pass.
+
+## Automatic route region priority
+
+The shared CAGED router now selects each chord's closest-fitting shapes to the requested region before minimising movement between tied candidates. The region applies throughout generated, template and edited charts in Fretboard and Exercises. Complete fingerings may extend beyond a region where no exact fit exists. Explicit manual choices and saved routes keep their existing behaviour.
+
+The reported Amaj7–Dbmaj7–Fmaj7 Lydian cycle around frets 7–11 now repeats II/D (6–11), I/E (8–12), IV/A (7–11). Unit coverage checks region fit across all roots, nine modes and five regions, plus smooth tie-breaking. Twenty-three targeted route/timing/exercise checks, ten browser workflows and TypeScript/build pass.

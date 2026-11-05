@@ -707,7 +707,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const featured=settings.progression?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!settings.progression;
   select('position-region').parentElement!.hidden=!following;
-  el('position-path-guide').querySelector('p')!.textContent=following?'Start in this region, then follow nearby shapes. Choose a shape to set this chord manually.':'Choose a chord card, then its shape. Other cards keep their positions.';
+  el('position-path-guide').querySelector('p')!.textContent=following?'Use the closest shapes to this region throughout the chart. Choose a shape to set this chord manually.':'Choose a chord card, then its shape. Other cards keep their positions.';
   select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
   const info = chordInfo(step);

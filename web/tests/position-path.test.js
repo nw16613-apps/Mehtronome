@@ -65,18 +65,32 @@ test('G Lydian rotates parent-major geometry to IV A, V G, I E, II D, III C',()=
   }),['IV:A','V:G','I:E','II:D','III:C']);
 });
 
-test('the low Gm7 to Bbm7 to Dbm7 to Em7 route follows E, G, A and C shapes',()=>{
+test('the low Gm7 to Bbm7 to Dbm7 to Em7 route keeps every chord near frets 1–5',()=>{
  const hs=[7,10,1,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'})),path=progressionPositionPath(hs,FRET_REGIONS.low);
- assert.deepEqual(path.map(p=>p.shape),['E','G','A','C']);assert.deepEqual(path.map(p=>[p.start,p.end]),[[2,6],[3,7],[3,8],[4,9]]);
+ assert.deepEqual(path.map(p=>p.shape),['E','G','C','D']);assert.deepEqual(path.map(p=>[p.start,p.end]),[[2,6],[3,7],[1,6],[2,6]]);
 });
-test('later harmonies cannot pull the opening position away from the chosen starting region',()=>{
- for(let key=0;key<12;key++)for(const mode of ['major','dorian','harmonic_minor','melodic_minor'])for(const region of Object.values(FRET_REGIONS)){
-  const hs=[0,3,6,9,2,5].map(offset=>harmonyAt({key:(key+offset)%12,mode,chord:mode==='major'?'maj7':'min7'}));
+test('every chord retains its independently preferred region fit across keys and modes',()=>{
+ for(let key=0;key<12;key++)for(const mode of ['major','dorian','phrygian','lydian','mixolydian','minor','locrian','harmonic_minor','melodic_minor'])for(const region of Object.values(FRET_REGIONS)){
+  const hs=[0,3,6,9,2,5].map(offset=>harmonyAt({key:(key+offset)%12,mode,chord:['major','lydian'].includes(mode)?'maj7':mode==='mixolydian'?'dom7':mode==='locrian'?'halfDim':['harmonic_minor','melodic_minor'].includes(mode)?'minMaj7':'min7'}));
   const first=progressionPositionPath([hs[0]],region)[0],route=progressionPositionPath(hs,region);assert.deepEqual(route[0],first);
-  for(const [i,position]of route.entries()){const board=fretboardFor(hs[i],position.geometryShape);assert.equal(cagedPositionFor(board).shape,position.shape);assert.equal(position.start,board.start);assert.equal(position.end,board.end);}
+  for(const [i,position]of route.entries()){const board=fretboardFor(hs[i],position.geometryShape);assert.equal(cagedPositionFor(board).shape,position.shape);assert.equal(position.start,board.start);assert.equal(position.end,board.end);const local=progressionPositionPath([hs[i]],region)[0],target=(region.start+region.end)/2,overlap=p=>Math.max(0,Math.min(p.end,region.end)-Math.max(p.start,region.start)+1);assert.equal(Math.abs(position.center-target),Math.abs(local.center-target));assert.equal(overlap(position),overlap(local));}
  }
 });
 test('unchanged harmony remains in its opening position throughout a long route',()=>{
  const h=harmonyAt({key:9,mode:'dorian',chord:'min7'});
  for(const region of Object.values(FRET_REGIONS)){const path=progressionPositionPath(Array(32).fill(h),region);for(const position of path)assert.deepEqual(position,path[0]);}
+});
+
+test('repeated A Db F Lydian changes stay around frets 7–11 instead of drifting to higher shapes',()=>{
+ const hs=Array.from({length:12},(_,i)=>harmonyAt({key:[9,1,5][i%3],mode:'lydian',chord:'maj7'}));
+ const expected=Array.from({length:12},(_,i)=>[{shape:'D',numeral:'II',start:6,end:11},{shape:'E',numeral:'I',start:8,end:12},{shape:'A',numeral:'IV',start:7,end:11}][i%3]);
+ for(const count of [3,6,12])assert.deepEqual(progressionPositionPath(hs.slice(0,count),FRET_REGIONS.middle).map(({shape,numeral,start,end})=>({shape,numeral,start,end})),expected.slice(0,count));
+});
+
+test('equally suitable shapes use the smoother continuation inside the selected region',()=>{
+ const hs=[0,3,6,9,2,5].map(key=>harmonyAt({key,mode:'harmonic_minor',chord:'minMaj7'}));
+ const region=FRET_REGIONS.upperMiddle,independent=progressionPositionPath([hs[4]],region)[0],route=progressionPositionPath(hs,region);
+ assert.deepEqual([independent.shape,independent.start,independent.end],['E',9,13]);
+ assert.deepEqual([route[4].shape,route[4].start,route[4].end],['D',11,15]);
+ assert.equal(route[3].center,route[4].center);
 });
