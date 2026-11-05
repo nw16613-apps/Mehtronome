@@ -1,11 +1,12 @@
+import {latinDrumCell,SON_BELL} from './latin-grooves.js';
 import {DRUM_KITS} from './instrumentation.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
 import { SampledBass } from './bass.js';
-import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, LIVE_DRUM_GROUPS } from './sample-map.js';
+import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, LIVE_DRUM_GROUPS, LATIN_DRUM_GROUPS } from './sample-map.js';
 
 export const DRUM_GROOVES = {
   straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
-  fusionRide:'Fusion jazz ride pocket', fusion: 'Funk / fusion sixteenths', neoSoul: 'Neo-soul pocket', motown: 'Motown drive', tumbao: 'Latin tumbao',
+  fusionRide:'Fusion jazz ride pocket', fusion: 'Funk / fusion sixteenths', neoSoul: 'Neo-soul pocket', motown: 'Motown drive', tumbao: 'Afro-Cuban son · 2–3 clave',
   modernJazz: 'Modern jazz comping', ballad: 'Ambient ballad',
 };
 export const BASS_PATTERNS = {
@@ -50,12 +51,6 @@ const GROOVES = {
     [[0,'kick',.8],[3,'kick',.4],[10,'kick',.56],[12,'kick',.35],[7,'snare',.13]],
     [[0,'kick',.79],[6,'kick',.44],[10,'kick',.56],[3,'snare',.11],[11,'snare',.12]],
   ],
-  bossa: [
-    [[0,'kick',.55],[6,'kick',.4],[8,'kick',.5],[14,'kick',.38],[0,'rim',.52],[6,'rim',.62],[12,'rim',.55]],
-    [[0,'kick',.54],[6,'kick',.38],[8,'kick',.5],[14,'kick',.36],[2,'rim',.48],[8,'rim',.56],[14,'rim',.5]],
-    [[0,'kick',.56],[6,'kick',.4],[8,'kick',.5],[14,'kick',.37],[0,'rim',.52],[6,'rim',.59],[12,'rim',.54],[15,'rim',.1]],
-    [[0,'kick',.54],[6,'kick',.39],[8,'kick',.5],[14,'kick',.35],[2,'rim',.49],[8,'rim',.56],[14,'rim',.5]],
-  ],
   fusion: [
     [[0,'kick',.78],[3,'kick',.4],[7,'kick',.5],[10,'kick',.62],[14,'kick',.44],[4,'snare',.63],[12,'snare',.69],[6,'snare',.1],[15,'snare',.12]],
     [[0,'kick',.79],[5,'kick',.43],[8,'kick',.66],[11,'kick',.47],[15,'kick',.36],[4,'snare',.64],[12,'snare',.7],[10,'snare',.11]],
@@ -73,12 +68,6 @@ const GROOVES = {
     [[0,'kick',.64],[4,'kick',.49],[8,'kick',.59],[12,'kick',.5],[14,'kick',.32],[4,'snare',.64],[12,'snare',.68]],
     [[0,'kick',.63],[4,'kick',.5],[8,'kick',.6],[12,'kick',.51],[4,'snare',.65],[12,'snare',.69],[11,'snare',.09]],
     [[0,'kick',.64],[4,'kick',.49],[8,'kick',.59],[12,'kick',.5],[4,'snare',.64],[12,'snare',.68]],
-  ],
-  tumbao: [
-    [[0,'kick',.56],[6,'kick',.43],[10,'kick',.48],[14,'kick',.4],[0,'rim',.48],[6,'rim',.59],[10,'rim',.47],[12,'rim',.55]],
-    [[0,'kick',.55],[5,'kick',.39],[8,'kick',.48],[14,'kick',.42],[2,'rim',.46],[6,'rim',.57],[10,'rim',.49],[14,'rim',.54]],
-    [[0,'kick',.57],[6,'kick',.42],[9,'kick',.46],[14,'kick',.41],[0,'rim',.49],[6,'rim',.58],[10,'rim',.48],[12,'rim',.55]],
-    [[0,'kick',.55],[5,'kick',.4],[10,'kick',.48],[14,'kick',.42],[2,'rim',.47],[6,'rim',.57],[10,'rim',.49],[14,'rim',.55]],
   ],
   modernJazz: [
     [[0,'kick',.27],[7,'kick',.2],[14,'kick',.24],[5,'snare',.16],[10,'snare',.23],[15,'snare',.12]],
@@ -110,10 +99,10 @@ const BASS_LINES = {
     [[0,0,0,2.7,.87],[12,-1,0,.85,.56]],
   ],
   fifths: [
-    [[0,0,0,.85,.94],[6,-1,0,.4,.74],[8,0,1,.6,.82],[11,-1,0,.25,.55],[14,-1,0,.4,.76]],
-    [[0,0,0,.85,.94],[3,0,0,.2,.39],[6,-1,0,.38,.7],[8,0,1,.7,.81],[12,1,0,.4,.68],[14,-1,0,.35,.72]],
-    [[0,0,0,.85,.94],[6,-1,0,.4,.71],[8,0,0,.65,.84],[10,1,0,.35,.66],[14,-1,0,.4,.75]],
-    [[0,0,0,.85,.95],[6,-1,0,.4,.71],[8,0,1,.55,.82],[11,-2,0,.3,.61],[14,-1,0,.4,.73]],
+    [[0,0,0,1.65,.9],[8,-1,0,1.4,.76]],
+    [[0,0,0,1.65,.9],[8,0,0,1.05,.8],[14,-1,0,.4,.64]],
+    [[0,0,0,1.65,.91],[8,-1,0,1.4,.76]],
+    [[0,0,0,1.65,.9],[8,0,1,1.05,.78],[14,-1,0,.4,.65]],
   ],
   walk: [
     [[0,0,0,.94,.88],[4,1,0,.91,.76],[8,2,0,.93,.81],[12,-2,0,.89,.73]],
@@ -122,10 +111,10 @@ const BASS_LINES = {
     [[0,0,0,.94,.88],[4,-1,0,.91,.77],[8,1,0,.93,.8],[12,-2,0,.89,.74]],
   ],
   bossa: [
-    [[0,0,0,1.1,.88],[6,-1,0,.4,.68],[8,0,0,1,.81],[14,-1,0,.4,.69]],
-    [[0,0,0,1.1,.87],[6,-1,0,.38,.66],[8,1,0,.95,.74],[14,-1,0,.4,.68]],
-    [[0,0,0,1.1,.89],[6,-1,0,.4,.68],[8,0,0,1,.81],[14,-1,0,.4,.69]],
-    [[0,0,0,1.1,.87],[6,-1,0,.38,.66],[8,0,1,.9,.76],[14,1,0,.4,.65]],
+    [[0,0,0,1.4,.84],[6,-1,0,.42,.64],[8,0,0,1.4,.80],[14,-1,0,.42,.65]],
+    [[0,0,0,1.4,.84],[6,-1,0,.42,.64],[8,0,0,1.4,.80],[14,-1,0,.42,.65]],
+    [[0,0,0,1.4,.85],[6,-1,0,.42,.64],[8,0,0,1.4,.80],[14,-1,0,.42,.65]],
+    [[0,0,0,1.4,.84],[6,-1,0,.42,.64],[8,0,0,1.4,.80],[14,-1,0,.42,.65]],
   ],
   funk: [
     [[0,0,0,.35,.96],[3,0,1,.2,.6],[6,-1,0,.3,.79],[9,0,0,.22,.68],[11,2,0,.2,.56],[14,0,1,.3,.82],[15,-1,0,.16,.5]],
@@ -152,16 +141,16 @@ const BASS_LINES = {
     [[0,0,0,.74,.92],[5,2,0,.24,.59],[8,0,1,.46,.76],[13,-2,0,.26,.62],[15,-1,0,.15,.47]],
   ],
   motown: [
-    [[0,0,0,.55,.92],[3,1,0,.25,.58],[6,-1,0,.45,.72],[8,2,0,.55,.78],[11,-2,0,.28,.61],[14,0,1,.38,.74]],
-    [[0,0,0,.52,.91],[2,1,0,.25,.52],[5,2,0,.36,.67],[8,-1,0,.5,.76],[12,-2,0,.34,.64],[15,0,1,.17,.47]],
-    [[0,0,0,.55,.93],[3,-1,0,.24,.57],[6,1,0,.4,.7],[9,2,0,.38,.72],[12,-2,0,.42,.68],[15,0,1,.16,.49]],
-    [[0,0,0,.54,.92],[2,1,0,.22,.51],[5,-1,0,.37,.68],[8,2,0,.46,.75],[11,1,0,.3,.62],[14,-2,0,.35,.69]],
+    [[0,0,0,.7,.9],[6,1,0,.4,.63],[8,2,0,.7,.78],[12,-2,0,.4,.66],[14,0,1,.4,.72]],
+    [[0,0,0,.7,.9],[4,1,0,.4,.62],[6,2,0,.4,.68],[8,-1,0,.7,.76],[14,-2,0,.4,.66]],
+    [[0,0,0,.7,.91],[6,-1,0,.4,.64],[8,1,0,.7,.77],[12,2,0,.4,.68],[14,0,1,.4,.72]],
+    [[0,0,0,.7,.9],[4,1,0,.4,.62],[6,-1,0,.4,.68],[8,2,0,.7,.77],[12,1,0,.4,.64],[14,-2,0,.4,.68]],
   ],
   tumbao: [
-    [[0,0,0,.5,.84],[6,-1,0,.34,.67],[10,0,0,.38,.72],[14,1,0,.4,.76]],
-    [[0,0,0,.48,.83],[5,1,0,.27,.59],[7,-1,0,.34,.68],[11,0,1,.3,.7],[14,-2,0,.42,.75]],
-    [[0,0,0,.5,.85],[6,-1,0,.33,.66],[9,1,0,.28,.6],[12,0,0,.38,.72],[15,2,0,.18,.53]],
-    [[0,0,0,.48,.84],[5,-2,0,.28,.6],[7,-1,0,.34,.69],[10,0,1,.3,.71],[14,1,0,.42,.76]],
+    [[6,-1,0,1.15,.68],[12,0,0,2.35,.83]],
+    [[6,-1,0,1.15,.67],[12,0,0,2.35,.82]],
+    [[6,-1,0,1.15,.68],[12,0,0,2.35,.83]],
+    [[6,-1,0,1.15,.67],[12,0,0,2.35,.82]],
   ],
   jazzOstinato: [
     [[0,0,0,.42,.9],[3,-2,0,.24,.59],[7,1,0,.36,.7],[10,-1,0,.28,.65],[13,2,0,.38,.74]],
@@ -239,7 +228,7 @@ export class Rhythm {
     this.drumVoices = Array.from({length:24}, () => ({sample:null, position:0, increment:1, gain:0, filter:0, tone:1, choke:1, choking:false, kind:''}));
     this.bassInstrument = new SampledBass(rate,kit);
     this.bassVoices = this.bassInstrument.voices;
-    this.lastBassMidi = null;
+    this.lastBassMidi = null;this.lastBassChord='';
     this.drums = 0;
     this.bass = 0;
   }
@@ -251,14 +240,14 @@ export class Rhythm {
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));
-    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);
+    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);
   }
   gridAt(settings, beat, phase) {
     return beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
   }
   bassGridAt(beat,phase,groove='straight',bpm=120){return beat*4+backingSubdivision(phase,groove,bpm);}
   clearDrums() { for (const voice of this.drumVoices) voice.sample = null; this.activeDrums=0; }
-  clearBass() { this.bassInstrument.clear();this.bassCursor=0;this.lastBassMidi=null; }
+  clearBass() { this.bassInstrument.clear();this.bassCursor=0;this.lastBassMidi=null;this.lastBassChord=''; }
   tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes,drumsAudible=true,bassAudible=true) {
     const grid = this.gridAt(settings, beat, phase);
     const bassGrid = this.bassGridAt(beat, phase,settings.drumGroove,settings.bpm);
@@ -276,12 +265,12 @@ export class Rhythm {
   hitDrum(name,gain,sample,step,beat,sub,onEvent,kitName='rock',delayFrames=0) {
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
-    const jazz=profile.bank==='jazz'&&this.jazzGroups.ride.length;
+    const jazz=profile.bank==='jazz'&&(this.jazzGroups.kick.length||this.jazzGroups.kickSoft.length);
     const live=profile.bank==='live'&&this.liveGroups.kick.length,layered=jazz||live;
     const groups=jazz?this.jazzGroups:live?this.liveGroups:this.groups;
     const group=name==='snare'?(gain<(jazz ? .17 : live ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
-    const ids=groups[group]||groups[name]||this.groups[group]||this.groups[name]||[];
-    const cursorKey=(jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
+    const ids=this.latinGroups[name]||groups[group]||groups[name]||this.groups[group]||this.groups[name]||[];
+    const cursorKey=(this.latinGroups[name]?'latin:':jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
     const id=ids.length?ids[cursor%ids.length]:fallback;
     const pcm=this.kit[id];
     if(!pcm?.length)return;
@@ -299,6 +288,9 @@ export class Rhythm {
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
+    if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
+      this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
+    }
     const groove=GROOVES[settings.drumGroove]?settings.drumGroove:'straight';
     const cell=(beat*4+sub)%16,varied=settings.backingVariation>0,chapter=Math.floor(bar/4),phrase=varied&&chapter%2?[0,2,1,3][bar%4]:bar%4;
     const lastBeat=beat===settings.beats-1;
@@ -354,11 +346,24 @@ export class Rhythm {
     else if((!varied||!filling)&&groove==='fusion'&&[3,7,11,15].includes(cell))hit('hat',cell===7||cell===15?.1:.075);
 
   }
+  playLatinDrums(settings,sub,beat,bar,sample,step,onEvent){
+    const cell=(beat*4+sub)%16,son=settings.drumGroove==='tumbao',varied=settings.backingVariation>0;
+    const hit=(name,gain)=>{
+      const touch=performanceTouch(settings,name,bar,beat*4+sub,this.rate);
+      this.hitDrum(name,gain*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,name==='clave'?0:touch.delayFrames);
+    };
+    for(const [offset,name,gain]of latinDrumCell(settings.drumGroove,bar))if(offset===cell)hit(name,gain);
+    if(son&&varied&&Math.floor(bar/8)%2===1)for(const [offset,name,gain]of SON_BELL)if(offset===cell)hit(name,gain);
+    // A small hand-percussion pickup leaves the clave and open tones intact.
+    // Bossa keeps its quiet ostinato instead of acquiring a rock/tom fill.
+    if(son&&varied&&(settings.backingTurnaround||bar%8===7)&&beat===settings.beats-1&&sub===1)hit('congaMute',.13);
+  }
   playBass(settings, sub, beat, bar, notes, sample, step, onEvent,nextNotes = notes) {
     if(!notes?.length)return;
     const pattern=BASS_LINES[settings.bassPattern]?settings.bassPattern:'roots';
     const cell=(beat*4+sub)%16;
     let note=BASS_LINES[pattern][settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%4]:bar%4].find(event=>event[0]===cell);
+    if(pattern==='tumbao'&&cell===0&&notes.join(',')!==this.lastBassChord)note=[cell,0,0,1.4,.76];
     if(pattern==='roots'&&bar%2===1&&beat===settings.beats-1&&sub===2)note=[cell,-1,0,.38,.48];
     if(!note)return;
     let [,index,octave,length,gain]=note;
@@ -383,7 +388,7 @@ export class Rhythm {
     // chord. This makes actual changes connect without adding chromatic notes
     // that would conflict with the mode being practised.
     const nextRoot=nextNotes?.[0]%12;
-    const approaching=Number.isFinite(nextRoot)&&nextRoot!==root&&beat===settings.beats-1&&(pattern==='walk'||sub>=2);
+    const approaching=!['bossa','tumbao'].includes(pattern)&&Number.isFinite(nextRoot)&&nextRoot!==root&&beat===settings.beats-1&&(pattern==='walk'||sub>=2);
     if(approaching){
       const target=28+(nextRoot-4+12)%12;
       const candidates=pcs.flatMap(pc=>[28+(pc-4+12)%12,40+(pc-4+12)%12]);
@@ -391,7 +396,7 @@ export class Rhythm {
       midi=candidates[0];
     }
     while(midi>59)midi-=12;
-    this.lastBassMidi=midi;
+    this.lastBassMidi=midi;this.lastBassChord=notes.join(',');
     const touch=performanceTouch(settings,'bass',bar,beat*4+sub,this.rate);
     gain*=touch.velocity;length*=touch.length;
     const seconds=length*60/settings.bpm;

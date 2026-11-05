@@ -79,3 +79,14 @@ export const JAZZ_DRUM_GROUPS={
 export const LIVE_DRUM_GROUPS={
  kick:['liveKick1','liveKick2','liveKick3'],kickSoft:['liveKickSoft1','liveKickSoft2'],snare:['liveSnare1','liveSnare2','liveSnare3'],snareSoft:['liveSnareSoft1','liveSnareSoft2'],snareGhost:['liveSnareGhost1','liveSnareGhost2'],hat:['liveHat1','liveHat2','liveHat3'],hatOpen:['liveHatOpen1','liveHatOpen2'],hatPedal:['liveHatPedal1','liveHatPedal2'],ride:['liveRide1','liveRide2','liveRide3'],rideBell:['liveRideBell1','liveRideBell2'],rim:['liveRim1','liveRim2'],tomHigh:['liveTomHigh1','liveTomHigh2'],tomLow:['liveTomLow1','liveTomLow2'],crash:['liveCrash1','liveCrash2']
 };
+
+// CC0 acoustic percussion from the Versilian Community Sample Library.
+export const LATIN_DRUM_GROUPS={
+ clave:['latinClave1','latinClave2'],congaOpen:['latinCongaOpen1','latinCongaOpen2'],
+ congaMute:['latinCongaMute1','latinCongaMute2'],tumbaOpen:['latinTumbaOpen1','latinTumbaOpen2'],
+ cowbell:['latinCowbell1','latinCowbell2'],guiroShort:['latinGuiroShort1','latinGuiroShort2'],
+ guiroLong:['latinGuiroLong1','latinGuiroLong2'],shaker:['latinShaker1','latinShaker2']
+};
+const SON_PERCUSSION_GROUPS=Object.fromEntries(Object.entries(LATIN_DRUM_GROUPS).filter(([name])=>name!=='shaker'));
+const BOSSA_PERCUSSION_GROUPS={shaker:LATIN_DRUM_GROUPS.shaker};
+export function latinSampleGroups(groove){return groove==='tumbao'?SON_PERCUSSION_GROUPS:groove==='bossa'?BOSSA_PERCUSSION_GROUPS:{};}

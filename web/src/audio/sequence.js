@@ -1,3 +1,6 @@
+import {performanceTouch} from './groove-time.js';
+import {CompingInstrument} from './comping.js';
+import {styleSequenceStep} from './style-phrases.js';
 import { SEQUENCE_WAVE, SINE, readWave } from './waves.js';
 
 export const SEQUENCE_SOURCES = {
@@ -143,29 +146,35 @@ function nearest(reference, notes) {
 
 export class Sequence {
   constructor(rate) {
-    this.rate=rate;this.decay=Math.exp(-1/(rate*.14));this.attackFrames=Math.max(1,Math.round(rate*.008));this.maxAge=Math.round(rate*.8);this.reset();
+    this.rate=rate;this.instrument=new CompingInstrument(rate,8);this.decay=Math.exp(-1/(rate*.14));this.attackFrames=Math.max(1,Math.round(rate*.008));this.maxAge=Math.round(rate*.8);this.reset();
   }
+  installKit(kit,clear=true){this.instrument.installKit(kit,clear);}
   reset() {
-    this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
+    this.instrument.clear();this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
     const rate=Number(settings.sequenceRate)||2;let offset=0;
+    if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues')){
+      const swing=settings.sequenceStyle==='blues'?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);
+      return beat*2+(phase>=swing?1:0);
+    }
     for(let i=1;i<rate;i++){
       const swing=rate===3?0:(i%2 ? settings.sequenceSwing*.5 : 0);
       if(phase >= (i+swing)/rate) offset=i;
     }
     return beat*rate+offset;
   }
-  tick(settings, beat, phase, notes, sample, step, onNote, nextNotes=notes,context=null) {
+  tick(settings, beat, phase, notes, sample, step, onNote, nextNotes=notes,context=null,audible=true) {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
-    this.lastGrid=grid;
+    this.lastGrid=grid;if(!audible)return;
     const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
-    const roleNotes=musical?(context?.[settings.sequenceRole]||notes):notes;
+    const styled=musical&&!!settings.sequenceStyle;
+    const roleNotes=styled&&settings.sequenceStyle==='blues'?notes:musical?(context?.[settings.sequenceRole]||notes):notes;
     const density=Math.max(0,Math.min(1,settings.sequenceDensity));
     if(!musical&&(grid*37+17)%100 >= density*100)return;
-    const note=musical?musicalSequenceStep(settings,grid,roleNotes.length):sequenceStep(settings.sequencePattern,grid,notes.length,Number(settings.sequenceRate)||2);
+    const note=styled?styleSequenceStep(settings,grid,roleNotes.length):musical?musicalSequenceStep(settings,grid,roleNotes.length):sequenceStep(settings.sequencePattern,grid,notes.length,Number(settings.sequenceRate)||2);
     if(!note)return;
     const register=Number(settings.sequenceRegister);
     const offset=Number.isFinite(register)?register:12;
@@ -175,7 +184,21 @@ export class Sequence {
     if(leads&&nextNotes.length)midi=nearest(this.lastMidi,nextNotes.map(value=>value+(Number.isFinite(register)?register:12)));
     if(musical&&note.target==='chord'&&context?.chordResponse?.length)midi=nearest(midi,context.chordResponse.map(value=>value+offset));
     if(musical&&note.target==='next'&&context?.nextChord?.length)midi=nearest(this.lastMidi,context.nextChord.map(value=>value+offset));
+    if(styled&&note.target==='resolve'&&context?.chordResponse?.length){
+      const target=context.nextChord?.[0]??midi;
+      midi=nearest(target+offset,context.chordResponse.map(value=>value+offset));
+    }
+    if(styled&&(settings.sequenceRole==='guideLine'||settings.sequenceRole==='counterline')){
+      const alternatives=[midi-12,midi,midi+12].filter(value=>value>=55&&value<=88);
+      midi=nearest(this.lastMidi,alternatives);
+    }
     this.lastMidi=midi;
+    if(styled){
+      const tone=settings.sequenceTone||settings.compingTone||'brightTine',duration=note.duration||.5;
+      const touch=performanceTouch(settings,'sequence',Math.floor(beat/settings.beats),(beat%settings.beats)*4+(grid%rate)*4/rate,this.rate);
+      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames);
+      onNote({sample:sample+touch.delayFrames,gridSample:sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar,style:settings.sequenceStyle,tone,durationBeats:duration});return;
+    }
     const voice=this.voices[this.cursor++%this.voices.length];
     const frequency=440*2**((midi-69)/12);
     Object.assign(voice,{phase:0,frequency,increment:frequency/this.rate,age:0,envelope:note.velocity,pan:grid%2?.35:-.35,table:frequency*3<this.rate*.45?SEQUENCE_WAVE:SINE});
@@ -191,6 +214,7 @@ export class Sequence {
       voice.phase+=voice.increment;if(voice.phase>=1) voice.phase-=1;
       voice.envelope*=this.decay;voice.age++;
     }
-    this.left=left;this.right=right;
+    const styled=this.instrument.render(audible);
+    this.left=left+styled;this.right=right+styled;
   }
 }

@@ -92,16 +92,16 @@ export function compingChordVoicings(harmony,nextHarmony,movement='inner',length
 // [sixteenth position, duration in beats, velocity]. Four related bars create
 // a phrase with one or two supportive attacks per bar and room for a soloist.
 const CELLS={
-  popRock:[[[0,.45,.72],[8,.45,.7]],[[0,.4,.7]],[[0,.45,.73],[10,.3,.57]],[[6,.28,.5]]],
+  popRock:[[[0,1.35,.72],[8,1.1,.7]],[[0,1.7,.7]],[[0,1.35,.73],[10,.7,.57]],[[6,.8,.5]]],
   fusion:[[[0,.32,.7],[10,.38,.68]],[[1,.24,.52]],[[0,.34,.7],[13,.22,.5]],[[7,.27,.6]]],
   blues:[[[0,.36,.67],[8,.36,.65]],[[6,.27,.56]],[[0,.35,.68],[10,.26,.57]],[[8,.34,.65]]],
   motown:[[[2,.23,.57],[10,.23,.57]],[[6,.22,.62],[14,.22,.65]],[[0,.3,.65]],[[6,.23,.62]]],
   funk:[[[4,.21,.66],[10,.19,.6]],[[0,.23,.68],[14,.18,.6]],[[4,.2,.65]],[[6,.18,.58],[12,.2,.65]]],
-  latin:[[[0,.3,.62],[10,.28,.59]],[[2,.28,.56]],[[0,.3,.63],[10,.28,.58]],[[8,.32,.64]]],
+  latin:[[[2,.3,.62],[10,.3,.59]],[[6,.35,.56]],[[2,.3,.62],[10,.3,.59]],[[6,.35,.56]]],
   sparse:[[[0,1.45,.72]],[[12,1.2,.7]],[[0,1.1,.7]],[[5,.65,.52]]],
   jazz:[[[2,.55,.62],[11,.68,.65]],[[6,.4,.48]],[[3,.5,.58],[13,.48,.52]],[[6,.62,.62]]],
   neoSoul:[[[0,.85,.68],[10,.75,.64]],[[9,.72,.65]],[[0,.9,.7]],[[5,.55,.54]]],
-  bossa:[[[0,.62,.62],[10,.62,.64]],[[6,.55,.6],[14,.55,.62]],[[0,.6,.64]],[[8,.64,.62],[14,.48,.58]]],
+  bossa:[[[0,.6,.60],[6,.4,.55]],[[10,.55,.59]],[[0,.6,.60],[6,.4,.55]],[[10,.55,.59]]],
   ballad:[[[0,2.6,.65]],[[0,1.8,.62]],[[0,2.4,.66]],[[4,1.35,.54]]],
 };
 
@@ -118,7 +118,7 @@ const TONE_SHAPES={
 for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
 
 export class CompingInstrument{
-  constructor(rate){this.rate=rate;this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.cursor=0;this.output=0;this.voices=Array.from({length:32},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  constructor(rate,voiceCount=32){this.rate=rate;this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
   installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
   clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true){
@@ -128,7 +128,7 @@ export class CompingInstrument{
     // Leave the last beat of larger drum answers clear; existing chords can ring.
     if(settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
 
-    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%pattern.length]:bar%pattern.length];
+    const pattern=CELLS[settings.compingPattern]||CELLS.sparse,cell=pattern[!['latin','bossa'].includes(settings.compingPattern)&&settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%pattern.length]:bar%pattern.length];
     for(const [position,duration,velocity]of cell)if(position===offset){
       const chordSignature=notes.join(','),firstChord=chordSignature!==this.lastChord;
       const amount=Math.max(0,Math.min(1,Number(settings.compingMovementAmount)||0));

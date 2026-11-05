@@ -1,0 +1,154 @@
+{
+  "repository": "sgossner/VCSL",
+  "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+  "license": "CC0-1.0",
+  "attribution": "Versilian Community Sample Library, Sam Gossner / Versilian Studios and contributors.",
+  "format": "mono 32000 Hz PCM16",
+  "processing": "Mono downmix, 65 Hz high-pass, 14 kHz low-pass, leading silence trim, short natural tails, peak normalization and edge fades.",
+  "files": [
+    {
+      "id": "latinClave1",
+      "path": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v2_rr1_Mid.wav",
+      "sourceSha256": "bcabe27330761309eb4b4f6207e6e3b4be59815df86449ac05bfb9b81f19efc9",
+      "sha256": "3ae372e7028f9d1c872105b1cd2194d097cc643872f12cac92117ee1fcef1d1f",
+      "onsetTrimFrames": 257,
+      "duration": 0.22,
+      "bytes": 14124
+    },
+    {
+      "id": "latinClave2",
+      "path": "Idiophones/Struck Idiophones/Claves/Claves1_Hit_v3_rr1_Mid.wav",
+      "sourceSha256": "12285f65ed125f4140d1e8a86b2d6a08bf3283b7bf30c10d68290b8e8230a927",
+      "sha256": "7db6f40d66855415a8051cd847420b00f6a54ec8ef6f69227d636d403f9a885c",
+      "onsetTrimFrames": 257,
+      "duration": 0.22,
+      "bytes": 14124
+    },
+    {
+      "id": "latinCongaOpen1",
+      "path": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v2_rr1_Sum.wav",
+      "sourceSha256": "13d322c0e7a830cdbcbdc5a6e05566dfe3f5a073b7b82a3262d3f6fc10f96764",
+      "sha256": "eca221c5d1dcd3e19ec46f14f567fbb2954323f0762e61f2cdd6e17d8cb31e3b",
+      "onsetTrimFrames": 0,
+      "duration": 0.48,
+      "bytes": 30764
+    },
+    {
+      "id": "latinCongaOpen2",
+      "path": "Membranophones/Struck Membranophones/Conga/Conga_HitN_v2_rr2_Sum.wav",
+      "sourceSha256": "4f52f6619fd12d1d0e1e942e67cdf77fcad06fef6de44eba8bab6df99ade4acd",
+      "sha256": "cec6a61d8f94d5752636f80a556c58674e4eb35d0d67b2eecdfeea24b822b704",
+      "onsetTrimFrames": 0,
+      "duration": 0.48,
+      "bytes": 30764
+    },
+    {
+      "id": "latinCongaMute1",
+      "path": "Membranophones/Struck Membranophones/Conga/Conga_HitFM_v2_rr1_Sum.wav",
+      "sourceSha256": "1a24a11a7dae6fdc05405a706768a5b6d96ad534c95bee5d451aa49eedd84855",
+      "sha256": "64121d5f11c8692eba4531db7a853f7d9d296283a81ef7de4dad0976b9c37e1c",
+      "onsetTrimFrames": 0,
+      "duration": 0.22,
+      "bytes": 14124
+    },
+    {
+      "id": "latinCongaMute2",
+      "path": "Membranophones/Struck Membranophones/Conga/Conga_HitFM_v2_rr2_Sum.wav",
+      "sourceSha256": "f1d21c33c0cf8a5f22c18376c4bae481345b12177a243fc5571591ef7d29b51b",
+      "sha256": "dd0bcd87966b7ca567ba24bd373e328ebd29215805c9ce68e2d81219cb4bcc0f",
+      "onsetTrimFrames": 2,
+      "duration": 0.22,
+      "bytes": 14124
+    },
+    {
+      "id": "latinTumbaOpen1",
+      "path": "Membranophones/Struck Membranophones/Conga/Tumba_HitN_v2_rr1_Sum.wav",
+      "sourceSha256": "c61f662c8af0dc95fcfca81d8a319b71bafd6e4c59a168dceec799fbb7963a47",
+      "sha256": "2ec711d46ad3c71e137b1b3d7e5abcd1cc8c9464a25899b11a393fba4cb777c1",
+      "onsetTrimFrames": 0,
+      "duration": 0.58,
+      "bytes": 37164
+    },
+    {
+      "id": "latinTumbaOpen2",
+      "path": "Membranophones/Struck Membranophones/Conga/Tumba_HitN_v2_rr2_Sum.wav",
+      "sourceSha256": "9092f501109e11c07a62503d1e69c53efb6fb9060376d491c57cf3c037199519",
+      "sha256": "4ce2825c6f28d42eaaa31b0ae4da8a748dd89d9ca05fb2619190ff0e38cfb255",
+      "onsetTrimFrames": 0,
+      "duration": 0.58,
+      "bytes": 37164
+    },
+    {
+      "id": "latinCowbell1",
+      "path": "Idiophones/Struck Idiophones/Cowbells/Cowbell1_Normal_v2_rr1_Mid.wav",
+      "sourceSha256": "d1f89cb17fe60091deca7ae689009ff03ed79b061b74cd3f6ef5373b5999612c",
+      "sha256": "0f677a4ba6aecd97ab05c2564b41cfd2a3643e307dae5b6805f5318ba77bdb65",
+      "onsetTrimFrames": 256,
+      "duration": 0.35,
+      "bytes": 22444
+    },
+    {
+      "id": "latinCowbell2",
+      "path": "Idiophones/Struck Idiophones/Cowbells/Cowbell1_Normal_v3_rr1_Mid.wav",
+      "sourceSha256": "e212cc27b3490d7927d41508bd7e90d6e09b0b8da169f0357341d3057c4910c4",
+      "sha256": "eaee246f388f696e24d9449785d7a310d35b7609868a09e39878ce70fd0e1e44",
+      "onsetTrimFrames": 261,
+      "duration": 0.35,
+      "bytes": 22444
+    },
+    {
+      "id": "latinGuiroShort1",
+      "path": "Idiophones/Struck Idiophones/Guiro/Legacy/guiro_short.wav",
+      "sourceSha256": "2f113b444deed8c4044fcf14f0b26ea786c8a91f8e84a41e0799b0d164e6b355",
+      "sha256": "111b7964710a19dc69a28cbfca27c9cda5334daf576f3a2b55d8357f04365cad",
+      "onsetTrimFrames": 218,
+      "duration": 0.2,
+      "bytes": 12844
+    },
+    {
+      "id": "latinGuiroShort2",
+      "path": "Idiophones/Struck Idiophones/Guiro/Legacy/guiro_short2.wav",
+      "sourceSha256": "d27f35cbbb94d636e0ea89fa71e7459d3294c6161fc0cc67b4e083f82af10598",
+      "sha256": "2706736f508239658937dfe4fa110f7ab47705f778f6a60b35cf224ed9765d15",
+      "onsetTrimFrames": 551,
+      "duration": 0.2,
+      "bytes": 12844
+    },
+    {
+      "id": "latinGuiroLong1",
+      "path": "Idiophones/Struck Idiophones/Guiro/Legacy/guiro_long.wav",
+      "sourceSha256": "18d9da0aea2e5d89f42c3d0881b9e4122e3bf8cb98b62393133e02493ecc7fa6",
+      "sha256": "49edc32c85d4166aab56197464a2aa85e5e04c97471a21e82b04dc6fbb4c12ce",
+      "onsetTrimFrames": 0,
+      "duration": 0.4,
+      "bytes": 25644
+    },
+    {
+      "id": "latinGuiroLong2",
+      "path": "Idiophones/Struck Idiophones/Guiro/Legacy/guiro_long2.wav",
+      "sourceSha256": "df526ecf8bba1afffa4f29d62e9358f57360988215cd7a5a30699361cc71b369",
+      "sha256": "a037f354f4db2d1d71a8291e41c1b3ea1cb5a4261304604347d30d4a582acd34",
+      "onsetTrimFrames": 0,
+      "duration": 0.4,
+      "bytes": 25644
+    },
+    {
+      "id": "latinShaker1",
+      "path": "Idiophones/Struck Idiophones/Shaker, Large/LShaker_Shake1D_rr2_Mid.wav",
+      "sourceSha256": "e83a95d7f1f493246afc77c2709d8093112342486efa92150e6fcf0a345871cb",
+      "sha256": "bcbe752611ed7b8b1ef117f2e722f13d7ca6817961998ed798e843ade4270084",
+      "onsetTrimFrames": 314,
+      "duration": 0.16,
+      "bytes": 10284
+    },
+    {
+      "id": "latinShaker2",
+      "path": "Idiophones/Struck Idiophones/Shaker, Large/LShaker_Shake1U_rr1_Mid.wav",
+      "sourceSha256": "f6bbd4b897a18af5d567cf7925d402a8b854a8f31c1cf3c706f91bf96815b7c7",
+      "sha256": "0b632c1933ac2848bd3ee093e35b84f7950b9f7af310007dade3cd05499493e1",
+      "onsetTrimFrames": 670,
+      "duration": 0.16,
+      "bytes": 10284
+    }
+  ]
+}

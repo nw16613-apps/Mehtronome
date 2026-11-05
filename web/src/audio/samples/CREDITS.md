@@ -87,3 +87,9 @@ Current pop/rock, blues, fusion jazz, Motown and funk use [DRSKit v1.0](https://
 ### Kick-only refinement
 
 The five live kick takes now receive a 44 Hz high-pass, a 4 dB cut at 85 Hz and a smooth release from 55 to 235 ms. Peak normalization retains attack level. Other live samples are byte-for-byte unchanged. `prepare-live-drums.py` reproduces this treatment; source/derivative hashes and filter details remain in `live/sources.json`.
+
+## Acoustic Latin percussion
+
+[Versilian Community Sample Library](https://github.com/sgossner/VCSL/tree/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e), Sam Gossner / Versilian Studios and contributors, **CC0 1.0 Universal**. Sixteen acoustic recordings: claves, open and fully muted congas, open tumba, cowbell, short/long güiro and alternating shaker strokes. No drum-kit snare or tom substitutes are used for these parts.
+
+Selected hits are downmixed to mono 32 kHz PCM16, gently filtered, trimmed and normalized with short edge fades. See [latin/LICENSE](latin/LICENSE) and [latin/sources.json](latin/sources.json) for the complete licence, original filenames, pinned revision and original/derivative hashes. `web/scripts/prepare-latin-percussion.py` reproduces the bank. Melodic movement shares the existing credited guitar/piano recordings or synthesized electric-key voices.

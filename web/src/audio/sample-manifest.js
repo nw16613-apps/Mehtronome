@@ -2,6 +2,23 @@
 // are documented in samples/README.md and samples/CREDITS.md.
 // Literal URLs let Vite fingerprint and bundle every recording.
 export const SAMPLE_FILES = {
+  latinClave1: new URL('./samples/latin/latinClave1.wav', import.meta.url),
+  latinClave2: new URL('./samples/latin/latinClave2.wav', import.meta.url),
+  latinCongaOpen1: new URL('./samples/latin/latinCongaOpen1.wav', import.meta.url),
+  latinCongaOpen2: new URL('./samples/latin/latinCongaOpen2.wav', import.meta.url),
+  latinCongaMute1: new URL('./samples/latin/latinCongaMute1.wav', import.meta.url),
+  latinCongaMute2: new URL('./samples/latin/latinCongaMute2.wav', import.meta.url),
+  latinTumbaOpen1: new URL('./samples/latin/latinTumbaOpen1.wav', import.meta.url),
+  latinTumbaOpen2: new URL('./samples/latin/latinTumbaOpen2.wav', import.meta.url),
+  latinCowbell1: new URL('./samples/latin/latinCowbell1.wav', import.meta.url),
+  latinCowbell2: new URL('./samples/latin/latinCowbell2.wav', import.meta.url),
+  latinGuiroShort1: new URL('./samples/latin/latinGuiroShort1.wav', import.meta.url),
+  latinGuiroShort2: new URL('./samples/latin/latinGuiroShort2.wav', import.meta.url),
+  latinGuiroLong1: new URL('./samples/latin/latinGuiroLong1.wav', import.meta.url),
+  latinGuiroLong2: new URL('./samples/latin/latinGuiroLong2.wav', import.meta.url),
+  latinShaker1: new URL('./samples/latin/latinShaker1.wav', import.meta.url),
+  latinShaker2: new URL('./samples/latin/latinShaker2.wav', import.meta.url),
+
   liveKick1: new URL('./samples/live/liveKick1.wav', import.meta.url),
   liveKick2: new URL('./samples/live/liveKick2.wav', import.meta.url),
   liveKick3: new URL('./samples/live/liveKick3.wav', import.meta.url),

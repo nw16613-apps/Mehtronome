@@ -46,7 +46,7 @@ export function melodicNotePool(source, harmony, chordMidi) {
 }
 
 export function melodicRoleContext(settings,harmony,nextHarmony,chordMidi,nextChordMidi){
-  const anchor=harmonyAt({...settings,progression:false},0),modal=melodicNotePool('mode',anchor,anchor.midi);
+  const anchor=settings.sequenceStyle?harmony:harmonyAt({...settings,progression:false},0),modal=melodicNotePool('mode',anchor,anchor.midi);
   const root=modal[0],colourPc=characteristicNotes(anchor)[0]?.pc??anchor.scalePcs[3];
   const colour=root+((colourPc-anchor.scalePcs[0]+12)%12),fifth=modal[Math.min(4,modal.length-1)];
   return {modalHook:[root,fifth,colour,fifth],chordResponse:[...chordMidi],counterline:modal,
@@ -167,12 +167,12 @@ export class Engine {
   installDrumKit(kit) {
     this.drumKit = kit;
     this.rhythm.installKit(kit);
-    this.comping.installKit(kit);
+    this.comping.installKit(kit);this.sequence.installKit(kit);
   }
 
   mergeDrumKit(kit){
     this.drumKit={...this.drumKit,...kit};
-    this.rhythm.installKit(this.drumKit,false);this.comping.installKit(this.drumKit,false);
+    this.rhythm.installKit(this.drumKit,false);this.comping.installKit(this.drumKit,false);this.sequence.installKit(this.drumKit,false);
   }
 
   reset() {
@@ -180,7 +180,7 @@ export class Engine {
     this.guitar = null;
     this.gapGain = 1;
     this.gapMuted = false;
-    this.sequence = new Sequence(this.rate);
+    this.sequence = new Sequence(this.rate);this.sequence.installKit(this.drumKit);
     this.rhythm = new Rhythm(this.rate, this.drumKit);
     this.comping = new CompingInstrument(this.rate);
     this.comping.installKit(this.drumKit);
@@ -293,7 +293,7 @@ export class Engine {
     this.clockSettings = this.clockSettings || {};
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
     const timeline=s.progression?progressionTimeline(s):[];
-    const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
+    const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){
       this.harmonyCacheKey=harmonyKey;this.cachedHarmonies=new Map();this.cachedComping=new Map();
       const indices=s.progression?[...new Set(timeline.map(segment=>segment.step))]:[0];
@@ -314,7 +314,7 @@ export class Engine {
       this.lastPoly=this.beat>=this.remainingCount?Math.floor(((this.beat-this.remainingCount)+this.phase/(60*this.rate))*s.polyBeats/s.polyBase+1e-10):-1;
       this.polyAge=this.rate;
     }
-    if(!previousSequence && s.sequence) for(const voice of this.sequence.voices) voice.age=Infinity;
+    if(!previousSequence && s.sequence){for(const voice of this.sequence.voices)voice.age=Infinity;this.sequence.instrument.clear();}
     if(previousSequenceRate!==s.sequenceRate || previousSequence!==s.sequence || previousSwing!==s.sequenceSwing){
       this.sequence.lastGrid=this.beat>=this.remainingCount ? this.sequence.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
@@ -543,7 +543,7 @@ export class Engine {
       const polyClick=s.polyBeats&&polyTime<.05?Math.sin(2*Math.PI*2200*polyTime)*Math.exp(-140*polyTime):0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
       if(s.sequence && backingActive && !this.auditioning){
-        this.sequence.tick(s,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext);
+        this.sequence.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext,sequenceVolume>0);
       }
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render(sequenceVolume>0||this.sequenceLevel>.000001);
       else { this.sequence.left = 0; this.sequence.right = 0; }

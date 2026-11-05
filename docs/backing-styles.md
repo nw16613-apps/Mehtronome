@@ -106,3 +106,24 @@ Checks cover no-WAV first playback, selective instrument requests, repeated-star
 ## Sparser comping
 
 All comping patterns now use one or two selected chord attacks per four-beat bar, rather than the previous three-to-five attacks in most styles. Sparse/ballad patterns use one attack per bar. Offbeat placements and chord lengths retain each genre’s feel; existing sounds, velocities, voicings, extensions and mixer levels remain in place. The final beat of an eight-bar answer or marked-section turnaround is left free of new comping attacks, allowing drum fills and the soloist more space. Chords already sounding are allowed to decay normally. Drums, fills and bass patterns are unchanged.
+
+## Style-specific ensemble phrases
+
+Melodic movement now has a distinct four-bar accompaniment vocabulary for every style, rather than sharing the same percentage-spaced note grid. Phrases include complete rests and repeat recognisable ideas. They use the current chord/mode, and cadential responses choose a current chord tone toward the next root rather than sounding an incompatible future chord early. Jazz/blues eighths follow the drum swing; jazz swing relaxes at faster tempos. Lower density leaves whole bars free. Bossa and son preserve two-bar pairs. Existing custom pattern-library sequencing remains available to legacy setups.
+
+| Style | Bass / comping | Melodic movement |
+| --- | --- | --- |
+| Pop / rock | Steadier root/fifth bass, longer clean-guitar chord holds | Clean-guitar chord-tone answers |
+| Traditional jazz | Walking upright bass, sparse piano extensions | Acoustic-piano third/seventh phrases with swing |
+| Fusion jazz | Displaced bass, ride/bell pocket, electric-key accents | Displaced electric-tine modal motif |
+| Blues | Shuffled chord-aware bass and short guitar responses | Driven-guitar pentatonic call and answer |
+| Motown | Mainly eighth-note melodic bass and clipped piano | Short clean-guitar eighth-note hook |
+| Funk | Clipped syncopated bass and sparse clav chords | Dry single-note clav syncopations |
+| Neo-soul | Spacious electric bass and tine voicings | Narrow, spacious electric-tine counterline |
+| Bossa nova | Root/fifth bass with longer main tones, sparse nylon chords | Nylon-guitar answers in two-bar phrases |
+| Latin · Cuban son | Fifth on 2-and, root on 4 sustained across held-chord downbeats; new harmony stated on its change | Short acoustic-piano guajeo fragments in a stable two-bar orientation |
+| Ballad | Gentle bass counterline, soft piano chord holds | Longer soft-piano notes and wide rests |
+
+The approved live drum sounds and non-Latin core grooves remain. Bossa has a quiet samba-derived bass-drum ostinato (1, 2-and, 3, 4-and), even eighths, light shaker and a consistent two-bar cross-stick response. Cuban son has 2–3 son clave (bar 1: 2, 3; bar 2: 1, 2-and, 4), conga marcha with open tones on 4 and 4-and, and long/short güiro strokes. A quiet bell section opens alternate eight-bar phrases; a small muted-conga pickup adds an answer without replacing clave or conga open tones. Generic tom/snare fills and four-bar cell reordering never interrupt these Latin ostinatos. These are specific 4/4 practice arrangements; other meters clip/repeat the cells and are not presented as traditional odd-meter grooves.
+
+Sixteen acoustic VCSL percussion recordings add about 327 KiB. Only audible Latin drums request them (bossa requests only the two shaker takes). Including the required club-kit hits, Latin drums load 16 files and bossa loads nine, rather than the entire 38-file jazz bank. Style melodic tracks share the existing piano/guitar sample banks or use the existing synthesized tine/clav voices; they load their bank when audible even if comping is muted. Sample merge/reset preserves playback, FX sends remain independent, and muted melodic parts advance their clock without scheduling hidden notes. The melodic sampler has eight bounded voices and reuses the comping renderer, with no additional real-time decoding or effects. Source paths, pinned revision, licence and hashes are in `samples/latin/sources.json`; the CC0 licence and reproducible builder ship with the source.
