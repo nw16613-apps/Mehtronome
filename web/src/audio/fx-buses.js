@@ -1,4 +1,4 @@
-export const FX_CHANNELS=['click','harmony','drums','bass','comping','sequence','space'];
+export const FX_CHANNELS=['click','harmony','drums','bass','comping','sequence'];
 export const FX_BUSES=['reverb','reverbB','delay'];
 export const REVERB_TYPES={room:'Short room',chamber:'Chamber',plate:'Plate',hall:'Hall'};
 export const DELAY_DIVISIONS={sixteenth:'Sixteenth notes',dottedSixteenth:'Dotted sixteenths',eighthTriplet:'Eighth-note triplets',eighth:'Eighth notes',dotted:'Dotted eighths',quarterTriplet:'Quarter-note triplets',quarter:'Quarter notes',dottedQuarter:'Dotted quarters',half:'Half notes',whole:'Whole notes · one 4/4 bar'};

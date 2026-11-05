@@ -448,7 +448,7 @@ export class Engine {
     const compingVolume=this.muted.has('comping')?0:s.compingVolume,sequenceVolume=this.muted.has('sequence')?0:s.sequenceVolume;
     if (this.guitar) {
       if(stems)for(const key in stems)stems[key]?.fill(0);
-      // Guitar bypasses pad layers and echoes, but feeds the shared room reverb.
+      // Guitar bypasses pad layers and echoes; its harmony stem feeds the selected FX sends.
       for (let i = 0; i < output.length; i++) {
         this.level += ((this.running ? 1 : 0) - this.level) * this.smoothing;
         const value = this.guitar.sample() * this.level * harmonyVolume;

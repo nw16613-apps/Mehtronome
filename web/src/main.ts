@@ -34,7 +34,6 @@ import {extensionChoices} from './audio/extensions.js';
 import {tapBpm, beatStrength, formatTime} from './practice/pulse.js';
 import {createFxBuses,FX_PRESET_CONTROLS} from './audio/fx-buses.js';
 import {installFxControls} from './practice/fx-view.js';
-import { roomImpulse } from './audio/ambience.js';
 import { theoryOptions } from './guitar/superimposition.js';
 import { recommendedGrip } from './guitar/grips.js';
 import { PRESET_KEY, PRESET_CONTROLS, readPresets, writePresets, exportPresets, importPresets, MAX_PRESET_FILE_BYTES } from './practice/presets.js';
@@ -208,7 +207,7 @@ app.innerHTML = `
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
-      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With Show chord voicing enabled, play the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Ambient space adds reverb. Click the same button again to stop the chord. The Melodic overlay selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Voicing and modal markings return when the overlay is off.</p>
+      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With Show chord voicing enabled, play the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Use the Harmony track’s Reverb A/B sends to add reverb. Click the same button again to stop the chord. The Melodic overlay selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Voicing and modal markings return when the overlay is off.</p>
         <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
       </details>
     </section>
@@ -229,19 +228,13 @@ let master: GainNode | undefined;
 let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
 let masterVolume=DEFAULT_MASTER_VOLUME;
 try{masterVolume=masterVolumePercent(localStorage.getItem(MASTER_VOLUME_KEY));}catch{}
-let wet: GainNode | undefined;
-let reverbGate: GainNode | undefined;
+let harmonyFxSource:GainNode|undefined;
 let fxBuses: ReturnType<typeof createFxBuses> | undefined;
 let fxUi: ReturnType<typeof installFxControls> | undefined;
-let reverb: ConvolverNode | undefined;
-let reverbSleepTimer:ReturnType<typeof setTimeout>|undefined;
-let impulse: AudioBuffer | undefined;
 let playing = false;
 let busy = false;
 let step = 0;
 let context: AudioContext | undefined;
-let ambientMeters:AnalyserNode[]=[];
-const ambientSamples=new Float32Array(256);
 let node: AudioWorkletNode | undefined;
 let installedSampleNames=new Set<string>(),sampleSettingsGeneration=0;
 let stopping = false;
@@ -285,7 +278,7 @@ let exerciseGuitarGain:GainNode|undefined;
 function exerciseGuitarOutput(){
   if(!exerciseGuitarGain||exerciseGuitarGain.context!==context){
     exerciseGuitarGain=context!.createGain();exerciseGuitarGain.gain.value=exerciseGuitarVolume/100;
-    exerciseGuitarGain.connect(master!);if(reverb)exerciseGuitarGain.connect(reverb);
+    exerciseGuitarGain.connect(master!);exerciseGuitarGain.connect(harmonyFxSource!);
   }
   return exerciseGuitarGain;
 }
@@ -1015,17 +1008,6 @@ function commitCustomEdit(field:string){
   }
   saveCustomProgression(harmonic&&targets.length>1?`Updated ${targets.length} selected chords.`:undefined);restoreChartPracticeChoices(practiceChoices);fillLoopOptions(true);step=customStepIndex;update();
 }
-function updateSpace() {
-  el('space-value').textContent = `${input('space').value}%`;
-  syncConsole();
-  if(wet&&context){
-    const amount=input('mute-space').checked?0:Number(input('space').value)/100*BUS_GAINS.space;
-    clearTimeout(reverbSleepTimer);
-    if(amount>0&&reverb&&impulse&&reverb.buffer!==impulse)reverb.buffer=impulse;
-    wet.gain.setTargetAtTime(amount,context.currentTime,amount>0?.08:.015);
-    if(amount===0&&reverb){const current=reverb;reverbSleepTimer=setTimeout(()=>{if(current===reverb&&(input('mute-space').checked||Number(input('space').value)===0))current.buffer=null;},120);}
-  }
-}
 function update() {
   fxUi?.sync();
   if(backingStyleUi){settings.backingStyle=backingStyleUi.sync();Object.assign(settings,backingStyleInstruments(settings.backingStyle));}
@@ -1155,7 +1137,7 @@ function update() {
   reflectMixerChannels();
   queueAudioSettings(settings);
   syncMixerDetails();
-  updateSpace();
+
   renderMusic();
   if (!playing) renderBeats();
 }
@@ -1248,7 +1230,7 @@ async function initialiseAudio(requested:any=settings) {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
     context = createPlaybackContext(AudioContext,navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContext;
-    reverb = undefined;fxBuses=undefined;
+    harmonyFxSource=undefined;fxBuses=undefined;
     installedSampleNames=new Set();
     let kit: Record<string, Float32Array>;
     try { [,kit]=await Promise.all([context.audioWorklet.addModule(workletUrl),loadDrumKit(context,sampleNamesForSettings(requested))]); }
@@ -1262,18 +1244,8 @@ async function initialiseAudio(requested:any=settings) {
     node.connect(master, 0); // Click stays dry and rhythmically clear.
     node.connect(master, 1);
     node.connect(master, 2); // Drums and bass bypass pad reverb and echoes.
-    const room = roomImpulse(context.sampleRate);
-    impulse = context.createBuffer(2, room[0].length, context.sampleRate);
-    room.forEach((samples,channel)=>impulse!.getChannelData(channel).set(samples));
-    wet = context.createGain();
-    wet.gain.value = (input('mute-space').checked?0:Number(input('space').value) / 100 * BUS_GAINS.space);
-    reverbGate = context.createGain();
-    reverbGate.gain.value = 0;
-    node.connect(reverbGate.gain,3);
-    wet.connect(reverbGate).connect(master);
-    const meterSplit=context.createChannelSplitter(2);reverbGate.connect(meterSplit);
-    ambientMeters=[context.createAnalyser(),context.createAnalyser()];
-    ambientMeters.forEach((meter,index)=>{meter.fftSize=256;meterSplit.connect(meter,index);});
+    harmonyFxSource=context.createGain();
+    node.connect(harmonyFxSource,8);
     node.port.onmessage = ({ data }) => {
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
@@ -1322,14 +1294,7 @@ async function initialiseAudio(requested:any=settings) {
   }
   await context.resume();
   if (context.state !== 'running') throw new Error('Your browser could not enable audio. Check site sound permissions, then try Start again.');
-  // A new convolver discards the previous session's frozen reverb tail.
-  clearTimeout(reverbSleepTimer);
-  if (reverb) { node!.disconnect(reverb, 1);if(exerciseGuitarGain?.context===context){try{exerciseGuitarGain.disconnect(reverb);}catch{}}reverb.disconnect(); }
-  reverb = context.createConvolver();
-  reverb.buffer = !input('mute-space').checked&&Number(input('space').value)>0?impulse!:null;
-  node!.connect(reverb, 1);
-  reverb.connect(wet!);if(exerciseGuitarGain?.context===context)exerciseGuitarGain.connect(reverb);
-  if(!fxBuses)fxBuses=createFxBuses(context,master!,{click:{node:node!,output:0},harmony:{node:node!,output:8},drums:{node:node!,output:4},bass:{node:node!,output:5},comping:{node:node!,output:6},sequence:{node:node!,output:7},space:{node:reverbGate!,output:0}},fxUi?.read());
+  if(!fxBuses)fxBuses=createFxBuses(context,master!,{click:{node:node!,output:0},harmony:{node:harmonyFxSource!},drums:{node:node!,output:4},bass:{node:node!,output:5},comping:{node:node!,output:6},sequence:{node:node!,output:7}},fxUi?.read());
   node!.port.postMessage({type:'fx-sends',channels:activeFxChannels(fxUi!.read())});
   fxBuses.set(fxUi!.read());fxBuses.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);fxBuses.reset();
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
@@ -1376,7 +1341,7 @@ async function previewGrip(shape: string) {
   el('error').hidden = true;
   try {
     if (replacing && master && context?.state === 'running') {
-      // Finish fading the previous waveform before resetting strings/reverb.
+      // Finish fading the previous waveform before resetting strings and effect tails.
       const now = context.currentTime;
       master.gain.cancelAndHoldAtTime(now);
       master.gain.linearRampToValueAtTime(0, now + .012);
@@ -1722,7 +1687,6 @@ document.addEventListener('click',event=>{
   const button=chordButton(event.target);
   if(button&&!button.disabled&&!playing&&!exercisePlaying){step=chordIndex(button);renderMusic();}
 });
-input('space').addEventListener('input', updateSpace);
 async function toggle() {
   if(exercisePlaying||exercisePreparing){stopExercisePreview();return;}
   if (busy || stopping || previewPreparation) return;
@@ -1759,13 +1723,13 @@ select('fret-labels').addEventListener('input', () => { guitarDegrees = select('
 select('fret-view').addEventListener('input', () => { select('exercise').value = select('fret-view').value; renderMusic(); });
 
 const soloChannels=new Set<string>();
-function mixerMuteMask(){return MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked||(soloChannels.size>0&&channel.id!=='space'&&!soloChannels.has(channel.id))).map(channel=>channel.id).join(',');}
+function mixerMuteMask(){return MIX_CHANNELS.filter(channel=>input('mute-'+channel.id).checked||(soloChannels.size>0&&!soloChannels.has(channel.id))).map(channel=>channel.id).join(',');}
 function reflectMixerChannels(){
   let mutedCount=0;
   for(const channel of MIX_CHANNELS){
     const muted=input('mute-'+channel.id).checked;
     const card=document.querySelector<HTMLElement>(`[data-mix-channel="${channel.id}"]`)!;
-    const solo=soloChannels.has(channel.id), excluded=soloChannels.size>0&&channel.id!=='space'&&!solo;
+    const solo=soloChannels.has(channel.id), excluded=soloChannels.size>0&&!solo;
     card.classList.toggle('is-solo',solo);card.classList.toggle('is-excluded',excluded);
     card.querySelector('.channel-solo')?.setAttribute('aria-pressed',String(solo));
     card.classList.toggle('is-muted',muted);card.classList.remove('is-inactive');
@@ -1793,11 +1757,11 @@ function updateMixerLevels(){
     settings[`${id}Volume`]=Number(input(`${id}-volume`).value)/100;
     el(`${id}-volume-value`).textContent=`${input(`${id}-volume`).value}%`;
   }
-  sendMixerSettings();updateSpace();reflectMixerChannels();syncMixerDetails();
+  sendMixerSettings();reflectMixerChannels();syncMixerDetails();
 }
 function applyMixerMutes(){
   settings.mutedChannels=mixerMuteMask();
-  sendMixerSettings();updateSpace();reflectMixerChannels();
+  sendMixerSettings();reflectMixerChannels();
 }
 el('mix-sections').addEventListener('click',event=>{
   const solo=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-solo-channel]');
@@ -1996,7 +1960,7 @@ function syncWorkspaceStates(){
  const locked=playing||exercisePlaying||exercisePreparing;
  document.querySelectorAll<HTMLInputElement>('[data-practice-task]').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
  const checklist=document.getElementById('practice-checklist-help');if(checklist)checklist.textContent=locked?'Stop playback before marking this checklist. It follows the currently selected chord.':'Mark items yourself for the selected root, scale and chord. Suggested times are estimates; this is not an accuracy score.';
- for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&channel.id!=='space'&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
+ for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
  const still=select('comping-movement').value==='still';select('comping-hook-length').disabled=still;input('comping-movement-amount').disabled=still;
  input('pad-depth-amount').disabled=select('pad-depth-motion').value==='fixed';
 }
@@ -2331,10 +2295,7 @@ input('preset-file').addEventListener('change',async()=>{
   finally{input('preset-file').value='';}
 });
 
-installConsole(()=>{
-  if(!context||context.state!=='running'||!master||master.gain.value<.00001)return [0,0];
-  return ambientMeters.map(meter=>{meter.getFloatTimeDomainData(ambientSamples);let peak=0;for(const value of ambientSamples)peak=Math.max(peak,Math.abs(value));return peak*master!.gain.value;});
-});
+installConsole();
 
 function activeFxChannels(value:any){return Object.keys(value.sends).filter(id=>value.sends[id].reverb>0||value.sends[id].reverbB>0||value.sends[id].delay>0);}
 fxUi=installFxControls(value=>{node?.port.postMessage({type:'fx-sends',channels:activeFxChannels(value)});fxBuses?.set(value);fxBuses?.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);});
@@ -2370,10 +2331,10 @@ async function startGuidedGoal(){
  for(const id of ['trainer-enabled','gap-enabled','loop-enabled','extension-morph'])input(id).checked=false;
  for(const id of BACKING_CHANNELS)input(id).checked=true;
  for(const channel of MIX_CHANNELS)input('mute-'+channel.id).checked=BACKING_CHANNELS.includes(channel.id);soloChannels.clear();
- input('show-grip').checked=true;input('highlight-mode').checked=true;input('count-in').checked=true;select('beats').value='4';select('subdivision').value='1';input('bpm').value='80';input('click').value='40';input('harmony').value='35';input('space').value='20';
+ input('show-grip').checked=true;input('highlight-mode').checked=true;input('count-in').checked=true;select('beats').value='4';select('subdivision').value='1';input('bpm').value='80';input('click').value='40';input('harmony').value='35';input('send-reverb-harmony').value='20';input('send-reverb-sequence').value='20';
  const accompaniment=select('practice-accompaniment').value;
  if(accompaniment==='trio'){for(const id of ['drums','bass','comping'])input('mute-'+id).checked=false;select('backing-style').value='traditionalJazz';}
- if(accompaniment==='modal'){input('extension-morph').checked=true;input('space').value='60';}
+ if(accompaniment==='modal'){input('extension-morph').checked=true;input('send-reverb-harmony').value='60';input('send-reverb-sequence').value='60';}
  if(accompaniment==='sparse'||goal.id==='time'){input('gap-enabled').checked=true;input('gap-play').value='2';input('gap-mute').value='1';select('gap-target').value='click';input('harmony').value='20';}
  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';
  Object.assign(exerciseView,{study:goal.study,stage:goal.id==='jazz'?'full':'cell',fretboard:true,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;

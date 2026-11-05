@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';import {readFileSync} from 'node:fs
 test('console send knobs sit above the faders, persist and move with the floating mixer without starting audio',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{const Original=window.AudioContext;(window as any).__fxContexts=0;window.AudioContext=class extends Original{constructor(options?:AudioContextOptions){super(options);(window as any).__fxContexts++;}};});
- await page.goto('/');await expect(page.locator('.channel-fx-sends input')).toHaveCount(21);
+ await page.goto('/');await expect(page.locator('.mix-channel')).toHaveCount(6);await expect(page.locator('#space,#mute-space,[data-mix-channel=space]')).toHaveCount(0);await expect(page.locator('.channel-fx-sends input')).toHaveCount(18);
  await expect(page.locator('#fx-reverb-return,#fx-delay-return,#fx-reverb-b-return')).toHaveCount(0);
  await page.locator('#send-reverb-drums').fill('32');await page.locator('#send-reverb-drums').dispatchEvent('input');
  const knob=page.getByRole('slider',{name:'Comping Reverb B send',exact:true});await knob.focus();await knob.press('ArrowUp');await expect(knob).toHaveValue('1');

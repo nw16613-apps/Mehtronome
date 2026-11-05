@@ -63,7 +63,7 @@ html:root[data-palette][data-theme] {
     .panel-action { min-height:30px; font-size:10px; padding:5px 9px; border-radius:5px; }
     .levels-heading { margin:0 0 12px; gap:8px; }
     .levels-heading h3 { font-size:11px; font-weight:500; color:var(--muted,var(--practice-muted,#64735f)); margin:0 auto 0 0; }
-    .mix-level-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:0; padding:12px 6px; border:1px solid var(--line,#b5c0af); border-radius:8px; background:var(--pulse,var(--practice-panel)); }
+    .mix-level-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:0; padding:12px 6px; border:1px solid var(--line,#b5c0af); border-radius:8px; background:var(--pulse,var(--practice-panel)); }
     .mix-channel { padding:5px 6px; border:0; border-right:1px solid var(--line,#b5c0af); border-radius:0; gap:12px; background:transparent; }
     .mix-channel:last-child { border-right:0; }
     .mix-channel[data-mix-channel=space] { border-left:1px solid var(--line,#b5c0af); }
@@ -107,7 +107,7 @@ html:root[data-palette][data-theme] {
 @media(max-width:1100px) {
   html:root[data-palette][data-theme] body[data-workspace=practice] {
     .workspace { grid-template-columns:minmax(300px,.9fr) minmax(0,1.3fr); gap:18px; }
-    .mix-level-grid { grid-template-columns:repeat(7,92px); overflow-x:auto; }
+    .mix-level-grid { grid-template-columns:repeat(6,92px); overflow-x:auto; }
     .mixer-quick-switches { gap:10px; }
     .studio-tools .small-label { display:none; }
   }
@@ -139,7 +139,7 @@ html:root[data-palette][data-theme] {
       .transport-options>label:first-child { grid-template-columns:1fr 58px; font-size:10px; }
       #subdivision { width:58px; }
       .transport-options .check { font-size:9px; }
-      .mix-level-grid { grid-template-columns:repeat(7,98px); padding:12px 4px; }
+      .mix-level-grid { grid-template-columns:repeat(6,98px); padding:12px 4px; }
       .channel-mute,.channel-solo { min-height:40px; min-width:34px; padding:5px; }
       .mixer-quick-switches { gap:10px 16px; }
       #open-sound-settings { margin-left:0; }

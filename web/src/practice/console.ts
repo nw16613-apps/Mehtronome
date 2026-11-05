@@ -26,7 +26,7 @@ export function syncConsole(){
 }
 let recentPeaks:number[]=[];let receivedAt=0;
 export function receiveConsoleMeters(peaks:number[]){if(!Array.isArray(peaks)||peaks.length!==12)return;recentPeaks=peaks;receivedAt=performance.now();}
-export function installConsole(ambient:()=>number[]){
+export function installConsole(){
  syncConsole();
  for(const channel of MIX_CHANNELS){
   const input=control(channel.control);let pointer:number|null=null;
@@ -37,12 +37,12 @@ export function installConsole(ambient:()=>number[]){
   input.addEventListener('pointercancel',()=>pointer=null);
   input.addEventListener('dblclick',()=>{input.value=String(channel.value);input.dispatchEvent(new Event('input',{bubbles:true}));});
  }
- const lanes=Array.from(document.querySelectorAll<HTMLElement>('.console-meter-lane'));const shown=new Float32Array(14),held=new Float32Array(14);let previous=performance.now();
+ const lanes=Array.from(document.querySelectorAll<HTMLElement>('.console-meter-lane'));const shown=new Float32Array(12),held=new Float32Array(12);let previous=performance.now();
  function frame(now:number){
   const dt=Math.max(0,Math.min(.1,(now-previous)/1000));previous=now;
   const visible=document.getElementById('mix-sections')!.getClientRects().length>0&&!document.hidden;
-  if(visible){const tail=ambient();for(let i=0;i<14;i++){
-   const raw=i<12?(now-receivedAt<180?recentPeaks[i]||0:0):tail[i-12]||0;
+  if(visible){for(let i=0;i<12;i++){
+   const raw=now-receivedAt<180?recentPeaks[i]||0:0;
    const target=Number.isFinite(raw)&&raw>0?Math.max(0,Math.min(100,(20*Math.log10(raw)+60)/60*100)):0;
    shown[i]=Math.max(target,shown[i]-dt*85);held[i]=Math.max(target,held[i]-dt*18);
    lanes[i].style.setProperty('--level',`${shown[i]}%`);lanes[i].style.setProperty('--peak',`${held[i]}%`);lanes[i].style.setProperty('--visible',held[i]>0?'1':'0');

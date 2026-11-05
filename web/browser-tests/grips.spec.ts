@@ -111,39 +111,18 @@ test('changing diagrams before a strum loads prevents a stale note',async({page}
   await expect(page.locator('#grip-preview-status')).toBeHidden();
 });
 
-test('guitar strums feed stereo reverb controlled by Ambient space',async({page})=>{
+test('guitar strums feed the selected Harmony reverb send without a fixed room return',async({page})=>{
   await page.addInitScript(()=>{
-    const Original=window.AudioWorkletNode;
-    window.AudioWorkletNode=class extends Original{
-      constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
-        super(context,name,options);
-        const create=context.createGain.bind(context);let count=0;
-        context.createGain=()=>{
-          const gain=create();
-          if(count++===1){
-            const split=context.createChannelSplitter(2),left=context.createAnalyser(),right=context.createAnalyser();
-            gain.connect(split);split.connect(left,0);split.connect(right,1);
-            (window as any).__guitarWet=[left,right];
-          }
-          return gain;
-        };
-      }
-    };
+    const Native=window.AudioContext;
+    window.AudioContext=new Proxy(Native,{construct(target,args){const context=Reflect.construct(target,args) as AudioContext,create=context.createConvolver.bind(context);context.createConvolver=()=>{const node=create(),split=context.createChannelSplitter(2),left=context.createAnalyser(),right=context.createAnalyser();node.connect(split);split.connect(left,0);split.connect(right,1);(window as any).__guitarWet=[left,right];return node;};return context;}});
   });
-  await openReference(page);await page.locator('#show-grip').check();await page.locator('#space').fill('0');
-  const button=page.locator('[data-position="III"] .grip-preview');await button.click();
-  await expect(page.locator('#grip-preview-status')).toBeVisible();
-  const wet=()=>page.evaluate(()=>{
-    const channels=((window as any).__guitarWet as AnalyserNode[]).map(a=>{const values=new Float32Array(a.fftSize);a.getFloatTimeDomainData(values);return values;});
-    return {peak:Math.max(...channels[0].map(Math.abs)),difference:Math.max(...channels[0].map((v,i)=>Math.abs(v-channels[1][i])))};
-  });
-  await page.waitForTimeout(150);expect((await wet()).peak).toBe(0);
-  await page.locator('#space').fill('75');
-  await expect(page.locator('#grip-preview-status')).toBeVisible();
-  await expect.poll(async()=>(await wet()).peak).toBeGreaterThan(.001);
-  await expect.poll(async()=>(await wet()).difference).toBeGreaterThan(.001);
-  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
-  await expect(page.locator('#grip-preview-status')).toBeHidden();
+  await page.goto('/');await page.locator('[data-workspace-target=guitar-title]').click();await page.locator('#show-grip').check();await expect(page.locator('#space')).toHaveCount(0);
+  await page.locator('.grip-preview').first().click();await expect(page.locator('#grip-preview-status')).toBeVisible();
+  expect(await page.evaluate(()=>(window as any).__guitarWet===undefined)).toBe(true);
+  await page.locator('#mini-mixer').click();await page.locator('#send-reverb-harmony').fill('75');await page.locator('#send-reverb-harmony').dispatchEvent('input');
+  const wet=()=>page.evaluate(()=>{const channels=((window as any).__guitarWet as AnalyserNode[]|undefined)?.map(a=>{const values=new Float32Array(a.fftSize);a.getFloatTimeDomainData(values);return values;});return channels?{peak:Math.max(...channels[0].map(Math.abs)),difference:Math.max(...channels[0].map((v,i)=>Math.abs(v-channels[1][i])))}:{peak:0,difference:0};});
+  await expect.poll(async()=>(await wet()).peak).toBeGreaterThan(.0001);await expect.poll(async()=>(await wet()).difference).toBeGreaterThan(.0001);
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await expect(page.locator('#grip-preview-status')).toBeHidden();
 });
 
 test('guitar dry and reverb sum with headroom at full volume, including repeated strums',async({page})=>{
@@ -165,7 +144,7 @@ test('guitar dry and reverb sum with headroom at full volume, including repeated
       }
     };
   });
-  await page.goto('/');await page.locator('#show-grip').check();await page.locator('#harmony').fill('100');await page.locator('#space').fill('100');
+  await page.goto('/');await page.locator('#show-grip').check();await page.locator('#harmony').fill('100');await page.locator('#send-reverb-harmony').fill('100');
   for(const [mode,key] of [['dorian','9'],['lydian','0'],['altered','7']]){
     await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
     for(const [selector,status,count] of [['.grip-preview','#grip-preview-status',5]] as const){

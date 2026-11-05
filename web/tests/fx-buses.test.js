@@ -27,3 +27,8 @@ test('delay lengths include dotted/triplet subdivisions and support a whole note
 test('reverb choices have distinct deterministic decay lengths and stereo responses',()=>{
  const lengths=new Set();for(const type of ['room','chamber','plate','hall']){const impulse=fxImpulse(8000,type);lengths.add(impulse[0].length);assert.deepEqual(impulse,fxImpulse(8000,type));assert.notDeepEqual(impulse[0],impulse[1]);assert.ok(impulse.every(channel=>channel.every(Number.isFinite)));}assert.equal(lengths.size,4);
 });
+
+test('legacy room return is absent and old return sends cannot create an extra FX source',()=>{
+ assert.equal(FX_CHANNELS.length,6);assert.ok(!FX_CHANNELS.includes('space'));
+ const fx=normalizeFxSettings({sends:{space:{reverb:70},harmony:{reverbB:32}}});assert.equal(fx.sends.space,undefined);assert.equal(fx.sends.harmony.reverbB,32);
+});
