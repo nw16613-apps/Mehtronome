@@ -15,3 +15,9 @@ Validation covers all six pages at desktop/phone widths; chart generator and rep
 ## Exercise guidance follow-up
 
 Exercise help is now one short, study-specific paragraph under About this exercise. The duplicated chord/material list, starting-note prose, timing essays, grip reference and footer instructions are removed. A single key stays beside the diagram; a single trainer message stays beside its controls. Distinct timing/availability warnings remain near the exercise choices. Eleven browser checks cover the condensed structure, desktop/mobile layouts, chart/CAGED preservation and selected-passage playback; the exercise-option checks and TypeScript build pass.
+
+## App-wide text review
+
+Reviewed all six pages with their reference disclosures expanded. Mixer operations and FX routing each have one explanation; ordinary accent and trainer states no longer repeat the controls. Harmony removes duplicated mode/backing narrative and shows evolving-extension state only when relevant. Fretboard keeps one scale/pitch reference, parent fingering and unique overlay omissions instead of repeating its diagram and legend. Progress uses a short suggested-session pointer instead of repeating checklist labels; the guided banner keeps its title/navigation with the setup tip beside the goal choice. Generator help and statuses are shorter, and routine chart draft updates use a single status location. Saved-data scope, compatibility warnings, mode insights and licence/source information remain.
+
+Twenty scoped browser workflows pass across the text review, generator, shared routes, playback, mobile mixer and current pages; ten context/learning checks and TypeScript pass. Two old pulse-test expectations were updated for the current six-channel mixer and the intentional removal of redundant normal-accent prose.

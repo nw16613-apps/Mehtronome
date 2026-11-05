@@ -6,7 +6,7 @@ export function musicalContext(settings,step=0){
 }
 export function spellingHelp(harmony){
  const aliases=harmony.chordPcs.flatMap((pc,i)=>{const j=harmony.scalePcs.indexOf(pc);return j>=0&&harmony.tones[i]!==harmony.scaleNames[j]?[`${harmony.tones[i]} = ${harmony.scaleNames[j]}`]:[];});
- return `Chord labels describe the harmony; scale labels describe its guide. 2/9, 4/11 and 6/13 name the same pitch classes in different registers.${aliases.length?' Enharmonic equivalents here: '+aliases.join(', ')+'.':''} Scale guides are contextual choices, not rules for every use of a chord.`;
+ return `Extensions 9, 11 and 13 correspond to scale degrees 2, 4 and 6.${aliases.length?' Enharmonic equivalents here: '+aliases.join(', ')+'.':''} Scale guides are contextual choices.`;
 }
 
 /** Report pitch-class differences without forbidding deliberate outside harmony. */

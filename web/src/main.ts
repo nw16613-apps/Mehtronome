@@ -25,7 +25,7 @@ import {installChartTools} from './practice/chart-tools.js';
 import {chordSheet} from './practice/chord-sheet.js';
 import {progressionStudyPlan,planPosition} from './practice/progression-timing.js';
 import {progressionNotationSvg} from './practice/progression-notation.js';
-import {GOALS,gripStudy,positionalArpeggio,gripFacts,shortCell,overlayPurpose,guideToneExamples} from './practice/learning.js';
+import {GOALS,gripStudy,positionalArpeggio,gripFacts,shortCell,guideToneExamples} from './practice/learning.js';
 import {learningView,highlightLearningNote,updateProgressionMap} from './practice/learning-view.js';
 import {musicalContext,spellingHelp,scaleCompatibility} from './practice/context.js';
 import './beta.css';
@@ -89,12 +89,12 @@ app.innerHTML = `
     <button type="button" class="workspace-tab" data-workspace-target="sound-settings-title"><span>06</span>Sound Settings</button>
   </div>
 </nav>
-<main><section id="guided-goals" class="panel guided-goals workspace-page workspace-practice"><div class="section-heading"><h2>Start with a musical goal</h2><button type="button" class="practice-button" data-learning-nav="progress">Learning path →</button></div><div class="goal-controls"><label>Today’s goal<select id="practice-goal">${GOALS.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></label><label>Accompaniment<select id="practice-accompaniment"><option value="clear">Clear harmony study</option><option value="trio">Jazz trio</option><option value="modal">Modal exploration</option><option value="sparse">Sparse click / time</option></select></label><button type="button" class="practice-button" id="start-guided-goal">Set up this session</button></div><p id="goal-description" class="practice-help">${GOALS[0].tip} Keeps your selected tonic. Configures tools without starting audio.</p></section><section id="guided-session" class="guided-session" hidden><strong id="guided-session-title"></strong><p id="guided-session-tip"></p><div><button class="practice-button" data-learning-nav="harmony">1 · Hear the harmony</button><button class="practice-button" data-learning-nav="guitar">2 · Learn the shape</button><button class="practice-button" data-learning-nav="exercises">3 · Practise an idea</button><button class="practice-button" data-learning-nav="progress">Setups & progress</button><button id="dismiss-guided-session" class="practice-button">Dismiss guide</button></div></section><div class="studio-intro workspace-page workspace-practice"><div><p class="eyebrow">YOUR PRACTICE SPACE</p><h1>Metronome &amp; mixer</h1></div><p>Set your pulse. Shape your sound.</p></div>
+<main><section id="guided-goals" class="panel guided-goals workspace-page workspace-practice"><div class="section-heading"><h2>Start with a musical goal</h2><button type="button" class="practice-button" data-learning-nav="progress">Learning path →</button></div><div class="goal-controls"><label>Today’s goal<select id="practice-goal">${GOALS.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></label><label>Accompaniment<select id="practice-accompaniment"><option value="clear">Clear harmony study</option><option value="trio">Jazz trio</option><option value="modal">Modal exploration</option><option value="sparse">Sparse click / time</option></select></label><button type="button" class="practice-button" id="start-guided-goal">Set up this session</button></div><p id="goal-description" class="practice-help">${GOALS[0].tip}</p></section><section id="guided-session" class="guided-session" hidden><strong id="guided-session-title"></strong><div><button class="practice-button" data-learning-nav="harmony">1 · Hear the harmony</button><button class="practice-button" data-learning-nav="guitar">2 · Learn the shape</button><button class="practice-button" data-learning-nav="exercises">3 · Practise an idea</button><button class="practice-button" data-learning-nav="progress">Setups & progress</button><button id="dismiss-guided-session" class="practice-button">Dismiss guide</button></div></section><div class="studio-intro workspace-page workspace-practice"><div><p class="eyebrow">YOUR PRACTICE SPACE</p><h1>Metronome &amp; mixer</h1></div><p>Set your pulse. Shape your sound.</p></div>
   <div class="intro workspace-page workspace-progress"><div><p class="eyebrow">SAVED PRACTICE &amp; PROGRESS</p><h1 id="progress-title">Your practice.<br><em>Your progress.</em></h1></div><p class="intro-copy">Save your setups and pick up where you left off.<br>Follow your learning path, one session at a time.</p></div>
   <section class="presets panel workspace-page workspace-progress" aria-labelledby="presets-title">
     <div class="section-heading"><h2 id="presets-title">Practice presets</h2><span class="small-label">PICK UP WHERE YOU LEFT OFF</span></div>
     <div class="preset-fields"><label>Preset name<input id="preset-name" type="text" maxlength="60" placeholder="e.g. D Dorian · slow groove"></label><button id="preset-save" class="practice-button">Save new</button><label>Saved setups<select id="preset-list"><option value="">Choose a preset</option></select></label><div class="preset-actions"><button id="preset-load" class="practice-button" disabled>Load</button><button id="preset-update" class="practice-button" disabled>Update</button><button id="preset-delete" class="practice-button" disabled>Delete</button></div></div>
-    <p id="preset-status" class="practice-help" role="status">Saved on this browser. Loading a setup stops playback.</p>
+    <p id="preset-status" class="practice-help" role="status">Setups are saved in this browser.</p>
   <div class="preset-transfer"><button id="preset-export" class="practice-button">Export presets</button><button id="preset-import" class="practice-button">Import presets</button><input id="preset-file" type="file" accept=".json,application/json" hidden></div>
   </section>
   <div class="workspace">
@@ -120,8 +120,8 @@ app.innerHTML = `
 
 
 
-      <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox" checked>Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Slowly add and release extensions from the current scale. The root and progression stay in place; this shapes the sustained harmony.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
-      <p id="mode-tip" class="mode-tip"></p>
+      <div class="practice-block extension-morph"><label class="check"><input id="extension-morph" type="checkbox" checked>Evolving chord extensions</label><div id="extension-controls" hidden><label>Blend cycle<select id="extension-bars"><option value="4">4 bars</option><option value="8" selected>8 bars</option><option value="16">16 bars</option></select></label><p class="practice-help">Adds and releases scale extensions in the sustained Harmony track.</p></div><p id="extension-status" class="practice-help" hidden></p></div>
+
       <div class="mode-label">BACKING</div><div class="segmented" hidden aria-hidden="true"><button id="pedal" class="selected" aria-pressed="true">Pedal chord</button><button id="progression" aria-pressed="false">Chord progression</button></div>
       <button id="single-chord-chart" type="button" class="practice-button">New single-chord chart</button>
       <button id="mode-template" class="practice-button mode-template-button">Try a mode progression</button>
@@ -147,30 +147,30 @@ app.innerHTML = `
       <div class="section-heading"><div><h2 id="notes-title">Under your fingers</h2><p id="seventh-chords-context" class="mode-map-context"></p></div><label class="exercise-label">Exercise <select id="exercise"><option value="scale">Scale</option><option value="arpeggio">Arpeggio</option></select></label></div>
       <div class="chord-stage"><span class="small-label" id="chord-caption">LET IT RING</span><p class="small-label current-chord-label">CURRENT CHORD</p><div id="chord-name">C<span>maj</span></div><p id="chord-notes">C · E · G</p></div>
       <label class="check characteristic-toggle"><input id="highlight-mode" type="checkbox" checked>Highlight modal colour notes</label><p id="characteristic-notes" class="practice-help"></p>
-      <p class="mode-map-guide">Read down: scale note &amp; degree → seventh chord → its four chord tones.</p>
+
       <ol id="note-list" class="mode-harmony-map" aria-label="Scale degrees and their seventh chords"></ol>
       <p id="exercise-description">Play these notes on your instrument, at your own pace.</p>
     </section>
 
       <div id="preview-controls" hidden><p>While stopped, hold a chord to hear it. Release to stop; its diagrams stay selected.</p><span id="preview-status" role="status" hidden>Release to stop</span></div>
-      <p class="backing-description" id="backing-description">One sustained chord. Explore how every note feels against it.</p>
+
       <details class="learn-more"><summary>Learn more about this harmony</summary><p id="harmony-explanation" class="practice-help"></p></details>
     </section>
 
     <section id="mix-panel" class="mix panel workspace-page workspace-practice" aria-labelledby="mix-title"><div class="section-heading"><div><p class="eyebrow">SOUND DESK</p><h2 id="mix-title">Mixer</h2></div><button id="mix-collapse" class="panel-action" type="button" aria-controls="mix-sections" aria-expanded="true">Hide mixer</button></div>
       <p id="mixer-docked-note" class="practice-help" hidden>Mixer is open above the focus bar. <button id="mixer-return" type="button" class="panel-action">Return mixer here</button></p><div id="mix-sections" class="mix-sections">
         <section class="mix-levels mix-group" aria-labelledby="levels-title"><div class="levels-heading"><h3 id="levels-title">Levels &amp; effects</h3><button id="mixer-clear-solos" type="button" class="panel-action" disabled>Clear solos</button><button id="mixer-unmute-all" type="button" class="panel-action" disabled>Unmute all</button></div>
-          <div class="master-output"><label for="master-volume">Master volume</label><input id="master-volume" type="range" min="0" max="100" value="100" aria-describedby="master-volume-help"><output id="master-volume-value" for="master-volume">100%</output><p id="master-volume-help" class="practice-help">Overall listening level. Your instrument balance stays the same.</p></div>
+          <div class="master-output"><label for="master-volume">Master volume</label><input id="master-volume" type="range" min="0" max="100" value="100" aria-describedby="master-volume-help"><output id="master-volume-value" for="master-volume">100%</output><p id="master-volume-help" class="practice-help">Adjust overall loudness without changing the mix.</p></div>
           <div class="console-level-scroll" tabindex="0" aria-label="Scroll mixer channels"><div class="mix-level-grid">${MIX_CHANNELS.map(consoleChannel).join('')}</div></div>
         </section>
 <div class="mixer-quick-switches" aria-label="Sound settings">${BACKING_CHANNELS.map(id=>`<input id="${id}" type="checkbox" hidden>`).join('')}<button type="button" id="open-sound-settings" class="panel-action">Sound settings →</button></div></div></section>
 <section class="studio-tools panel workspace-page workspace-practice" aria-labelledby="practice-tools-title"><div class="section-heading"><h2 id="practice-tools-title">Practice tools</h2><span class="small-label">MAKE EACH SESSION COUNT</span></div>      <div class="pulse-shortcut-row"><span class="small-label">TEMPO SHORTCUTS</span><div id="tempo-shortcuts" class="tempo-shortcuts"></div><button id="tempo-save" type="button" class="practice-button">Save current tempo</button><span id="tempo-shortcut-status" class="practice-help" role="status"></span></div>      <div class="pulse-tool-grid">
-        <details class="pulse-tool"><summary>Swing</summary><div class="pulse-tool-fields"><label>Eighth-note swing <output id="pulse-swing-value">Straight</output><input id="pulse-swing" type="range" min="0" max="100" value="0" aria-describedby="pulse-swing-help"></label><p id="pulse-swing-help" class="practice-help">Select eighth notes above. Move from straight timing to a triplet feel; backing rhythms keep their own groove.</p></div></details>
-        <details class="pulse-tool"><summary>Practice timer</summary><div class="pulse-tool-fields"><label>Session length (minutes; 0 = unlimited)<input id="pulse-minutes" type="number" min="0" max="180" step="1" value="0"></label><label class="check"><input id="pulse-finish-bar" type="checkbox" checked>Finish the current bar before stopping</label><output id="pulse-time" class="pulse-time" aria-live="off">0:00 elapsed</output><p class="practice-help">Starts after the count-in. Starting playback begins a new session.</p></div></details>
-        <details class="pulse-tool"><summary>Polyrhythm</summary><div class="pulse-tool-fields"><label>Overlay<select id="pulse-poly"><option value="0/2">Off</option><option value="3/2">3 against 2</option><option value="4/3">4 against 3</option><option value="5/4">5 against 4</option><option value="7/4">7 against 4</option><option value="2/3">2 against 3</option></select></label><div id="pulse-poly-beats" class="pulse-poly-beats" aria-label="Polyrhythm beats"></div><p class="practice-help">A higher click plays the overlay evenly across the chosen number of main beats. Both layers follow the tempo trainer and gap training.</p></div></details>
+        <details class="pulse-tool"><summary>Swing</summary><div class="pulse-tool-fields"><label>Eighth-note swing <output id="pulse-swing-value">Straight</output><input id="pulse-swing" type="range" min="0" max="100" value="0" aria-describedby="pulse-swing-help"></label><p id="pulse-swing-help" class="practice-help">Choose eighth notes to adjust swing. Backing grooves keep their own feel.</p></div></details>
+        <details class="pulse-tool"><summary>Practice timer</summary><div class="pulse-tool-fields"><label>Session length (minutes; 0 = unlimited)<input id="pulse-minutes" type="number" min="0" max="180" step="1" value="0"></label><label class="check"><input id="pulse-finish-bar" type="checkbox" checked>Finish the current bar before stopping</label><output id="pulse-time" class="pulse-time" aria-live="off">0:00 elapsed</output><p class="practice-help">Timer starts after the count-in and resets for each session.</p></div></details>
+        <details class="pulse-tool"><summary>Polyrhythm</summary><div class="pulse-tool-fields"><label>Overlay<select id="pulse-poly"><option value="0/2">Off</option><option value="3/2">3 against 2</option><option value="4/3">4 against 3</option><option value="5/4">5 against 4</option><option value="7/4">7 against 4</option><option value="2/3">2 against 3</option></select></label><div id="pulse-poly-beats" class="pulse-poly-beats" aria-label="Polyrhythm beats"></div><p class="practice-help">A higher click plays the overlay evenly over the selected main beats.</p></div></details>
       </div>
       <div class="practice-block tempo-training"><label class="check"><input id="trainer-enabled" type="checkbox">Tempo trainer</label><div id="trainer-controls" hidden><div class="trainer-fields"><label>Every <select id="trainer-bars"><option>1</option><option>2</option><option selected>4</option><option>8</option></select> bars</label><label>Increase <input id="trainer-increment" type="number" min="1" max="30" value="2"> BPM</label><label>Target <input id="trainer-target" type="number" min="30" max="240" value="120"> BPM</label></div><p id="trainer-status" class="practice-help" role="status">Starts at your selected tempo.</p></div></div>
-      <div class="practice-block gap-training"><label class="check"><input id="gap-enabled" type="checkbox">Gap training</label><div id="gap-controls" hidden><div class="field-row"><label>Audible bars<select id="gap-play"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label><label>Gap bars<select id="gap-mute"><option>1</option><option>2</option><option>4</option></select></label></div><label class="check"><input id="gap-progressive" type="checkbox">Increase silence by one bar after each cycle</label><label class="template-field">Maximum silent bars<select id="gap-max"><option>2</option><option>4</option><option selected>8</option><option>16</option></select></label><label class="template-field">Mute during gaps<select id="gap-target"><option value="all">Click + backing</option><option value="click">Click only</option><option value="backing">Backing only</option></select></label><p class="practice-help">Keep playing through the gap. The harmony and pulse continue underneath; the count-in stays audible.</p></div></div>
+      <div class="practice-block gap-training"><label class="check"><input id="gap-enabled" type="checkbox">Gap training</label><div id="gap-controls" hidden><div class="field-row"><label>Audible bars<select id="gap-play"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label><label>Gap bars<select id="gap-mute"><option>1</option><option>2</option><option>4</option></select></label></div><label class="check"><input id="gap-progressive" type="checkbox">Increase silence by one bar after each cycle</label><label class="template-field">Maximum silent bars<select id="gap-max"><option>2</option><option>4</option><option selected>8</option><option>16</option></select></label><label class="template-field">Mute during gaps<select id="gap-target"><option value="all">Click + backing</option><option value="click">Click only</option><option value="backing">Backing only</option></select></label><p class="practice-help">Keep time through the silent bars. Count-in remains audible.</p></div></div>
 </section>
     <section class="sound-settings panel workspace-page workspace-settings" aria-labelledby="sound-settings-title"><div class="section-heading"><div><p class="eyebrow">SHAPE YOUR SOUND</p><h2 id="sound-settings-title">Sound Settings</h2></div></div><p class="practice-help">Choose a backing style, then unmute the instruments you want in the mixer.</p><section class="metronome-sound-settings workspace-group sound-instrument-card" id="sound-click"><div class="sound-section-heading"><h3>Metronome</h3><span class="sound-channel-state" data-sound-state="click"></span></div><label>Click sound<select id="pulse-sound"><option value="beep">Digital beep</option><option value="wood">Woodblock</option><option value="rim">Rim click</option><option value="soft">Soft click</option></select></label></section></section>
     <section class="practice-roadmap panel workspace-page workspace-progress" aria-labelledby="practice-roadmap-title">
@@ -179,16 +179,16 @@ app.innerHTML = `
       <div class="practice-roadmap-tools"><label>Today’s session<select id="practice-roadmap-duration"><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></label><button id="practice-roadmap-reset" type="button" class="practice-button">Reset this mode</button></div>
       <div id="practice-roadmap-today" class="practice-roadmap-today"></div>
       <div id="practice-roadmap-list" class="practice-roadmap-list"></div>
-      <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Best completion for each mode at the current root, across the chord qualities you have studied.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
+      <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Highest checklist completion for each mode at this root.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
     </section>
     <section class="guitar panel workspace-page workspace-guitar" aria-labelledby="guitar-title">
       <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Fretboard explorer</h2></div><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
       <section class="progression-reference compact-reference" aria-label="Fretboard progression reference"></section>
       <div class="guitar-guide guitar-overview">
-        <h3 id="guitar-context"></h3><p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
+        <p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <input type="hidden" id="pattern-start-route" value=""><input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
-        <label class="check grip-toggle"><input id="show-grip" type="checkbox" aria-describedby="grip-toggle-help">Show chord voicing</label><p id="grip-toggle-help" class="guitar-help">Show a chord voicing in the selected position and on the full-neck map.</p><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
+        <label class="check grip-toggle"><input id="show-grip" type="checkbox">Show chord voicing</label><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
         <div class="theory-controls shared-theory-controls"><label>Melodic overlay<select id="theory-view" aria-label="Melodic overlay"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Pentatonic source<select id="theory-choice" aria-label="Pentatonic source"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord voicing</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
@@ -196,8 +196,8 @@ app.innerHTML = `
       <div id="position-overview" class="position-overview" role="tablist" aria-label="CAGED positions"></div>
       <div id="guitar-diagrams" class="guitar-diagrams"></div>
       <div class="position-navigation" aria-label="Position navigation"><button id="position-previous" type="button" class="practice-button">← Previous</button><span id="position-indicator" aria-live="polite"></span><button id="position-next" type="button" class="practice-button">Next →</button></div>
-      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">Major-scale modes share their parent-major fretboard fingerings. Position numbers and CAGED names follow the current modal root within each fingering; gold dots mark that root. With Show chord voicing enabled, play the solid-ring notes together. Faded notes remain available for scale or arpeggio practice. Click Strum chord while stopped to hear a warm nylon-string guitar chord at your Harmony volume. Use the Harmony track’s Reverb A/B sends to add reverb. Click the same button again to stop the chord. The Melodic overlay selector applies a pentatonic superimposition or triad pair to all five positions at once. These highlight notes within the same CAGED fingerings, with modal degrees and A/B triad markers. Voicing and modal markings return when the overlay is off.</p>
-        <p class="guitar-help">High E is at the top, low E at the bottom. Frets increase from left to right. Open-position forms are moved up an octave so every position uses fretted notes.</p>
+      <details class="guitar-guide learn-more"><summary>Learn more about the diagrams</summary><p class="guitar-help">CAGED names follow the current modal root. Major-scale modes share their parent-major fingerings.</p>
+        <p class="guitar-help">Open shapes are shown an octave higher so all positions use fretted notes.</p>
       </details>
     </section>
     <section id="caged-exercise" class="caged-exercise panel workspace-page workspace-exercises" aria-labelledby="caged-exercise-title"></section>
@@ -328,7 +328,7 @@ function reflectExerciseSelection(){
   document.querySelectorAll<HTMLElement>('#caged-exercise .exercise-note').forEach(note=>{const index=Number(note.dataset.noteIndex);note.classList.toggle('range-selected',Boolean(range&&index>=range.start&&index<=range.end));});
   const playButton=document.querySelector<HTMLButtonElement>('#exercise-preview'),clearButton=document.querySelector<HTMLButtonElement>('#exercise-clear-range');
   if(playButton&&!exercisePreparing)playButton.textContent=exercisePlaying?(range?'■ Stop passage':'■ Stop exercise'):(range?'▶ Play selected passage':'▶ Play exercise');
-  const description=document.querySelector<HTMLElement>('#exercise-range-description');if(description)description.textContent=range?`${range.end-range.start+1} notes selected. Play uses this passage${exerciseView.loop?' and repeats it':''}.`:'Drag across notation notes to select a passage. Play uses the full exercise when no passage is selected.';
+  const description=document.querySelector<HTMLElement>('#exercise-range-description');if(description)description.textContent=range?`${range.end-range.start+1} notes selected. Play uses this passage${exerciseView.loop?' and repeats it':''}.`:'Drag across notes to select a passage.';
   if(clearButton){clearButton.disabled=!range;clearButton.hidden=!range;}
 }
 function updateExerciseCursor(frame=performance.now()){
@@ -600,7 +600,6 @@ function renderMusic(skipExercise=false,positionOverride:any=null) {
   const custom = template.kind === 'custom';
   el('chord-caption').textContent = settings.progression && modal ? `${progressionDurations(settings).reduce((sum:number,bars:number)=>sum+bars,0)}-BAR MODAL LOOP` : !settings.progression ? 'LET IT RING' : settings.loopEnabled ? `${progressionTimeline(settings).reduce((sum:number,segment:any)=>sum+segment.duration,0)}-BEAT SELECTED LOOP` : custom ? `${progressionBeatDurations(settings).reduce((sum:number,beats:number)=>sum+beats,0)}-BEAT CUSTOM LOOP` : jazz ? `${progressionDurations(settings).reduce((sum: number, bars: number) => sum + bars, 0)}-BAR JAZZ LOOP` : template.bars === 2 ? 'TWO BARS PER CHORD' : 'ONE BAR PER CHORD';
   el('harmony-explanation').textContent = [scaleCompatibility(info),spellingHelp(info)].filter(Boolean).join(' ')+' '+(modal ? ('explanation' in template ? String(template.explanation) : '') : MODES[info.mode as keyof typeof MODES].tip);
-  el('backing-description').textContent = custom ? 'Your progression follows the chord, duration, bass-note and scale-guide choices in the builder.' : modal && settings.progression ? `A ${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name} practice loop.` : !settings.progression ? 'One sustained chord. Explore how every note feels against it.' : jazz ? 'Classic jazz changes with fixed chord types. The scale guide follows each chord.' : settings.template === 'diatonic' ? 'Diatonic seventh chords, one bar each.' : settings.template.startsWith('fourths') ? `All 12 roots by perfect fourths, keeping the selected chord type. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord.` : `The same chord type on ${template.roman.join('–')}. ${template.bars === 2 ? 'Two bars' : 'One bar'} per chord. Mode notes follow each root.`;
 
   const colour = characteristicNotes(info);
   const highlight = input('highlight-mode').checked;
@@ -627,10 +626,10 @@ function renderMusic(skipExercise=false,positionOverride:any=null) {
       </div>
     </li>`;
   }).join('');
-  el('exercise-description').textContent=arpeggio?'Play the highlighted scale notes as the current arpeggio. Other scale notes are dimmed; the outlined chord marks the current root.':'Filled note boxes belong to the current chord; dashed rings mark modal colour notes. Each seventh chord stacks alternate notes of this mode; the outlined chord marks the current root.';
+  el('exercise-description').textContent=arpeggio?'Highlighted notes: current chord tones.':'Filled notes: current chord · dashed rings: modal colour notes.';
 
   const extensions=extensionChoices(info);
-  el('extension-status').textContent=extensions.length?`Scale colours: ${extensions.map(choice=>choice.label).join(' · ')} · ${settings.extensionBars}-bar blend cycle`:'This scale has no additional extensions for the selected chord.';
+  el('extension-status').textContent=extensions.length?`Available extensions: ${extensions.map(choice=>choice.label).join(' · ')}`:'This scale has no additional extensions for the selected chord.';
   renderGuitar(skipExercise,positionOverride);
   syncMiniTransport();
   if(focusedReference&&focusedReferenceStep!==undefined){
@@ -647,7 +646,7 @@ function renderPracticeRoadmap(info:any){
   el('practice-roadmap-percent').textContent=`${percent}%`;
   el('practice-roadmap-count').textContent=`${count} of ${PRACTICE_TASKS.length} checked`;
   (el('practice-roadmap-fill') as HTMLElement).style.width=`${percent}%`;
-  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Suggested ${duration}-minute session · ${today.minutes} min estimated</strong><span>${today.tasks.map(task=>escapeHtml(task.label)).join(' · ')}</span>`:'<strong>Checklist complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
+  el('practice-roadmap-today').innerHTML=today.tasks.length?`<strong>Suggested ${duration}-minute session · ${today.minutes} min estimated</strong><span>Start with the first ${today.tasks.length} unchecked items below.</span>`:'<strong>Checklist complete</strong><span>Revisit weak areas or apply the mode over a new progression.</span>';
   const stages=[...new Set(PRACTICE_TASKS.map(task=>task.stage))];
   el('practice-roadmap-list').innerHTML=stages.map(stage=>`<fieldset><legend>${stage}</legend>${PRACTICE_TASKS.filter(task=>task.stage===stage).map(task=>`<label class="practice-roadmap-task${done.has(task.id)?' complete':''}"><input type="checkbox" data-practice-task="${task.id}" ${done.has(task.id)?'checked':''}><span>${escapeHtml(task.label)}</span><small>${task.minutes} min</small></label>`).join('')}</fieldset>`).join('');
   const root=context.root;
@@ -671,7 +670,7 @@ function fillHarmonyChoices(chordId:string,currentMode:string){
  const legacy=!ids.includes(chordId)?`<option value="${chordId}" disabled>${escapeHtml(CHORDS[chordId as keyof typeof CHORDS].name)} · outside selected mode</option>`:'';
  chord.innerHTML=legacy+modeChordGroups(currentMode).map((group:any)=>`<optgroup label="${escapeHtml(group.label)}">${group.choices.map((choice:any)=>`<option value="${choice.id}">${escapeHtml(choice.name)}${choice.id===suggested?' · suggested':''}</option>`).join('')}</optgroup>`).join('');chord.value=chordId;
  for(const option of Array.from(chord.options)){const choice=choices.find((c:any)=>c.id===option.value);if(choice){if(!choice.strict)option.textContent+=' · reduced guide';option.title=choice.explanation;}}
- el('custom-mode-help').textContent=`${choices.length} compatible chord qualities on the selected root, grouped by structure. Changing the mode keeps compatible qualities and replaces incompatible ones with a suggestion. Pentatonic/blues options marked “reduced guide” can omit written chord tones.`;
+ el('custom-mode-help').textContent=`Changing mode keeps compatible chord qualities and replaces incompatible ones. “Reduced guide” may omit chord tones.`;
 }
 function fillChordScaleOptions(chordId:string,currentMode:string){
   const groups=compatibleScaleGroups(chordId),choices=groups.flatMap((g:any)=>g.choices);
@@ -681,7 +680,7 @@ function fillChordScaleOptions(chordId:string,currentMode:string){
   const legacy=known&&!choices.some((choice:any)=>choice.id===currentMode)?`<option value="${currentMode}" disabled>${known.name} · incompatible saved guide</option>`:'';
   select('custom-mode').innerHTML=legacy+groups.map((group:any)=>`<optgroup label="${group.family}">${group.choices.map((choice:any)=>`<option value="${choice.id}">${choice.name}</option>`).join('')}</optgroup>`).join('');
   select('custom-mode').value=currentMode;
-  el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`Full scales contain every written chord tone. Pentatonic and blues guides may omit tones when their underlying pentatonic fits a compatible full scale; added blues notes are passing colours. ${choices.length} compatible ${choices.length===1?'mode':'modes'}; grouped by parent scale.`;
+  el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`Full scales include every chord tone. Pentatonic/blues guides may omit tones; blues notes add passing colour.`;
 }
 
 function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
@@ -704,7 +703,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   const featured=settings.progression?path[step]?.numeral||'I':'all';
   el('position-path-guide').hidden=!settings.progression;
   select('position-region').parentElement!.hidden=!following;
-  el('position-path-guide').querySelector('p')!.textContent=following?'Automatic route. The region sets the opening position; later chords follow nearby shapes. Choosing a position below switches this chart slot to manual; other slots keep their positions.':'Manual positions. Choose a chart slot, then its position; other slots stay unchanged.';
+  el('position-path-guide').querySelector('p')!.textContent=following?'Start in this region, then follow nearby shapes. Choose a shape to set this chord manually.':'Choose a chord card, then its shape. Other cards keep their positions.';
   select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
   const info = chordInfo(step);
@@ -720,7 +719,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   el('characteristic-legend').hidden=Boolean(selectedTheory)||!input('highlight-mode').checked;
   const legend=document.querySelector('.guitar-legend');
   if(legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=Boolean(selectedTheory);(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=Boolean(selectedTheory)||select('exercise').value==='arpeggio'||showGrip&&gripOnly;}
-  const displayStatus=document.getElementById('fretboard-display-status');if(displayStatus){displayStatus.hidden=!selectedTheory;displayStatus.textContent=selectedTheory?'Overlay active. Turn it off to restore your diagram and voicing settings.':'';}
+  const displayStatus=document.getElementById('fretboard-display-status');if(displayStatus){displayStatus.hidden=!selectedTheory;displayStatus.textContent=selectedTheory?'Turn the overlay off to edit Diagram or Show chord voicing.':'';}
   const sourceLabel=el('theory-choice-label');sourceLabel.firstChild!.textContent=theoryView.kind==='triads'?'Triad pair ':'Pentatonic source ';select('theory-choice').setAttribute('aria-label',theoryView.kind==='triads'?'Triad pair':'Pentatonic source');
   theoryView.choiceId = selectedTheory?.id || '';
   select('theory-view').value=theoryView.kind;
@@ -731,7 +730,9 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   if(overlayKey)overlayKey.innerHTML=keyMarkup;
   if(overlaySummary){overlaySummary.hidden=!selectedTheory;overlaySummary.textContent=selectedTheory?`${selectedTheory.name} · ${selectedTheory.names.map((name,i)=>`${name} (${selectedTheory.degrees[i]})`).join(' · ')}`:'';}
   if(overlayDetails)overlayDetails.hidden=!selectedTheory;
-  el('theory-description').innerHTML=!selectedTheory?'':`<div class="theory-description"><p>${escapeHtml(overlayPurpose(selectedTheory,info))}</p>${selectedTheory.groups?selectedTheory.groups.map(group=>`<p>${escapeHtml(group.name)}: ${group.names.map(escapeHtml).join(' · ')}</p>`).join(''):''}<p>${theoryView.kind==='triads'?'Alternate triad A and triad B as single-note lines.':'Try short phrases from the coloured notes.'} Degrees are relative to ${escapeHtml(info.scaleNames[0])} ${escapeHtml(mode.name)}.</p></div>`;
+  const omittedChord=selectedTheory?info.tones.filter((_:string,i:number)=>!selectedTheory.pcs.includes(info.chordPcs[i])):[];
+  const omittedColour=selectedTheory?characteristicNotes(info).filter((n:any)=>!selectedTheory.pcs.includes(n.pc)).map((n:any)=>`${n.name} (${n.degree})`):[];
+  el('theory-description').innerHTML=!selectedTheory?'':`<div class="theory-description"><p>${escapeHtml(selectedTheory.explanation)}</p>${omittedChord.length?`<p>Omitted chord tones: ${omittedChord.map(escapeHtml).join(' · ')}</p>`:''}${omittedColour.length?`<p>Omitted modal colours: ${omittedColour.map(escapeHtml).join(' · ')}</p>`:''}</div>`;
   const displayedPositions=POSITIONS.map(position=>{
     const board=fretboardFor(info,position.shape,select('exercise').value==='arpeggio');
     return {...cagedPositionFor(board),geometryShape:position.shape,board};
@@ -771,8 +772,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   el('position-path').innerHTML=settings.progression?positionRouteCards(guitarRouteGroups,progressionOrder(settings),step,playing||exercisePlaying||exercisePreparing,true):'';enrichProgressionCards();
   const parentMajor = parentMajorFor(info);
   el('guitar-parent').hidden = !parentMajor;
-  el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()} · current root: ${info.name}.` : '';
-  el('guitar-context').textContent = chord;
+  el('guitar-parent').textContent = parentMajor ? `Parent fingering: ${parentMajor.name} ${parentMajor.family.replace(' scale','').toLowerCase()}.` : '';
   el('guitar-scale-check').textContent=scaleCompatibility(info);el('guitar-scale-check').hidden=!scaleCompatibility(info);
   el('guitar-scale').textContent = `${info.scaleNames[0]} ${mode.name} · ${info.scaleNames.join(' · ')}`;
   renderPracticeRoadmap(info);
@@ -783,7 +783,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
 function syncPulseToolsUI(){
  const custom=Boolean(settings.beatAccents?.trim());
  input('accent').disabled=custom;
- const accentStatus=document.getElementById('beat-accent-status');if(accentStatus)accentStatus.textContent=custom?'Custom accents active. Reset accents to use the beat-one option.':settings.accent?'Beat one accented; other beats soft.':'All beats soft.';
+ const accentStatus=document.getElementById('beat-accent-status');if(accentStatus){accentStatus.hidden=!custom;accentStatus.textContent=custom?'Custom accents active. Reset to use Accent beat one.':'';}
  const timer=document.getElementById('pulse-timer-mode') as HTMLSelectElement|null;
  if(timer){timer.value=settings.sessionSeconds>0?'timed':'unlimited';input('pulse-minutes').closest('label')!.hidden=settings.sessionSeconds===0;input('pulse-finish-bar').closest('label')!.hidden=settings.sessionSeconds===0;el('session-timer-summary').textContent=settings.sessionSeconds>0?`Session timer · ${settings.sessionSeconds/60} min`:'Session timer · Unlimited';}
 }
@@ -834,9 +834,9 @@ function materializeWorkingChart(){
  const definition=progressionDefinition(settings);
  customProgression={...cloneTemplate(definition,settings.chord,settings.mode,settings),name:definition.name};customStepIndex=0;
  select('template').value='custom';settings.customProgression=customProgression;
- saveCustomProgression('Editable working chart ready.');fillLoopOptions(true);update();
+ saveCustomProgression('');fillLoopOptions(true);update();
 }
-function saveCustomProgression(message='Working draft saved in this browser.'){
+function saveCustomProgression(message=''){
   customProgression=normalizeCustomProgression(customProgression);
   settings.customProgression=customProgression;
   (PROGRESSIONS as any).custom=customProgression;
@@ -858,7 +858,7 @@ function renderCustomBeatGrid(){
  const auto=progressionPositionPath(harmonies,FRET_REGIONS[select('position-region').value as keyof typeof FRET_REGIONS]),route=manualPositionPath(harmonies,auto,input('manual-position-route').value);
  const annotations=chartView.annotations?harmonies.map((h:any,i:number)=>`${MODES[h.mode as keyof typeof MODES].name} · ${route.path[i].numeral} / ${route.path[i].shape}`):[];
  el<HTMLButtonElement>('chart-loop-clear').disabled=!settings.loopEnabled;
- el('chart-loop-status').textContent=chartView.tool==='loop'?'Set loop: drag across the beats to repeat. Chord editing selection stays separate.':'Select chords: click to edit, drag to select several. Hold to hear a chord. Arrow keys move between chords.';
+ el('chart-loop-status').textContent=chartView.tool==='loop'?'Drag across beats to set the loop.':'Click to edit; drag to select chords. Hold to hear.';
  el('custom-beat-grid').innerHTML=chordSheet(chords,durations,settings.beats,{title:definition.name,key:names[settings.key],marks:definition.steps?.map((s:any)=>s.section||'')||[],selected:settings.template==='custom'?customStepIndex:step,selectedSteps:settings.template==='custom'?chartEditSteps:[],loopSteps:settings.loopEnabled&&settings.loopUnit!=='beats'?progressionOrder(settings):[],loopBeats:settings.loopEnabled&&settings.loopUnit==='beats'?progressionTimeline(settings).flatMap((segment:any)=>Array.from({length:segment.duration},(_,i)=>segment.start+i)):[],barsPerLine:chartView.barsPerLine,labels:chartView.labels,romans:definition.roman,annotations,repeatBars:chartView.repeatBars});
  el('custom-beat-grid').insertAdjacentHTML('beforeend',sectionControls());
  if(el('custom-beat-grid').closest('.chart-sheet-panel'))(el('custom-beat-grid').querySelector('.rehearsal-controls')||el('custom-beat-grid')).append(loopControls);
@@ -942,7 +942,7 @@ function renderCustomBuilder(){
 function reflectChartEditSelection(){
  const selected=chartEditSteps.map(i=>customProgression.steps[i]).filter(Boolean),multi=selected.length>1;
  const duration=progressionBeatDurations(settings),starts=duration.map((_:number,i:number)=>duration.slice(0,i).reduce((a:number,b:number)=>a+b,0)),from=chartEditSteps[0]??customStepIndex,to=chartEditSteps.at(-1)??customStepIndex;
- const status=el('custom-edit-selection-status');status.hidden=!multi;status.textContent=`Editing all ${selected.length} selected chord entries · bars ${Math.floor(starts[from]/settings.beats)+1}–${Math.ceil((starts[to]+duration[to])/settings.beats)}.`;
+ const status=el('custom-edit-selection-status');status.hidden=!multi;status.textContent=`Bars ${Math.floor(starts[from]/settings.beats)+1}–${Math.ceil((starts[to]+duration[to])/settings.beats)} selected. Chord changes apply to the whole selection.`;
  const durationHeading=el('custom-duration-unit').closest('.workspace-group')?.querySelector('h3');if(durationHeading)durationHeading.textContent=multi?'Duration · first selected chord':'Duration';
  if(!multi)return;
  for(const [id,key]of [['custom-root','root'],['custom-chord','chord'],['custom-mode','mode'],['custom-bass','bass']]){
@@ -1038,7 +1038,6 @@ function update() {
   const custom = settings.progression && settings.template === 'custom';
   select('quality').parentElement!.hidden = jazz || custom;
   select('chord').parentElement!.hidden = jazz || diatonic || modal || custom;
-  el('mode-tip').hidden = jazz || custom;
   select('chord').disabled = jazz || diatonic || modal || custom;
   el('root-label').textContent = settings.progression ? 'Chart key' : 'Root note';
   el('chord-label').textContent = settings.progression ? 'Chord type' : 'Pedal chord';
@@ -1196,7 +1195,7 @@ async function initialiseAudio(requested:any=settings) {
       currentBpm = data.bpm;fxBuses?.setTempo(currentBpm);
       syncMiniTransport();
       syncTrainerStatus();
-      if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'passing between colours'} · ${settings.extensionBars}-bar cycle`;
+      if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'between colours'}`;
       el('mini-beat').textContent = `${data.beat + 1} / ${settings.beats}`;
       renderBeats(data.beat);
       el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
@@ -1641,7 +1640,7 @@ async function toggle() {
     reflectPlayback();
     el('error').textContent = error instanceof Error ? error.message : 'Could not start audio. Please try again.';
     el('error').hidden = false;
-    el('play-status').textContent='Playback stopped. Try Start again.';
+    el('play-status').textContent='Playback stopped. Try Play again.';
     await context?.close().catch(() => {});
     context = undefined;
     node = undefined;
@@ -1767,7 +1766,6 @@ function fillChords(preserve = false) {
   const mode = select('quality').value as keyof typeof MODES;
   select('chord').innerHTML=chordTypeOptions(settings.progression?Object.keys(CHORDS):compatibleChords(mode),MODES[mode].chord);
   select('chord').value = preserve && Array.from(select('chord').options).some(option => option.value === previousChord) ? previousChord : MODES[mode].chord;
-  el('mode-tip').textContent = MODES[mode].tip;
   el('mode-template').textContent = `Try ${MODES[mode].name} progression`;
   el('mode-template').hidden = !PROGRESSIONS[`modal_${mode}` as keyof typeof PROGRESSIONS] || settings.progression && select('template').value === `modal_${mode}`;
   select('template').querySelector<HTMLOptionElement>('[value=diatonic]')!.textContent=mode==='major'||mode==='minor'?progressionDefinition({mode,template:'diatonic'}).name:'Diatonic seventh chords · major/minor only';
@@ -1860,14 +1858,13 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pageshow',()=>void resumeBackgroundAudio());
 function syncTrainerStatus() {
   el('bpm-caption').textContent=settings.trainerEnabled?'STARTING BPM':'BEATS PER MINUTE';
-  el('trainer-status').textContent = !settings.trainerEnabled ? 'Starts at your selected tempo.' : playing ? `${currentBpm} BPM · ${currentBpm >= Math.max(settings.bpm,settings.trainerTarget) ? 'Target reached' : `towards ${settings.trainerTarget} BPM`}. Starting tempo: ${settings.bpm} BPM.` : `Start at ${settings.bpm} BPM; add ${settings.trainerIncrement} every ${settings.trainerBars} bars, up to ${Math.max(settings.bpm,settings.trainerTarget)} BPM.`;
+  el('trainer-status').textContent = playing?`${currentBpm} BPM${currentBpm>=Math.max(settings.bpm,settings.trainerTarget)?' · Target reached':''}`:`Starts at ${settings.bpm} BPM.`;
 }
 function syncWorkspaceStates(){
  const context=document.getElementById('setup-current-context');if(context)context.textContent=`Current setup: ${names[settings.key]} · ${settings.bpm} BPM · ${progressionDefinition(settings).name}`;
- const selection=document.getElementById('preset-selection-help');if(selection){const option=select('preset-list').selectedOptions[0];selection.textContent=select('preset-list').value?`Selected: ${option?.textContent}. Load applies it; Update selected setup replaces it with the current settings.`:'Choose a saved setup to load, update or delete.';}
  const locked=playing||exercisePlaying||exercisePreparing;
  document.querySelectorAll<HTMLInputElement>('[data-practice-task]').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
- const checklist=document.getElementById('practice-checklist-help');if(checklist)checklist.textContent=locked?'Stop playback before marking this checklist. It follows the currently selected chord.':'Mark items yourself for the selected root, scale and chord. Suggested times are estimates; this is not an accuracy score.';
+ const checklist=document.getElementById('practice-checklist-help');if(checklist)checklist.textContent=locked?'Stop playback before updating the checklist.':'Tick completed items for the current root, scale and chord.';
  for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
 }
 function syncMiniTransport() {
@@ -1895,7 +1892,7 @@ function syncMiniTransport() {
   const transportStep=exercisePlaying?exerciseBackingStep:step;
   const info = harmonyAt(transportSettings,transportStep);
   const active=musicalContext(transportSettings,transportStep);
-  el('active-musical-context').innerHTML=`<div><small>Modal tonic</small><strong>${escapeHtml(info.scaleNames[0])}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div><p>${exercisePlaying?'Exercise audition is shown here; the main transport setup below is retained. ':''}${progressionOrder(transportSettings).length===1?'Single-chord chart: explore the scale guide over the repeating chord.':'Scale guides follow the chords in the chart.'} ${transportSettings.extensionMorph?'Extensions are evolving; switch them off for a stable listening reference.':''}</p>`;
+  el('active-musical-context').innerHTML=`<div><small>Modal tonic</small><strong>${escapeHtml(info.scaleNames[0])}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div>${exercisePlaying||transportSettings.extensionMorph?`<p>${exercisePlaying?'Exercise playback. ':''}${transportSettings.extensionMorph?'Evolving extensions on (Sound Settings).':''}</p>`:''}`;
   select('mini-key').setAttribute('aria-label',settings.progression?'Selected chord root':'Pedal root');
   select('mini-key').disabled=settings.progression&&(playing||exercisePlaying||exercisePreparing||busy||stopping);
   select('mini-mode-select').parentElement!.hidden=select('quality').parentElement!.hidden;
@@ -2195,7 +2192,7 @@ el('preset-import').addEventListener('click',()=>input('preset-file').click());
 input('preset-file').addEventListener('change',async()=>{
   const file=input('preset-file').files?.[0];if(!file)return;
   try{
-    if(file.size>MAX_PRESET_FILE_BYTES)throw new Error('Preset files must be smaller than 512 KB.');
+    if(file.size>MAX_PRESET_FILE_BYTES)throw new Error('Setup files must be smaller than 512 KB.');
     const result=importPresets(await file.text(),presets);
     persistPresets(result.items,result.items.at(-1)?.id||'',`Imported ${result.imported} setup${result.imported===1?'':'s'}. Existing setups kept.`);
   }catch(error){el('preset-status').textContent=(error as Error).message;}
@@ -2227,7 +2224,7 @@ document.addEventListener('click',event=>{
  const sectionButton=event.target.closest<HTMLElement>('[data-section-start],[data-section-full]');if(sectionButton){if(playing||exercisePlaying||exercisePreparing||stopping)return;stopPreview();if(sectionButton.hasAttribute('data-section-full')){input('loop-enabled').checked=false;step=0;update();}else{step=customProgression.steps.findIndex((_:any,i:number)=>progressionBeatDurations(settings).slice(0,i).reduce((a:number,b:number)=>a+b,0)===Number(sectionButton.dataset.sectionStart));void applyChartLoop(Number(sectionButton.dataset.sectionStart),Number(sectionButton.dataset.sectionEnd));}return;}
  const grip=event.target.closest<HTMLElement>('[data-practise-grip]');if(grip){stopPreview();overviewPosition=grip.dataset.practiseGrip!;if(settings.progression)chooseOverviewPosition(overviewPosition);exerciseView.study='positional';exerciseView.stage='full';exerciseView.fretboard=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}
 });
-select('practice-goal').addEventListener('input',()=>{const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;el('goal-description').textContent=goal.tip+' Keeps your selected tonic. Configures tools without starting audio.';});
+select('practice-goal').addEventListener('input',()=>{const goal=GOALS.find(g=>g.id===select('practice-goal').value)!;el('goal-description').textContent=goal.tip+'';});
 el('dismiss-guided-session').addEventListener('click',()=>{el('guided-session').hidden=true;activeGoal='';});
 el('start-guided-goal').addEventListener('click',()=>void startGuidedGoal());
 async function startGuidedGoal(){
@@ -2247,7 +2244,7 @@ async function startGuidedGoal(){
  Object.assign(exerciseView,{study:goal.study,stage:'full',fretboard:true,tempo:80,tempoLinked:true,loop:false,autoTempo:false,motion:'ascending',setupOpen:false,backing:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;
  fillLoopOptions(true);tempo(80);update();
  if(goal.id==='pentatonic'){const choices=theoryOptions(chordInfo(0)).pentatonics;exerciseView.source=choices[0]?.id||'';renderGuitar();}
- el('guided-session-title').textContent=goal.name;el('guided-session-tip').textContent=goal.tip+(goal.id==='jazz'?' Play the harmonized exercise through the chart. Choose a chord card to inspect its CAGED position.':accompaniment==='modal'?' Modal exploration has evolving extensions enabled.':' Stable harmony is selected unless the setup states otherwise.');el('guided-session').hidden=false;input('preset-name').value=goal.name;
+ el('guided-session-title').textContent=goal.name;el('guided-session').hidden=false;input('preset-name').value=goal.name;
  materializeWorkingChart();
  document.dispatchEvent(new Event('chart-context-restored'));
  showWorkspace(goal.workspace,learningTargets[goal.workspace]);
@@ -2262,13 +2259,13 @@ const guitarOverview=document.querySelector('.guitar-overview')!;
 const guitarRouteControls=document.createElement('div');guitarRouteControls.className='position-path-controls';const guitarRouteHeading=el('position-path-guide').querySelector('.position-path-heading')!;guitarRouteHeading.prepend(guitarRouteControls);guitarRouteControls.append(select('featured-position').closest('label')!,select('position-region').closest('label')!);
 guitarRouteControls.append(select('guitar-chord-position').closest('label')!);select('guitar-chord-position').addEventListener('input',()=>{chooseOverviewPosition(select('guitar-chord-position').value);select('guitar-chord-position').focus({preventScroll:true});});
 const guitarShapeControls=document.createElement('div');guitarShapeControls.className='guitar-shape-controls';guitarShapeControls.setAttribute('aria-label','Chord shapes and position exploration');
-for(const selector of ['.grip-toggle','#grip-toggle-help','.shared-theory-controls','#theory-description']){const element=guitarOverview.querySelector(selector);if(element)guitarShapeControls.append(element);}
+for(const selector of ['.grip-toggle','.shared-theory-controls','#theory-description']){const element=guitarOverview.querySelector(selector);if(element)guitarShapeControls.append(element);}
 guitarOverview.append(guitarShapeControls);
 for(const selector of ['.guitar-controls','.guitar-legend']){const element=guitarOverview.querySelector(selector);if(element)guitarSetup.append(element);}
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
 
-async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('Chart loaded as an editable progression.');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
+async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
 
 installRepertoire({
  templates:[

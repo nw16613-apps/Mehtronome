@@ -10,7 +10,7 @@ export function installFxControls(changed:(value:any)=>void){
  }
  const options=(values:Record<string,string>)=>Object.entries(values).map(([value,name])=>`<option value="${value}">${name}</option>`).join('');
  const panel=document.createElement('section');panel.className='mixer-fx-buses';
- panel.innerHTML=`<h3>FX buses</h3><div><label>Reverb A<select id="fx-reverb-type">${options(REVERB_TYPES)}</select></label><label>Reverb B<select id="fx-reverb-b-type">${options(REVERB_TYPES)}</select></label><label>Modulated delay<select id="fx-delay-division">${options(DELAY_DIVISIONS)}</select></label></div><p class="practice-help">Three independent, fully wet buses. Returns stay at 100%; use the send knobs above each fader to set the effect amount. Sends follow track volume and mute. The Harmony sends also add effects to the exercise guitar.</p>`;
+ panel.innerHTML=`<h3>FX buses</h3><div><label>Reverb A<select id="fx-reverb-type">${options(REVERB_TYPES)}</select></label><label>Reverb B<select id="fx-reverb-b-type">${options(REVERB_TYPES)}</select></label><label>Modulated delay<select id="fx-delay-division">${options(DELAY_DIVISIONS)}</select></label></div><p class="practice-help">Use the send knobs above each fader to add effects. Harmony sends also affect the exercise guitar.</p>`;
  document.querySelector('.console-level-scroll')!.before(panel);
  const field=(id:string)=>document.getElementById(id) as HTMLInputElement|HTMLSelectElement;
  function read(){return normalizeFxSettings({reverbType:field('fx-reverb-type').value,reverbBType:field('fx-reverb-b-type').value,delayDivision:field('fx-delay-division').value,sends:Object.fromEntries(FX_CHANNELS.map(id=>[id,Object.fromEntries(FX_BUSES.map(bus=>[bus,field('send-'+bus+'-'+id).value]))]))});}

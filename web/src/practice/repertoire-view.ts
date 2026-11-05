@@ -43,7 +43,7 @@ export function installRepertoire({capture,load,makeTemplate,draft,templates,ref
  byId('repertoire-export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify({version:1,items},null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='mehtronome-repertoire.json';a.click();URL.revokeObjectURL(url);};
  byId('repertoire-import').onclick=()=>byId('repertoire-file').click();
  (byId('repertoire-file') as HTMLInputElement).onchange=async e=>{const input=e.target as HTMLInputElement,file=input.files?.[0];if(!file)return;try{if(file.size>512*1024)throw new Error('Chart files must be under 512 KB.');const incoming=normalizeRepertoire(JSON.parse(await file.text()));if(items.length+incoming.length>50)throw new Error('Import would exceed 50 charts.');persist([...items,...incoming.map((i:any)=>({...i,id:crypto.randomUUID()}))]);status.textContent=`Imported ${incoming.length} charts as new copies.`;}catch(e){report(e);}finally{input.value='';}};
- document.addEventListener('chart-working-copy-change',()=>{workingDraft=capture();if(!loading)status.textContent='Unsaved changes · draft kept in this browser.';if(!loading&&!selectedSaved){selectedSource='custom';brief.hidden=true;render();}});
+ document.addEventListener('chart-working-copy-change',()=>{workingDraft=capture();if(!loading)status.textContent='Unsaved changes';if(!loading&&!selectedSaved){selectedSource='custom';brief.hidden=true;render();}});
  document.addEventListener('chart-context-restored',()=>{selectedSaved='';selectedSource='custom';workingDraft=capture();brief.hidden=true;render();});
  render();void choose('single',true);
 }

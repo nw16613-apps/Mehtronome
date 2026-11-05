@@ -15,7 +15,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const playback=document.createElement('div');playback.className='session-playback';
  const now=document.createElement('div');now.className='session-harmony';now.innerHTML='<span class="small-label">CURRENT HARMONY</span><strong id="session-chord"></strong><span id="session-mode"></span>';
  move(playback,now,get('play'),label('count-in'),get('play-status'));
- const scope=document.createElement('p');scope.className='practice-help';scope.textContent='Play starts all unmuted tracks in the mixer.';playback.append(scope);
+ const scope=document.createElement('p');scope.className='practice-help';scope.textContent='Play starts all unmuted tracks.';playback.append(scope);
  const pulse=document.createElement('div');pulse.className='pulse-main-controls';move(pulse,tempo,playback);transport.querySelector('.section-heading')!.after(pulse);
  const rhythm=group('Rhythm','metronome-rhythm');move(rhythm,query('.pulse-options'));transport.append(rhythm);
  const accents=group('Beat accents','beat-accent-group');move(accents,get('beat-dots'),label('accent'),query('.pulse-accent-help'),get('pulse-large-open'));
@@ -26,7 +26,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const timerMode=document.createElement('label');timerMode.innerHTML='Session duration<select id="pulse-timer-mode"><option value="unlimited">Unlimited</option><option value="timed">Fixed duration</option></select>';timer.querySelector('.pulse-tool-fields')!.prepend(timerMode);timer.querySelector('#pulse-minutes')!.closest('label')!.firstChild!.textContent='Minutes ';
  const training=group('Training','metronome-training');move(training,query('.tempo-training'),query('.gap-training'));move(tools,session,training);pulseGrid.remove();
  const goals=get('guided-goals');goals.classList.replace('workspace-practice','workspace-progress');query('.presets').before(goals);goals.querySelector('h2')!.textContent='Guided session setup';
- const mixHelp=document.createElement('p');mixHelp.className='practice-help mixer-instructions';mixHelp.textContent='Start with each fader at −12 dB. Unmute a track to add it. Solo isolates tracks. Reverb A, Reverb B and Delay sends are independent. Use the Harmony sends for the exercise guitar too.';query('.levels-heading').after(mixHelp);
+ const mixHelp=document.createElement('p');mixHelp.className='practice-help mixer-instructions';mixHelp.textContent='Unmute tracks to hear them. Solo isolates your selection.';query('.levels-heading').after(mixHelp);
  // Harmony: chart setup, sheet and selected-chord editor, then optional reference.
  const harmony=query('.harmony'),heading=harmony.querySelector('.section-heading')!;
  harmony.querySelector('.segmented')!.setAttribute('hidden','');harmony.querySelector('.mode-label')?.remove();
@@ -36,7 +36,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(tonality,label('key'),label('quality'),label('chord'));
  move(setupFields,query('.progression-chooser'),label('custom-name'),tonality,get('single-chord-chart'));
  move(progression,setupFields,query('.chart-save-actions'),get('repertoire-status'));
- const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Save chart keeps a named copy. Chart actions contains Update, Delete, Import and Export.';const setupHelp=document.createElement('details');setupHelp.className='chart-setup-help';setupHelp.innerHTML='<summary>About saving charts</summary>';setupHelp.append(draftHelp);progression.append(setupHelp);
+ const draftHelp=document.createElement('p');draftHelp.className='practice-help';draftHelp.textContent='Edits stay as a browser draft. Save creates a named copy; Update replaces the selected saved chart.';const setupHelp=document.createElement('details');setupHelp.className='chart-setup-help';setupHelp.innerHTML='<summary>About saving charts</summary>';setupHelp.append(draftHelp);progression.append(setupHelp);
  const keyHelp=document.createElement('p');keyHelp.className='practice-help';keyHelp.textContent='Chart key transposes the whole chart. Use Chord root in the editor to change selected chords.';keyHelp.classList.add('chart-key-help');progression.insertBefore(keyHelp,progression.querySelector('.chart-save-actions'));
  const hiddenTemplates=document.createElement('div');hiddenTemplates.hidden=true;move(hiddenTemplates,get('mode-template'),label('template'));progression.append(hiddenTemplates);
  heading.after(get('active-musical-context'));get('active-musical-context').after(progression);
@@ -60,13 +60,13 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const reference=document.createElement('details');reference.className='harmony-reference';reference.innerHTML='<summary>Chord & scale reference</summary>';builder.after(reference);reference.append(map);
  const highlightLabel=label('exercise');highlightLabel.firstChild!.textContent='Highlight ';
  const referenceHighlight=get('exercise') as HTMLSelectElement;referenceHighlight.options[0].textContent='Scale';referenceHighlight.options[1].textContent='Chord tones';
- const help=harmony.querySelector('.learn-more')!;move(help,get('mode-tip'),get('backing-description'));reference.append(help);
+ const help=harmony.querySelector('.learn-more')!;reference.append(help);
  get('preview-controls').hidden=true;
  const movement=group('Chord extensions','harmony-movement');move(movement,query('.extension-morph'));query('.sound-settings').append(movement);
  // Fretboard: chart slots first, then position, display and the active diagram.
  const guitar=query('.guitar'),overview=query('.guitar-overview'),guitarHelp=guitar.querySelector('.learn-more')!,legend=query('.guitar-legend');
  guitarHelp.querySelector('summary')!.textContent='Fretboard reference';
- move(guitarHelp,get('guitar-context'),get('guitar-scale'),get('guitar-parent'),get('grip-toggle-help'));
+ move(guitarHelp,get('guitar-scale'),get('guitar-parent'));
  const guitarProgression=query('.guitar-progression-panel');guitarProgression.classList.add('workspace-group');guitarProgression.prepend(Object.assign(document.createElement('h3'),{textContent:'Chord & position'}));guitarProgression.append(get('guitar-scale-check'),get('position-path'));
  const fretboardWorkspace=document.createElement('section');fretboardWorkspace.className='fretboard-workspace';fretboardWorkspace.setAttribute('aria-label','Fretboard explorer');overview.before(fretboardWorkspace);
  const diagramControls=query('#position-path-guide .position-path-controls');diagramControls.classList.add('caged-diagram-controls');diagramControls.setAttribute('aria-label','Position choices');
@@ -81,19 +81,19 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  const overlayDetails=document.createElement('details');overlayDetails.id='fretboard-overlay-details';overlayDetails.innerHTML='<summary>Overlay details</summary>';move(overlayDetails,get('theory-description'));fretboardWorkspace.append(overlayDetails);
  const oldSetup=query('.guitar-setup');oldSetup.remove();overview.hidden=true;
  // Progress prioritises recall; setup, manual checklist and backup have distinct scopes.
- get('progress-title').textContent='Setups & progress';query('.workspace-progress .intro-copy').textContent='Recall your sound and chart settings; keep a manual practice checklist.';
+ get('progress-title').textContent='Setups & progress';query('.workspace-progress .intro-copy').textContent='Recall saved setups and track your practice.';
  const presets=query('.presets'),presetFields=query('.preset-fields'),loadSetup=group('Load a saved setup','preset-load-group'),saveSetup=group('Save current setup','preset-save-group');
  get('presets-title').textContent='Saved setups';presets.querySelector('.small-label')!.textContent='CHART · TEMPO · SOUND · MIX';
  move(loadSetup,label('preset-list'),query('.preset-actions'));move(saveSetup,label('preset-name'),get('preset-save'),loadSetup.querySelector('#preset-update'));presetFields.append(loadSetup,saveSetup);
  label('preset-name').firstChild!.textContent='Setup name ';get('preset-update').textContent='Update selected setup';get('preset-save').textContent='Save new setup';get('preset-delete').textContent='Delete selected setup';
- const selectionHelp=document.createElement('p');selectionHelp.id='preset-selection-help';selectionHelp.className='practice-help';loadSetup.append(selectionHelp);
+
  const setupContext=document.createElement('p');setupContext.id='setup-current-context';setupContext.className='practice-help';saveSetup.prepend(setupContext);
- const scopeHelp=document.createElement('p');scopeHelp.className='practice-help';scopeHelp.textContent='Setups save the chart, tempo, sound, mix and fretboard settings. Save exercise options in Exercises; save individual charts in Harmony.';presets.querySelector('.section-heading')!.after(scopeHelp);
+ const scopeHelp=document.createElement('p');scopeHelp.className='practice-help';scopeHelp.textContent='A setup saves your chart, tempo, sound, mix and CAGED choices. Update replaces the selected setup.';presets.querySelector('.section-heading')!.after(scopeHelp);
  get('preset-export').textContent='Export setups';get('preset-import').textContent='Import setups';
  const presetBackup=group('Backup & transfer','preset-backup');move(presetBackup,query('.preset-transfer'));presets.append(presetBackup);
  presets.after(goals);const checklistLink=goals.querySelector<HTMLButtonElement>('[data-learning-nav]')!;checklistLink.removeAttribute('data-learning-nav');checklistLink.textContent='View checklist';checklistLink.onclick=()=>{get('practice-roadmap-title').focus({preventScroll:true});get('practice-roadmap-title').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
  const roadmap=query('.practice-roadmap'),plan=group('Suggested session','roadmap-plan');get('practice-roadmap-title').textContent='Practice checklist';get('practice-roadmap-title').tabIndex=-1;roadmap.querySelector('.eyebrow')!.textContent='SELF-REPORTED PROGRESS';label('practice-roadmap-duration').firstChild!.textContent='Time budget ';
- const checklistHelp=document.createElement('p');checklistHelp.id='practice-checklist-help';checklistHelp.className='practice-help';checklistHelp.textContent='Mark items yourself for the selected root, scale and chord. Suggested times are estimates; this is not an accuracy score.';roadmap.querySelector('.practice-roadmap-bar')!.after(checklistHelp);
+ const checklistHelp=document.createElement('p');checklistHelp.id='practice-checklist-help';checklistHelp.className='practice-help';checklistHelp.textContent='Tick completed items for the current root, scale and chord.';roadmap.querySelector('.practice-roadmap-bar')!.after(checklistHelp);
  move(plan,query('.practice-roadmap-tools'),get('practice-roadmap-today'));get('practice-roadmap-list').before(plan);get('practice-roadmap-list').before(Object.assign(document.createElement('h3'),{textContent:'Checklist items'}));
  get('practice-roadmap-reset').textContent='Reset this checklist';
  const reset=document.createElement('div');reset.className='roadmap-reset';reset.append(get('practice-roadmap-reset'));roadmap.append(reset);

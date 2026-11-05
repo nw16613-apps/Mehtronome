@@ -46,7 +46,7 @@ export function exerciseGuidance(study){
   chordtones:'Start a scale-note stack on each core tone of the backing chord. Each stack can form a different chord.',
   chordtonesalternating:'Start a scale-note stack on each core chord tone, alternating upward and downward contours. Each stack can form a different chord.',
   inversions:'Start the same chord-tone cell from each of its tones, using up to three or four chord tones. This changes the melodic starting note, not the backing chord’s bass.',
-  approach:'Approach the first note of each arpeggio cell chromatically, then play the cell.',
+  approach:'Play each arpeggio, then approach the first note of the next cell chromatically.',
   doubleapproach:'Lead into each arpeggio cell with two chromatic approach notes.',
   chromaticneighbors:'Move away from a chord tone to its written chromatic neighbour, then return.',
   passingtones:'Connect scale notes with the written chromatic passing tones.',
