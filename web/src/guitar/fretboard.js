@@ -256,7 +256,7 @@ export function fullFretboardSvg(board, degrees, modeDegrees, title, regions = [
     const start=Math.max(board.start,region.start),end=Math.min(board.end,region.end);
     if(start>end)continue;
     const rx=boundary(start),rw=boundary(end+1)-rx,selected=region.numeral===selectedPosition;
-    svg+=`<g class="caged-region${selected?' selected':''}" style="--shape-color:var(--shape-${Math.max(0,POSITIONS.findIndex(p=>p.numeral===region.numeral))})" data-full-position="${region.numeral}" role="button" tabindex="0" aria-label="Select position ${region.numeral}, ${region.shape} shape"><rect x="${rx}" y="22" width="${rw}" height="${top+5*34-8}" rx="9"/><text x="${rx+10}" y="39">${region.numeral} · ${region.shape}</text></g>`;
+    svg+=`<g class="caged-region${selected?' selected':''}" style="--shape-color:var(--shape-${Math.max(0,POSITIONS.findIndex(p=>p.numeral===region.numeral))})" data-full-position="${region.numeral}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="Select position ${region.numeral}, ${region.shape} shape"><rect x="${rx}" y="22" width="${rw}" height="${top+5*34-8}" rx="9"/><text x="${rx+10}" y="39">${region.numeral} · ${region.shape}</text></g>`;
   }
   for(let fret=board.start;fret<=board.end;fret++)svg+=`<text class="fret-number" x="${x(fret)}" y="${top+5*34+30}" text-anchor="middle">${fret}</text>`;
   for(let column=0;column<=columns;column++){const bx=left+column*spacing;svg+=`<line class="fret-wire" x1="${bx}" x2="${bx}" y1="${top}" y2="${top+5*34}"/>`;}

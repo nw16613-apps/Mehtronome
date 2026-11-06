@@ -97,3 +97,11 @@ The original map, layout, range, controls and exercise placement remain intact. 
 CAGED map regions, thumbnail/card fret labels, route-card ranges and local diagrams now use the first and last occupied frets rather than the wider fingering construction window. The reported A Dorian G, D and A shapes display 2–5, 7–10 and 11–15 respectively. Diagram rendering also includes any voiced grip notes when calculating its display extent.
 
 The original fingering windows, note membership and automatic/manual route calculations remain unchanged. Thirteen unit checks cover occupied edges across every root/mode/CAGED shape, diagram immutability and routing; four browser workflows verify the reported ranges and region rectangles, colours, mobile themes and progression/manual routing. TypeScript/build pass.
+
+## Consistent map selection and drop voicings
+
+The original full-neck panel now offers the same Show positions, Highlight shape, All notes, fullscreen and visibility controls for CAGED, three-note scales, alternating arpeggios and drop chords. Every per-string shape has a clickable envelope and a separate accessible label, so overlapping shapes can be selected independently. Labels support Enter/Space, pressed state and retained keyboard focus; touch selection is verified. CAGED selection remains connected to its original position cards. No page sections move.
+
+Drop 2 and Drop 3 are added to Fingering with a string-set selector and all four inversions. Drop 2 uses adjacent four-string sets; Drop 3 uses strings 6–4–3–2 or 5–3–2–1. Voicings are formed by dropping the second-/third-highest voice of a close-position tetrad an octave, then retaining playable registers on the chosen strings. Local diagrams show muted strings and fit phone widths. Extended qualities use their four structural tones and explain that extensions remain in the backing; triads are not silently changed. The existing Practise this shape links remain for alternating arpeggios.
+
+Seven browser workflows pass for map click/keyboard/touch/dropdown consistency, original layout and map preservation, drop inversions/string sets, mobile layout and unsupported/extended qualities. Two unit checks cover drop definitions and all inversions across twelve roots, ten chord qualities and all string sets, plus canonical Cmaj7 grips. TypeScript/build pass.
