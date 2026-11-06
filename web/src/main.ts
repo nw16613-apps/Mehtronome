@@ -1,3 +1,4 @@
+import {shapeColor,emphasizeFullNeck} from './guitar/shape-emphasis.js';
 import {PER_STRING_STUDIES,perStringExerciseChoice,perStringExerciseGroups} from './practice/per-string-exercises.js';
 import {arpeggioFingeringControls} from './practice/per-string-exercise-view.js';
 import {installPerStringView} from './guitar/per-string-view.js';
@@ -775,7 +776,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
       .replace('viewBox="0 0 480 218"','viewBox="36 8 408 180"');
-    return `<button type="button" role="tab" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
+    return `<button type="button" role="tab" style="--shape-color:${shapeColor(POSITIONS.findIndex(p=>p.numeral===position.numeral))}" class="position-thumbnail${position.numeral===selectedPosition.numeral?' current':''}" data-overview-position="${position.numeral}" aria-selected="${position.numeral===selectedPosition.numeral}" tabindex="${position.numeral===selectedPosition.numeral?'0':'-1'}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}><span>Position ${position.numeral}</span><small>${position.shape} shape · ${board.start}–${board.end}</small>${thumbnailDiagram}</button>`;
   }).join('');
   el('position-indicator').textContent=`Position ${selectedPosition.numeral} of V · ${selectedPosition.shape} shape`;
   for(const id of ['position-previous','position-next']) (el(id) as HTMLButtonElement).disabled=playing||exercisePlaying||exercisePreparing;
@@ -786,7 +787,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     positionGrips.set(position.geometryShape,grip);
     const gripDetails=!showGrip?'':grip?`<div class="grip-details"><div class="fretboard-voicing-actions"><div class="grip-stage-buttons"><button class="practice-button" data-grip-display="grip" aria-pressed="${gripOnly}">Voicing only</button><button class="practice-button" data-grip-display="scale" aria-pressed="${!gripOnly}">Voicing + scale</button></div><button type="button" class="practice-button grip-preview" data-grip="${position.geometryShape}" data-preview-label="position ${position.numeral}" aria-label="Strum chord, position ${position.numeral}" aria-pressed="false" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Strum chord</button><button type="button" class="practice-button" data-practise-grip="${position.numeral}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Practise arpeggio →</button></div><details class="voicing-details"><summary>Voicing details</summary><p><b>Chord formula:</b> ${escapeHtml(info.intervals.join(' · '))}. <b>Voiced bass:</b> ${escapeHtml(gripFacts(grip,info)!.bass)}</p><p class="grip-tones">Voiced low to high: ${grip.notes.map((n:any,i:number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p>${grip.omitted.length?`Omitted: ${grip.omitted.join(' · ')}. `:''}Ringed notes form a variation of the standard ${grip.framework} chord shape; mute × strings.</p></details></div>`:'<p class="grip-help">No playable variation of this chord shape fits this position.</p>';
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
-    return `<article class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>${escapeHtml(chord)} · Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:grip.notes}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
+    return `<article style="--shape-color:${shapeColor(POSITIONS.findIndex(p=>p.numeral===position.numeral))}" class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>${escapeHtml(chord)} · Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:grip.notes}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
   const fullBoard=fullFretboardFor(info,1,17,selectedTheory?false:select('exercise').value==='arpeggio');
   const fullFretboardGrips=showGrip&&!selectedTheory?displayedPositions.map(position=>{
@@ -794,6 +795,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     return grip?{numeral:position.numeral!,notes:grip.notes}:null;
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
   el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
+  emphasizeFullNeck(el('full-fretboard'),selectedPosition.board,POSITIONS.findIndex(p=>p.numeral===selectedPosition.numeral));
   reflectFullFretboard();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);
   const guitarRouteGroups=progressionOrder(settings).map((i:number)=>({chord:harmonies[i]?.name+harmonies[i]?.suffix,position:path[i],board:harmonies[i]?fretboardFor(harmonies[i],path[i].geometryShape):null}));
@@ -1342,8 +1344,10 @@ function renderPerStringMap(context:any){
  const shape=shapes.find((s:any)=>String(s.degree)===perStringMapShape),base=fullFretboardFor(harmony,1,17,arp);
  const board={...base,notes:arp?base.notes.map((n:any)=>({...n,scaleIndex:-1})):base.notes.filter((n:any)=>n.scale)};
  const target=el('full-fretboard'),scroll=target.scrollLeft;target.innerHTML=fullFretboardSvg(board,labels,degrees,title+' · full fretboard, frets 1 to 17',[], 'I',input('highlight-mode').checked,null,false);
- const keys=new Set(shape?.board.notes.map((n:any)=>`${n.string}:${n.fret}`)||[]);
- target.querySelectorAll<SVGGElement>('.fret-note').forEach(note=>{if(!keys.has(`${note.dataset.string}:${note.dataset.fret}`))return;note.classList.add('per-string-map-selected');const ring=note.querySelector('circle')!.cloneNode() as SVGCircleElement;ring.setAttribute('r','14');ring.setAttribute('class','per-string-map-ring');note.append(ring);});target.scrollLeft=scroll;
+ emphasizeFullNeck(target,shape?.board,Math.max(0,shapes.indexOf(shape)),true);
+ document.querySelectorAll<HTMLElement>('.per-string-shape').forEach(card=>card.classList.toggle('map-current',!!shape&&Number(card.dataset.startDegree)===shape.degree));
+ perStringMapMenu.style.setProperty('--shape-color',shapeColor(Math.max(0,shapes.indexOf(shape))));
+ target.scrollLeft=scroll;
  range.textContent=`Frets 1–17${shape?' · '+shape.label:''}${shape?.board.end>17?' · see the reference diagram for the complete shape':''}`;
 }
 const positionNumerals=['I','II','III','IV','V'];
