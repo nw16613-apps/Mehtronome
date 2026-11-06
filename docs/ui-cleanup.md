@@ -57,3 +57,9 @@ The alternate fretboard now shows one separate diagram for every distinct starti
 Continuous patterns that cannot fit a 24-fret guitar remain visible as clearly labelled reference diagrams extending beyond fret 24, rather than silently omitting a degree. The default fingering API retains its 24-fret limit; the complete gallery prefers playable registers and uses extended diagrams only when required. Exhaustive coverage checks every starting tone across all scale families, chord qualities and twelve roots, including both arpeggio patterns and duplicate pitch-class removal.
 
 Validation: four unit checks covering the full scale/chord catalogue, four browser workflows for degree/inversion completeness, independent registers, phone overflow, playback updates and CAGED restoration, plus TypeScript/build passed.
+
+## Full-neck maps for per-string shapes
+
+Scale and alternating-arpeggio galleries now include a full-neck map spanning open strings through fret 24. Scale maps show only mode tones; arpeggio maps show only chord tones with chord-interval labels. Highlight shape selects the exact notes of any starting-degree shape or inversion and follows that shape's register choice. Extended reference shapes expand the labelled map range beyond fret 24 as required.
+
+The map supports persistent hide/show, fullscreen and horizontal phone scrolling. Its DOM stays mounted across chord changes so fullscreen is retained, and it does not redraw between playback beats. Three map browser workflows verify all scale/string/fret positions, exact shape highlighting, register/label changes, both arpeggio patterns, extended pentatonics, fullscreen, phone layout and playback updates. Four existing gallery regressions and TypeScript/build pass.
