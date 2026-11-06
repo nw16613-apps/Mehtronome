@@ -39,3 +39,7 @@ The reported Amaj7–Dbmaj7–Fmaj7 Lydian cycle around frets 7–11 now repeats
 With full root coverage off, automatic chord count now follows one complete interval cycle: major thirds produce three chords, minor thirds four, whole steps six and tritones two. Alternating intervals close when both pitch and pattern phase return. Random order uses one selected-root pass; full coverage still visits all selected roots, and explicit counts retain longer repeating drills. The automatic option now names its behaviour and is selected explicitly on initialisation.
 
 Eight generator unit checks, six generator/region browser workflows and TypeScript/build pass, including preview/apply/undo, filtered roots and manual-position preservation.
+
+## Chord outline playback highlight
+
+Generator previews, fretboard/exercise route cards and harmony reference cards share a gold playing highlight and visible Playing marker. Exactly the sounding slot is marked in each outline, including repeated harmonies and loop/resolution returns. Inspection remains separate; indicators clear on stop and wait through count-in. Unapplied previews only follow playback if their harmony and durations match the working chart. Four playback workflows (desktop/mobile, backed/unbacked exercises, loop and count-in), five generator regressions and TypeScript/build pass.

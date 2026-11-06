@@ -1,5 +1,6 @@
 import {CHORDS,MODES,ROOT_NAMES,harmonyAt} from '../audio/music.js';
 import {generateProgression,generatorModes,generatorPositions,generatorRootLetter,ROOT_ORDERS,GENERATOR_VOCABULARIES} from './progression-generator.js';
+import {playbackChartKey} from './chord-playback.js';
 import {recommendedMode} from './custom-progression.js';
 import {chordOptionGroups} from './chord-options.js';
 const chordDefs:Record<string,{name:string}>=CHORDS,modeDefs:Record<string,{name:string}>=MODES,vocabularies:Record<string,string[]>=GENERATOR_VOCABULARIES;
@@ -37,7 +38,8 @@ export function installProgressionGenerator({getContext,load,isLocked}:any){
  function invalidate(){preview=null;previewPanel.hidden=true;status.textContent='Settings changed. Generate a new preview.';reflect();}
  function read(){return {approach:field('approach').value,key:field('key').value,count:field('count').value,bars:field('bars').value,chord:field('chord').value,mode:field('mode').value,tonality:field('tonality').value,modalMode:field('modal-mode').value,complexity:field('complexity').value,vocabulary:field('vocabulary').value,order:field('order').value,direction:Number(field('direction').value),coverage:(field('coverage') as HTMLInputElement).checked,roots:checked('[data-generator-root]').map(Number),qualities:checked('[data-generator-quality]'),position:field('position').value,positionSet:checked('[data-generator-position]'),existingPositions:getContext().positions,beats:getContext().beats};}
  function renderPreview(){previewPanel.hidden=false;panel.querySelector('#generator-preview-title')!.textContent=`${preview.progression.name} · ${ROOT_NAMES[preview.key]}`;
-  panel.querySelector('#generator-preview-chords')!.innerHTML=preview.progression.steps.map((step:any,i:number)=>{const h=harmonyAt({progression:true,template:'custom',customProgression:preview.progression,key:preview.key,mode:step.mode,chord:step.chord},i);return `<li><strong>${esc(h.name+h.suffix)}</strong><span>${esc(modeDefs[step.mode].name)}</span><small>${step.bars} bar${step.bars===1?'':'s'}${preview.positions?' · Position '+preview.positions[i]:''}</small></li>`;}).join('');
+  panel.querySelector('#generator-preview-chords')!.innerHTML=preview.progression.steps.map((step:any,i:number)=>{const h=harmonyAt({progression:true,template:'custom',customProgression:preview.progression,key:preview.key,mode:step.mode,chord:step.chord},i);return `<li data-generator-step="${i}"><strong>${esc(h.name+h.suffix)}</strong><span>${esc(modeDefs[step.mode].name)}</span><small>${step.bars} bar${step.bars===1?'':'s'}${preview.positions?' · Position '+preview.positions[i]:''}</small></li>`;}).join('');
+  (panel.querySelector('#generator-preview-chords') as HTMLElement).dataset.playbackChart=playbackChartKey({progression:true,template:'custom',customProgression:preview.progression,key:preview.key,beats:preview.beats??4});
   const slots=preview.progression.steps.length,total=preview.progression.steps.reduce((n:number,s:any)=>n+s.bars,0);status.textContent=`Preview: ${slots} chords · ${total} bars.`;
   (field('new-key') as HTMLButtonElement).disabled=preview.approach!=='musical'&&lastConfig.roots.length<12;reflect();
  }

@@ -1,4 +1,5 @@
 import {checklistCards} from './practice/checklist-view.js';
+import {highlightChordPlayback} from './practice/chord-playback.js';
 import {installProgressionGenerator} from './practice/progression-generator-view.js';
 import {chordStepsInRange} from './practice/chart-edit-selection.js';
 import {patternStartRoute,patternStartRouteValue,cardStartLabel} from './practice/pattern-start-route.js';
@@ -221,6 +222,7 @@ let harmonyFxSource:GainNode|undefined;
 let fxBuses: ReturnType<typeof createFxBuses> | undefined;
 let fxUi: ReturnType<typeof installFxControls> | undefined;
 let playing = false;
+let playbackCounting=false;
 let busy = false;
 let step = 0;
 let context: AudioContext | undefined;
@@ -336,6 +338,7 @@ function updateExerciseCursor(frame=performance.now()){
   if(frame-exerciseCursorFrame<33){exerciseAnimationFrame=requestAnimationFrame(updateExerciseCursor);return;}exerciseCursorFrame=frame;
   const sequence=exercisePlaybackSequence,divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2,noteLength=60/exerciseView.tempo/divisions;
   const elapsed=context.currentTime-exerciseTimelineStart,countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;
+  if(!exerciseView.backing&&playbackCounting&&elapsed>=countIn){playbackCounting=false;syncMiniTransport();}
   const status=document.querySelector<HTMLElement>('#exercise-playback-status'),progress=document.querySelector<HTMLElement>('#exercise-progress-fill');
   if(elapsed<countIn){const beat=Math.max(1,Math.ceil((countIn-elapsed)/(60/exerciseView.tempo)));if(status)status.textContent=`Count-in · ${settings.beats-beat+1} / ${settings.beats}`;}
   else if(sequence.length&&exercisePlan){
@@ -533,7 +536,7 @@ async function toggleExercisePreview() {
     exercisePlaybackSequence=selectedExercise();exercisePlaybackPlan=exercisePlan?{...exercisePlan,events:selectedPlanEvents()}:null;
     const prepared=await exerciseBufferCache.prepare(context!,exerciseBufferRequests(exerciseView.tempo),()=>generation!==exercisePrepareGeneration);
     if(!prepared||generation!==exercisePrepareGeneration)return;exerciseBuffers=prepared;
-    exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');exercisePlaying=true;exerciseBackingStep=exercisePlan?.resolution?0:exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
+    exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');playbackCounting=settings.countIn;exercisePlaying=true;exerciseBackingStep=exercisePlan?.resolution?0:exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.12:undefined;
     if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
@@ -1180,6 +1183,7 @@ async function initialiseAudio(requested:any=settings) {
     node.connect(harmonyFxSource,8);
     node.port.onmessage = ({ data }) => {
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
+      if((playing||exercisePlaying)&&typeof data.counting==='boolean'&&playbackCounting!==data.counting){playbackCounting=data.counting;syncMiniTransport();}
       if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
       if(!playing&&exercisePlaying&&data.type==='session-complete'){stopExercisePreview();return;}
       if(!playing&&exercisePlaying&&exerciseView.backing&&typeof data.step==='number'&&exerciseBackingStep!==data.step){exerciseBackingStep=data.step;syncMiniTransport();}
@@ -1652,7 +1656,7 @@ async function toggle() {
     await prepareAudio();
     currentBpm = settings.bpm;
     step = settings.progression ? progressionStep(settings,0) : 0;
-    playing = true;
+    playbackCounting=settings.countIn;playing = true;
     el('pulse-time').textContent=settings.sessionSeconds?`${formatTime(settings.sessionSeconds)} remaining`:'0:00 elapsed';
     node!.port.postMessage({ type: 'start', settings });
     renderMusic();
@@ -1913,6 +1917,8 @@ function syncMiniTransport() {
   el<HTMLButtonElement>('mini-play').disabled = busy || stopping;
   const transportSettings=exercisePlaying&&exerciseView.backing?exerciseBackingConfig():settings;
   const transportStep=exercisePlaying?exerciseBackingStep:step;
+  const outlineStep=exercisePlaying&&exerciseView.backing?(exercisePlan?.resolution?exercisePlan.slots[exerciseBackingStep]?.step??step:exerciseBackingStep):step;
+  highlightChordPlayback(settings,outlineStep,(playing||exercisePlaying)&&!playbackCounting);
   const info = harmonyAt(transportSettings,transportStep);
   const active=musicalContext(transportSettings,transportStep);
   el('active-musical-context').innerHTML=`<div><small>Modal tonic</small><strong>${escapeHtml(info.scaleNames[0])}</strong></div><div><small>Current chord</small><strong>${escapeHtml(active.chord)}</strong></div><div><small>Current scale guide</small><strong>${escapeHtml(active.scale)}</strong></div><div><small>Next chord</small><strong>${escapeHtml(active.nextChord)}</strong></div>${exercisePlaying||transportSettings.extensionMorph?`<p>${exercisePlaying?'Exercise playback. ':''}${transportSettings.extensionMorph?'Evolving extensions on (Sound Settings).':''}</p>`:''}`;
