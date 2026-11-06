@@ -9,7 +9,7 @@ import {recommendedGrip} from '../guitar/grips.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function learningView(panel:HTMLElement,context:any){
  const {board,info,position,groups,notes,study,fretboard}=context;
- const grip=context.perString?null:recommendedGrip(info,board);
+ const grip=context.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(info,board);
  const toolbar=document.createElement('div');toolbar.className='exercise-learning-toolbar';toolbar.innerHTML=`<label>${context.progression?'Selected chord position':'Position'}<select id="exercise-position">${['I','II','III','IV','V'].map(n=>`<option ${n===position.numeral?'selected':''}>${n}</option>`).join('')}</select></label>`;
  const oldStudy=panel.querySelector('#exercise-study')?.closest('label');if(oldStudy)toolbar.prepend(oldStudy);
  const focusButton=panel.querySelector('#exercise-focus');if(focusButton)toolbar.append(focusButton);const previewButton=panel.querySelector('#exercise-preview');if(previewButton)toolbar.append(previewButton);
@@ -71,7 +71,7 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  const augmented={...board,notes:[...board.notes]};
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
  if(['grip','positional'].includes(study))augmented.notes=augmented.notes.map((n:any)=>{const index=harmony.chordPcs.indexOf(n.pc);return index<0?n:{...n,scaleIndex:-1,chromaticDegree:harmony.intervals[index]};});
- const grip=group.perString?null:recommendedGrip(harmony,board);
+ const grip=group.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(harmony,board);
  diagram.innerHTML=diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
  diagram.querySelector('svg')?.setAttribute('role','group');
  if(group.perString){(diagram.querySelector('svg') as SVGElement).style.minWidth=Math.max(480,(board.end-board.start+1)*48)+'px';diagram.classList.add('per-string-scroll');}

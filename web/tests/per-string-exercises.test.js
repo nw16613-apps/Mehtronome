@@ -19,3 +19,19 @@ test('chord durations, repeated-slot continuity, changed qualities and resolutio
  const fallback=perStringExerciseChoice(harmonyAt({key:9,mode:'major',chord:'major'}),{...options,inversion:6});assert.equal(fallback.index,0);assert.match(fallback.warning,/root position/);
  const changing=perStringExerciseGroups([h,harmonyAt({key:0,mode:'major',chord:'major'})],[4,4],[position,position],{...options,inversion:3}),ending=withExerciseResolution(changing,progressionStudyPlan(changing,[0,1],[1,1],4,'positional','sixteenths'));assert.match(changing[1].fingeringLabel,/Root position/);assert.match(ending.groups.at(-1).fingeringLabel,/Third inversion/);
 });
+
+test('chord suggestions use fretted octave equivalents instead of open strings',()=>{
+ const chord=harmonyAt({key:9,mode:'dorian',chord:'min7'}),choice=perStringExerciseChoice(chord,{...options,fingering:'oneTwo',inversion:3,fingeringFret:3});
+ assert.equal(choice.board.firstFret,15);assert.ok(choice.board.notes.every(n=>n.fret>0));
+});
+
+test('drop practice preserves every inversion and string set, and unsupported chords rest',()=>{
+ for(const fingering of ['drop2','drop3'])for(let fingeringStringSet=0;fingeringStringSet<(fingering==='drop2'?3:2);fingeringStringSet++)for(let inversion=0;inversion<4;inversion++){
+  const o={...options,fingering,fingeringStringSet,inversion},choice=perStringExerciseChoice(h,o),g=perStringExerciseGroups([h],null,[position],o)[0];
+  assert.equal(choice.board.notes.length,4);assert.deepEqual(g.notes.slice(0,4),choice.board.notes);assert.equal(g.notes[0].pc,h.chordPcs[inversion]);assert.equal(choice.board.muted.length,2);
+ }
+ const triad=harmonyAt({key:9,mode:'major',chord:'major'}),g=perStringExerciseGroups([triad],[4],[position],{...options,fingering:'drop2'})[0];assert.deepEqual(g.notes,[]);assert.match(g.warning,/rest for this chord/);
+});
+test('three-note-per-string practice transfers the continuous scale and starting degree',()=>{
+ for(let inversion=0;inversion<7;inversion++){const o={...options,fingering:'three',inversion,study:'positionalscale'},g=perStringExerciseGroups([h],null,[position],o)[0];assert.equal(g.board.notes.length,18);assert.deepEqual(g.notes.slice(0,18),g.board.notes);assert.equal(g.notes[0].pc,h.scalePcs[inversion]);}
+});

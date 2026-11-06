@@ -238,3 +238,25 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 #full-fretboard .caged-region:is(:hover,:focus-visible) rect{stroke-opacity:1;stroke-width:2.5;fill-opacity:.08}
 
 #full-fretboard .per-string-map-region{cursor:pointer}#full-fretboard .shape-region-boundary{fill:var(--shape-color);fill-opacity:.025;stroke:var(--shape-color);stroke-opacity:.3;stroke-width:1.2;pointer-events:all}#full-fretboard .per-string-map-region.selected .shape-boundary{pointer-events:all}#full-fretboard .per-string-map-region:hover polygon{fill-opacity:.14;stroke-opacity:1}#full-fretboard .per-string-region-label rect{fill:var(--panel);stroke:var(--shape-color);stroke-width:1.5}#full-fretboard .per-string-region-label text{fill:var(--shape-color);font:700 12px system-ui;pointer-events:none}#full-fretboard .per-string-region-label.selected rect,#full-fretboard .per-string-region-label:focus-visible rect{stroke-width:3}#full-fretboard .per-string-region-label:focus-visible{outline:none}
+
+.per-string-shape .per-string-scroll{cursor:pointer}.per-string-shape .per-string-scroll:focus-visible{outline:2px solid var(--shape-color,var(--accent));outline-offset:2px}
+.full-fretboard-toolbar .per-string-neck-option{display:grid;gap:6px;flex:0 1 250px;min-width:0;max-width:100%;align-content:start}.per-string-neck-option>span{display:block;line-height:1.4;white-space:nowrap}.per-string-neck-option select{display:block;width:100%;min-width:0;max-width:100%;margin:0;box-sizing:border-box;padding:8px 10px;min-height:40px;font:12px/1.4 system-ui;color:var(--ink);background:var(--field);border:1px solid var(--line);border-left:4px solid var(--shape-color,var(--accent));border-radius:5px}
+/* Keep register controls in the same two rows in every inversion card. */
+.per-string-shape .per-string-register-label{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:6px;margin:10px 0;line-height:1.4}.per-string-register-label select{display:block;width:100%;max-width:220px;min-width:0;min-height:40px;box-sizing:border-box;margin:0;font:inherit;line-height:1.4}
+/* Alternative fingerings follow the CAGED overview and selected-diagram layout. */
+.per-string-gallery{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));align-items:stretch;gap:10px}
+.per-string-gallery .per-string-shape{padding:10px;display:flex;flex-direction:column;cursor:pointer}
+.per-string-gallery .position-heading{display:block;min-height:58px;margin:0 0 8px;padding:0;border:0}
+.per-string-gallery .position-heading h5{font-size:12px;line-height:1.4}
+.per-string-gallery .position-heading>span{display:block;font-size:11px;margin-top:4px}
+.per-string-gallery .per-string-scroll{overflow:hidden;margin-top:auto}
+.per-string-gallery svg{width:100%;min-width:0!important;display:block}
+.per-string-navigation{display:flex;align-items:center;justify-content:center;gap:20px;margin:12px 0 18px}
+.per-string-navigation>span{font-size:12px;color:var(--muted);text-align:center}
+.per-string-featured{max-width:1128px;margin:0 auto}
+.per-string-selected{padding:20px;border-color:var(--shape-color)!important}
+.per-string-selected-controls{display:flex;align-items:end;flex-wrap:wrap;gap:16px;margin:12px 0}
+.per-string-selected-controls .per-string-register-label{display:grid;gap:6px;margin:0;min-width:200px}
+.per-string-selected-diagram{overflow-x:auto;max-width:100%}
+.per-string-selected-diagram svg{display:block;width:100%;max-width:850px;margin-inline:auto}
+@media(max-width:520px){.per-string-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.per-string-navigation{gap:8px}.per-string-navigation button{padding:10px}.per-string-selected{padding:12px}}

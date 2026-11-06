@@ -45,6 +45,6 @@ export function singleChordExercisePlan(groups,harmony,board,position,study,rhyt
  const notes=groups.flatMap(g=>g.notes),division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  let offset=0;const targetIndices=[];
  for(const group of groups){targetIndices.push(...(group.targetIndices||(group.targetIndex===undefined?[]:[group.targetIndex])).map(i=>i+offset));offset+=group.notes.length;}
- const group={slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
+ const group={...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
  return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil(notes.length/division/beats))],beats,study,rhythm)};
 }

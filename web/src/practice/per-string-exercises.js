@@ -1,10 +1,14 @@
 import {perStringCatalogue} from '../guitar/per-string.js';
-export const PER_STRING_STUDIES=new Set(['positional','arpgroups3','arpgroups4']);
+import {dropVoicingCatalogue} from '../guitar/drop-voicings.js';
+import {MODES} from '../audio/music.js';
+export const PER_STRING_STUDIES=new Set(['positional','positionalscale','arpgroups3','arpgroups4']);
+export const exerciseFingeringCatalogue=(h,o)=>o.fingering.startsWith('drop')?dropVoicingCatalogue(h,o.fingering,o.fingeringStringSet||0):perStringCatalogue(h,o.fingering);
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function perStringExerciseChoice(harmony,options){
- const catalogue=perStringCatalogue(harmony,options.fingering),entry=catalogue[options.inversion]||catalogue[0];
+ const catalogue=exerciseFingeringCatalogue(harmony,options),entry=catalogue[options.inversion]||catalogue[0];
+ if(!entry||!entry.choices.length)return {board:{start:1,end:5,notes:[],muted:[]},entry:{choices:[]},index:0,label:options.fingering==='drop2'?'Drop 2':'Drop 3',warning:`${harmony.name}${harmony.suffix}: no playable four-tone drop voicing on this string set; rest for this chord.`};
  const board=entry.choices.reduce((best,b)=>!best||Math.abs(b.firstFret-options.fingeringFret)<Math.abs(best.firstFret-options.fingeringFret)?b:best,null);
- const index=catalogue.indexOf(entry),label=`${options.fingering==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'} · ${inversionNames[index]}`;
+ const index=catalogue.indexOf(entry),label=`${options.fingering==='three'?'3 notes per string':options.fingering==='drop2'?'Drop 2':options.fingering==='drop3'?'Drop 3':options.fingering==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'} · ${options.fingering==='three'?'Starting degree '+MODES[harmony.mode].degrees[entry.degree]:inversionNames[index]}`;
  return {board,entry,index,label,warning:catalogue[options.inversion]?'':`The selected inversion is absent from ${harmony.name}${harmony.suffix}; using root position.`};
 }
 /** Reuse the precise fretboard fingering. Cycles preserve string/fret identity
@@ -22,7 +26,7 @@ export function perStringExerciseGroups(harmonies,durations,positions,options){
   const cycle=[...up,...down],identity=JSON.stringify([harmony.chordPcs,board.notes.map(n=>[n.string,n.fret]),options.motion,options.study]);
   if(identity!==previous)phase=0;previous=identity;
   const capacity=durations?Math.max(1,Math.floor(durations[slot]*division)):cycle.length;
-  const notes=Array.from({length:capacity},()=>cycle[phase++%cycle.length]);
+  const notes=Array.from({length:cycle.length?capacity:0},()=>cycle[phase++%cycle.length]);
   const group={slot,globalStart,harmony,board,position:{...positions[slot],perString:true},perString:true,fingeringLabel:choice.label,applicationLabel:choice.label,chord:harmony.name+harmony.suffix,annotation:choice.label,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),warning:[choice.warning,capacity<board.notes.length?`${harmony.name}${harmony.suffix}: only ${capacity} notes fit before the next chord. Use a faster subdivision or longer chord duration for the full shape.`:'',choice.entry.extended?'This continuous shape extends beyond fret 24.':''].filter(Boolean).join(' '),targetIndices:[]};
   globalStart+=notes.length;return group;
  });

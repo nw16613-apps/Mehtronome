@@ -11,8 +11,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  guitar.querySelector('.guitar-progression-panel')!.before(controls);
  const panel=document.createElement('section');panel.id='per-string-diagram';panel.className='per-string-diagram';panel.hidden=true;guitar.querySelector('#position-overview')!.before(panel);
  const field=(id:string)=>controls.querySelector<HTMLSelectElement>('#'+id)!;
- const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,lastDropKind='';
- panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div>';
+ const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,lastDropKind='',selectedDegree:number|undefined;
+ panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div><div class="per-string-navigation"><button type="button" class="practice-button" data-shape-move="-1">← Previous</button><span></span><button type="button" class="practice-button" data-shape-move="1">Next →</button></div><div class="per-string-featured"></div>';
  function refresh(){
   const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three',drop=kind==='drop2'||kind==='drop3';
   guitar.classList.toggle('per-string-active',active);panel.hidden=!active;
@@ -21,7 +21,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   controls.querySelectorAll<HTMLElement>('[data-drop-control]').forEach(e=>e.hidden=!drop);
   if(drop&&lastDropKind!==kind){field('drop-string-set').innerHTML=(DROP_STRING_SETS as any)[kind].map((strings:number[],i:number)=>`<option value="${i}">Strings ${strings.map(s=>6-s).join('–')}</option>`).join('');lastDropKind=kind;}
   controls.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked);
-  panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked);
+  panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked||e.options.length===1);
   panel.querySelectorAll<HTMLButtonElement>('[data-practise-per-string]').forEach(e=>e.disabled=locked);
   if(!active){lastRender='';updateMap?.(null);return;}
   const renderKey=JSON.stringify([kind,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
@@ -36,13 +36,41 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
    const board=entry.choices.reduce((best:any,b:any)=>!best||Math.abs(b.firstFret-preferred)<Math.abs(best.firstFret-preferred)?b:best,null);
    const label=arp?(inversionNames[i]||'Starting tone '+(i+1)):'Starting degree '+degrees[degree];
    const heading=label+' · '+names[degree]+(arp?' ('+degrees[degree]+')':'');
-   if(!board)return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><h5>${esc(heading)}</h5><p>${drop?'No playable voicing fits this string set within frets 0–24.':'No complete pattern fits within frets 0–36.'}</p></article>`;
+   if(!board)return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><h5>${esc(heading)}</h5><p>${drop?'No playable voicing fits this string set within frets 1–24.':'No complete pattern fits within frets 0–36.'}</p></article>`;
    mapShapes.push({degree,board,label:heading,tag:arp?(i===0?'R':['','1st','2nd','3rd','4th','5th','6th'][i]):degrees[degree]});
-   return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div>${arp&&!drop?`<button type="button" class="practice-button" data-practise-per-string="${i}" data-practice-fret="${board.firstFret}" ${locked?'disabled':''}>Practise this shape →</button>`:''}${entry.extended?'<p class="per-string-range-note">Extends beyond fret 24 · full pattern shown for reference.</p>':''}${entry.choices.length>1?`<label class="per-string-register-label">${drop?'Bass fret · string '+(6-board.notes[0].string):'Starting fret · low E'}<select data-string-register="${degree}" aria-label="Starting fret for ${esc(label)}" ${locked?'disabled':''}>${entry.choices.map((b:any)=>`<option value="${b.firstFret}" ${b.firstFret===board.firstFret?'selected':''}>${b.firstFret===0?'Open':b.firstFret} · frets ${b.start}–${b.end}</option>`).join('')}</select></label>`:''}<div class="per-string-scroll" tabindex="0" aria-label="Scrollable fingering: ${esc(heading)}">${diagramSvg(board,field('per-string-labels').value==='degrees',degrees,title+', '+heading,true,drop?{notes:board.notes,muted:board.muted}:null).replace('<svg ',`<svg style="min-width:${drop?0:Math.max(480,(board.end-board.start+1)*48)}px" `)}</div></article>`;
+   const svg=diagramSvg(board,field('per-string-labels').value==='degrees',degrees,title+', '+heading,true,drop?{notes:board.notes,muted:board.muted}:null);
+   Object.assign(mapShapes[mapShapes.length-1],{index:i,entry,heading,svg,drop});
+   return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-scroll" tabindex="0" role="button" aria-pressed="false" aria-label="Highlight ${esc(heading)} on full-neck map">${svg}</div></article>`;
   }).join('');
-  lastMap={harmony:h,arp,degrees,labels:field('per-string-labels').value==='degrees',title,shapes:mapShapes};updateMap?.(lastMap);
+  lastMap={harmony:h,arp,degrees,labels:field('per-string-labels').value==='degrees',title,shapes:mapShapes,selectShape};selectShape(selectedDegree);updateMap?.(lastMap);
  }
- panel.addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLButtonElement>('[data-practise-per-string]');if(button&&!button.disabled)practise?.({kind:field('fretboard-fingering').value,inversion:Number(button.dataset.practisePerString),fret:Number(button.dataset.practiceFret)});});
+ function selectShape(degree:number|undefined){
+  const shapes=lastMap?.shapes||[],shape=shapes.find((s:any)=>s.degree===degree)||shapes.find((s:any)=>s.degree===selectedDegree)||shapes[0];
+  const featured=panel.querySelector<HTMLElement>('.per-string-featured')!,nav=panel.querySelector<HTMLElement>('.per-string-navigation')!;
+  featured.hidden=!shape;nav.hidden=!shape;if(!shape){featured.innerHTML='';return;}
+  selectedDegree=shape.degree;
+  const {board,entry,index,heading,svg,drop}=shape,{locked}=getContext();
+  nav.querySelectorAll<HTMLButtonElement>('button').forEach(button=>button.disabled=locked);
+  nav.querySelector('span')!.textContent=`${index+1} of ${shapes.length} · ${shape.label}`;
+  featured.innerHTML=`<article class="position-card per-string-selected" style="--shape-color:${shapeColor(index)}"><div class="position-heading"><h4>${esc(heading)}</h4><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-selected-controls"><label class="per-string-register-label">${drop?'Bass fret · string '+(6-board.notes[0].string):'Starting fret · low E'}<select data-string-register="${shape.degree}" aria-label="Starting fret for ${esc(shape.label)}" ${locked||entry.choices.length===1?'disabled':''}>${entry.choices.map((b:any)=>`<option value="${b.firstFret}" ${b.firstFret===board.firstFret?'selected':''}>${b.firstFret} · frets ${b.start}–${b.end}</option>`).join('')}</select></label><button type="button" class="practice-button" data-practise-per-string="${index}" data-practice-fret="${board.firstFret}" ${locked?'disabled':''}>Practise this shape →</button></div>${entry.extended?'<p class="per-string-range-note">Extends beyond fret 24 · full pattern shown for reference.</p>':''}<div class="per-string-selected-diagram">${svg.replace('<svg ',`<svg style="min-width:${drop?0:Math.max(480,(board.end-board.start+1)*48)}px" `)}</div></article>`;
+ }
+ function selectCard(card:HTMLElement|null){
+  if(!card||!lastMap?.shapes.some((s:any)=>String(s.degree)===card.dataset.startDegree))return;
+  const menu=document.querySelector<HTMLSelectElement>('#per-string-neck-shape');if(!menu)return;
+  menu.value=card.dataset.startDegree!;menu.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ panel.addEventListener('click',event=>{
+  const target=event.target instanceof Element?event.target:null;if(!target)return;
+  const button=target.closest<HTMLButtonElement>('[data-practise-per-string]');
+  if(button){if(!button.disabled)practise?.({kind:field('fretboard-fingering').value,inversion:Number(button.dataset.practisePerString),fret:Number(button.dataset.practiceFret),stringSet:Number(field('drop-string-set').value)||0});return;}
+  const move=target.closest<HTMLElement>('[data-shape-move]');if(move){const shapes=lastMap.shapes,index=shapes.findIndex((s:any)=>s.degree===selectedDegree);const next=shapes[(index+Number(move.dataset.shapeMove)+shapes.length)%shapes.length];selectCard(panel.querySelector(`[data-start-degree="${next.degree}"]`));return;}
+  if(target.closest('button,select,option,label,input,a'))return;
+  selectCard(target.closest<HTMLElement>('.per-string-shape'));
+ });
+ panel.addEventListener('keydown',event=>{
+  if(!['Enter',' '].includes(event.key)||!(event.target instanceof HTMLElement)||!event.target.matches('.per-string-scroll'))return;
+  event.preventDefault();selectCard(event.target.closest<HTMLElement>('.per-string-shape'));
+ });
  controls.addEventListener('change',refresh);
  panel.addEventListener('change',e=>{const target=e.target as HTMLSelectElement;if(target.dataset.stringRegister===undefined)return;registers.set(field('fretboard-fingering').value+':'+target.dataset.stringRegister,Number(target.value));refresh();});
  document.addEventListener('mehtronome-playback-state',refresh);

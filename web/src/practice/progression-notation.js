@@ -11,6 +11,8 @@ const durationPart=(remaining,at,division)=>{
  * are tied and retain the same audition/selection index in every segment. */
 export function progressionNotationSvg(plan,title,options={chordDiagrams:false}){
  const positionChanges=new Set(plan.slots.filter((slot,index)=>index===0||notationDiagramKey(slot)!==notationDiagramKey(plan.slots[index-1])));
+ const fingeringKey=slot=>JSON.stringify([slot.fingeringLabel,slot.board?.notes.map(n=>[n.string,n.fret])]);
+ const fingeringChanges=new Set(plan.slots.filter((slot,index)=>index===0||fingeringKey(slot)!==fingeringKey(plan.slots[index-1])));
  const diagramChanges=options.chordDiagrams?positionChanges:new Set();
  const chordChanges=new Set(plan.slots.filter((slot,index)=>index===0||slot.chord!==plan.slots[index-1].chord));
  const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=dense?2:guide?4:3;
@@ -32,7 +34,8 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
     if(diagramChanges.has(change)&&atChange)diagramBand+=notationChordDiagram(change.harmony,change.board,change.position,x,58);
     const hasNotes=plan.events.some(e=>e.slot===change.slot&&e.start<end&&e.start+e.duration>start);
     const caption=change.resolution?'Resolution':change.response?'Your turn · lead rests':change.applicationLabel||(!hasNotes?'Rest':change.position?.perString?change.annotation:plan.study==='guidetones'?change.annotation.split(' · ')[0]:change.annotation.startsWith('Rest')?'Rest':plan.study==='connections'?'Arpeggio → rest':['positional','positionalscale'].includes(plan.study)&&change.position?`Position ${change.position.numeral} · ${change.position.shape} shape`:change.annotation.match(/\d+ cell(?: segments|s)?/)?.[0]||'Cell');
-    const showCaption=!caption.startsWith('Position ')||positionChanges.has(change)&&atChange;
+    const shapeCaption=change.perString&&!change.resolution&&!change.response;
+    const showCaption=shapeCaption?fingeringChanges.has(change)&&atChange:!caption.startsWith('Position ')||positionChanges.has(change)&&atChange;
     svg+='</g>'+(chordChanges.has(change)&&atChange?chordSvg(change.chord,x,40,'backing'):'')+
      (showCaption?`<text class="exercise-degree" x="${x}" y="${272+musicOffset}">${esc(caption)}</text>`:'')+`<g transform="translate(0,${musicOffset})">`;
    }
