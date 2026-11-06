@@ -20,10 +20,10 @@ test('voicing display and overlay are explicit, restore settings and keep strum/
  await page.locator('[data-practise-grip]').click();await expect(page.locator('#exercise-study')).toHaveValue('positional');expect(errors).toEqual([]);
 });
 test('mobile tabs remain readable and the full-neck map honours the saved visibility choice',async({page})=>{
- await page.setViewportSize({width:390,height:844});await open(page);await page.locator('#full-fretboard-collapse').click();await expect(page.locator('#full-fretboard-collapse')).toHaveText('Show map');await expect(page.locator('[data-overview-position=II] small')).toBeVisible();await expect(page.locator('[data-overview-position=II] svg')).toBeHidden();
+ await page.setViewportSize({width:390,height:844});await open(page);await expect(page.locator('#full-fretboard-collapse')).toHaveText('Show map');await expect(page.locator('[data-overview-position=II] small')).toBeVisible();await expect(page.locator('[data-overview-position=II] svg')).toBeHidden();
  const width=await page.locator('[data-overview-position=II]').evaluate(n=>n.getBoundingClientRect().width);expect(width).toBeGreaterThanOrEqual(100);
  await page.locator('#full-fretboard-collapse').click();await expect(page.locator('#full-fretboard-collapse')).toHaveText('Hide map');await page.reload();await expect(page.locator('#full-fretboard-collapse')).toHaveText('Hide map');
- await page.locator('#full-neck-shape').selectOption('I');await expect(page.locator('#featured-position')).toHaveValue('all');await expect(page.locator('.featured-position')).toHaveAttribute('data-position','I');
+ await page.locator('#full-fretboard [data-full-position=I]').first().click();await expect(page.locator('#featured-position')).toHaveValue('all');await expect(page.locator('.featured-position')).toHaveAttribute('data-position','I');
  await page.locator('[data-learning-focus]').click();await expect(page.locator('.fretboard-toolbar')).toBeHidden();await expect(page.locator('.featured-position')).toBeVisible();await page.locator('#exit-focus').click();await expect(page.locator('.fretboard-toolbar')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 test('unavailable overlays and navigation during playback do not present ineffective choices',async({page})=>{

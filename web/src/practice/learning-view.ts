@@ -1,6 +1,3 @@
-import {fullNeckView} from '../guitar/full-neck-view.js';
-import {perStringCatalogue} from '../guitar/per-string.js';
-import {POSITIONS,cagedPositionFor,fretboardFor} from '../guitar/fretboard.js';
 import {cardStartChoices,cardStartLabel} from './pattern-start-route.js';
 import {organizeExercisePanel} from './exercise-layout.js';
 import {positionRouteCards} from './position-route.js';
@@ -10,22 +7,6 @@ import {MODES} from '../audio/music.js';
 import {exerciseGuidance} from './exercise-options.js';
 import {recommendedGrip} from '../guitar/grips.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-
-let exerciseNeck:ReturnType<typeof fullNeckView>|undefined;
-function updateExerciseNeck(panel:HTMLElement,group:any,study:string){
- if(!group?.harmony)return;
- exerciseNeck??=fullNeckView({id:'exercise-full-neck',notesId:'exercise-neck-notes',shapeId:'exercise-neck-shape'});
- const h=group.harmony,perString=!!group.perString,kind=group.fingeringLabel?.startsWith('1–2')?'oneTwo':'twoOne';
- const shapes=perString?perStringCatalogue(h,kind).map((entry:any,i:number)=>{
-  const own=entry.choices.some((b:any)=>b.notes[0].fret===group.board.notes[0]?.fret&&entry.degree===h.chordPcs.indexOf(group.board.notes[0]?.pc));
-  const board=own?group.board:entry.choices.reduce((best:any,b:any)=>!best||Math.abs(b.firstFret-5)<Math.abs(best.firstFret-5)?b:best,null);
-  return {degree:entry.degree,board,label:`${i===0?'Root position':['','First','Second','Third','Fourth','Fifth','Sixth'][i]+' inversion'} · ${h.tones[entry.degree]} (${h.intervals[entry.degree]})`};
- }):POSITIONS.map(p=>{const board=fretboardFor(h,p.shape),identity=cagedPositionFor(board)!;return {degree:identity.numeral,board,label:`Position ${identity.numeral} · ${identity.shape} shape`};});
- const activeId=perString?h.chordPcs.indexOf(group.board.notes[0]?.pc):group.position.numeral;
- if(!panel.contains(exerciseNeck.element))panel.querySelector('.exercise-linked-fretboard')!.after(exerciseNeck.element);
- exerciseNeck.update({harmony:h,arp:perString||['positional','arpgroups3','arpgroups4','inversions'].includes(study),degrees:MODES[h.mode as keyof typeof MODES].degrees,labels:true,title:group.chord,shapes,activeId,includeChordTones:true,isExercise:true});
-
-}
 export function learningView(panel:HTMLElement,context:any){
  const {board,info,position,groups,notes,study,fretboard}=context;
  const grip=context.perString?null:recommendedGrip(info,board);
@@ -68,13 +49,12 @@ export function learningView(panel:HTMLElement,context:any){
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Tempo, playback and display settings</summary>';for(const selector of ['.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);
  organizeExercisePanel(panel,context.guitarVolume);
- updateExerciseNeck(panel,groups[context.progression?Math.max(0,context.progressionSteps.indexOf(context.inspectedStep)):0],study);
 }
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
  document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
  document.querySelectorAll('.exercise-note.target-preview').forEach(el=>el.classList.remove('target-preview'));
  if(markNotation&&index!==null)document.querySelectorAll(`.exercise-note[data-note-index="${index}"]`).forEach(el=>el.classList.add('target-preview'));
- const selected=index===null?null:notes[index];document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note,#exercise-full-neck .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
+ const selected=index===null?null:notes[index];document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
 }
 
 /** Update only the linked diagram at a chord boundary; retain notation,
@@ -107,5 +87,4 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  });
  panel.querySelector('.exercise-map-heading strong')!.textContent=group.perString?`${group.chord} · ${group.fingeringLabel}`:group.fixedRegion?`${group.chord} · frets ${board.start}–${board.end}`:`${group.chord} · Position ${position.numeral} · ${position.shape} framework`;
  const positionSelect=panel.querySelector<HTMLSelectElement>('#exercise-position');if(positionSelect)positionSelect.value=position.numeral;
- updateExerciseNeck(panel,group,study);
 }
