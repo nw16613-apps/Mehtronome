@@ -1,3 +1,4 @@
+import {installPerStringView} from './guitar/per-string-view.js';
 import {checklistCards} from './practice/checklist-view.js';
 import {highlightChordPlayback} from './practice/chord-playback.js';
 import {installProgressionGenerator} from './practice/progression-generator-view.js';
@@ -230,6 +231,7 @@ let node: AudioWorkletNode | undefined;
 let installedSampleNames=new Set<string>(),sampleSettingsGeneration=0;
 let stopping = false;
 let guitarDegrees = true;
+let perStringView:ReturnType<typeof installPerStringView>|undefined;
 let previewHold: string | null = null;
 let chartPreviewTimer:ReturnType<typeof setTimeout>|undefined;
 let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -786,6 +788,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   select('fret-view').value = select('exercise').value;
   applyStudioIcons(document.querySelector('.guitar')!);
   applyStudioIcons(el('caged-exercise'));
+  perStringView?.refresh();
 }
 function syncPulseToolsUI(){
  const custom=Boolean(settings.beatAccents?.trim());
@@ -2325,6 +2328,7 @@ installProgressionGenerator({
   input('loop-enabled').checked=false;fillLoopOptions(true);update();document.dispatchEvent(new Event('chart-context-restored'));
  }
 });
+perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}));
 backingStyleUi=installBackingStyles(update);
 update();
 applyStudioIcons();

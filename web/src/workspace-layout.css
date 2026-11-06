@@ -207,3 +207,13 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 }
 
 #generator-preview-chords li.chord-playing:after,.position-path button.chord-playing:after,.reference-chord.chord-playing:after{visibility:visible}
+
+.per-string-controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:18px 0}.per-string-controls label{display:grid;gap:6px;font-size:12px;color:var(--muted);flex:1 1 180px;min-width:0}.per-string-controls select{min-width:0;width:100%;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--field);color:var(--ink);font:inherit}
+.per-string-diagram{margin:18px 0;min-width:0;max-width:100%}.per-string-scroll{overflow-x:auto;max-width:100%;scrollbar-color:var(--accent) transparent}.per-string-scroll svg{display:block;width:100%;max-width:none}.per-string-scroll:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.guitar.per-string-active #position-overview,.guitar.per-string-active #guitar-diagrams,.guitar.per-string-active>.position-navigation,.guitar.per-string-active #full-fretboard-panel,.guitar.per-string-active .guitar-overview,.guitar.per-string-active #position-path-guide .position-path-heading{display:none}
+.guitar.per-string-active #position-path button>span,.guitar.per-string-active #position-path button>small:not(.route-harmony){display:none}
+@media(max-width:760px){.per-string-controls label{flex-basis:calc(50% - 12px)}.per-string-diagram{padding:12px}.per-string-diagram .position-heading{flex-wrap:wrap}}
+
+.guitar.per-string-active :is(.position-navigation,#position-path-guide,.fretboard-toolbar,.guitar-legend,#fretboard-overlay-summary,#fretboard-overlay-details,#grip-preview-status){display:none!important}
+
+.per-string-controls [hidden]{display:none!important}

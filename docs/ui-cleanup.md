@@ -43,3 +43,9 @@ Eight generator unit checks, six generator/region browser workflows and TypeScri
 ## Chord outline playback highlight
 
 Generator previews, fretboard/exercise route cards and harmony reference cards share a gold playing highlight and visible Playing marker. Exactly the sounding slot is marked in each outline, including repeated harmonies and loop/resolution returns. Inspection remains separate; indicators clear on stop and wait through count-in. Unapplied previews only follow playback if their harmony and durations match the working chart. Four playback workflows (desktop/mobile, backed/unbacked exercises, loop and count-in), five generator regressions and TypeScript/build pass.
+
+## Per-string fretboard fingerings
+
+A Fingering selector adds continuous diagonal scale patterns with exactly three consecutive tones on each string (including pentatonic, blues, symmetric and parent-scale modes), plus 1–2–1–2–1–2 and 2–1–2–1–2–1 arpeggios read from low E to high E. Arpeggios use the actual chord quality including extensions; degree labels refer to chord intervals. Starting degree, playable low-E register and note/degree labels are selectable. Invalid registers beyond frets 0–24 are omitted, unavailable starting notes are labelled, and boundary tones are never duplicated or skipped to force a fit.
+
+This is an alternate Fretboard display. CAGED routes, manual positions and existing Exercises remain intact. Unrelated CAGED/overlay controls are hidden in the alternate view. Diagrams follow the inspected/playing harmony, retain scrolling between beats and scroll horizontally on phones. Exhaustive scale/chord/transposition unit checks and three browser workflows pass; four playback-highlight regression workflows and TypeScript/build also pass.
