@@ -71,3 +71,11 @@ Both alternating arpeggio galleries now offer Practise this shape, which opens t
 The shared per-string diagrams supply the actual exercise notes, including chord extensions. Traversal reverses without duplicated turning tones; identical repeated chord slots continue their phase and new harmonies restart the selected inversion. The linked diagram and TAB follow the actual string/fret choices, without CAGED labels or grip diagrams. Short slots and missing inversions give explicit notices. Resolution uses the opening per-string board and its inversion metadata.
 
 Validation: 24 exercise/options/resolution/timing unit checks, exhaustive fingering catalogue checks, three new browser workflows for exact transfer, controls/saving/mobile and backed progression playback, four existing gallery workflows and the unified exercise playback regression pass. TypeScript/build pass.
+
+## Unified full-neck maps
+
+CAGED, three-note-per-string scales, alternating arpeggios and Exercises now use one shared full-neck component. All maps span frets 0–24, share the same sizing/mobile scrolling, sit below their local diagrams, and offer Current shape/All notes/named shape selection, note/degree labels, modal-colour control, fullscreen and show/hide. Label and visibility choices carry across views; visibility uses the existing saved CAGED preference. CAGED shape selection still updates the selected manual position.
+
+Every map has a contextual root/chord/scale/shape/modal-colour legend, with voicing and overlay keys when relevant. Selected rings remain transparent in every theme. Extended diagonal shapes retain their full reference diagrams, while the full-neck map stays on a physical 24-fret neck and explains any continuation. Selecting a different shape brings it into view on narrow screens; scrolling is retained between playback beats.
+
+Exercises now include the same full-neck map for CAGED and alternating fingerings, following chord/position changes and marking the sounding note. The old CAGED-only region toolbar and duplicate per-string map implementation/styles are removed. Ten targeted browser workflows cover note positions, all map types, shared settings/persistence, four themes, mobile overflow, CAGED manual navigation, fullscreen, shape transfers and backed/unbacked playback. TypeScript/build pass.

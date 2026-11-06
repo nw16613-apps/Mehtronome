@@ -13,7 +13,7 @@ export function installPerStringView(getContext:()=>any,practise?:(choice:any)=>
  const registers=new Map<string,number>();let lastRender='';
  const neck=perStringNeckView();
  panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div>';
- panel.querySelector('.per-string-gallery')!.before(neck.element);
+ panel.append(neck.element);
  function refresh(){
   const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three';
   guitar.classList.toggle('per-string-active',active);panel.hidden=!active;
