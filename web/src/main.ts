@@ -56,7 +56,7 @@ import './icons.css';
 import './workspace-layout.css';
 import {applyStudioIcons} from './practice/icons.js';
 import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
-import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, parentMajorFor } from './guitar/fretboard.js';
+import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, occupiedFretRange, parentMajorFor } from './guitar/fretboard.js';
 import { cagedStudy, alignedProgressionGroups, exerciseNotationSvg, flattenExercise, PENTATONIC_PATTERNS } from './guitar/exercises.js';
 import { FRET_REGIONS, progressionPositionPath } from './guitar/position-path.js';
 import workletUrl from './audio/worklet.js?worker&url';
@@ -764,7 +764,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   el('theory-description').innerHTML=!selectedTheory?'':`<div class="theory-description"><p>${escapeHtml(selectedTheory.explanation)}</p>${omittedChord.length?`<p>Omitted chord tones: ${omittedChord.map(escapeHtml).join(' · ')}</p>`:''}${omittedColour.length?`<p>Omitted modal colours: ${omittedColour.map(escapeHtml).join(' · ')}</p>`:''}</div>`;
   const displayedPositions=POSITIONS.map(position=>{
     const board=fretboardFor(info,position.shape,select('exercise').value==='arpeggio');
-    return {...cagedPositionFor(board),geometryShape:position.shape,board};
+    return {...cagedPositionFor(board),geometryShape:position.shape,board,range:occupiedFretRange(board)};
   });
   const selectedNumeral = positionOverride?.numeral || (featured === 'all' ? overviewPosition : featured);
   const selectedPosition = displayedPositions.find(position=>position.numeral===selectedNumeral) || displayedPositions[0]!;
@@ -772,7 +772,8 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   select('guitar-chord-position').value=overviewPosition;
   const overlay = selectedTheory ? {kind:theoryView.kind as 'pentatonic'|'triads',name:selectedTheory.name,pcs:selectedTheory.pcs,...(selectedTheory.rootPc===undefined?{}:{rootPc:selectedTheory.rootPc}),...(selectedTheory.groups ? {groups:selectedTheory.groups} : {})} : null;
   el('position-overview').innerHTML = displayedPositions.map(position=>{
-    const board=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
+    const source=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
+    const board={...source,...occupiedFretRange(source)};
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
       .replace('viewBox="0 0 480 218"','viewBox="36 8 408 180"');
@@ -782,7 +783,8 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   for(const id of ['position-previous','position-next']) (el(id) as HTMLButtonElement).disabled=playing||exercisePlaying||exercisePreparing;
   el('guitar-diagrams').innerHTML = [selectedPosition].map(position => {
     const chordBoard = position.board;
-    const board = selectedTheory ? fretboardFor(info,position.geometryShape) : chordBoard;
+    const source = selectedTheory ? fretboardFor(info,position.geometryShape) : chordBoard;
+    const board = {...source,...occupiedFretRange(source)};
     const grip = showGrip ? recommendedGrip(info, chordBoard) : null;
     positionGrips.set(position.geometryShape,grip);
     const gripDetails=!showGrip?'':grip?`<div class="grip-details"><div class="fretboard-voicing-actions"><div class="grip-stage-buttons"><button class="practice-button" data-grip-display="grip" aria-pressed="${gripOnly}">Voicing only</button><button class="practice-button" data-grip-display="scale" aria-pressed="${!gripOnly}">Voicing + scale</button></div><button type="button" class="practice-button grip-preview" data-grip="${position.geometryShape}" data-preview-label="position ${position.numeral}" aria-label="Strum chord, position ${position.numeral}" aria-pressed="false" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Strum chord</button><button type="button" class="practice-button" data-practise-grip="${position.numeral}" ${playing||exercisePlaying||exercisePreparing?'disabled':''}>Practise arpeggio →</button></div><details class="voicing-details"><summary>Voicing details</summary><p><b>Chord formula:</b> ${escapeHtml(info.intervals.join(' · '))}. <b>Voiced bass:</b> ${escapeHtml(gripFacts(grip,info)!.bass)}</p><p class="grip-tones">Voiced low to high: ${grip.notes.map((n:any,i:number)=>`${n.name} (${grip.intervals[i]})`).join(' · ')}</p><p>${grip.omitted.length?`Omitted: ${grip.omitted.join(' · ')}. `:''}Ringed notes form a variation of the standard ${grip.framework} chord shape; mute × strings.</p></details></div>`:'<p class="grip-help">No playable variation of this chord shape fits this position.</p>';
@@ -794,7 +796,7 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
     const grip=recommendedGrip(info,position.board);
     return grip?{numeral:position.numeral!,notes:grip.notes}:null;
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
-  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,start:position.board.start,end:position.board.end})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
+  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,...position.range})),selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   emphasizeFullNeck(el('full-fretboard'),selectedPosition.board,POSITIONS.findIndex(p=>p.numeral===selectedPosition.numeral));
   reflectFullFretboard();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);

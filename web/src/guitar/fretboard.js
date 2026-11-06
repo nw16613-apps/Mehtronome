@@ -175,9 +175,18 @@ export function pentatonicShapeFor(board,theory){
  * @param {{notes:Array<{string:number,fret:number,finger?:number}>,muted:number[]} | null} [grip]
  * @param {{kind:'pentatonic'|'triads',name:string,pcs:number[],rootPc?:number,groups?:Array<{name:string,rootPc?:number,pcs:number[]}>} | null} [theory]
  */
+// Display extents follow occupied frets. Keep the original position windows
+// intact: they define fingering membership and automatic route selection.
+export function occupiedFretRange(board){
+  if(!board.notes?.length)return {start:board.start,end:board.end};
+  const frets=board.notes.map(note=>note.fret);
+  return {start:Math.min(...frets),end:Math.max(...frets)};
+}
+/** @param {any} [grip] @param {any} [theory] */
 export function diagramSvg(board, degrees, modeDegrees, title, highlight = false, grip = null, theory = null) {
   const pentatonicShape=pentatonicShapeFor(board,theory);
   if(pentatonicShape)board=pentatonicShape.board;
+  board={...board,...occupiedFretRange({...board,notes:[...board.notes,...(grip?.notes||[])]})};
   const columns = board.end - board.start + 1;
   const spacing = 400 / columns;
   const x = fret => 40 + spacing / 2 + (fret - board.start) * spacing;

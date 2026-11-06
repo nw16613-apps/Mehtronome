@@ -91,3 +91,9 @@ The added Exercises full-neck panel is removed, restoring the earlier page struc
 Each CAGED position, scale starting degree and arpeggio inversion has a stable outline colour shared by its thumbnail/card, label marker and full-map selection. Existing root/chord/scale note fills retain their harmonic meaning. The selected shape receives thicker transparent rings; surrounding notes fade gently. CAGED regions keep their clickable shaded bands with distinct outlines, while per-string shapes use a clipped envelope following the actual note range on each string. All notes removes the envelope/rings and restores equal emphasis.
 
 The original map, layout, range, controls and exercise placement remain intact. No Start badge is added. Five targeted browser workflows pass, covering colour matching, transparent rings in all four themes, unchanged note fills, exact highlighted frets, original map/layout preservation, phone/fullscreen visibility and exercise controls. TypeScript/build pass.
+
+## Trim unused CAGED display edges
+
+CAGED map regions, thumbnail/card fret labels, route-card ranges and local diagrams now use the first and last occupied frets rather than the wider fingering construction window. The reported A Dorian G, D and A shapes display 2–5, 7–10 and 11–15 respectively. Diagram rendering also includes any voiced grip notes when calculating its display extent.
+
+The original fingering windows, note membership and automatic/manual route calculations remain unchanged. Thirteen unit checks cover occupied edges across every root/mode/CAGED shape, diagram immutability and routing; four browser workflows verify the reported ranges and region rectangles, colours, mobile themes and progression/manual routing. TypeScript/build pass.

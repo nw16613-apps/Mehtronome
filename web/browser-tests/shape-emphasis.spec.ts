@@ -13,3 +13,12 @@ test('diagonal shape outlines match their cards in every theme and keep the exis
  }}
  await page.locator('#palette').selectOption('midnight');await page.locator('#full-fretboard-panel').screenshot({path:'/workspace/shape-emphasis-desktop.png'});await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.locator('#per-string-neck-shape').selectOption('all');await expect(page.locator('#full-fretboard .shape-boundary,#full-fretboard .shape-selected-ring')).toHaveCount(0);await expect(page.locator('.map-current')).toHaveCount(0);
 });
+
+test('CAGED regions and displayed ranges exclude the unused edge fret in the reported Dorian shapes',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=guitar-title]').click();
+ for(const [numeral,start,end] of [['V',2,5],['II',7,10],['IV',11,15]] as const){
+  await page.locator(`[data-overview-position=${numeral}]`).click();await expect(page.locator('.featured-position .position-heading>span')).toHaveText(`Frets ${start}–${end}`);await expect(page.locator(`[data-overview-position=${numeral}] small`)).toContainText(`${start}–${end}`);
+  const rect=page.locator(`#full-fretboard [data-full-position=${numeral}] rect`);expect(Number(await rect.getAttribute('x'))).toBeCloseTo(62+(start-1)*1240/17);expect(Number(await rect.getAttribute('width'))).toBeCloseTo((end-start+1)*1240/17);
+  const frets=await page.locator('#full-fretboard .shape-selected-note').evaluateAll((nodes:SVGGElement[])=>nodes.map(n=>Number(n.dataset.fret)));expect(Math.min(...frets)).toBe(start);expect(Math.max(...frets)).toBe(end);expect(await page.locator('.featured-position .fret-number').allTextContents()).toEqual(Array.from({length:end-start+1},(_,i)=>String(start+i)));
+ }
+});
