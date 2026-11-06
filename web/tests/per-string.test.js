@@ -25,3 +25,19 @@ test('pentatonic patterns travel diagonally without repeated boundary pitches an
  const c=harmonyAt({key:0,mode:'minor_pentatonic',chord:'min7'});assert.deepEqual(perStringFingerings(c,'three',0),[]);
  assert.throws(()=>perStringFingerings(a,'bad'));assert.throws(()=>perStringFingerings(a,'three',5));
 });
+
+test('catalogue includes every distinct scale/chord starting tone, even when the pattern extends past fret 24',async()=>{
+ const {perStringCatalogue}=await import('../src/guitar/per-string.js');
+ for(let key=0;key<12;key++){
+  for(const mode of Object.keys(MODES)){
+   const h=harmonyAt({key,mode,chord:MODES[mode].chord}),entries=perStringCatalogue(h);
+   assert.equal(entries.length,new Set(h.scalePcs).size);
+   for(const e of entries){assert.ok(e.choices.length,`${mode} ${key} ${e.degree}`);for(const b of e.choices){assert.equal(b.notes[0].pc,h.scalePcs[e.degree]);assert.equal(b.notes.length,18);assert.ok(b.end<=36);if(!e.extended)assert.ok(b.end<=24);}}
+  }
+  for(const chord of Object.keys(CHORDS))for(const kind of ['oneTwo','twoOne']){
+   const h=harmonyAt({key,mode:'lydian',chord}),entries=perStringCatalogue(h,kind);assert.equal(entries.length,new Set(h.chordPcs).size);
+   for(const e of entries){assert.ok(e.choices.length,`${chord} ${key} ${kind} ${e.degree}`);for(const b of e.choices){assert.equal(b.notes[0].pc,h.chordPcs[e.degree]);assert.deepEqual(TUNING.map((_,s)=>b.notes.filter(n=>n.string===s).length),STRING_PATTERNS[kind]);assert.ok(b.end<=36);}}
+  }
+ }
+ const h=harmonyAt({key:0,mode:'minor_pentatonic',chord:'min7'}),root=perStringCatalogue(h)[0];assert.equal(root.extended,true);assert.equal(root.choices[0].firstFret,8);assert.equal(root.choices[0].end,25);
+});

@@ -217,3 +217,5 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 .guitar.per-string-active :is(.position-navigation,#position-path-guide,.fretboard-toolbar,.guitar-legend,#fretboard-overlay-summary,#fretboard-overlay-details,#grip-preview-status){display:none!important}
 
 .per-string-controls [hidden]{display:none!important}
+
+.per-string-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:16px;align-items:start}.per-string-gallery .per-string-shape{min-width:0;max-width:100%;padding:16px;margin:0}.per-string-shape h5{margin:0;font-size:14px;line-height:1.5}.per-string-register-label{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0;color:var(--muted);font-size:12px}.per-string-register-label select{background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:8px;font:inherit}.per-string-range-note{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0}.per-string-diagram>h4{font-size:16px;margin-bottom:8px}

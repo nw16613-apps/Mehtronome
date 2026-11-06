@@ -49,3 +49,11 @@ Generator previews, fretboard/exercise route cards and harmony reference cards s
 A Fingering selector adds continuous diagonal scale patterns with exactly three consecutive tones on each string (including pentatonic, blues, symmetric and parent-scale modes), plus 1–2–1–2–1–2 and 2–1–2–1–2–1 arpeggios read from low E to high E. Arpeggios use the actual chord quality including extensions; degree labels refer to chord intervals. Starting degree, playable low-E register and note/degree labels are selectable. Invalid registers beyond frets 0–24 are omitted, unavailable starting notes are labelled, and boundary tones are never duplicated or skipped to force a fit.
 
 This is an alternate Fretboard display. CAGED routes, manual positions and existing Exercises remain intact. Unrelated CAGED/overlay controls are hidden in the alternate view. Diagrams follow the inspected/playing harmony, retain scrolling between beats and scroll horizontally on phones. Exhaustive scale/chord/transposition unit checks and three browser workflows pass; four playback-highlight regression workflows and TypeScript/build also pass.
+
+## Complete per-string shape galleries
+
+The alternate fretboard now shows one separate diagram for every distinct starting degree of the mode and every arpeggio inversion. The single Starting note selector is removed. Each diagram labels its starting tone/degree and offers its own register choices where available. Changing one register leaves the other shapes unchanged; playback updates the whole gallery at chord boundaries without rebuilding it between beats.
+
+Continuous patterns that cannot fit a 24-fret guitar remain visible as clearly labelled reference diagrams extending beyond fret 24, rather than silently omitting a degree. The default fingering API retains its 24-fret limit; the complete gallery prefers playable registers and uses extended diagrams only when required. Exhaustive coverage checks every starting tone across all scale families, chord qualities and twelve roots, including both arpeggio patterns and duplicate pitch-class removal.
+
+Validation: four unit checks covering the full scale/chord catalogue, four browser workflows for degree/inversion completeness, independent registers, phone overflow, playback updates and CAGED restoration, plus TypeScript/build passed.
