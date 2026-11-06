@@ -2,6 +2,9 @@
 const fixedMaterial=new Set(['arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  view.stage='full';
+ view.fingering=['oneTwo','twoOne'].includes(view.fingering)?view.fingering:'caged';
+ view.inversion=Math.max(0,Math.min(6,Math.floor(Number(view.inversion)||0)));
+ view.fingeringFret=Number.isFinite(Number(view.fingeringFret))?Math.max(0,Math.min(36,Number(view.fingeringFret))):5;
  view.startTone=/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
  // Retire saved triplet phrase formulas; preserve explicit degree starts.
  delete view.phrase;

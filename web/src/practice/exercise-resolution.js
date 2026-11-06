@@ -14,8 +14,9 @@ export function withExerciseResolution(groups,plan){
  if(!harmony||!finalSlot?.board)return {groups,plan};
  const identity=h=>JSON.stringify([h?.mode,h?.chordPcs,h?.scalePcs,h?.tones,h?.scaleNames]);
  const sameHarmony=identity(harmony)===identity(finalSlot.harmony);
- const position=sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
- const board=sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
+ const perString=firstSlot.position?.perString;
+ const position=perString?firstSlot.position:sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
+ const board=perString?firstSlot.board:sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
  const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
  const ranked=candidates.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
   Math.abs(a.midi-last.note.midi)-Math.abs(b.midi-last.note.midi)||
@@ -23,7 +24,7 @@ export function withExerciseResolution(groups,plan){
   Number(a.string!==last.note.string)-Number(b.string!==last.note.string)||a.midi-b.midi||a.string-b.string);
  const note=ranked[0];if(!note)return {groups,plan};
  const slot=groups.length,index=groups.reduce((sum,g)=>sum+g.notes.length,0),start=plan.duration,duration=plan.beats;
- const group={...groups[finalSlot.slot],slot,notes:[note],pcs:[note.pc],names:[note.name],harmony,board,position,chord:firstSlot.chord,
+ const group={...(perString?groups[firstSlot.slot]:groups[finalSlot.slot]),slot,notes:[note],pcs:[note.pc],names:[note.name],harmony,board,position,chord:firstSlot.chord,
   globalStart:index,targetIndices:[0],cellLengths:[1],materialCells:['Resolution'],annotation:'Resolution',warning:'',resolution:true};
  const ending={...finalSlot,step:firstSlot.step,chord:firstSlot.chord,harmony,board,position,slot,start,duration,annotation:'Resolution',resolution:true};
  return {groups:[...groups,group],plan:{...plan,events:[...plan.events,{index,note,step:ending.step,slot,start,duration,target:true,resolution:true}],

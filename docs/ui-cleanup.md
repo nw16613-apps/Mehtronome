@@ -63,3 +63,11 @@ Validation: four unit checks covering the full scale/chord catalogue, four brows
 Scale and alternating-arpeggio galleries now include a full-neck map spanning open strings through fret 24. Scale maps show only mode tones; arpeggio maps show only chord tones with chord-interval labels. Highlight shape selects the exact notes of any starting-degree shape or inversion and follows that shape's register choice. Extended reference shapes expand the labelled map range beyond fret 24 as required.
 
 The map supports persistent hide/show, fullscreen and horizontal phone scrolling. Its DOM stays mounted across chord changes so fullscreen is retained, and it does not redraw between playback beats. Three map browser workflows verify all scale/string/fret positions, exact shape highlighting, register/label changes, both arpeggio patterns, extended pentatonics, fullscreen, phone layout and playback updates. Four existing gallery regressions and TypeScript/build pass.
+
+## Practise per-string arpeggio shapes
+
+Both alternating arpeggio galleries now offer Practise this shape, which opens the existing positional arpeggio exercise with the exact fingering, inversion and low-E register. It does not start playback or change the chart/CAGED route. Exercises offer CAGED, 1–2–1–2–1–2 and 2–1–2–1–2–1 within positional arpeggios and arpeggio groups of three/four; unrelated studies keep their existing fingering. Inversion/register choices are saved with exercise options, with legacy favourites defaulting to CAGED.
+
+The shared per-string diagrams supply the actual exercise notes, including chord extensions. Traversal reverses without duplicated turning tones; identical repeated chord slots continue their phase and new harmonies restart the selected inversion. The linked diagram and TAB follow the actual string/fret choices, without CAGED labels or grip diagrams. Short slots and missing inversions give explicit notices. Resolution uses the opening per-string board and its inversion metadata.
+
+Validation: 24 exercise/options/resolution/timing unit checks, exhaustive fingering catalogue checks, three new browser workflows for exact transfer, controls/saving/mobile and backed progression playback, four existing gallery workflows and the unified exercise playback regression pass. TypeScript/build pass.

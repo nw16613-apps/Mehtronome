@@ -9,7 +9,7 @@ import {recommendedGrip} from '../guitar/grips.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function learningView(panel:HTMLElement,context:any){
  const {board,info,position,groups,notes,study,fretboard}=context;
- const grip=recommendedGrip(info,board);
+ const grip=context.perString?null:recommendedGrip(info,board);
  const toolbar=document.createElement('div');toolbar.className='exercise-learning-toolbar';toolbar.innerHTML=`<label>${context.progression?'Selected chord position':'Position'}<select id="exercise-position">${['I','II','III','IV','V'].map(n=>`<option ${n===position.numeral?'selected':''}>${n}</option>`).join('')}</select></label>`;
  const oldStudy=panel.querySelector('#exercise-study')?.closest('label');if(oldStudy)toolbar.prepend(oldStudy);
  const focusButton=panel.querySelector('#exercise-focus');if(focusButton)toolbar.append(focusButton);const previewButton=panel.querySelector('#exercise-preview');if(previewButton)toolbar.append(previewButton);
@@ -71,9 +71,10 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  const augmented={...board,notes:[...board.notes]};
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
  if(['grip','positional'].includes(study))augmented.notes=augmented.notes.map((n:any)=>{const index=harmony.chordPcs.indexOf(n.pc);return index<0?n:{...n,scaleIndex:-1,chromaticDegree:harmony.intervals[index]};});
- const grip=recommendedGrip(harmony,board);
+ const grip=group.perString?null:recommendedGrip(harmony,board);
  diagram.innerHTML=diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
  diagram.querySelector('svg')?.setAttribute('role','group');
+ if(group.perString){(diagram.querySelector('svg') as SVGElement).style.minWidth=Math.max(480,(board.end-board.start+1)*48)+'px';diagram.classList.add('per-string-scroll');}
  const span=group.positionalSpan as any[]|undefined,spanPitches=new Set(span?.map((n:any)=>n.midi)||[]);
  const spanStatus=panel.querySelector<HTMLElement>('#exercise-span-status');if(spanStatus)spanStatus.title='Faded chord-tone markers lie outside the selected exercise span.';
  if(spanStatus){spanStatus.hidden=!span?.length;if(span?.length){const pitch=(n:any)=>n.name+(Math.floor(n.midi/12)-1),beats=(span.length-1)/group.phraseDivision;spanStatus.textContent=`${span.length}-note span · ${pitch(span[0])}–${pitch(span.at(-1))} · ${Number.isInteger(beats)?beats+' beats':(span.length-1)+' notes'} each way${span.length<(group.phraseSpanSize||9)?' · fewer than nine pitches available':''}`;}}
@@ -84,6 +85,6 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
   el.dataset.exerciseIndex=String(group.globalStart+local);el.setAttribute('tabindex','0');el.setAttribute('role','button');el.setAttribute('aria-label',`${notes[local].name}, ${group.chord}, string ${6-string}, fret ${fret}`);
   const circle=el.querySelector('circle')!,square=document.createElementNS('http://www.w3.org/2000/svg','rect');square.setAttribute('x',String(Number(circle.getAttribute('cx'))-15));square.setAttribute('y',String(Number(circle.getAttribute('cy'))-15));square.setAttribute('width','30');square.setAttribute('height','30');square.setAttribute('rx','2');square.setAttribute('class','exercise-current-box');el.append(square);
  });
- panel.querySelector('.exercise-map-heading strong')!.textContent=group.fixedRegion?`${group.chord} · frets ${board.start}–${board.end}`:`${group.chord} · Position ${position.numeral} · ${position.shape} framework`;
+ panel.querySelector('.exercise-map-heading strong')!.textContent=group.perString?`${group.chord} · ${group.fingeringLabel}`:group.fixedRegion?`${group.chord} · frets ${board.start}–${board.end}`:`${group.chord} · Position ${position.numeral} · ${position.shape} framework`;
  const positionSelect=panel.querySelector<HTMLSelectElement>('#exercise-position');if(positionSelect)positionSelect.value=position.numeral;
 }
