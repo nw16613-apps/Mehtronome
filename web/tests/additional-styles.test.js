@@ -5,7 +5,7 @@ function settings(id){return {...BACKING_STYLES[id].settings,beats:ADDITIONAL_ST
 function decode(url){const b=readFileSync(url);let data,sr;for(let o=12;o+8<=b.length;){const n=b.readUInt32LE(o+4),tag=b.toString('ascii',o,o+4);if(tag==='fmt ')sr=b.readUInt32LE(o+12);if(tag==='data')data=b.subarray(o+8,o+8+n);o+=8+n+(n%2);}assert.ok(data&&sr);return Float32Array.from({length:Math.floor(data.length/2*rate/sr)},(_,i)=>data.readInt16LE(Math.min(data.length/2-1,Math.floor(i*sr/rate))*2)/32768);}
 const names=new Set(Object.keys(ADDITIONAL_STYLES).flatMap(id=>sampleNamesForSettings(settings(id)))),kit=Object.fromEntries([...names].map(id=>[id,decode(SAMPLE_FILES[id])]));
 test('all additional styles load their required recorded instruments and percussion, with different full-band phrases',()=>{
- assert.equal(Object.keys(ADDITIONAL_STYLES).length,11);const signatures=[];
+ assert.equal(Object.keys(ADDITIONAL_STYLES).length,10);const signatures=[];
  for(const [id,style]of Object.entries(ADDITIONAL_STYLES)){
   const s=settings(id),e=new Engine(rate);e.installDrumKit(kit);e.configure(s);e.reset();const events=[],melody=[],frames=style.beats*4000*8,dry=new Float32Array(frames);e.render(new Float32Array(frames),undefined,null,null,n=>melody.push(n),dry,n=>events.push(n));
   assert.ok(events.some(n=>n.type==='bass'),id);assert.ok(events.some(n=>n.type==='comping'),id);assert.ok(melody.length,id);assert.ok(dry.every(n=>Number.isFinite(n)&&Math.abs(n)<=1),id);assert.ok(dry.some(n=>Math.abs(n)>.001),id);
@@ -13,7 +13,7 @@ test('all additional styles load their required recorded instruments and percuss
   assert.ok(events.filter(n=>n.type==='comping').every(n=>n.notes.every(midi=>[9,11,0,2,4,6,7].includes(midi%12))),id);
   signatures.push(JSON.stringify(events.map(n=>[n.type,n.sample,n.midi,n.notes])));
  }
- assert.equal(new Set(signatures).size,11);
+ assert.equal(new Set(signatures).size,10);
 });
 test('one-drop omits the downbeat kick and keeps kick/cross-stick together on beat three',()=>{
  const r=new Rhythm(rate),events=[];r.hitDrum=(type,gain,sample,step,beat,sub)=>events.push({type,beat,sub});const s=settings('reggae');for(let beat=0;beat<4;beat++)for(let sub=0;sub<4;sub++)r.playDrums(s,sub,beat,0,0,0,()=>{});
@@ -24,7 +24,7 @@ test('compound soul subdivisions are equally spaced triplets and Afro-Cuban bell
  const bell=bar=>additionalDrumCell('afroCuban68',bar,true,true).filter(n=>n[1]==='cowbell');for(let bar=0;bar<8;bar++)assert.deepEqual(bell(bar),ADDITIONAL_STYLES.afroCuban68.drums[bar%4].filter(n=>n[1]==='cowbell'));
  assert.equal(ADDITIONAL_STYLES.jazzWaltz.beats,3);assert.equal(ADDITIONAL_STYLES.afroCuban68.beats,3);
 });
-test('new rock styles require recorded driven guitar and stay distinct from the existing fusion style',()=>{
- for(const id of ['hardRock','jazzRock']){const wanted=sampleNamesForSettings({...settings(id),mutedChannels:'drums,bass'});assert.ok(wanted.some(id=>id.startsWith('electricGuitar')));assert.equal(BACKING_STYLES[id].settings.compingTone,'drivenGuitar');}
- assert.equal(BACKING_STYLES.fusionJazz.settings.compingTone,'brightTine');assert.notDeepEqual(ADDITIONAL_STYLES.jazzRock.base,ADDITIONAL_STYLES.hardRock.base);
+test('hard rock requires recorded driven guitar and remains distinct from legato fusion',()=>{
+ for(const id of ['hardRock']){const wanted=sampleNamesForSettings({...settings(id),mutedChannels:'drums,bass'});assert.ok(wanted.some(id=>id.startsWith('electricGuitar')));assert.equal(BACKING_STYLES[id].settings.compingTone,'drivenGuitar');}
+ assert.equal(BACKING_STYLES.fusionJazz.settings.compingTone,'brightTine');assert.notDeepEqual(ADDITIONAL_STYLES.legatoFusion.base,ADDITIONAL_STYLES.hardRock.base);
 });

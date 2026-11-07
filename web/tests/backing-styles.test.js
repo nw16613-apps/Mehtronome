@@ -7,19 +7,20 @@ import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
 import {SEQUENCE_ROLES,SEQUENCE_PATTERNS} from '../src/audio/sequence.js';
 import {exportPresets,importPresets} from '../src/practice/presets.js';
 test('styles provide distinct complete arrangements with valid sound and pattern choices, without taking over chart or mixer settings',()=>{
- assert.equal(Object.keys(BACKING_STYLES).length,21);
+ assert.equal(Object.keys(BACKING_STYLES).length,20);
  for(const [id,{settings:s}]of Object.entries(BACKING_STYLES)){
   assert.ok(DRUM_GROOVES[s.drumGroove]);assert.ok(BASS_PATTERNS[s.bassPattern]);assert.ok(COMPING_PATTERNS[s.compingPattern]);assert.ok(COMPING_TONES[s.compingTone]);assert.ok(SEQUENCE_ROLES[s.sequenceRole]);assert.ok(SEQUENCE_PATTERNS[s.sequencePattern]);
   for(const field of Object.keys(STYLE_CONTROLS))assert.notEqual(s[field],undefined,id+' '+field);
   for(const field of ['bpm','key','chord','mode','template','beats','customProgression','mutedChannels','drumsVolume','bassVolume','compingVolume','sequenceVolume','clickSwing','countIn'])assert.equal(s[field],undefined,id+' '+field);
  }
- assert.equal(new Set(Object.values(BACKING_STYLES).map(s=>JSON.stringify(s.settings))).size,21);
+ assert.equal(new Set(Object.values(BACKING_STYLES).map(s=>JSON.stringify(s.settings))).size,20);
 });
 test('legacy instrument presets choose a matching style and explicit style selections round-trip through saved presets',()=>{
  assert.equal(backingStyleForControls({'drum-groove':'swing','bass-pattern':'walk'}),'traditionalJazz');
  assert.equal(backingStyleForControls({'drum-groove':'shuffle'}),'blues');
  assert.equal(backingStyleForControls({'backing-style':'motown','drum-groove':'swing'}),'motown');
  assert.equal(backingStyleId('unknown'),'popRock');
+ assert.equal(backingStyleId('jazzRock'),'legatoFusion');assert.equal(backingStyleForControls({'backing-style':'jazzRock'}),'legatoFusion');assert.equal(BACKING_STYLES.jazzRock,undefined);
  const preset={id:'style',name:'Motown mix',progression:true,controls:{'backing-style':'motown','mute-bass':true,'comping-volume':'28',bpm:'115'}};
  assert.deepEqual(importPresets(exportPresets([preset])).items,[preset]);
 });
@@ -42,5 +43,5 @@ test('each style produces its own repeatable band phrase and adapts over chord c
   assert.ok(events.some(e=>e.step===1),id);assert.ok(audio.every(v=>Number.isFinite(v)&&Math.abs(v)<=1));
   if(beats===4)signatures.push(JSON.stringify(events.map(e=>[e.type,e.sample,e.midi,e.notes,e.duration])));
  }
- assert.equal(new Set(signatures).size,21);
+ assert.equal(new Set(signatures).size,20);
 });
