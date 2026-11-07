@@ -1,3 +1,4 @@
+import {referenceChart} from './audio/reference-performances.js';
 import {shapeColor,emphasizeFullNeck,perStringMapRegions} from './guitar/shape-emphasis.js';
 import {PER_STRING_STUDIES,perStringExerciseChoice,perStringExerciseGroups} from './practice/per-string-exercises.js';
 import {arpeggioFingeringControls} from './practice/per-string-exercise-view.js';
@@ -1104,6 +1105,7 @@ function update() {
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
   settings.mutedChannels=mixerMuteMask();
+  backingStyleUi?.reflect(settings,playing||exercisePlaying||exercisePreparing||busy||stopping);
   reflectMixerChannels();
   queueAudioSettings(settings);
 
@@ -1972,6 +1974,7 @@ function syncWorkspaceStates(){
  for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
 }
 function syncMiniTransport() {
+  backingStyleUi?.reflect(settings,playing||exercisePlaying||exercisePreparing||busy||stopping);
   document.dispatchEvent(new Event('mehtronome-playback-state'));
   syncExerciseRouteCards();
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
@@ -2403,7 +2406,22 @@ installProgressionGenerator({
  }
 });
 perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
-backingStyleUi=installBackingStyles(update);
+backingStyleUi=installBackingStyles(update,{
+ load:async(id:string)=>{
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before loading a reference study.');
+  const chart=referenceChart(id);
+  select('backing-style').value=id;select('sequence-activity').value='countermelody';
+  input('trainer-enabled').checked=false;input('gap-enabled').checked=false;
+  await loadWorkingChart(chart);tempo(chart.bpm);update();
+ },
+ play:async()=>{
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
+  soloChannels.clear();
+  for(const id of ['drums','bass','comping','sequence'])input('mute-'+id).checked=false;
+  for(const id of ['click','harmony'])input('mute-'+id).checked=true;
+  applyMixerMutes();update();await toggle();
+ }
+});
 update();
 applyStudioIcons();
 renderCustomBuilder();

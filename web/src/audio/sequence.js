@@ -1,3 +1,4 @@
+import {referenceEvents} from './reference-performances.js';
 import {sourceFor} from './sound-library.js';
 import {performanceTouch} from './groove-time.js';
 import {CompingInstrument} from './comping.js';
@@ -155,7 +156,7 @@ export class Sequence {
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
-    const rate=Number(settings.sequenceRate)||2;let offset=0;
+    const rate=settings.referencePlan?.score.rate||Number(settings.sequenceRate)||2;let offset=0;
     if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues'||settings.sequenceStyle==='jazzWaltz'||settings.sequenceStyle==='secondLine')){
       const swing=['blues','secondLine'].includes(settings.sequenceStyle)?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);
       return beat*2+(phase>=swing?1:0);
@@ -170,6 +171,17 @@ export class Sequence {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
     this.lastGrid=grid;if(!audible)return;
+    if(settings.referencePlan){
+      const plan=settings.referencePlan;
+      // A reference uses its written rate, not activity-based phrase selection.
+      for(const event of referenceEvents(plan,'sequence',grid)){
+        const midi=event.midi+plan.transpose,tone=settings.sequenceTone;
+        this.instrument.soundLibrary=sourceFor(settings,'sequence');
+        this.instrument.strike([midi],event.duration,event.velocity*.65,settings.bpm,sample,step,undefined,'sequence',tone);
+        this.lastMidi=midi;onNote({sample,grid,midi,step,tone,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
+      }
+      return;
+    }
     if(['legatoGuitar','fluteLead'].includes(settings.sequenceTone)){const signature=notes.join(',')+':'+(context?.counterline||[]).join(',');if(this.legatoHarmony!==signature){for(const voice of this.instrument.voices)if(voice.active)this.instrument.releaseVoice(voice);this.legatoHarmony=signature;}}
     const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
     const styled=musical&&!!settings.sequenceStyle;

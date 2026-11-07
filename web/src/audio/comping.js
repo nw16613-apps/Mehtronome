@@ -1,3 +1,4 @@
+import {referenceEvents} from './reference-performances.js';
 import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone,sourceFor} from './sound-library.js';
 import {ensembleComping} from './ensemble-arrangements.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
@@ -157,6 +158,15 @@ export class CompingInstrument{
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats)*4+grid%4;
+    if(settings.referencePlan){
+      const plan=settings.referencePlan;
+      for(const event of referenceEvents(plan,'comping',grid)){
+        const pitches=event.notes.map(midi=>midi+plan.transpose);
+        this.strike(pitches,event.duration,event.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone);
+        onEvent?.({type:'comping',sample,step,notes:pitches,duration:event.duration,velocity:event.velocity,reference:plan.score.id,bar:event.bar});
+      }
+      return;
+    }
     if(part){this.playPart(settings,beat,bar,offset,part,sample,step,onEvent);return;}
     // Leave the last beat of larger drum answers clear; existing chords can ring.
     if(settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;

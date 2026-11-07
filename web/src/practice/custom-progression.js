@@ -94,7 +94,7 @@ export function normalizeCustomProgression(value){
   }
   const sourceNotes=typeof value?.sourceNotes==='string'?value.sourceNotes.slice(0,1600):'';
   const sources=Array.isArray(value?.sources)?value.sources.filter(s=>typeof s?.url==='string'&&/^https?:\/\//.test(s.url)).slice(0,6).map(s=>({label:String(s.label||'Source').slice(0,100),url:s.url.slice(0,2048)})):[];
-  return {...(sourceNotes?{sourceNotes}:{}),...(sources.length?{sources}:{}),version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
+  return {...(['blues','legatoFusion'].includes(value?.referencePerformance)?{referencePerformance:value.referencePerformance}:{}),...(sourceNotes?{sourceNotes}:{}),...(sources.length?{sources}:{}),version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
 }
 
 export function progressionText(progression,chordSymbol=id=>id){

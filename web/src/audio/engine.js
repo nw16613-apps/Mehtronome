@@ -1,3 +1,4 @@
+import {referencePlan} from './reference-performances.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
@@ -302,7 +303,7 @@ export class Engine {
     // Rhythm envelopes need the current tempo; the public setting remains the
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
-    Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
+    Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:referencePlan(s)});
     const timeline=s.progression?progressionTimeline(s):[];
     const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){

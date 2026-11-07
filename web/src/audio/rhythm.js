@@ -1,3 +1,4 @@
+import {referenceEvents} from './reference-performances.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
 import {ensembleDrums,ensembleBass} from './ensemble-arrangements.js';
@@ -305,6 +306,14 @@ export class Rhythm {
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
+    if(settings.referencePlan){
+      const plan=settings.referencePlan;
+      for(const event of referenceEvents(plan,'drums',(bar*settings.beats+beat)*4+sub)){
+        const touch=performanceTouch(settings,event.name,bar,beat*4+sub,this.rate);
+        this.hitDrum(event.name,event.velocity*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);
+      }
+      return;
+    }
     const added=ensembleDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
     if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);}return;}
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
@@ -378,6 +387,16 @@ export class Rhythm {
     if(son&&varied&&(settings.backingTurnaround||bar%8===7)&&beat===settings.beats-1&&sub===1)hit('congaMute',.13);
   }
   playBass(settings, sub, beat, bar, notes, sample, step, onEvent,nextNotes = notes) {
+    if(settings.referencePlan){
+      const plan=settings.referencePlan;
+      for(const event of referenceEvents(plan,'bass',(bar*settings.beats+beat)*4+sub)){
+        const midi=event.midi+plan.transpose;
+        this.bassInstrument.noteOn(midi,event.duration*60/settings.bpm,event.velocity,settings.bassPattern,settings.bassInstrument,sourceFor(settings,'bass'));
+        this.bassCursor=this.bassInstrument.cursor;this.lastBassMidi=midi;
+        onEvent({type:'bass',sample,step,beat,sub,midi,gain:event.velocity,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
+      }
+      return;
+    }
     if(!notes?.length)return;
     const pattern=BASS_LINES[settings.bassPattern]?settings.bassPattern:'roots';
     const cell=beat*4+sub;
