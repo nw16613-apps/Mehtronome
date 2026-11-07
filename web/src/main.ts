@@ -10,7 +10,7 @@ import {patternStartRoute,patternStartRouteValue,cardStartLabel} from './practic
 import {createMasterOutput,MASTER_VOLUME_KEY,DEFAULT_MASTER_VOLUME,masterVolumePercent} from './audio/master-output.js';
 import {BUS_GAINS} from './audio/mix-balance.js';
 import {installBackingStyles} from './practice/backing-styles-view.js';
-import {BACKING_STYLES,backingStyleId,backingStyleInstruments,backingStyleForControls} from './practice/backing-styles.js';
+import {BACKING_STYLES,backingStyleId,backingStyleInstruments,backingStyleForControls,resolveDrumKit} from './practice/backing-styles.js';
 import {withExerciseResolution,resolutionBackingSettings,singleChordExercisePlan} from './practice/exercise-resolution.js';
 import {scaleStartingState} from './practice/scale-start.js';
 import {arpeggioStartingChoices} from './practice/arpeggio-start.js';
@@ -1023,8 +1023,8 @@ function update() {
   fxUi?.sync();
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
   settings.soundLibrary=document.querySelector<HTMLSelectElement>('#sound-library')?.value||'expanded';
+  Object.assign(settings,backingStyleUi?.readAudioChoices());settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
-  settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
@@ -1121,7 +1121,6 @@ function tempo(value: number) {
   queueAudioSettings(settings);
 }
 function reflectPlayback() {
-  backingStyleUi?.reflectPlayback();
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
@@ -1217,7 +1216,6 @@ async function initialiseAudio(requested:any=settings) {
     harmonyFxSource=context.createGain();
     node.connect(harmonyFxSource,8);
     node.port.onmessage = ({ data }) => {
-      if(data.backingArrangement)backingStyleUi?.playback(data.backingArrangement);
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if((playing||exercisePlaying)&&typeof data.counting==='boolean'&&playbackCounting!==data.counting){playbackCounting=data.counting;syncMiniTransport();}
       if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
@@ -1779,8 +1777,8 @@ function sendMixerSettings(){
 }
 function updateMixerLevels(){
   settings.soundLibrary=document.querySelector<HTMLSelectElement>('#sound-library')?.value||'expanded';
+  Object.assign(settings,backingStyleUi?.readAudioChoices());settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
-  settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   settings.click=Number(input('click').value)/100;
   settings.harmony=Number(input('harmony').value)/100;
@@ -2251,7 +2249,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sound-library':'original','sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sound-library':'expanded','sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
@@ -2272,6 +2270,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     for (const id of PRESET_CONTROLS) if (!id.startsWith('theory-') && !['quality','key','template','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end'].includes(id)) restoreControl(id,preset.controls[id]);
     localStorage.setItem('mehtronome-pattern-start-route',input('pattern-start-route').value);
     select('backing-style').value=backingStyleForControls(preset.controls);
+    backingStyleUi?.restoreChoices(preset.controls['track-sound-sources']);
     for(const [id,muted] of Object.entries(backingMutesForPreset(preset.controls)))input(id).checked=muted;
     tempo(Number(input('bpm').value));
     guitarDegrees = select('fret-labels').value === 'degrees';
@@ -2405,7 +2404,7 @@ installProgressionGenerator({
  }
 });
 perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
-backingStyleUi=installBackingStyles(update,async()=>{if(busy||stopping||exercisePreparing)return;if(exercisePlaying)stopExercisePreview();if(playing)await stop();await toggle();},()=>playing||exercisePlaying);
+backingStyleUi=installBackingStyles(update);
 update();
 applyStudioIcons();
 renderCustomBuilder();

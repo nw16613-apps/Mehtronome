@@ -22,7 +22,7 @@ test('new figures follow actual chord changes and are identical across render bl
   const settings={progression:true,template:'major251essential'},whole=engine(style,settings),blocks=engine(style,settings),size=64000,expected=new Float32Array(size),actual=new Float32Array(size),a=[],b=[];
   whole.render(new Float32Array(size),undefined,null,null,undefined,expected,n=>a.push(n));
   for(let offset=0;offset<size;offset+=127){const end=Math.min(size,offset+127);blocks.render(new Float32Array(end-offset),undefined,null,null,undefined,actual.subarray(offset,end),n=>b.push(n));}
-  assert.deepEqual(actual,expected,style);assert.deepEqual(b,a,style);assert.ok(a.some(n=>n.step===1));
+  assert.deepEqual(actual,expected,style);assert.deepEqual(b,a,style);assert.ok(a.some(n=>n.step!==0));
   for(const note of a){const h=harmonyAt(whole.settings,note.step);assert.ok(note.notes.every(midi=>[...h.chordPcs,...h.scalePcs].includes(midi%12)),style);}
  }
 });

@@ -2,6 +2,8 @@ export const BASS_INSTRUMENTS={electric:'Fingerstyle electric bass',upright:'Plu
 // Genre-specific drum banks, damping and brightness.
 // Live-fusion acoustic recordings for the five band styles; club profiles stay unchanged.
 export const DRUM_KITS={
+ tama:{name:'Tama acoustic kit',bank:'tama',brightness:1,decay:0},
+ close:{name:'Close acoustic kit',bank:'close',brightness:1,decay:0},
  rock:{name:'Live acoustic kit',bank:'live',brightness:1,decay:0},
  jazz:{name:'Club jazz kit',bank:'jazz',brightness:1,decay:0},
  fusion:{name:'Live fusion kit',bank:'live',brightness:1,decay:0},

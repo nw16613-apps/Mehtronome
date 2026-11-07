@@ -1,5 +1,6 @@
-import {EXPANDED_DRUM_GROUPS} from './sound-library.js';
-import {trialDrums,trialBass} from './audition-arrangements.js';
+import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
+import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
+import {ensembleDrums,ensembleBass} from './ensemble-arrangements.js';
 import {CYMBAL_TRIM_DB} from './mix-balance.js';
 import {ADDITIONAL_STYLES,additionalDrumCell} from './additional-styles.js';
 const additionalGrooves=Object.fromEntries(Object.entries(ADDITIONAL_STYLES).map(([id,s])=>[s.groove,id]));
@@ -247,7 +248,7 @@ export class Rhythm {
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));
-    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);this.expandedGroups=available(EXPANDED_DRUM_GROUPS);
+    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);this.expandedGroups=available(EXPANDED_DRUM_GROUPS);this.tamaGroups=available(TAMA_DRUM_GROUPS);this.liveDynamics=available(LIVE_DYNAMIC_GROUPS);this.expandedLiveGroups={...this.liveGroups,...this.liveDynamics,hatSoft:this.expandedGroups.hatSoft,rideSoft:this.expandedGroups.rideSoft};
   }
   gridAt(settings, beat, phase) {
     return beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
@@ -256,7 +257,7 @@ export class Rhythm {
   clearDrums() { for (const voice of this.drumVoices) voice.sample = null; this.activeDrums=0; }
   clearBass() { this.bassInstrument.clear();this.bassCursor=0;this.lastBassMidi=null;this.lastBassChord=''; }
   tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes,drumsAudible=true,bassAudible=true) {
-    this.expandedSounds=settings.soundLibrary==='expanded';
+    this.expandedSounds=sourceFor(settings,'drums')==='expanded';
     const grid = this.gridAt(settings, beat, phase);
     const bassGrid = this.bassGridAt(beat, phase,settings.drumGroove,settings.bpm);
     const inBar = beat % settings.beats;
@@ -274,12 +275,19 @@ export class Rhythm {
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const jazz=profile.bank==='jazz'&&(this.jazzGroups.kick.length||this.jazzGroups.kickSoft.length);
-    const live=profile.bank==='live'&&this.liveGroups.kick.length,layered=jazz||live;
-    const groups=jazz?this.jazzGroups:live?this.liveGroups:this.groups;
-    const group=name==='snare'?(gain<(jazz ? .17 : live ? .2 : .25)?'snareGhost':layered&&gain<.4?'snareSoft':'snare'):layered&&name==='kick'&&gain<.4?'kickSoft':jazz&&name==='ride'&&gain>=.29?'rideAccent':name;
-    const softGroup=this.expandedSounds&&live&&(name==='hat'&&gain<.19?'hatSoft':name==='ride'&&gain<.18?'rideSoft':null),softIds=softGroup&&this.expandedGroups[softGroup]?.length?this.expandedGroups[softGroup]:null;
-    const ids=softIds||this.latinGroups[name]||groups[group]||groups[name]||this.groups[group]||this.groups[name]||[];
-    const cursorKey=(this.latinGroups[name]?'latin:':jazz?'jazz:':live?'live:':'rock:')+(softIds?softGroup:group),cursor=this.sampleCursors[cursorKey]||0;
+    const live=profile.bank==='live'&&this.liveGroups.kick.length,tama=profile.bank==='tama'&&this.tamaGroups.kick.length,layered=jazz||live||tama;
+    const groups=tama?this.tamaGroups:jazz?this.jazzGroups:live?this.liveGroups:this.groups,dynamic=this.expandedSounds||tama;
+    const candidates=tama?groups:live&&dynamic?this.expandedLiveGroups:groups;
+    let group=name;
+    if(name==='snare')group=gain<(jazz?.17:.2)?'snareGhost':layered&&gain<.4?'snareSoft':'snare';
+    if(layered&&name==='kick'&&gain<.4)group='kickSoft';
+    if(jazz&&name==='ride'&&gain>=.29)group='rideAccent';
+    if(dynamic){
+      const alternative=name==='snare'&&gain>=.68?'snareAccent':name==='snare'&&gain>=.4&&gain<.56?'snareMid':name==='kick'&&gain<.23?'kickGhost':name==='kick'&&gain>.73?'kickAccent':name==='hat'&&gain<.17?'hatSoft':name==='hat'&&gain>.26?'hatAccent':name==='ride'&&gain<.18?'rideSoft':name==='ride'&&gain>=.29?'rideAccent':name==='rideBell'&&gain<.2?'rideBellSoft':name==='crash'&&gain<.22?'crashSoft':name==='tomHigh'&&gain<.24?'tomHighSoft':name==='tomLow'&&gain<.24?'tomLowSoft':null;
+      if(alternative&&candidates[alternative]?.length)group=alternative;
+    }
+    const ids=this.latinGroups[name]||candidates[group]||groups[name]||this.groups[group]||this.groups[name]||[];
+    const cursorKey=(this.latinGroups[name]?'latin:':tama?'tama:':jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
     const id=ids.length?ids[cursor%ids.length]:fallback;
     const pcm=this.kit[id];
     if(!pcm?.length)return;
@@ -297,7 +305,7 @@ export class Rhythm {
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
-    const added=trialDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
+    const added=ensembleDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
     if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);}return;}
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
       this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
@@ -372,10 +380,10 @@ export class Rhythm {
   playBass(settings, sub, beat, bar, notes, sample, step, onEvent,nextNotes = notes) {
     if(!notes?.length)return;
     const pattern=BASS_LINES[settings.bassPattern]?settings.bassPattern:'roots';
-    const cell=(beat*4+sub)%16;
+    const cell=beat*4+sub;
     const bassBars=BASS_LINES[pattern],bassBar=additionalGrooves[settings.drumGroove]?(bar%bassBars.length):(settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%4]:bar%4);
-    const trial=trialBass(settings,bar);
-    let note=(trial||bassBars[bassBar%bassBars.length]).find(event=>event[0]===cell);
+    const arranged=ensembleBass(settings,bar);
+    let note=(arranged||bassBars[bassBar%bassBars.length]).find(event=>event[0]===cell);
     if(pattern==='tumbao'&&cell===0&&notes.join(',')!==this.lastBassChord)note=[cell,0,0,1.4,.76];
     if(pattern==='roots'&&bar%2===1&&beat===settings.beats-1&&sub===2)note=[cell,-1,0,.38,.48];
     if(!note)return;
@@ -413,7 +421,7 @@ export class Rhythm {
     const touch=performanceTouch(settings,'bass',bar,beat*4+sub,this.rate);
     gain*=touch.velocity;length*=touch.length;
     const seconds=length*60/settings.bpm;
-    this.bassInstrument.noteOn(midi,seconds,gain,pattern,settings.bassInstrument,settings.soundLibrary);
+    this.bassInstrument.noteOn(midi,seconds,gain,pattern,settings.bassInstrument,sourceFor(settings,'bass'));
     this.bassCursor=this.bassInstrument.cursor;
     onEvent({type:'bass',sample,step,beat,sub,midi,root,offbeat:sub!==0,gain,approaching,durationBeats:length});
   }

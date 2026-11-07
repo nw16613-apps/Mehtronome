@@ -1,5 +1,5 @@
-import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone} from './sound-library.js';
-import {trialComping} from './audition-arrangements.js';
+import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone,sourceFor} from './sound-library.js';
+import {ensembleComping} from './ensemble-arrangements.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {accompanimentPhrase} from './accompaniment.js';
 import {COMPING_TRIMS} from './mix-balance.js';
@@ -153,10 +153,10 @@ export class CompingInstrument{
   }
   clear(){this.sampleCursors.clear();for(const voice of this.voices)voice.pendingLegato=null;for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true,part=null){
-    this.soundLibrary=settings.soundLibrary||'original';
+    this.soundLibrary=sourceFor(settings,'comping');
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
-    const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
+    const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats)*4+grid%4;
     if(part){this.playPart(settings,beat,bar,offset,part,sample,step,onEvent);return;}
     // Leave the last beat of larger drum answers clear; existing chords can ring.
     if(settings.backingVariation>0&&(settings.backingTurnaround||bar%8===7)&&beat%settings.beats===settings.beats-1)return;
@@ -181,7 +181,7 @@ export class CompingInstrument{
       this.partSignature=part.signature;this.partOption=0;
       if(moving&&this.partLastVoicing){let best=Infinity;for(let index=0;index<part.options.length;index++){const chord=part.options[index].chord,score=chord.reduce((sum,note,i)=>sum+Math.abs(note-this.partLastVoicing[Math.min(i,this.partLastVoicing.length-1)]),0)/chord.length;if(score<best){best=score;this.partOption=index;}}}
     }
-    const phrase=trialComping(settings,bar)||accompanimentPhrase(part.style,bar,settings.backingVariation>0,settings.backingTurnaround),cell=phrase.cell;
+    const phrase=ensembleComping(settings,bar)||accompanimentPhrase(part.style,bar,settings.backingVariation>0,settings.backingTurnaround),cell=phrase.cell;
     // Pitch colours change between two-bar phrases, never halfway through the riff.
     if(offset===0&&!changed&&moving&&bar%2===0)this.partOption=Math.floor(bar/2)%Math.max(1,Math.ceil(part.options.length*amount));
     const option=part.options[(moving?this.partOption:0)%part.options.length];

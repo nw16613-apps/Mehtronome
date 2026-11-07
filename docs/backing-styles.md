@@ -148,51 +148,49 @@ A cached 32-bar arrangement selects whole two-bar phrases, revisits the theme an
 
 The new choices reuse the existing harmonic pitch maps, instrument samples, mixer and FX settings. Phrase cells are prepared once, and selection does not allocate pattern arrays or use random note decisions in the audio callback. Disabling `backingVariation` retains the original stable figure. Tests verify actual note/rhythm changes with humanisation and voicing movement off, thinner sections, current-mode pitches, preserved Latin/Brazilian anchors, deterministic restarts, chart-ending cues and native audio headroom.
 
-### Arrangement auditions
+### Coordinated arrangements and sound choices
 
-Legato Fusion and Blues offer **Compare arrangements** in Backing styles.
-A keeps the existing backing; B selects an authored, reviewed phrase library
-(`web/src/audio/audition-arrangements.js`), not an external generation service.
-The 16-bar fusion and 12-bar blues forms coordinate comping, bass, drums and
-melodic questions/answers. The blues form follows the chart's actual harmony;
-it does not substitute a standard twelve-bar progression.
+All 20 styles now use the coordinated written ensemble approach. The approved
+Legato Fusion 16-bar and Blues 12-bar B performances are retained exactly and
+are the standard parts; the A/B selector and obsolete audition code are removed.
+The other styles use written calls, answers, quieter bars, bass responses and
+section-ending drum figures. Clave/Brazilian two-bar orientation, reggae
+one-drop, jazz-waltz metre and slow-soul triplet placement remain intact.
+Parts follow the actual chart; a twelve-bar Blues arrangement does not replace
+its chord progression with a stock blues progression. This is an authored
+phrase library, not a call to an external AI music service.
 
-Both versions use the same instrument patches, faders, sends, tempo, chord
-chart and humanisation. A/B requests take effect at the next musical barline;
-**Restart from beginning** starts the selected version from the beginning of
-the current chart/loop with the existing count-in. Other styles keep A, and
-changing styles returns the audition selector to A. The trial is for four
-beats per bar; other meters keep A and explain how to enable B. Audition
-selection is temporary and is not saved into practice presets.
+Expanded sounds are the default throughout, including Legato Fusion's recorded
+flute melody. Sound sources remain independent of the musical arrangement.
+**Instrument sound choices** is collapsed by default and offers Original,
+Expanded or Follow sound library separately for Drums, Bass, Comping and
+Melodic movement. Choices are remembered per style and in saved setups.
 
-Phrase material uses harmonic roles and diatonic offsets. Existing pitch
-resolution follows chord qualities/scale guides, voice leading and actual
-changes; no audio/network request is needed. Supporting/Countermelody/Featured
-still controls the melodic part. Mixer mute/solo remains the way to hear an
-individual part. Focused tests cover complete forms, harmonic membership,
-barline switching through mixer updates, reset, audio block independence,
-real-sample headroom, and the two-style mobile browser workflow.
+The kit menu offers four genuine recording sources:
 
-### Sound-library comparison
+- **Tama acoustic / MuldjordKit:** a newly imported Tama Superstar kit, forty
+  selected soft/medium/strong/alternate recordings. Pedal hat and cross-stick
+  use the existing credited DRS/Virtuosity recordings.
+- **Live fusion / DRSKit:** the existing live kit with eighteen further real
+  dynamic recordings, covering kick, snare, hats, toms, ride bell and crash.
+- **Open jazz / Virtuosity:** the existing separate acoustic jazz session.
+- **Close acoustic / Naked Drums:** the original close-miked acoustic session.
 
-**Sound library → Expanded recordings** is independent of arrangement A/B and
-applies across all styles to drums, bass, comping and melodic movement. New
-sessions default to Expanded; Original sounds preserves the previous timbres.
-The preference survives reload, style changes and new saved setups. Older
-presets without this control restore Original sounds to retain their sound.
+Expanded Style choice uses Tama for Pop/rock, Blues, Motown, Funk, Second-line,
+Reggae, Boogaloo and Hard rock. Fusion jazz and Legato Fusion retain the
+preferred live-fusion character with broader dynamics. Jazz, bossa, Latin,
+ballad and other light styles retain their appropriate club-jazz profiles.
+An explicit kit choice overrides Style choice without changing parts or FX.
+The Original drum source with Style choice restores the prior style kit.
 
-New electric guitar recordings select actual soft/medium takes and recorded
-short articulations, while electric bass selects soft/medium-soft/strong
-plucks. Upright alternates real soft plucks. Piano/nylon use more pitch zones.
-Electric keys use recorded Wurlitzer, clav uses a recorded clav-style synth,
-and flute uses acoustic recordings. Organ uses a richer synthesized drawbar
-model; other modeled leads and the harmony pad remain synthesized. Source
-labels update to avoid describing sampled Wurlitzer as a tine/Rhodes piano.
+Drum dynamics select real recorded attack levels before applying the existing
+musical velocity. Snare ghost/soft/mid/normal/accent, kick and hat accents,
+soft toms/bell/crash and independent takes reduce repeated-hit sameness.
+Kicks retain a short smooth tail; calibrated cymbal trims keep rides behind
+the backbeat. The exact metronome remains separate from humanised percussion.
 
-Muted tracks request no samples. Decoding/fetching remains limited to four
-concurrent operations. Encoded recordings have a 24 MiB cache budget and
-decoded recordings a 48 MiB budget per device sample rate. Worklet settings
-retain only samples required by the current audible setup, preserving buffers
-referenced by already sounding notes; identical retain requests do no work.
-Sound-library changes wait for required samples before updating playback.
-Mix levels, sends, arrangement choices and the sample clock stay intact.
+Only audible instruments request recordings. Fetch/decode concurrency remains
+four; encoded/decoded caches retain their existing budgets and the worklet
+releases unused banks without cutting already sounding notes. A source or kit
+switch waits for its required samples before updating playback. Mixer levels,
+sends, chart, tempo and the shared sample clock remain intact.

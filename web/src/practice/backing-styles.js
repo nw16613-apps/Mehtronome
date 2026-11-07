@@ -1,3 +1,4 @@
+import {sourceFor} from '../audio/sound-library.js';
 import {ADDITIONAL_STYLES} from '../audio/additional-styles.js';
 import {ACCOMPANIMENT_PARTS} from '../audio/accompaniment.js';
 import {COMPING_TONES} from '../audio/comping.js';
@@ -41,3 +42,9 @@ export function backingStyleForControls(controls){
 }
 
 export function backingStyleInstruments(id){const {bassInstrument,drumKit}=BACKING_STYLES[backingStyleId(id)].settings;return {bassInstrument,drumKit,accompanimentStyle:backingStyleId(id),sequenceStyle:backingStyleId(id),sequenceTone:BACKING_STYLES[backingStyleId(id)].settings.sequenceTone};}
+
+export function resolveDrumKit(s){
+ if(s.drumKitChoice&&s.drumKitChoice!=='style'&&Object.hasOwn(DRUM_KITS,s.drumKitChoice))return s.drumKitChoice;
+ if(sourceFor(s,'drums')==='expanded'&&['popRock','blues','motown','funk','secondLine','reggae','boogaloo','hardRock'].includes(backingStyleId(s.backingStyle)))return 'tama';
+ return BACKING_STYLES[backingStyleId(s.backingStyle)].settings.drumKit;
+}

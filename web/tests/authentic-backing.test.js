@@ -30,8 +30,8 @@ test('bossa keeps samba feet and a two-bar cross-stick answer without generic fi
 });
 test('tumbao sustains across held-chord downbeats, but states a new harmony at its change',()=>{
  const held=play('latin',4).events.filter(e=>e.type==='bass');
- assert.deepEqual(held.map(e=>e.sample/1000),[0,6,12,22,28,38,44,54,60]);
- assert.ok(held.filter(e=>e.sub===0&&e.beat===3).every(e=>e.durationBeats>1.8));
+ assert.deepEqual(held.map(e=>e.sample/1000),[0,6,14,22,30,38,46,54,62]);
+ assert.ok(held.filter(e=>e.sub===2&&e.beat===3).every(e=>e.durationBeats>1));
  const changing=play('latin',4,{progression:true,template:'major251essential'}).events.filter(e=>e.type==='bass');
  assert.ok(changing.some(e=>e.step===1&&e.beat===0&&e.sub===0));
 });

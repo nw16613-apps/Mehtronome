@@ -10,4 +10,4 @@ export const COMPING_TRIMS=Object.fromEntries(Object.entries(COMPING_TRIM_DB).ma
 export const BASS_TRIMS={electric:10**(2/20),upright:1};
 
 // Audited with repeating hits and recorded tails; hats already have source trims.
-export const CYMBAL_TRIM_DB={live:{ride:-7.5,rideBell:-2,flatRide:-2,crash:-1.5},jazz:{ride:-2,rideBell:-2,flatRide:-1,crash:-2.5},default:{ride:-2,rideBell:-2,flatRide:-1,crash:-2}};
+export const CYMBAL_TRIM_DB={tama:{ride:-8,rideBell:-3,flatRide:-6,crash:-3},close:{ride:-3,rideBell:-3,flatRide:-2,crash:-3},live:{ride:-7.5,rideBell:-2,flatRide:-2,crash:-1.5},jazz:{ride:-2,rideBell:-2,flatRide:-1,crash:-2.5},default:{ride:-2,rideBell:-2,flatRide:-1,crash:-2}};

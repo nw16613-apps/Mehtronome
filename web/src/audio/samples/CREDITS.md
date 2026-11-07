@@ -134,3 +134,16 @@ synthesized. No third-party sample downloads or generation service run during
 playback; only the chosen audible banks are fetched from this app.
 
 Clavisynth source names and its documented octave-up patch produce sounding pitches two octaves above scientific filename pitch. The importer selects source notes two octaves lower and verifies their sounding fundamentals, so the requested MIDI register is preserved.
+
+## Selectable Tama acoustic kit and additional live dynamics
+
+[MuldjordKit](https://github.com/sfzinstruments/DrumGizmo.MuldjordKit/tree/fc165714974aa843125ce88597f341b31376e1d5), Lars Muldjord / DrumGizmo; SFZ/FLAC port by kinwie, CC BY 4.0. Tama Superstar acoustic kit recorded in 2010. Forty real hits supply kick (three strengths), snare (four strengths), hats/ride (three strengths), toms (two strengths), open hats, bell and crash, with independent takes. DRSKit pedal hats and Virtuosity cross-sticks retain their original credits and complete the kit.
+
+Eighteen further DRSKit recordings add kick ghost/accent, snare mid/accent,
+hat accent, soft toms, bell and crash. Attribution and pinned DRS source remain
+as above. `tama/sources.json` records exact source/derivative hashes, source
+revisions, microphone choices and processing; full CC BY 4.0 licences are in
+`tama/*-LICENSE.txt`. `prepare-tama-drums.py` reproduces the 58 mono 32 kHz
+PCM16 recordings (3.47 MiB), keeping the tightened kick release and natural
+acoustic tuning. Group data are separated from asset URLs for AudioWorklet
+compatibility. No artist recordings are sampled.

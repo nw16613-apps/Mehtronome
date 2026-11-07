@@ -11,3 +11,4 @@ export function recordedZone(zones,midi,velocity,cursors){
  const nearest=pool.reduce((best,z)=>!best||Math.abs(z.rootMidi-midi)<Math.abs(best.rootMidi-midi)?z:best,null);if(!nearest)return null;
  const root=nearest.nominalMidi??Math.round(nearest.rootMidi),choices=pool.filter(z=>(z.nominalMidi??Math.round(z.rootMidi))===root),key=nearest.id.replace(/[12]$/,'')+':'+root+':'+(layer||''),count=cursors.get(key)||0;cursors.set(key,count+1);return choices[count%choices.length];
 }
+export function sourceFor(settings,channel){const selected=settings.soundSources?.[channel];return selected==='original'||selected==='expanded'?selected:settings.soundLibrary==='expanded'?'expanded':'original';}

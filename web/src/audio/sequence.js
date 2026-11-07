@@ -1,3 +1,4 @@
+import {sourceFor} from './sound-library.js';
 import {performanceTouch} from './groove-time.js';
 import {CompingInstrument} from './comping.js';
 import {styleSequenceStep} from './style-phrases.js';
@@ -207,7 +208,7 @@ export class Sequence {
     }
     this.lastMidi=midi;
     if(styled){
-      this.instrument.soundLibrary=settings.soundLibrary||'original';
+      this.instrument.soundLibrary=sourceFor(settings,'sequence');
       const tone=settings.sequenceTone||settings.compingTone||'brightTine',duration=note.duration||.5;
       const touch=performanceTouch(settings,'sequence',Math.floor(beat/settings.beats),(beat%settings.beats)*4+(grid%rate)*4/rate,this.rate);
       this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression==='bend'&&['cleanGuitar','bluesGuitar','drivenGuitar','jazzGuitar','legatoGuitar'].includes(tone)?'bend':null);
