@@ -169,7 +169,7 @@ export class Sequence {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
     this.lastGrid=grid;if(!audible)return;
-    if(settings.sequenceStyle==='legatoFusion'){const signature=notes.join(',')+':'+(context?.counterline||[]).join(',');if(this.legatoHarmony!==signature){for(const voice of this.instrument.voices)if(voice.active)this.instrument.releaseVoice(voice);this.legatoHarmony=signature;}}
+    if(['legatoGuitar','fluteLead'].includes(settings.sequenceTone)){const signature=notes.join(',')+':'+(context?.counterline||[]).join(',');if(this.legatoHarmony!==signature){for(const voice of this.instrument.voices)if(voice.active)this.instrument.releaseVoice(voice);this.legatoHarmony=signature;}}
     const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
     const styled=musical&&!!settings.sequenceStyle;
     const bluesFamily=['blues','secondLine','boogaloo'].includes(settings.sequenceStyle);
@@ -209,7 +209,7 @@ export class Sequence {
     if(styled){
       const tone=settings.sequenceTone||settings.compingTone||'brightTine',duration=note.duration||.5;
       const touch=performanceTouch(settings,'sequence',Math.floor(beat/settings.beats),(beat%settings.beats)*4+(grid%rate)*4/rate,this.rate);
-      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression);
+      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression==='bend'&&['cleanGuitar','bluesGuitar','drivenGuitar','jazzGuitar','legatoGuitar'].includes(tone)?'bend':null);
       onNote({sample:sample+touch.delayFrames,gridSample:sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar,style:settings.sequenceStyle,tone,durationBeats:duration,section:note.section,phraseId:note.phraseId,phraseStart:note.phraseStart,phraseEnd:note.phraseEnd,target:note.target,activity:settings.sequenceActivity||'countermelody'});return;
     }
     const voice=this.voices[this.cursor++%this.voices.length];

@@ -22,6 +22,6 @@ test('developed melodies and cadences use only the current chord and scale throu
   for(const n of notes){const h=harmonyAt(e.settings,n.step),allowed=[...h.scalePcs,...h.chordPcs];assert.ok(allowed.includes(n.midi%12),id);if(n.target){assert.ok([...h.chordPcs,...characteristicNotes(h).map(c=>c.pc)].includes(n.midi%12),id);}}
  }
 });
-test('blues phrase endings have a short bend that settles on the scheduled target pitch',()=>{
+test('guitar bend expressions settle on the scheduled target pitch',()=>{
  const i=new CompingInstrument(8000);i.installKit({electricGuitar63:Float32Array.from({length:16000},(_,n)=>Math.sin(n*.2)*.2)});i.strike([64],1,.4,120,0,0,null,'sequence','bluesGuitar',0,null,'bend');const v=i.voices.find(v=>v.active),target=2**((64-62.9982)/12);assert.ok(v.sampleIncrement<target);for(let n=0;n<480;n++)assert.ok(Number.isFinite(i.render()));assert.ok(Math.abs(v.sampleIncrement-target)<1e-10);
 });

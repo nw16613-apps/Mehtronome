@@ -1,3 +1,4 @@
+import {CYMBAL_TRIM_DB} from './mix-balance.js';
 import {ADDITIONAL_STYLES,additionalDrumCell} from './additional-styles.js';
 const additionalGrooves=Object.fromEntries(Object.entries(ADDITIONAL_STYLES).map(([id,s])=>[s.groove,id]));
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
@@ -228,7 +229,7 @@ export class Rhythm {
     this.bassCursor = 0;
     this.sampleCursors = Object.create(null);
     this.chokeDecay = Math.exp(-1 / (rate * .006));
-    this.kitProfiles=Object.fromEntries(Object.entries(DRUM_KITS).map(([id,profile])=>[id,{...profile,decayFactor:profile.decay?Math.exp(-1/(rate*profile.decay)):1}]));
+    this.kitProfiles=Object.fromEntries(Object.entries(DRUM_KITS).map(([id,profile])=>[id,{...profile,cymbalGains:Object.fromEntries(Object.entries(CYMBAL_TRIM_DB[profile.bank]||CYMBAL_TRIM_DB.default).map(([name,db])=>[name,10**(db/20)])),decayFactor:profile.decay?Math.exp(-1/(rate*profile.decay)):1}]));
     this.drumVoices = Array.from({length:24}, () => ({sample:null, position:0, increment:1, gain:0, filter:0, tone:1, choke:1, choking:false, kind:''}));
     this.bassInstrument = new SampledBass(rate,kit);
     this.bassVoices = this.bassInstrument.voices;
@@ -287,7 +288,7 @@ export class Rhythm {
     // any kick, backbeat or grid onset away from the shared sample clock.
     const tuning=[1,.997,1.003,.999][cursor%4];
     const tone=name==='kick'?.85:name==='snare'||name==='rim'?.48+.42*Math.min(1,gain/.7):.94;
-    const balancedGain=gain*(DRUM_BALANCE[name]??1);
+    const balancedGain=gain*(DRUM_BALANCE[name]??1)*(profile.cymbalGains[name]??1);
     Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain:balancedGain,filter:0,tone:Math.min(.98,tone*profile.brightness),envelope:1,decayFactor:profile.decayFactor,choke:1,choking:false,kind:name,delay:delayFrames});
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }

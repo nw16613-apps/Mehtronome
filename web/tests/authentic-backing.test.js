@@ -41,7 +41,7 @@ test('each style has a distinct melodic part, appropriate timbre, deliberate res
   const {melody,e,dry}=play(style,8,{progression:true,template:'major251essential'});assert.ok(melody.length>0&&melody.length<=48,style);
   assert.ok(melody.every(n=>n.style===style&&n.tone===arrangement.settings.sequenceTone),style);
   assert.ok(new Set(melody.map(n=>Math.floor(n.gridSample/16000))).size<8,style+' leaves bars open');
-  if(['popRock','traditionalJazz','blues','motown','bossa','latin','ballad'].includes(style))assert.ok(e.sequence.instrument.voices.some(v=>v.pcm?.length),style+' uses recordings');
+  if(['jazzGuitar','cleanGuitar','acousticPiano'].includes(arrangement.settings.sequenceTone))assert.ok(e.sequence.instrument.voices.some(v=>v.pcm?.length),style+' uses recordings');
   for(const note of melody){const harmony=harmonyAt(e.settings,note.step);assert.ok([...harmony.scalePcs,...harmony.chordPcs].includes(note.midi%12),style+' follows the current harmony');}
   assert.ok(dry.every(Number.isFinite));signatures.push(JSON.stringify(melody.map(n=>[n.gridSample,n.midi,n.durationBeats])));
   assert.equal(styleSequenceStep({...arrangement.settings,sequenceDensity:0},0,4),null);
@@ -49,7 +49,7 @@ test('each style has a distinct melodic part, appropriate timbre, deliberate res
  assert.equal(new Set(signatures).size,20);
 });
 test('melodic-only playback requests its own recordings even when comping is muted',()=>{
- for(const style of ['popRock','traditionalJazz','motown','bossa','latin','ballad']){
+ for(const style of ['traditionalJazz','motown','bossa','latin','neoSoul','jazzWaltz','secondLine','reggae','boogaloo','modernStraightJazz']){
   const names=sampleNamesForSettings({...BACKING_STYLES[style].settings,sequence:true,sequenceVolume:.25,drums:false,bass:false,comping:false});
   assert.ok(names.length>=4&&names.length<=5,style);
  }

@@ -1,7 +1,7 @@
 import {DRUM_KITS} from './instrumentation.js';
 import {DRUM_SAMPLE_GROUPS,JAZZ_DRUM_GROUPS,LIVE_DRUM_GROUPS,BASS_SAMPLE_ZONES,latinSampleGroups} from './sample-map.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
-const compingBanks={swelledGuitar:'electricGuitar',drivenGuitar:'electricGuitar',acousticPiano:'piano',softPiano:'piano',cleanGuitar:'electricGuitar',bluesGuitar:'electricGuitar',nylonGuitar:'nylonGuitar'};
+const compingBanks={jazzGuitar:'electricGuitar',swelledGuitar:'electricGuitar',drivenGuitar:'electricGuitar',acousticPiano:'piano',softPiano:'piano',cleanGuitar:'electricGuitar',bluesGuitar:'electricGuitar',nylonGuitar:'nylonGuitar'};
 // Click and harmony are synthesized. Style melodic parts can share recorded guitar/piano banks.
 export function sampleNamesForSettings(settings){
  const muted=new Set(String(settings.mutedChannels||'').split(',')),names=new Set();
