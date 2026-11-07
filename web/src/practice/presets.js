@@ -4,7 +4,7 @@ import {normalizeCustomProgression} from './custom-progression.js';
 
 export const PRESET_KEY = 'mehtronome-practice-presets-v1';
 export const PRESET_CONTROLS = [
-  'backing-style','sound-library','track-sound-sources','sequence-activity',...FX_PRESET_CONTROLS,
+  'backing-style','sequence-activity',...FX_PRESET_CONTROLS,
   ...MIX_CHANNELS.map(channel=>'mute-'+channel.id),'extension-morph','extension-bars',
   'pulse-accents','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max',
   'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness','chord','template',

@@ -262,4 +262,3 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 @media(max-width:520px){.per-string-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.per-string-navigation{gap:8px}.per-string-navigation button{padding:10px}.per-string-selected{padding:12px}}
 
 
-.instrument-sound-choices{margin:18px 0}.sound-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}.sound-choice-grid label{display:grid;gap:7px;min-width:0}.sound-choice-grid select{width:100%;min-width:0}

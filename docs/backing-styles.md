@@ -160,28 +160,18 @@ Parts follow the actual chart; a twelve-bar Blues arrangement does not replace
 its chord progression with a stock blues progression. This is an authored
 phrase library, not a call to an external AI music service.
 
-Expanded sounds are the default throughout, including Legato Fusion's recorded
-flute melody. Sound sources remain independent of the musical arrangement.
-**Instrument sound choices** is collapsed by default and offers Original,
-Expanded or Follow sound library separately for Drums, Bass, Comping and
-Melodic movement. Choices are remembered per style and in saved setups.
+Expanded sounds are standard throughout, including Legato Fusion's recorded
+flute melody. Sound-library, per-track source and kit comparison controls are
+removed. Older stored sound preferences and saved sound overrides do not
+replace the standard palette. Style, melodic activity, mixer and FX controls
+remain available.
 
-The kit menu offers four genuine recording sources:
-
-- **Tama acoustic / MuldjordKit:** a newly imported Tama Superstar kit, forty
-  selected soft/medium/strong/alternate recordings. Pedal hat and cross-stick
-  use the existing credited DRS/Virtuosity recordings.
-- **Live fusion / DRSKit:** the existing live kit with eighteen further real
-  dynamic recordings, covering kick, snare, hats, toms, ride bell and crash.
-- **Open jazz / Virtuosity:** the existing separate acoustic jazz session.
-- **Close acoustic / Naked Drums:** the original close-miked acoustic session.
-
-Expanded Style choice uses Tama for Pop/rock, Blues, Motown, Funk, Second-line,
-Reggae, Boogaloo and Hard rock. Fusion jazz and Legato Fusion retain the
-preferred live-fusion character with broader dynamics. Jazz, bossa, Latin,
-ballad and other light styles retain their appropriate club-jazz profiles.
-An explicit kit choice overrides Style choice without changing parts or FX.
-The Original drum source with Style choice restores the prior style kit.
+The standard style palette uses the newly imported Tama Superstar/MuldjordKit
+for Pop/rock, Blues, Motown, Funk, Second-line, Reggae, Boogaloo and Hard rock.
+Fusion jazz and Legato Fusion retain the preferred live-fusion DRS character
+with broader recorded dynamics. Jazz, bossa, Latin, ballad and other light
+styles retain their appropriate club-jazz profiles. Legacy source assets and
+sampler support remain for reproducibility, without comparison controls.
 
 Drum dynamics select real recorded attack levels before applying the existing
 musical velocity. Snare ghost/soft/mid/normal/accent, kick and hat accents,
@@ -194,3 +184,11 @@ four; encoded/decoded caches retain their existing budgets and the worklet
 releases unused banks without cutting already sounding notes. A source or kit
 switch waits for its required samples before updating playback. Mixer levels,
 sends, chart, tempo and the shared sample clock remain intact.
+
+Musical scope: this is an AI-assisted, development-time phrase-library prototype.
+It does not run a generative music model during playback. Most melodic units
+are short; four/eight-bar bass vocabularies and a few comping cells are placed
+into longer forms. Harmonic roles resolve against current chords and scale
+guides, but the system does not compose a new long-form line for an entire
+progression or listen/respond to other instruments. A sixteen-bar form should
+not be described as a fully developed sixteen-bar composition.
