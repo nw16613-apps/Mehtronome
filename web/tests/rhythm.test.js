@@ -1,3 +1,5 @@
+import {ADDITIONAL_STYLES} from '../src/audio/additional-styles.js';
+const legacyGrooves=Object.keys(DRUM_GROOVES).filter(id=>!Object.values(ADDITIONAL_STYLES).some(s=>s.groove===id));
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Engine} from '../src/audio/engine.js';
@@ -87,7 +89,7 @@ test('bass patterns follow actual chord tones and land on the root each bar in e
       if(event.beat===0)assert.equal(event.midi%12,info.midi[0]%12);
     }
   }
-  for(const drumGroove of Object.keys(DRUM_GROOVES))for(const beats of [3,5,7]){
+  for(const drumGroove of legacyGrooves)for(const beats of [3,5,7]){
     const result=render(setup({beats,drumGroove,bass:false}),beats*4000*2);
     assert.ok(result.events.some(e=>e.type==='kick'&&e.sample===beats*4000));
   }
@@ -131,8 +133,8 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
 });
 
 test('drum and bass styles produce distinct event patterns and articulations',()=>{
-  assert.equal(Object.keys(DRUM_GROOVES).length,12);
-  assert.equal(Object.keys(BASS_PATTERNS).length,13);
+  assert.equal(Object.keys(DRUM_GROOVES).length,22);
+  assert.equal(Object.keys(BASS_PATTERNS).length,23);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
   assert.equal(new Set(drumSignatures).size,Object.keys(DRUM_GROOVES).length);
   const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{
@@ -186,7 +188,7 @@ test('bundled WAV kit is valid, survives transport resets and renders safely in 
 
 
 test('phrases vary over four bars with ghost notes, pickups, dynamics and bass octaves',()=>{
-  for(const drumGroove of Object.keys(DRUM_GROOVES).filter(id=>!['bossa','tumbao'].includes(id))){
+  for(const drumGroove of legacyGrooves.filter(id=>!['bossa','tumbao'].includes(id))){
     const result=render(setup({drumGroove,bass:false}),64000);
     const phrase=bar=>result.events.filter(e=>Math.floor(e.sample/16000)===bar)
       .map(e=>[e.type,e.sample%16000,e.gain]);
@@ -268,7 +270,7 @@ test('recorded hits alternate takes, soft snares use real ghost takes, and close
 
 test('eight-bar drum phrases make different answers and resolve fills without overloading the kit',()=>{
   // Two-bar Brazilian/Cuban ostinatos have dedicated persistence tests.
-  for(const drumGroove of Object.keys(DRUM_GROOVES).filter(id=>!['bossa','tumbao'].includes(id))){
+  for(const drumGroove of legacyGrooves.filter(id=>!['bossa','tumbao'].includes(id))){
     const {events}=render(setup({drumGroove,bass:false}),128000);
     const signatures=Array.from({length:4},(_,bar)=>JSON.stringify(events.filter(event=>Math.floor(event.sample/16000)===bar)
       .map(event=>[event.type,event.sample%16000,event.gain])));

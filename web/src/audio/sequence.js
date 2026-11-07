@@ -155,8 +155,8 @@ export class Sequence {
   }
   gridAt(settings, beat, phase) {
     const rate=Number(settings.sequenceRate)||2;let offset=0;
-    if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues')){
-      const swing=settings.sequenceStyle==='blues'?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);
+    if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues'||settings.sequenceStyle==='jazzWaltz'||settings.sequenceStyle==='secondLine')){
+      const swing=['blues','secondLine'].includes(settings.sequenceStyle)?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);
       return beat*2+(phase>=swing?1:0);
     }
     for(let i=1;i<rate;i++){

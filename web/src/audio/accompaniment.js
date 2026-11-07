@@ -1,3 +1,4 @@
+import {ADDITIONAL_STYLES} from './additional-styles.js';
 // A part event names a harmonic role, not a whole-chord retrigger.
 // [sixteenth, role, held beats, velocity, optional independent voice group].
 // Latin/Brazilian figures keep their two-bar orientation through the form.
@@ -107,6 +108,10 @@ const PART_VARIATIONS={
   turn:[[[0,'lowDyad',3.8,.39],[4,'upper3',2.9,.37]],[[0,'root',3.8,.33],[6,'upper',1.8,.35],[12,'top',1.3,.24]]]
  }
 };
+for(const [id,s] of Object.entries(ADDITIONAL_STYLES)){
+ ACCOMPANIMENT_PARTS[id]={name:s.part,bars:s.base};
+ PART_VARIATIONS[id]={develop:s.develop,answer:s.answer,turn:s.turn,space:s.base.map(bar=>bar.slice(0,1).map(([at,role,duration,velocity,group])=>[at,role,Math.min(s.beats,duration*1.8),velocity*.9,group]))};
+}
 // A 32-bar form revisits the theme and places quieter/answering parts around it.
 // Each selection is a whole two-bar pair, so clave sides never get reordered.
 const FORM=['base','develop','space','answer','base','develop','answer','turn','base','space','develop','answer','base','answer','space','turn'];
@@ -130,7 +135,7 @@ export function prepareAccompaniment(harmony,voicings,style){
   const innerThird=at(third,60),neighbours=harmony.scalePcs.filter(pc=>![root,third,fifth,seventh].includes(pc)&&(pcs.some(n=>[10,11].includes(interval(n)))||![10,11].includes(interval(pc)))).flatMap(pc=>[at(pc,48),at(pc,60),at(pc,72)]).sort((a,b)=>Math.abs(a-innerThird)-Math.abs(b-innerThird)||a-b),innerColour=neighbours[0]??at(fifth,60);
   let upperInversion=unique([upper.at(-1),upper[0]+12]);if(upperInversion.at(-1)>84)upperInversion=upperInversion.map(note=>note-12);
   const pad=unique([at(root,55),at(fifth,60),at(seventh,67)]).filter(note=>note%12!==third);
-  return {thirdDown:[at(third,64)-12],fifthUp:[at(fifth,60)+12],upperInversion,innerFifth:[at(fifth,60)],innerSeventh:[at(seventh,60)],thumbRoot:[at(root,48)],thumbFifth:[at(fifth,48)],innerThird:[innerThird],innerColour:[innerColour],chord:[...chord],root:[at(root,55)],fifth:[at(fifth,60)],third:[at(third,64)],seventh:[at(seventh,67)],top:[chord.at(-1)],colour:[at(colour%12,62)],
+  return {...(style==='hardRock'?{power:unique([at(root,43),at(fifth,48),at(root,43)+12])}:{}),thirdDown:[at(third,64)-12],fifthUp:[at(fifth,60)+12],upperInversion,innerFifth:[at(fifth,60)],innerSeventh:[at(seventh,60)],thumbRoot:[at(root,48)],thumbFifth:[at(fifth,48)],innerThird:[innerThird],innerColour:[innerColour],chord:[...chord],root:[at(root,55)],fifth:[at(fifth,60)],third:[at(third,64)],seventh:[at(seventh,67)],top:[chord.at(-1)],colour:[at(colour%12,62)],
    lowDyad:unique([at(root,55),at(fifth,60)]),upper,upperColour:unique([at(third,64),at(colour%12,67)]),shell:upper,upper3:unique(chord.slice(-3)),pad:pad.length?pad:[at(root,55)],
    rootOctave:[at(root,60),at(root,60)+12],fifthOctave:[at(fifth,60),at(fifth,60)+12]};
  });

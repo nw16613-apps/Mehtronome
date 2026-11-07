@@ -1,6 +1,6 @@
 # Recorded rhythm banks
 
-Current styles use DRSKit live drums for pop/rock, blues, fusion jazz, Motown and funk, and Virtuosity drums for the other styles, with VCSL Latin percussion where appropriate. The Wilkinson, studio and modern banks below are historical sources; they are not the current style assignments. See [recording credits](CREDITS.md) for licences and processing history.
+Current styles use DRSKit live drums for pop/rock, blues, fusion jazz, Motown, funk, second-line, reggae, boogaloo, hard rock and jazz-rock, and Virtuosity drums for the other styles, with VCSL Latin percussion where appropriate. The Wilkinson, studio and modern banks below are historical sources; they are not the current style assignments. See [recording credits](CREDITS.md) for licences and processing history.
 
 ## Original bank (historical)
 

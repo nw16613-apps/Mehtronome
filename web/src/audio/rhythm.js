@@ -1,3 +1,5 @@
+import {ADDITIONAL_STYLES,additionalDrumCell} from './additional-styles.js';
+const additionalGrooves=Object.fromEntries(Object.entries(ADDITIONAL_STYLES).map(([id,s])=>[s.groove,id]));
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
 import {DRUM_KITS} from './instrumentation.js';
 import {backingSubdivision,performanceTouch} from './groove-time.js';
@@ -17,6 +19,7 @@ export const BASS_PATTERNS = {
   motown: 'Motown · melodic eighths', tumbao: 'Latin · anticipated tumbao', jazzOstinato: 'Modern jazz · asymmetric ostinato',
   ballad: 'Ballad · sparse counterline',
 };
+for(const [id,s] of Object.entries(ADDITIONAL_STYLES)){DRUM_GROOVES[s.groove]=s.name;BASS_PATTERNS[id]=s.name;}
 // The first bar states the groove; the following bars answer it. Fills have
 // their own space at the end of a phrase instead of accumulating extra hits.
 // Offsets use sixteenths in a four-beat cell; other meters end at their barline.
@@ -212,6 +215,7 @@ function drumSamples(rate) {
 
 // All scheduling uses the metronome's sample clock. The browser installs decoded
 // samples before playback; cached synthesis is the standalone/test fallback.
+for(const [id,s] of Object.entries(ADDITIONAL_STYLES))BASS_LINES[id]=s.bass;
 export class Rhythm {
   constructor(rate, kit = null) {
     this.rate = rate;
@@ -288,6 +292,8 @@ export class Rhythm {
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
+    const added=additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
+    if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);}return;}
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
       this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
     }
@@ -362,7 +368,8 @@ export class Rhythm {
     if(!notes?.length)return;
     const pattern=BASS_LINES[settings.bassPattern]?settings.bassPattern:'roots';
     const cell=(beat*4+sub)%16;
-    let note=BASS_LINES[pattern][settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%4]:bar%4].find(event=>event[0]===cell);
+    const bassBars=BASS_LINES[pattern],bassBar=additionalGrooves[settings.drumGroove]?(bar%bassBars.length):(settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%4]:bar%4);
+    let note=bassBars[bassBar%bassBars.length].find(event=>event[0]===cell);
     if(pattern==='tumbao'&&cell===0&&notes.join(',')!==this.lastBassChord)note=[cell,0,0,1.4,.76];
     if(pattern==='roots'&&bar%2===1&&beat===settings.beats-1&&sub===2)note=[cell,-1,0,.38,.48];
     if(!note)return;

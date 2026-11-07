@@ -6,7 +6,7 @@ function engine(style,extra={}){const e=new Engine(8000);e.configure({...BACKING
 test('all chord qualities and roots map every part role to current chord/mode pitches within the instrument range',()=>{
  for(const chord of Object.keys(CHORDS))for(const key of [0,4,9]){
   const h=harmonyAt({...DEFAULTS,key,chord,mode:recommendedMode(chord)}),v=compingChordVoicings(h,h,'extensions');
-  for(const style of Object.keys(ACCOMPANIMENT_PARTS)){const p=prepareAccompaniment(h,v,style);assert.ok(p);for(const option of p.options)for(const notes of Object.values(option))for(const midi of notes){assert.ok(midi>=48&&midi<=84,style+' '+midi);assert.ok(p.allowed.has(midi%12),chord+' '+style);}}
+  for(const style of Object.keys(ACCOMPANIMENT_PARTS)){const p=prepareAccompaniment(h,v,style);assert.ok(p);for(const option of p.options)for(const notes of Object.values(option))for(const midi of notes){assert.ok(midi>=(style==='hardRock'?40:48)&&midi<=84,style+' '+midi);assert.ok(p.allowed.has(midi%12),chord+' '+style);}}
  }
 });
 test('montuno contains octaves and upper fragments; funk has single-note and dyad attacks',()=>{

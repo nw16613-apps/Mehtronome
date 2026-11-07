@@ -89,4 +89,4 @@ export const LATIN_DRUM_GROUPS={
 };
 const SON_PERCUSSION_GROUPS=Object.fromEntries(Object.entries(LATIN_DRUM_GROUPS).filter(([name])=>name!=='shaker'));
 const BOSSA_PERCUSSION_GROUPS={shaker:LATIN_DRUM_GROUPS.shaker};
-export function latinSampleGroups(groove){return groove==='tumbao'?SON_PERCUSSION_GROUPS:groove==='bossa'?BOSSA_PERCUSSION_GROUPS:{};}
+export function latinSampleGroups(groove){return groove==='tumbao'?SON_PERCUSSION_GROUPS:groove==='bossa'?BOSSA_PERCUSSION_GROUPS:groove==='afroCuban68'?{cowbell:LATIN_DRUM_GROUPS.cowbell,congaOpen:LATIN_DRUM_GROUPS.congaOpen,congaMute:LATIN_DRUM_GROUPS.congaMute,tumbaOpen:LATIN_DRUM_GROUPS.tumbaOpen,shaker:LATIN_DRUM_GROUPS.shaker}:groove==='samba'?{shaker:LATIN_DRUM_GROUPS.shaker,congaOpen:LATIN_DRUM_GROUPS.congaOpen,congaMute:LATIN_DRUM_GROUPS.congaMute}:groove==='boogaloo'?{cowbell:LATIN_DRUM_GROUPS.cowbell}:{};}

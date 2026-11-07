@@ -1,3 +1,4 @@
+import {ADDITIONAL_STYLES} from './additional-styles.js';
 // Small accompaniment phrases, not continuous solo generators. Each entry is
 // [sixteenth, note-pool index, held beats, velocity]. Silence is part of the part.
 const PHRASES={
@@ -12,16 +13,18 @@ const PHRASES={
  latin:[[[0,0,.3,.58],[6,2,.3,.53],[10,1,.3,.55],[14,2,.3,.51]],[[2,1,.3,.52],[6,2,.3,.55],[8,0,.3,.59],[12,1,.3,.53]],[[0,0,.3,.58],[6,2,.3,.53],[10,1,.3,.55],[14,2,.3,.51]],[[2,1,.3,.52],[6,2,.3,.55],[8,0,.3,.59],[12,1,.3,.53]]],
  ballad:[[[0,1,2.5,.48]],[[8,0,2,.44]],[[0,1,2.5,.48]],[[8,0,2,.44]]],
 };
+for(const [id,s] of Object.entries(ADDITIONAL_STYLES))PHRASES[id]=s.melody;
+const riffStyles=new Set(['popRock','fusionJazz','blues','motown','funk','bossa','latin',...Object.keys(ADDITIONAL_STYLES)]);
 export function styleSequenceStep(settings,grid,length){
  const phrase=PHRASES[settings.sequenceStyle];if(!phrase||!length)return null;
  const density=Math.max(0,Math.min(1,Number(settings.sequenceDensity)||0));if(!density)return null;
  const rate=Number(settings.sequenceRate)||2,beats=settings.beats||4,barGrid=rate*beats;
  const bar=Math.floor(grid/barGrid),phraseBar=bar%4,local=grid%barGrid;
  // Brazilian and Cuban answers keep their two-bar halves together.
- const pair=settings.sequenceStyle==='latin'||settings.sequenceStyle==='bossa';
+ const pair=settings.sequenceStyle==='latin'||settings.sequenceStyle==='bossa'||['afroCuban68','samba'].includes(settings.sequenceStyle);
  const order=pair?[0,1,2,3]:[0,3,2,1],active=pair?Math.max(2,Math.ceil(density*2)*2):Math.max(1,Math.ceil(density*4));
  const accompaniment=settings.accompanimentStyle&&settings.comping&&(settings.compingVolume??.25)>0&&!String(settings.mutedChannels||'').split(',').includes('comping');
- const riff=accompaniment&&['popRock','fusionJazz','blues','motown','funk','bossa','latin'].includes(settings.accompanimentStyle);
+ const riff=accompaniment&&riffStyles.has(settings.accompanimentStyle);
  if(riff?phraseBar!==3:!order.slice(0,active).includes(phraseBar))return null;
  const events=phrase[phraseBar],event=events.find(([position])=>position<beats*4&&Math.round(position*rate/4)===local);
  if(!event)return null;

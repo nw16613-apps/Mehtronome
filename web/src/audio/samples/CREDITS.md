@@ -1,4 +1,4 @@
-> Current kit assignments: DRSKit for pop/rock, blues, fusion jazz, Motown and funk; Virtuosity for the other styles, plus VCSL Latin percussion. Earlier replacement sections below record processing history, not current assignments.
+> Current kit assignments: DRSKit for pop/rock, blues, fusion jazz, Motown, funk, second-line, reggae, boogaloo, hard rock and jazz-rock; Virtuosity for the other styles, plus VCSL Latin percussion. Earlier replacement sections below record processing history, not current assignments.
 
 # Recording credits
 

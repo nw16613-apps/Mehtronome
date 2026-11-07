@@ -1,5 +1,8 @@
 // Backing swing relaxes at faster tempos; the metronome has its own exact clock.
 export function backingSubdivision(phase,groove,bpm=120){
+ if(groove==='soul128')return Math.min(2,Math.floor(phase*3));
+ if(groove==='jazzWaltz')groove='swing';
+ if(groove==='secondLine')groove='shuffle';
  if(groove!=='swing'&&groove!=='shuffle')return Math.min(3,Math.floor(phase*4));
  const swing=groove==='shuffle'?2/3:Math.max(.54,2/3-Math.max(0,bpm-140)*.00075);
  return phase>=swing+(1-swing)/2?3:phase>=swing?2:phase>=swing/2?1:0;

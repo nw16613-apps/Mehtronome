@@ -1,3 +1,4 @@
+import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {accompanimentPhrase} from './accompaniment.js';
 import {COMPING_TRIMS} from './mix-balance.js';
 import {extensionChoices} from './extensions.js';
@@ -9,12 +10,13 @@ export const COMPING_PATTERNS={
   sparse:'Electric piano · spacious', jazz:'Electric piano · jazz syncopation', neoSoul:'Electric piano · neo-soul pocket',
   bossa:'Bossa guitar pattern', ballad:'Sustained ballad chords',
 };
+for(const [id,s]of Object.entries(ADDITIONAL_STYLES))COMPING_PATTERNS[id]=s.part;
 export const COMPING_MOVEMENTS={
   still:'Still chords', extensions:'Chord extensions & inversions', modal:'Modal chord colours', inner:'Chord inversions',
   response:'Chord responses', voiceLead:'Voice-led chords',
 };
 export const COMPING_TONES={
-  acousticPiano:'Acoustic piano',softPiano:'Soft acoustic piano',cleanGuitar:'Clean electric guitar',bluesGuitar:'Blues electric guitar',nylonGuitar:'Nylon-string guitar',
+  drawbarOrgan:'Drawbar-style organ',drivenGuitar:'Driven electric guitar',acousticPiano:'Acoustic piano',softPiano:'Soft acoustic piano',cleanGuitar:'Clean electric guitar',bluesGuitar:'Blues electric guitar',nylonGuitar:'Nylon-string guitar',
   brightKeys:'Bright percussive keys', brightTine:'Bright electric tine', clav:'Dry clav-style keys',
   warmTine:'Warm tine', felt:'Dark felt electric', suitcase:'Suitcase shimmer', reed:'Reed electric',
 };
@@ -106,7 +108,9 @@ const CELLS={
   ballad:[[[0,3.2,.65]],[[0,2.8,.62]],[[0,3.2,.66]],[[4,2.8,.54]]],
 };
 
+for(const [id,s]of Object.entries(ADDITIONAL_STYLES))CELLS[id]=s.base.map(bar=>bar.map(([position,,duration,velocity])=>[position,duration,velocity]));
 const TONE_SHAPES={
+ drawbarOrgan:{level:.6,attack:.004,release:.085,decay:.03,fm:0,second:.28,third:.16,tremolo:.018},
  brightKeys:{level:.7,attack:.0015,release:.085,decay:1.15,fm:.65,second:.3,third:.18,tremolo:0},
  brightTine:{level:.7,attack:.0025,release:.12,decay:.9,fm:1.05,second:.23,third:.09,tremolo:.008},
  clav:{level:.7,attack:.001,release:.055,decay:1.8,fm:.22,second:.43,third:.3,tremolo:0},
@@ -116,7 +120,7 @@ const TONE_SHAPES={
  reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
 };
 
-for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
+for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['drivenGuitar','electricGuitar',5600,.11,3.2],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
 
 export class CompingInstrument{
   constructor(rate,voiceCount=32){this.rate=rate;this.transitionFactor=Math.exp(-1/(rate*.025));this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
@@ -157,8 +161,9 @@ export class CompingInstrument{
     for(const [position,role,duration,velocity,group]of cell)if(position===offset){
       const pitches=option[role];if(!pitches?.length)continue;
       const touch=performanceTouch(settings,'comping',bar,offset,this.rate);
-      this.strike(pitches,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,touch.delayFrames,group||role);
-      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,variant:phrase.variant,role});
+      const tone=part.style==='reggae'&&['third','seventh'].includes(role)?'drawbarOrgan':settings.compingTone;
+      this.strike(pitches,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,undefined,'comping',tone,touch.delayFrames,group||role);
+      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,variant:phrase.variant,role,tone});
       this.partLastVoicing=option.chord;this.hits++;
     }
   }

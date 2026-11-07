@@ -46,7 +46,7 @@ test('each style has a distinct melodic part, appropriate timbre, deliberate res
   assert.ok(dry.every(Number.isFinite));signatures.push(JSON.stringify(melody.map(n=>[n.gridSample,n.midi,n.durationBeats])));
   assert.equal(styleSequenceStep({...arrangement.settings,sequenceDensity:0},0,4),null);
  }
- assert.equal(new Set(signatures).size,10);
+ assert.equal(new Set(signatures).size,20);
 });
 test('melodic-only playback requests its own recordings even when comping is muted',()=>{
  for(const style of ['popRock','traditionalJazz','motown','bossa','latin','ballad']){
