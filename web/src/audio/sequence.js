@@ -1,4 +1,4 @@
-import {referenceEvents} from './reference-performances.js';
+import {referenceEvents,referenceGrid} from './reference-performances.js';
 import {sourceFor} from './sound-library.js';
 import {performanceTouch} from './groove-time.js';
 import {CompingInstrument} from './comping.js';
@@ -156,6 +156,7 @@ export class Sequence {
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
+    if(settings.referencePlan?.score.gridRate)return referenceGrid(settings.referencePlan,'sequence',beat,phase,settings);
     const rate=settings.referencePlan?.score.rate||Number(settings.sequenceRate)||2;let offset=0;
     if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues'||settings.sequenceStyle==='jazzWaltz'||settings.sequenceStyle==='secondLine')){
       const swing=['blues','secondLine'].includes(settings.sequenceStyle)?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);

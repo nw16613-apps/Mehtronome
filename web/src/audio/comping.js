@@ -1,4 +1,4 @@
-import {referenceEvents} from './reference-performances.js';
+import {referenceEvents,referenceGrid} from './reference-performances.js';
 import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone,sourceFor} from './sound-library.js';
 import {ensembleComping} from './ensemble-arrangements.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
@@ -155,7 +155,7 @@ export class CompingInstrument{
   clear(){this.sampleCursors.clear();for(const voice of this.voices)voice.pendingLegato=null;for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true,part=null){
     this.soundLibrary=sourceFor(settings,'comping');
-    const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
+    const grid=settings.referencePlan?.score.gridRate?referenceGrid(settings.referencePlan,'comping',beat,phase,settings):beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats)*4+grid%4;
     if(settings.referencePlan){

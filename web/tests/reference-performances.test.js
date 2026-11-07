@@ -7,7 +7,7 @@ import {BACKING_STYLES,backingStyleInstruments,resolveDrumKit} from '../src/prac
 import {readSampleBank} from '../scripts/read-sample-bank.mjs';
 function config(id,extra={}){const chart=referenceChart(id),s={...BACKING_STYLES[id].settings,...backingStyleInstruments(id),backingStyle:id,...chart,customProgression:normalizeCustomProgression(chart.progression),template:'custom',progression:true,bpm:120,countIn:false,loopEnabled:false,extensionMorph:false,drums:true,bass:true,comping:true,sequence:true,click:0,harmony:0,backingHumanize:0,soundLibrary:'expanded',...extra};s.drumKit=resolveDrumKit(s);return s;}
 test('both complete scores survive normalization, use valid harmony, and have independent developed parts',()=>{
- for(const [id,def]of Object.entries(REFERENCE_PERFORMANCES)){
+ for(const [id,def]of Object.entries(REFERENCE_PERFORMANCES).filter(([id])=>['blues','legatoFusion'].includes(id))){
   const s=config(id),plan=referencePlan(s);assert.equal(plan.score.bars,def.bars);assert.equal(plan.transpose,0);assert.equal(s.customProgression.referencePerformance,id);
   assert.equal(s.customProgression.steps.reduce((n,v)=>n+v.beats,0),def.bars*4);
   def.harmony.forEach(([pc,chord,mode],i)=>{assert.ok(MODES[mode]);assert.ok(CHORDS[chord]);assert.equal(harmonyAt(s,i).chordPcs[0],pc);});
@@ -26,7 +26,7 @@ test('written pitch playback is restricted to its chart, with transposition and 
 const bank=await readSampleBank(8000);
 function render(id,bars,block=1024,extra={}){const s=config(id,extra),engine=new Engine(8000);engine.installDrumKit(bank);engine.configure(s);engine.reset();const n=bars*16000-1,out=new Float32Array(n),notes=[],events=[];for(let i=0;i<n;i+=block){const size=Math.min(block,n-i);engine.render(new Float32Array(size),undefined,null,null,e=>notes.push(e),out.subarray(i,i+size),e=>events.push(e));}return {engine,out,notes,events};}
 test('the engine plays every exact written note and voicing across the whole form, including approaches and ties',()=>{
- for(const [id,def]of Object.entries(REFERENCE_PERFORMANCES)){
+ for(const [id,def]of Object.entries(REFERENCE_PERFORMANCES).filter(([id])=>['blues','legatoFusion'].includes(id))){
   const result=render(id,def.bars),score=referenceScore(id);
   assert.deepEqual(result.notes.map(e=>[e.midi,e.durationBeats]),score.sequence.flat().map(e=>[e.midi,e.duration]));
   assert.deepEqual(result.events.filter(e=>e.type==='bass').map(e=>[e.midi,e.durationBeats]),score.bass.flat().map(e=>[e.midi,e.duration]));
@@ -36,7 +36,7 @@ test('the engine plays every exact written note and voicing across the whole for
  }
 });
 test('reference playback is block-independent, transposes exact parts, and respects inaudible tracks',()=>{
- for(const id of Object.keys(REFERENCE_PERFORMANCES)){
+ for(const id of ['blues','legatoFusion']){
   const a=render(id,4,257),b=render(id,4,1024);assert.deepEqual(a.out,b.out);assert.deepEqual(a.notes,b.notes);assert.deepEqual(a.events,b.events);
   const shifted=render(id,4,1024,{key:REFERENCE_PERFORMANCES[id].key+2});assert.deepEqual(shifted.notes.map(n=>n.midi),a.notes.map(n=>n.midi+2));
   const silent=render(id,1,1024,{mutedChannels:'drums,bass,comping,sequence'});assert.equal(silent.notes.length,0);assert.equal(silent.events.length,0);

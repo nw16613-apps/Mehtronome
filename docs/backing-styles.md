@@ -185,10 +185,16 @@ releases unused banks without cutting already sounding notes. A source or kit
 switch waits for its required samples before updating playback. Mixer levels,
 sends, chart, tempo and the shared sample clock remain intact.
 
-Musical scope: this is an AI-assisted, development-time phrase-library prototype.
-It does not run a generative music model during playback. Most melodic units
-are short; four/eight-bar bass vocabularies and a few comping cells are placed
-into longer forms. Harmonic roles resolve against current chords and scale
-guides, but the system does not compose a new long-form line for an entire
-progression or listen/respond to other instruments. A sixteen-bar form should
-not be described as a fully developed sixteen-bar composition.
+The standard backing retains the earlier development-time phrase-library approach:
+short cells placed into longer forms, with harmonic roles resolved against the
+current chord and scale guide. It remains the default for unarranged charts.
+
+A separate reference-driven checkpoint now provides a complete original study
+for all twenty styles and an **Arrange my chart** action. That action compiles
+longer source phrasing against the actual progression, including split bars,
+loops, guide tones, altered qualities, slash bass and connected voicings.
+See [Reference performances and chart-aware arrangements](reference-performances.md)
+for the catalogue, supported metres, limits and validation contract.
+Neither path calls an external music-generation service or listens/responds to
+live audio. The written references and first deterministic adaptation pass should
+be assessed by listening before describing them as player-level improvisation.

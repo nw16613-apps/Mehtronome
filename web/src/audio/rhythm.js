@@ -1,4 +1,4 @@
-import {referenceEvents} from './reference-performances.js';
+import {referenceEvents,referenceGrid} from './reference-performances.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
 import {ensembleDrums,ensembleBass} from './ensemble-arrangements.js';
@@ -252,7 +252,7 @@ export class Rhythm {
     this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);this.expandedGroups=available(EXPANDED_DRUM_GROUPS);this.tamaGroups=available(TAMA_DRUM_GROUPS);this.liveDynamics=available(LIVE_DYNAMIC_GROUPS);this.expandedLiveGroups={...this.liveGroups,...this.liveDynamics,hatSoft:this.expandedGroups.hatSoft,rideSoft:this.expandedGroups.rideSoft};
   }
   gridAt(settings, beat, phase) {
-    return beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
+    return settings.referencePlan?.score.gridRate?referenceGrid(settings.referencePlan,'drums',beat,phase,settings):beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
   }
   bassGridAt(beat,phase,groove='straight',bpm=120){return beat*4+backingSubdivision(phase,groove,bpm);}
   clearDrums() { for (const voice of this.drumVoices) voice.sample = null; this.activeDrums=0; }
@@ -260,7 +260,7 @@ export class Rhythm {
   tick(settings, beat, phase, notes, sample, step, onEvent, nextNotes = notes,drumsAudible=true,bassAudible=true) {
     this.expandedSounds=sourceFor(settings,'drums')==='expanded';
     const grid = this.gridAt(settings, beat, phase);
-    const bassGrid = this.bassGridAt(beat, phase,settings.drumGroove,settings.bpm);
+    const bassGrid = settings.referencePlan?.score.gridRate?referenceGrid(settings.referencePlan,'bass',beat,phase,settings):this.bassGridAt(beat, phase,settings.drumGroove,settings.bpm);
     const inBar = beat % settings.beats;
     const bar = Math.floor(beat / settings.beats);
     if (grid !== this.lastGrid) {
@@ -308,7 +308,7 @@ export class Rhythm {
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
     if(settings.referencePlan){
       const plan=settings.referencePlan;
-      for(const event of referenceEvents(plan,'drums',(bar*settings.beats+beat)*4+sub)){
+      for(const event of referenceEvents(plan,'drums',this.lastGrid)){
         const touch=performanceTouch(settings,event.name,bar,beat*4+sub,this.rate);
         this.hitDrum(event.name,event.velocity*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);
       }
@@ -389,7 +389,7 @@ export class Rhythm {
   playBass(settings, sub, beat, bar, notes, sample, step, onEvent,nextNotes = notes) {
     if(settings.referencePlan){
       const plan=settings.referencePlan;
-      for(const event of referenceEvents(plan,'bass',(bar*settings.beats+beat)*4+sub)){
+      for(const event of referenceEvents(plan,'bass',this.lastBassGrid)){
         const midi=event.midi+plan.transpose;
         this.bassInstrument.noteOn(midi,event.duration*60/settings.bpm,event.velocity,settings.bassPattern,settings.bassInstrument,sourceFor(settings,'bass'));
         this.bassCursor=this.bassInstrument.cursor;this.lastBassMidi=midi;

@@ -2414,6 +2414,16 @@ backingStyleUi=installBackingStyles(update,{
   input('trainer-enabled').checked=false;input('gap-enabled').checked=false;
   await loadWorkingChart(chart);tempo(chart.bpm);update();
  },
+ arrange:async()=>{
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before arranging the chart.');
+  materializeWorkingChart();const progression={...customProgression,arrangedPerformance:settings.backingStyle};delete progression.referencePerformance;
+  rememberCustomEdit();customProgression=progression;input('extension-morph').checked=false;saveCustomProgression('Developed arrangement applied.');update();
+ },
+ clear:async()=>{
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
+  const progression={...customProgression};delete progression.arrangedPerformance;
+  rememberCustomEdit();customProgression=progression;saveCustomProgression('Arrangement removed.');update();
+ },
  play:async()=>{
   if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
   soloChannels.clear();

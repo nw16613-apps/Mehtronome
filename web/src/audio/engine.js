@@ -303,7 +303,9 @@ export class Engine {
     // Rhythm envelopes need the current tempo; the public setting remains the
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
-    Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:referencePlan(s)});
+    const referenceKey=JSON.stringify([s.key,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
+    if(referenceKey!==this.referenceCacheKey){this.referenceCacheKey=referenceKey;this.cachedReferencePlan=referencePlan(s);}
+    Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:this.cachedReferencePlan});
     const timeline=s.progression?progressionTimeline(s):[];
     const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){

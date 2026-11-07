@@ -1,3 +1,5 @@
+import {arrangeReference,arrangementSupport} from './reference-arranger.js';
+import {STYLE_REFERENCES,catalogueScore} from './reference-catalogue.js';
 // Original, explicitly written ensemble studies. This is score playback, not
 // runtime AI generation. Rows are bars; onsets/durations are quarter-note beats.
 // Blues half-beats swing through the existing common clock.
@@ -11,6 +13,7 @@ const fusionHarmony=[
  [0,'maj9sharp11','lydian',8],[6,'min9','dorian',8],[10,'maj9sharp11','lydian',8],[4,'dom13','mixolydian',4],[9,'maj9sharp11','lydian',4],
 ];
 export const REFERENCE_PERFORMANCES={
+ ...STYLE_REFERENCES,
  blues:{id:'blues',name:'Blues · Two conversations',style:'blues',key:5,bpm:112,bars:24,rate:2,
   description:'Two 12-bar choruses in F. A restrained opening develops into a second chorus, with walking bass, guitar replies, organ melody and written turnarounds.',
   harmony:[...bluesHarmony,...bluesHarmony],sections:{0:'First chorus · call',4:'First chorus · response',8:'First turnaround',12:'Second chorus · develop',16:'Second chorus · lift',20:'Final turnaround'}},
@@ -127,7 +130,8 @@ function indexRows(rows,rate,parse){
 }
 const scores=new Map();
 export function referenceScore(id){
- if(scores.has(id))return scores.get(id);const def=REFERENCE_PERFORMANCES[id];if(!def)return null;
+ if(scores.has(id))return scores.get(id);const def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)return null;
+ if(STYLE_REFERENCES[id]){const score=catalogueScore(id);scores.set(id,score);return score;}
  const pitched=t=>{const [at,midi,duration,velocity]=t.split(':').map(Number);return {at,midi,duration,velocity:Number.isFinite(velocity)?velocity:.62};};
  const score={id,bars:def.bars,rate:def.rate,
   bass:indexRows(bass[id],4,pitched),sequence:indexRows(sequence[id],def.rate,pitched),
@@ -136,21 +140,35 @@ export function referenceScore(id){
  };scores.set(id,score);return score;
 }
 export function referenceChart(id){
- const def=REFERENCE_PERFORMANCES[id];if(!def)throw new Error('Unknown reference performance.');let beat=0;
+ const def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)throw new Error('Unknown reference performance.');let beat=0;
  const letters=[0,1,1,2,2,3,3,4,5,5,6,6];
- return {key:def.key,beats:4,bpm:def.bpm,progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored reference performance. Exact written ensemble parts; no external music-generation service. Changing harmony, durations, metre or style returns to standard backing. Transposition and tempo changes are supported.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/4];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
+ return {key:def.key,beats:def.beats||4,bpm:def.bpm,progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored reference performance. Exact written ensemble parts; no external music-generation service. Changing harmony, durations, metre or style returns to standard backing. Transposition and tempo changes are supported.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/(def.beats||4)];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
 }
 // Validate once per configure, never per sample. An edited chart must not keep
 // playing the old pitches under new chord symbols. Keep the marker for Undo.
 export function referenceStatus(settings){
- const id=settings.template==='custom'?settings.customProgression?.referencePerformance:null,def=REFERENCE_PERFORMANCES[id];if(!def)return {active:false,id:null,reason:''};
- const fail=reason=>({active:false,id,reason});
+ const adapted=settings.template==='custom'?settings.customProgression?.arrangedPerformance:null;
+ const id=settings.template==='custom'?(adapted||settings.customProgression?.referencePerformance):null,def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)return {active:false,id:null,adapted:false,reason:''};
+ const fail=reason=>({active:false,id,adapted:!!adapted,reason});
+ if(adapted){const reason=arrangementSupport(settings,def);return reason?fail(reason):{active:true,id,adapted:true,reason:''};}
  if(!settings.progression)return fail('Enable the reference chart to hear its written performance.');
  if(settings.backingStyle!==def.style)return fail('Choose its matching backing style to hear the written performance.');
- if(settings.beats!==4||settings.loopEnabled||settings.extensionMorph)return fail('The written performance needs 4/4, Full chart and chord variation off.');
+ if(settings.beats!==(def.beats||4)||settings.loopEnabled||settings.extensionMorph)return fail(`The written performance needs ${def.beats||4} beats per bar, Full chart and chord variation off.`);
  const steps=settings.customProgression.steps;
- if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*4)!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
- return {active:true,id,reason:''};
+ if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*(def.beats||4))!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
+ return {active:true,id,adapted:false,reason:''};
 }
-export function referencePlan(settings){const status=referenceStatus(settings);if(!status.active)return null;const def=REFERENCE_PERFORMANCES[status.id];let transpose=((settings.key-def.key+18)%12)-6;return {score:referenceScore(status.id),transpose};}
+export function referencePlan(settings){const status=referenceStatus(settings);if(!status.active)return null;const def=REFERENCE_PERFORMANCES[status.id];let transpose=((settings.key-def.key+18)%12)-6;return status.adapted?{score:arrangeReference(referenceScore(status.id),def,settings),transpose:0}:{score:referenceScore(status.id),transpose};}
 export function referenceEvents(plan,track,grid){const slots=plan.score[track];return slots[((grid%slots.length)+slots.length)%slots.length];}
+
+// Native scores use twelve ticks per beat so thirds and sixteenths coexist.
+// Preserve the approved two initial studies' original timing exactly.
+export function referenceGrid(plan,track,beat,phase,settings){
+ const score=plan.score;
+ if(!score.gridRate)return beat*(track==='sequence'?score.rate:4)+(track==='sequence'?Math.min(score.rate-1,Math.floor(phase*score.rate)):Math.min(3,Math.floor(phase*4)));
+ if(['traditionalJazz','blues','jazzWaltz','secondLine'].includes(score.id)){
+  const swing=['blues','secondLine'].includes(score.id)?2/3:Math.max(.54,2/3-Math.max(0,settings.bpm-140)*.00075);
+  phase=phase<swing?phase/swing*.5:.5+(phase-swing)/(1-swing)*.5;
+ }
+ return beat*score.gridRate+Math.min(score.gridRate-1,Math.floor(phase*score.gridRate+1e-9));
+}
