@@ -7,8 +7,9 @@ test('position arrows and tabs consistently switch to independent manual chart p
  await expect(page.locator('[data-workspace-target=guitar-title]')).toContainText('Fretboard');await expect(page.locator('#guitar-title')).toContainText('Fretboard explorer');await expect(page.locator('#featured-position')).toHaveValue('path');
  const original=await positions(page);await page.locator('#position-next').click();await expect(page.locator('#featured-position')).toHaveValue('all');const changed=await positions(page);expect(changed[0]).not.toBe(original[0]);expect(changed[1]).toBe(original[1]);
  await page.locator('#position-path [data-inspect-slot="1"]').click();await page.locator('[data-overview-position=V]').click();expect(await positions(page)).toEqual([changed[0],'V']);
- await page.locator('[data-overview-position=V]').press('ArrowRight');expect(await positions(page)).toEqual([changed[0],'I']);
- await tab(page,'caged-exercise');await expect(page.locator('.exercise-position-route [data-inspect-slot="0"]')).toHaveAttribute('data-position',changed[0]!);await expect(page.locator('.exercise-position-route [data-inspect-slot="1"]')).toHaveAttribute('data-position','I');expect(errors).toEqual([]);
+ const order=await page.locator('#position-overview [data-overview-position]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-overview-position')!)),next=order[(order.indexOf('V')+1)%order.length];
+ await page.locator('[data-overview-position=V]').press('ArrowRight');expect(await positions(page)).toEqual([changed[0],next]);
+ await tab(page,'caged-exercise');await expect(page.locator('.exercise-position-route [data-inspect-slot="0"]')).toHaveAttribute('data-position',changed[0]!);await expect(page.locator('.exercise-position-route [data-inspect-slot="1"]')).toHaveAttribute('data-position',next);expect(errors).toEqual([]);
 });
 test('voicing display and overlay are explicit, restore settings and keep strum/practice actions useful',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await open(page);await expect(page.locator('#fretboard-overlay-details')).toBeHidden();

@@ -44,3 +44,14 @@ test('previews and Previous/Next follow ascending fret ranges while preserving i
   const register=page.locator('.per-string-selected select');if(await register.locator('option').count()>1){await register.selectOption({index:(await register.locator('option').count())-1});await check();}
  }
 });
+test('CAGED previews and navigation follow fret order for changing chords and guides',async({page})=>{
+ await page.goto('/');await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#single-chord-chart').click();
+ for(const [root,mode,chord] of [['9','lydian_dominant','dom7'],['1','lydian','maj7'],['5','dorian','min7']]){
+  await page.locator('[data-workspace-target=harmony-title]').click();await page.locator('#custom-root').selectOption(root);await page.locator('[data-chart-workflow=mode]').click();await page.locator('#custom-mode').selectOption(mode);await page.locator('#custom-chord').selectOption(chord);await page.locator('[data-workspace-target=guitar-title]').click();await page.locator('#fretboard-fingering').selectOption('caged');
+  const previews=page.locator('#position-overview [data-overview-position]'),order=await previews.evaluateAll(nodes=>nodes.map(n=>n.getAttribute('data-overview-position')!));const starts=(await previews.locator('small').allTextContents()).map(s=>Number(s.match(/(\d+)–/)![1]));expect(starts).toEqual([...starts].sort((a,b)=>a-b));
+  const menuOrder=await page.locator('#per-string-neck-shape option').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('value')).filter(v=>v!=='all'));expect(menuOrder).toEqual(order);
+  await previews.first().click();for(let i=0;i<order.length;i++){await expect(page.locator('#position-overview [aria-selected=true]')).toHaveAttribute('data-overview-position',order[i]);await page.locator('#position-next').click();}await page.locator('#position-previous').click();await expect(page.locator('#position-overview [aria-selected=true]')).toHaveAttribute('data-overview-position',order.at(-1)!);
+  await previews.first().click();await page.keyboard.press('ArrowRight');await expect(page.locator('#position-overview [aria-selected=true]')).toHaveAttribute('data-overview-position',order[1]);
+ }
+ await page.setViewportSize({width:390,height:844});await page.locator('#position-overview').screenshot({path:'/workspace/caged-fret-order-mobile.png'});
+});

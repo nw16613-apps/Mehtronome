@@ -772,9 +772,12 @@ function renderGuitar(skipExercise:any=false,positionOverride:any=null) {
   overviewPosition = selectedPosition.numeral || 'I';
   select('guitar-chord-position').value=overviewPosition;
   const overlay = selectedTheory ? {kind:theoryView.kind as 'pentatonic'|'triads',name:selectedTheory.name,pcs:selectedTheory.pcs,...(selectedTheory.rootPc===undefined?{}:{rootPc:selectedTheory.rootPc}),...(selectedTheory.groups ? {groups:selectedTheory.groups} : {})} : null;
-  el('position-overview').innerHTML = displayedPositions.map(position=>{
+  const orderedPreviews=displayedPositions.map(position=>{
     const source=selectedTheory?fretboardFor(info,position.geometryShape):position.board;
-    const board={...source,...occupiedFretRange(source)};
+    return {...position,displayBoard:{...source,...occupiedFretRange(source)}};
+  }).sort((a,b)=>a.displayBoard.start-b.displayBoard.start||a.displayBoard.end-b.displayBoard.end);
+  el('position-overview').innerHTML = orderedPreviews.map(position=>{
+    const board=position.displayBoard;
     const title=`${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     const thumbnailDiagram=diagramSvg(board,guitarDegrees,mode.degrees,title,input('highlight-mode').checked,null,overlay)
       .replace('viewBox="0 0 480 218"','viewBox="36 8 408 180"');
@@ -1348,7 +1351,7 @@ select('per-string-neck-shape').addEventListener('change',()=>{if(!perStringMapC
 function renderPerStringMap(context:any){
  const previous=perStringMapContext;perStringMapContext=context;perStringMapMenu.hidden=false;input('show-regions').closest('label')!.hidden=false;
  const range=fullFretboardPanel.querySelector('.full-fretboard-toolbar>div>span')!;
- if(!context){range.textContent='Frets 1–17 · click a CAGED region to focus it';const menu=select('per-string-neck-shape');menu.innerHTML='<option value="all">All notes</option>'+POSITIONS.map(p=>`<option value="${p.numeral}">Position ${p.numeral} · ${p.shape} shape</option>`).join('');menu.value=cagedMapAll?'all':overviewPosition;perStringMapMenu.style.setProperty('--shape-color',shapeColor(POSITIONS.findIndex(p=>p.numeral===overviewPosition)));menu.disabled=playing||exercisePlaying||exercisePreparing;if(previous)renderGuitar(true);return;}
+ if(!context){range.textContent='Frets 1–17 · click a CAGED region to focus it';const menu=select('per-string-neck-shape');menu.innerHTML='<option value="all">All notes</option>'+Array.from(positionOverview.querySelectorAll<HTMLElement>('[data-overview-position]')).map(button=>{const numeral=button.dataset.overviewPosition!,p=POSITIONS.find(p=>p.numeral===numeral)!;return `<option value="${p.numeral}">Position ${p.numeral} · ${p.shape} shape</option>`;}).join('');menu.value=cagedMapAll?'all':overviewPosition;perStringMapMenu.style.setProperty('--shape-color',shapeColor(POSITIONS.findIndex(p=>p.numeral===overviewPosition)));menu.disabled=playing||exercisePlaying||exercisePreparing;if(previous)renderGuitar(true);return;}
  const {harmony,arp,degrees,labels,title,shapes}=context;select('per-string-neck-shape').disabled=false;
  const legend=document.querySelector('.guitar-legend');if(legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=false;(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=arp;}el('grip-legend').hidden=true;el('characteristic-legend').hidden=!input('highlight-mode').checked;
  if(!shapes.length)perStringMapShape='all';
@@ -1380,8 +1383,10 @@ function chooseOverviewPosition(numeral:string, focus=false) {
   if(focus)positionOverview.querySelector<HTMLButtonElement>(`[data-overview-position="${numeral}"]`)?.focus({preventScroll:true});
 }
 function moveOverviewPosition(direction:number) {
-  const index=positionNumerals.indexOf(overviewPosition);
-  chooseOverviewPosition(positionNumerals[(index+direction+positionNumerals.length)%positionNumerals.length]!,true);
+  const order=Array.from(positionOverview.querySelectorAll<HTMLElement>('[data-overview-position]'),button=>button.dataset.overviewPosition!);
+  if(!order.length)return;
+  const index=order.indexOf(overviewPosition);
+  chooseOverviewPosition(order[(index+direction+order.length)%order.length]!,true);
 }
 positionOverview.addEventListener('click',event=>{
   const button=event.target instanceof Element?event.target.closest<HTMLButtonElement>('[data-overview-position]'):null;
