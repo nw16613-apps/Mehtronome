@@ -1357,11 +1357,11 @@ function renderPerStringMap(context:any){
  const shape=shapes.find((s:any)=>String(s.degree)===perStringMapShape),base=fullFretboardFor(harmony,1,17,arp);
  const board={...base,notes:arp?base.notes.map((n:any)=>({...n,scaleIndex:-1})):base.notes.filter((n:any)=>n.scale)};
  const target=el('full-fretboard'),scroll=target.scrollLeft;target.innerHTML=fullFretboardSvg(board,labels,degrees,title+' · full fretboard, frets 1 to 17',[], 'I',input('highlight-mode').checked,null,false);
- emphasizeFullNeck(target,shape?.board,Math.max(0,shapes.indexOf(shape)));
+ emphasizeFullNeck(target,shape?.board,(shape?.index??0));
  if(input('show-regions').checked)perStringMapRegions(target,shapes,perStringMapShape);
  document.querySelectorAll<HTMLElement>('.per-string-shape').forEach(card=>{const current=!!shape&&Number(card.dataset.startDegree)===shape.degree;card.classList.toggle('map-current',current);card.querySelector('.per-string-scroll')?.setAttribute('aria-pressed',String(current));});
  context.selectShape?.(shape?.degree);
- perStringMapMenu.style.setProperty('--shape-color',shapeColor(Math.max(0,shapes.indexOf(shape))));
+ perStringMapMenu.style.setProperty('--shape-color',shapeColor((shape?.index??0)));
  target.scrollLeft=scroll;
  range.textContent=`Frets 1–17${shape?' · '+shape.label:''}${shape&&(shape.board.end>17||shape.board.start<1)?' · see the reference diagram for the complete shape':''}`;
 }

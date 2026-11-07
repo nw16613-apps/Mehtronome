@@ -38,9 +38,9 @@ export function perStringMapRegions(container,shapes,selected){
  const areas=document.createElementNS(ns,'g'),labels=document.createElementNS(ns,'g');areas.setAttribute('class','per-string-region-areas');labels.setAttribute('class','per-string-region-labels');
  shapes.forEach((shape,index)=>{
   const active=String(shape.degree)===String(selected),points=shapeEnvelope(shape.board);
-  const group=document.createElementNS(ns,'g');group.setAttribute('class',`per-string-map-region${active?' selected':''}`);group.setAttribute('data-full-string-position',String(shape.degree));group.style.setProperty('--shape-color',shapeColor(index));
+  const group=document.createElementNS(ns,'g');group.setAttribute('class',`per-string-map-region${active?' selected':''}`);group.setAttribute('data-full-string-position',String(shape.degree));group.style.setProperty('--shape-color',shapeColor(shape.index??index));
   const polygon=document.createElementNS(ns,'polygon');polygon.setAttribute('points',points.map(p=>p.join(',')).join(' '));polygon.setAttribute('clip-path','url(#full-neck-shape-clip)');polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');group.append(polygon);areas.append(group);
-  const label=document.createElementNS(ns,'g');label.setAttribute('class',`per-string-map-region per-string-region-label${active?' selected':''}`);label.setAttribute('data-full-string-position',String(shape.degree));label.setAttribute('role','button');label.setAttribute('tabindex','0');label.setAttribute('aria-pressed',String(active));label.setAttribute('aria-label','Highlight '+shape.label);label.style.setProperty('--shape-color',shapeColor(index));
+  const label=document.createElementNS(ns,'g');label.setAttribute('class',`per-string-map-region per-string-region-label${active?' selected':''}`);label.setAttribute('data-full-string-position',String(shape.degree));label.setAttribute('role','button');label.setAttribute('tabindex','0');label.setAttribute('aria-pressed',String(active));label.setAttribute('aria-label','Highlight '+shape.label);label.style.setProperty('--shape-color',shapeColor(shape.index??index));
   const first=shape.board.notes[0],desired=62+(first.fret-.5)*1240/17;
   // Compact numbered labels occupy distinct slots above the string diagram.
   let x=Math.min(1260,Math.max(68,desired));

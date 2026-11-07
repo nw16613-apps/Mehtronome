@@ -42,6 +42,9 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
    Object.assign(mapShapes[mapShapes.length-1],{index:i,entry,heading,svg,drop});
    return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-scroll" tabindex="0" role="button" aria-pressed="false" aria-label="Highlight ${esc(heading)} on full-neck map">${svg}</div></article>`;
   }).join('');
+  mapShapes.sort((a:any,b:any)=>a.board.start-b.board.start||a.board.end-b.board.end||a.index-b.index);
+  const gallery=panel.querySelector('.per-string-gallery')!;
+  mapShapes.forEach((shape:any)=>gallery.append(gallery.querySelector(`[data-start-degree="${shape.degree}"]`)!));
   lastMap={harmony:h,arp,degrees,labels:field('per-string-labels').value==='degrees',title,shapes:mapShapes,selectShape};selectShape(selectedDegree);updateMap?.(lastMap);
  }
  function selectShape(degree:number|undefined){
@@ -51,7 +54,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   selectedDegree=shape.degree;
   const {board,entry,index,heading,svg,drop}=shape,{locked}=getContext();
   nav.querySelectorAll<HTMLButtonElement>('button').forEach(button=>button.disabled=locked);
-  nav.querySelector('span')!.textContent=`${index+1} of ${shapes.length} · ${shape.label}`;
+  nav.querySelector('span')!.textContent=`${shapes.indexOf(shape)+1} of ${shapes.length} · ${shape.label}`;
   featured.innerHTML=`<article class="position-card per-string-selected" style="--shape-color:${shapeColor(index)}"><div class="position-heading"><h4>${esc(heading)}</h4><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-selected-controls"><label class="per-string-register-label">${drop?'Bass fret · string '+(6-board.notes[0].string):'Starting fret · low E'}<select data-string-register="${shape.degree}" aria-label="Starting fret for ${esc(shape.label)}" ${locked||entry.choices.length===1?'disabled':''}>${entry.choices.map((b:any)=>`<option value="${b.firstFret}" ${b.firstFret===board.firstFret?'selected':''}>${b.firstFret} · frets ${b.start}–${b.end}</option>`).join('')}</select></label><button type="button" class="practice-button" data-practise-per-string="${index}" data-practice-fret="${board.firstFret}" ${locked?'disabled':''}>Practise this shape →</button></div>${entry.extended?'<p class="per-string-range-note">Extends beyond fret 24 · full pattern shown for reference.</p>':''}<div class="per-string-selected-diagram">${svg.replace('<svg ',`<svg style="min-width:${drop?0:Math.max(480,(board.end-board.start+1)*48)}px" `)}</div></article>`;
  }
  function selectCard(card:HTMLElement|null){
