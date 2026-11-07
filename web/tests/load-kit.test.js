@@ -72,3 +72,6 @@ test('selective overlapping loads share each fetch/decode and empty playback loa
 test('prefetch fetches selected bytes without decoding or starting audio, then reuses them',async()=>{
  await mockedFetch(async requests=>{const load=createSampleLoader({kick:'kick.wav',unused:'unused.wav'});await load.prefetch(['kick']);assert.deepEqual(requests,['kick.wav']);await load(context(),['kick']);assert.equal(requests.length,1);});
 });
+test('bounded recording caches evict old banks without invalidating delivered audio or simultaneous requests',async()=>{
+ await mockedFetch(async requests=>{const audio=context(),load=createSampleLoader({a:'a.wav',b:'b.wav',c:'c.wav'},{maxEncodedBytes:2,maxDecodedBytes:4096});const first=await load(audio,['a']);const copy=first.a.slice();await load(audio,['b']);assert.deepEqual(first.a,copy);await load(audio,['a']);assert.equal(requests.filter(s=>s==='a.wav').length,2);const [a,b]=await Promise.all([load(audio,['c']),load(audio,['c'])]);assert.deepEqual(a.c,b.c);assert.notEqual(a.c,b.c);assert.equal(requests.filter(s=>s==='c.wav').length,1);});
+});

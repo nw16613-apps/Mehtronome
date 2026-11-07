@@ -1,3 +1,4 @@
+import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone} from './sound-library.js';
 import {trialComping} from './audition-arrangements.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {accompanimentPhrase} from './accompaniment.js';
@@ -128,6 +129,7 @@ const CELLS={
 };
 
 for(const [id,s]of Object.entries(ADDITIONAL_STYLES))CELLS[id]=s.base.map(bar=>bar.map(([position,,duration,velocity])=>[position,duration,velocity]));
+const ORGAN_RATIOS=[.5,1.5,1,2,3,4,5,6,8];
 const TONE_SHAPES={
  fluteLead:{level:.55,attack:.025,release:.18,decay:.09,fm:.025,second:.10,third:.025,tremolo:.008,breath:.018},
  legatoGuitar:{level:.55,attack:.018,release:.22,decay:.085,fm:.14,second:.18,third:.065,tremolo:.006},
@@ -145,10 +147,13 @@ for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0
 
 TONE_SHAPES.swelledGuitar.attack=.045;TONE_SHAPES.jazzGuitar.attack=.006;
 export class CompingInstrument{
-  constructor(rate,voiceCount=32){this.rate=rate;this.transitionFactor=Math.exp(-1/(rate*.025));this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
-  installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
-  clear(){for(const voice of this.voices)voice.pendingLegato=null;for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
+  constructor(rate,voiceCount=32){this.rate=rate;this.soundLibrary='original';this.sampleCursors=new Map();this.transitionFactor=Math.exp(-1/(rate*.025));this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
+  installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));
+   for(const [bank,zones]of Object.entries(EXPANDED_SAMPLE_ZONES)){const loaded=zones.filter(z=>kit?.[z.id]?.length).map(z=>({...z,pcm:kit[z.id]}));this.banks['expanded:'+bank]=bank==='piano'||bank==='nylonGuitar'||bank==='upright'?[...(this.banks[bank]||[]),...loaded]:loaded;}
+  }
+  clear(){this.sampleCursors.clear();for(const voice of this.voices)voice.pendingLegato=null;for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true,part=null){
+    this.soundLibrary=settings.soundLibrary||'original';
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
     const bar=Math.floor(beat/settings.beats),offset=(beat%settings.beats%4)*4+grid%4;
@@ -194,16 +199,22 @@ export class CompingInstrument{
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     if(['legatoGuitar','fluteLead'].includes(tone)&&type==='sequence'&&pitches.length===1){
       const held=this.voices.find(v=>v.active&&v.tone===tone&&v.age<v.hold&&v.releaseAt>v.age+1&&!v.delay);
-      if(held){const transition={midi:pitches[0],duration,velocity,bpm,delay:delayFrames};if(delayFrames>0)held.pendingLegato=transition;else this.connectLegato(held,transition);onEvent?.({type,sample:sample+delayFrames,step,notes:pitches,duration,velocity,legato:true});return;}
+      if(held&&!held.pcm){const transition={midi:pitches[0],duration,velocity,bpm,delay:delayFrames};if(delayFrames>0)held.pendingLegato=transition;else this.connectLegato(held,transition);onEvent?.({type,sample:sample+delayFrames,step,notes:pitches,duration,velocity,legato:true});return;}
     }
+    if(this.soundLibrary==='expanded'&&type==='sequence')for(const voice of this.voices)if(voice.active&&voice.pcm&&voice.tone===tone)this.releaseVoice(voice);
     if(group)for(const voice of this.voices)if(voice.active&&(group==='inner'?voice.group==='inner':pitches.includes(voice.midi)))this.releaseVoice(voice);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
-      const shape=this.shapes[tone]||this.shapes.warmTine;
+      const originalShape=this.shapes[tone]||this.shapes.warmTine,expanded=this.soundLibrary==='expanded',bank=expanded?expandedBankForTone(tone):null;
+      const shape=expanded&&bank?{...originalShape,bank:'expanded:'+bank,cutoff:bank==='flute'?9000:bank==='wurlitzer'?7500:originalShape.cutoff}:originalShape;
       Object.assign(voice,{pendingLegato:null,glideRemaining:0,noiseState:Math.imul(midi+1,1664525),breathFiltered:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
-      const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
+      const muted=expanded&&['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone)&&duration<.42&&this.banks['expanded:guitarMuted']?.length;
+      const zones=this.banks[muted?'expanded:guitarMuted':shape.bank]?.length?this.banks[muted?'expanded:guitarMuted':shape.bank]:this.banks[originalShape.bank]||[];
+      const zone=expanded?recordedZone(zones,midi,velocity,this.sampleCursors):zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
+      voice.sourceGain=expanded&&zone?(bank==='electricGuitar'?.9:bank==='flute'?1.45:bank==='wurlitzer'?1:bank==='nylonGuitar'?1.15:bank==='clav'?1.35:1.05):1;voice.sourceId=zone?.id;voice.articulation=muted?'recorded staccato':zone?.layer||'normal';voice.expanded=expanded;
+      voice.organPartials=expanded&&tone==='drawbarOrgan'?ORGAN_RATIOS.map((ratio,i)=>440*2**((midi-69)/12)*ratio<this.rate*.45?[.17,.1,1,.24,.1,.07,.035,.02,.01][i]:0):null;
       voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.bendRemaining=0;
-      if(expression==='bend'){voice.bendRemaining=Math.round(this.rate*.06);voice.bendTarget=voice.pcm?voice.sampleIncrement:voice.increment;const start=voice.bendTarget*2**(-.5/12);voice.bendStep=(voice.bendTarget-start)/voice.bendRemaining;if(voice.pcm)voice.sampleIncrement=start;else voice.increment=start;}voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
+      if(expression==='bend'){voice.bendRemaining=Math.round(this.rate*.06);voice.bendTarget=voice.pcm?voice.sampleIncrement:voice.increment;const start=voice.bendTarget*2**(-.5/12);voice.bendStep=(voice.bendTarget-start)/voice.bendRemaining;if(voice.pcm)voice.sampleIncrement=start;else voice.increment=start;}voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min((shape.cutoff||11000)*(expanded?.65+.7*Math.min(1,velocity):1),this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
     onEvent?.({type,sample:sample+delayFrames,gridSample:sample,delayFrames,step,notes:pitches,duration,velocity});
@@ -234,7 +245,7 @@ export class CompingInstrument{
         const value=pcm[index]+(pcm[index+1]-pcm[index])*(position-index);
         voice.filtered+=voice.filterAlpha*(value-voice.filtered);
         const wave=shape.drive?Math.tanh(voice.filtered*shape.drive)/Math.tanh(shape.drive):voice.filtered;
-        output+=wave*voice.gain*Math.min(1,voice.age/shape.attackFrames)*release;
+        output+=wave*voice.gain*voice.sourceGain*Math.min(1,voice.age/shape.attackFrames)*release;
         continue;
       }
       // Muted voices retain their age, envelope and oscillator phase without
@@ -244,7 +255,8 @@ export class CompingInstrument{
       const phase=2*Math.PI*voice.phase,mod=shape.fm*bell*Math.sin(2*Math.PI*voice.modPhase);
       const fundamental=Math.sin(phase+mod),second=Math.sin(phase*2+.12),third=Math.sin(phase*3+.24);
       const tremolo=1-shape.tremolo+shape.tremolo*Math.sin(2*Math.PI*seconds*4.7+voice.pan);
-      const wave=fundamental*(tone==='reed'?.74:.86)+second*shape.second*bell+third*shape.third*(tone==='reed'?.75:bell);
+      let wave=fundamental*(tone==='reed'?.74:.86)+second*shape.second*bell+third*shape.third*(tone==='reed'?.75:bell);
+      if(voice.organPartials){wave=0;for(let i=0;i<9;i++)if(voice.organPartials[i])wave+=Math.sin(phase*ORGAN_RATIOS[i])*voice.organPartials[i];wave*=.78*(.96+.04*Math.sin(seconds*2*Math.PI*5.2));wave+=Math.sin(phase*3)*.08*Math.exp(-seconds*12);}
       let air=0;if(shape.breath){voice.noiseState=(Math.imul(voice.noiseState,1664525)+1013904223)|0;voice.breathFiltered+=.15*((voice.noiseState>>>0)/2147483648-1-voice.breathFiltered);air=voice.breathFiltered*shape.breath;}
       output+=(wave+air)*voice.gain*attack*release*body*tremolo*.82;
       if(release<.0005)voice.active=false;

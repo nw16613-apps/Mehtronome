@@ -95,3 +95,42 @@ The five live kick takes now receive a 44 Hz high-pass, a 4 dB cut at 85 Hz and 
 [Versilian Community Sample Library](https://github.com/sgossner/VCSL/tree/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e), Sam Gossner / Versilian Studios and contributors, **CC0 1.0 Universal**. Sixteen acoustic recordings: claves, open and fully muted congas, open tumba, cowbell, short/long güiro and alternating shaker strokes. No drum-kit snare or tom substitutes are used for these parts.
 
 Selected hits are downmixed to mono 32 kHz PCM16, gently filtered, trimmed and normalized with short edge fades. See [latin/LICENSE](latin/LICENSE) and [latin/sources.json](latin/sources.json) for the complete licence, original filenames, pinned revision and original/derivative hashes. `web/scripts/prepare-latin-percussion.py` reproduces the bank. Melodic movement shares the existing credited guitar/piano recordings or synthesized electric-key voices.
+
+## Optional expanded recordings
+
+The selectable Expanded recordings library adds 126 recorded notes/hits
+(22.40 MiB mono 32 kHz PCM16) using pinned, redistributable sources. Existing
+recordings remain selectable through Original sounds. Exact source and
+recording hashes, measured/source-mapped pitch centres, layers, durations and
+transformations: [expanded/sources.json](expanded/sources.json).
+
+- Karoryfer Samples / D. Smolken, Black And Green Guitars, CC0,
+  `b3b3249d37dc977a1a297bd2dc053e6d9b6b805c`: 36 green-guitar sustained
+  recordings (nine pitches, two dynamic layers, two takes) and ten separate
+  staccato recordings (five pitches, two takes).
+- Karoryfer Samples / D. Smolken, Black And Blue Basses, CC0, original revision
+  above: 24 soft/strong takes. Original medium-soft plucks supply the middle
+  dynamic level. Each take retains its own measured pitch correction.
+- Tone.js instruments / Nicolas Brosowsky, CC BY 3.0, original revision above:
+  eight additional piano pitches, six nylon-guitar pitches and seven acoustic
+  flute notes. Repository code is MIT; the samples are CC BY 3.0 as stated in
+  its README. `tone-SAMPLES-NOTICE.txt` distinguishes these licences.
+- Greg Sullivan, E-Pianos, mapped by kinwie, CC BY 3.0,
+  `8c3e581acda3594b553948ff0222d4f84a698376`: fourteen Wurlitzer EP200 soft
+  and strong recordings. Source SFZ pitch centres and tuning are retained.
+  These are reed-piano recordings, not Rhodes samples.
+- VCSL / Sam Gossner / Versilian Studios and contributors, CC0, original
+  revision above: twelve Yamaha TX81Z Clavisynth notes in two velocity layers.
+  This is a sampled clav-style synthesizer, not an acoustic Clavinet.
+- Meatbass, attribution/revision above: five independent second takes of
+  the existing soft upright plucks, with the same fundamental-focused filter.
+- DRSKit, attribution/revision above: two soft closed-hat and two soft ride
+  takes. Existing kit tuning, tightened kick treatment and cymbal trims remain.
+
+Full source licences are bundled in `expanded/*-LICENSE.txt`. Source attribution
+and derivative processing are also included on `/audio-credits.html`. The
+expanded nine-drawbar organ, modeled guitar lead and harmony pad remain
+synthesized. No third-party sample downloads or generation service run during
+playback; only the chosen audible banks are fetched from this app.
+
+Clavisynth source names and its documented octave-up patch produce sounding pitches two octaves above scientific filename pitch. The importer selects source notes two octaves lower and verifies their sounding fundamentals, so the requested MIDI register is preserved.

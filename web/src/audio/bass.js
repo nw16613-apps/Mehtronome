@@ -1,3 +1,4 @@
+import {EXPANDED_SAMPLE_ZONES} from './sound-library.js';
 import {BASS_TRIMS} from './mix-balance.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import { BASS_WAVE, readWave } from './waves.js';
@@ -55,6 +56,7 @@ export class SampledBass {
     }
     this.zones.sort((a,b)=>a.rootMidi-b.rootMidi);
     this.banks={electric:this.zones,upright:INSTRUMENT_SAMPLE_ZONES.upright.flatMap(zone=>kit?.[zone.id]?.length?[{rootMidi:zone.rootMidi,samples:[kit[zone.id]]}]:[])};
+    this.expandedBanks=Object.fromEntries(['electricBass','upright'].map(bank=>[bank,(EXPANDED_SAMPLE_ZONES[bank]||[]).filter(z=>kit?.[z.id]?.length).map(z=>({...z,samples:[kit[z.id]]}))]));
     if(clear)this.clear();
   }
 
@@ -67,7 +69,7 @@ export class SampledBass {
     this.roundRobin.clear();
   }
 
-  noteOn(midi, lengthSeconds, gain=1, style='roots',instrument='electric') {
+  noteOn(midi, lengthSeconds, gain=1, style='roots',instrument='electric',soundLibrary='original') {
     if (!Number.isFinite(midi) || !Number.isFinite(lengthSeconds) || lengthSeconds<=0) return null;
     const articulation=ARTICULATIONS[style] || ARTICULATIONS.roots;
     const pitch=Math.max(24,Math.min(72,midi));
@@ -77,19 +79,23 @@ export class SampledBass {
     for (const old of this.voices) old.releasing=true;
     const voice=this.voices[this.cursor++%this.voices.length];
     let zone=null;
-    const zones=this.banks[instrument]?.length?this.banks[instrument]:this.zones;
+    let zones=this.banks[instrument]?.length?this.banks[instrument]:this.zones;
+    if(soundLibrary==='expanded'){
+      const extra=this.expandedBanks[instrument==='upright'?'upright':'electricBass']||[];
+      if(instrument==='upright')zones=[...zones,...extra];
+      else {const layer=level<.55?'p':level>.75?'f':null;if(layer&&extra.some(z=>z.layer===layer))zones=extra.filter(z=>z.layer===layer);}
+    }
     for (const candidate of zones) {
       if (!zone || Math.abs(pitch-candidate.rootMidi)<Math.abs(pitch-zone.rootMidi)) zone=candidate;
     }
     let sample=null;
     if (zone) {
-      const count=this.roundRobin.get(zone.rootMidi)||0;
-      sample=zone.samples[count%zone.samples.length];
-      this.roundRobin.set(zone.rootMidi,count+1);
+      const root=zone.nominalMidi??Math.round(zone.rootMidi),peers=zones.filter(z=>(z.nominalMidi??Math.round(z.rootMidi))===root),choices=peers.flatMap(z=>z.samples.map(pcm=>({zone:z,pcm}))),key=root+':'+(zone.layer||'base');
+      const count=this.roundRobin.get(key)||0,chosen=choices[count%choices.length];zone=chosen.zone;sample=chosen.pcm;this.roundRobin.set(key,count+1);
     }
     const seconds=Math.max(.015,lengthSeconds);
     Object.assign(voice,{
-      sample,position:0,phase:0,midi:pitch,rootMidi:zone?.rootMidi??null,
+      sample,position:0,phase:0,midi:pitch,rootMidi:zone?.rootMidi??null,sourceId:zone?.id??null,layer:zone?.layer??null,
       increment:sample?2**((pitch-zone.rootMidi)/12):440*2**((pitch-69)/12)/this.rate,
       age:0,envelope:1,releasing:false,gain:level*(BASS_TRIMS[instrument]??1),
       gate:Math.max(1,Math.round(seconds*this.rate)),

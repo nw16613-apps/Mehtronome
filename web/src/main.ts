@@ -561,7 +561,7 @@ async function toggleExercisePreview() {
     if(!prepared||generation!==exercisePrepareGeneration)return;exerciseBuffers=prepared;
     exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');playbackCounting=settings.countIn;exercisePlaying=true;exerciseBackingStep=exercisePlan?.resolution?0:exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.12:undefined;
-    if(exerciseView.backing)node!.port.postMessage({type:'start',startTime:backingStart,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});
+    if(exerciseView.backing){const sampleNames=sampleNamesForSettings(exerciseAudioSettings());node!.port.postMessage({type:'start',startTime:backingStart,sampleNames,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});installedSampleNames=new Set(sampleNames);}
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
     if(backingStart!==undefined){const countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;scheduleExercise(backingStart+countIn,backingStart);}
@@ -1022,6 +1022,7 @@ function commitCustomEdit(field:string){
 function update() {
   fxUi?.sync();
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
+  settings.soundLibrary=document.querySelector<HTMLSelectElement>('#sound-library')?.value||'expanded';
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
   settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
@@ -1191,9 +1192,9 @@ async function ensureSamples(requested:any){
 function queueAudioSettings(requested:any){
  const names=sampleNamesForSettings(requested),generation=++sampleSettingsGeneration,target=node;
  if(!target||!context||context.state==='closed'){void loadDrumKit.prefetch(names).catch(()=>{});return;}
- if(names.every(name=>installedSampleNames.has(name))){target.port.postMessage({type:'settings',settings:requested});return;}
+ if(names.every(name=>installedSampleNames.has(name))){target.port.postMessage({type:'settings',settings:requested,sampleNames:names});installedSampleNames=new Set(names);return;}
  const snapshot=structuredClone(requested);
- void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node)target.port.postMessage({type:'settings',settings:snapshot});}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
+ void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node){target.port.postMessage({type:'settings',settings:snapshot,sampleNames:names});installedSampleNames=new Set(names);}}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
 }
 async function initialiseAudio(requested:any=settings) {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
@@ -1733,7 +1734,7 @@ async function toggle() {
     step = settings.progression ? progressionStep(settings,0) : 0;
     playbackCounting=settings.countIn;playing = true;
     el('pulse-time').textContent=settings.sessionSeconds?`${formatTime(settings.sessionSeconds)} remaining`:'0:00 elapsed';
-    node!.port.postMessage({ type: 'start', settings });
+    node!.port.postMessage({ type: 'start', settings, sampleNames:sampleNamesForSettings(settings) });installedSampleNames=new Set(sampleNamesForSettings(settings));
     renderMusic();
     reflectPlayback();
     el('play-status').textContent = settings.countIn ? 'Counting you in…' : 'Playing…';
@@ -1777,6 +1778,7 @@ function sendMixerSettings(){
   queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);
 }
 function updateMixerLevels(){
+  settings.soundLibrary=document.querySelector<HTMLSelectElement>('#sound-library')?.value||'expanded';
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
   settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
@@ -2249,7 +2251,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sound-library':'original','sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);

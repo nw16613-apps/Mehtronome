@@ -14,7 +14,7 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  backingStyle:'popRock',backingArrangement:'current',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
+  backingStyle:'popRock',backingArrangement:'current',soundLibrary:'original',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
@@ -176,13 +176,14 @@ export class Engine {
   }
 
   installDrumKit(kit) {
-    this.drumKit = kit;
+    this.retainedSampleKey=null;this.drumKit = kit;
     this.rhythm.installKit(kit);
     this.comping.installKit(kit);this.sequence.installKit(kit);
   }
 
-  mergeDrumKit(kit){
-    this.drumKit={...this.drumKit,...kit};
+  mergeDrumKit(kit,keepNames=null){
+    const retainedKey=keepNames?.join('|');if(keepNames&&retainedKey===this.retainedSampleKey&&!Object.keys(kit).length)return;this.retainedSampleKey=retainedKey??null;
+    const merged={...this.drumKit,...kit};this.drumKit=keepNames?Object.fromEntries(keepNames.filter(name=>merged[name]).map(name=>[name,merged[name]])):merged;
     this.rhythm.installKit(this.drumKit,false);this.comping.installKit(this.drumKit,false);this.sequence.installKit(this.drumKit,false);
   }
 

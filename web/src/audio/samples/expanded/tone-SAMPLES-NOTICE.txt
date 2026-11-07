@@ -1,0 +1,1 @@
+Tone.js instruments samples, Nicolas Brosowsky; samples licensed CC BY 3.0: https://creativecommons.org/licenses/by/3.0/ . Repository README states Samples: CC-by 3.0. The separate MIT licence applies to code. Source: https://github.com/nbrosowsky/tonejs-instruments/tree/622c2f1c32c8cfce4158ddc3eb26e518ddef37e5 . Derivative processing and exact source paths are in sources.json.

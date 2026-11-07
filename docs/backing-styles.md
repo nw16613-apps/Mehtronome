@@ -172,3 +172,27 @@ still controls the melodic part. Mixer mute/solo remains the way to hear an
 individual part. Focused tests cover complete forms, harmonic membership,
 barline switching through mixer updates, reset, audio block independence,
 real-sample headroom, and the two-style mobile browser workflow.
+
+### Sound-library comparison
+
+**Sound library → Expanded recordings** is independent of arrangement A/B and
+applies across all styles to drums, bass, comping and melodic movement. New
+sessions default to Expanded; Original sounds preserves the previous timbres.
+The preference survives reload, style changes and new saved setups. Older
+presets without this control restore Original sounds to retain their sound.
+
+New electric guitar recordings select actual soft/medium takes and recorded
+short articulations, while electric bass selects soft/medium-soft/strong
+plucks. Upright alternates real soft plucks. Piano/nylon use more pitch zones.
+Electric keys use recorded Wurlitzer, clav uses a recorded clav-style synth,
+and flute uses acoustic recordings. Organ uses a richer synthesized drawbar
+model; other modeled leads and the harmony pad remain synthesized. Source
+labels update to avoid describing sampled Wurlitzer as a tine/Rhodes piano.
+
+Muted tracks request no samples. Decoding/fetching remains limited to four
+concurrent operations. Encoded recordings have a 24 MiB cache budget and
+decoded recordings a 48 MiB budget per device sample rate. Worklet settings
+retain only samples required by the current audible setup, preserving buffers
+referenced by already sounding notes; identical retain requests do no work.
+Sound-library changes wait for required samples before updating playback.
+Mix levels, sends, arrangement choices and the sample clock stay intact.
