@@ -29,6 +29,6 @@ test('scale and drop practice transfer exact selected notes, register and string
  }
  expect(errors).toEqual([]);
 });
-test('all arpeggio and drop suggestions use closed positions',async({page})=>{
- await open(page);for(const kind of ['oneTwo','twoOne','drop2','drop3']){await page.locator('#fretboard-fingering').selectOption(kind);expect(await page.locator('.per-string-gallery .fret-note').evaluateAll(notes=>notes.every(n=>!n.querySelector('title')!.textContent!.includes('fret 0')))).toBe(true);}
+test('all scale, arpeggio and drop suggestions use closed positions',async({page})=>{
+ await open(page);for(const kind of ['three','oneTwo','twoOne','drop2','drop3']){await page.locator('#fretboard-fingering').selectOption(kind);expect(await page.locator('.per-string-gallery .fret-note').evaluateAll(notes=>notes.every(n=>Number(n.getAttribute('data-fret'))>0))).toBe(true);}
 });

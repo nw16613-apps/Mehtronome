@@ -33,7 +33,8 @@ export function perStringCatalogue(harmony,kind='three'){
  const pcs=kind==='three'?harmony.scalePcs:harmony.chordPcs;
  return pcs.flatMap((pc,index)=>{
   if(pcs.indexOf(pc)!==index)return [];
-  const fretted=board=>kind==='three'||board.notes.every(note=>note.fret>0);
+  // Recommended scale and arpeggio registers are always fully fretted.
+  const fretted=board=>board.notes.every(note=>note.fret>0);
   const playable=perStringFingerings(harmony,kind,index).filter(fretted);
   const choices=playable.length?playable:perStringFingerings(harmony,kind,index,36).filter(fretted);
   return [{degree:index,choices,extended:!playable.length}];
