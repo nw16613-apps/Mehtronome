@@ -260,3 +260,5 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 .per-string-selected-diagram{overflow-x:auto;max-width:100%}
 .per-string-selected-diagram svg{display:block;width:100%;max-width:850px;margin-inline:auto}
 @media(max-width:520px){.per-string-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.per-string-navigation{gap:8px}.per-string-navigation button{padding:10px}.per-string-selected{padding:12px}}
+
+.backing-audition{margin:20px 0;padding:18px;border:1px solid var(--line,#344b5e);border-radius:8px}.backing-audition h4{margin:0 0 14px}.backing-audition-controls{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}.backing-audition-controls label{display:flex;flex-direction:column;gap:8px;flex:1 1 260px;min-width:0;max-width:36rem}.backing-audition-controls select{width:100%;min-width:0}.backing-audition .practice-help{margin:12px 0 0}

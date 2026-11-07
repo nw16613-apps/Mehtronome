@@ -1023,6 +1023,7 @@ function update() {
   fxUi?.sync();
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
+  settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
@@ -1119,6 +1120,7 @@ function tempo(value: number) {
   queueAudioSettings(settings);
 }
 function reflectPlayback() {
+  backingStyleUi?.reflectPlayback();
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
@@ -1214,6 +1216,7 @@ async function initialiseAudio(requested:any=settings) {
     harmonyFxSource=context.createGain();
     node.connect(harmonyFxSource,8);
     node.port.onmessage = ({ data }) => {
+      if(data.backingArrangement)backingStyleUi?.playback(data.backingArrangement);
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if((playing||exercisePlaying)&&typeof data.counting==='boolean'&&playbackCounting!==data.counting){playbackCounting=data.counting;syncMiniTransport();}
       if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
@@ -1775,6 +1778,7 @@ function sendMixerSettings(){
 }
 function updateMixerLevels(){
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
+  settings.backingArrangement=document.querySelector<HTMLSelectElement>('#backing-arrangement')?.value||'current';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   settings.click=Number(input('click').value)/100;
   settings.harmony=Number(input('harmony').value)/100;
@@ -2399,7 +2403,7 @@ installProgressionGenerator({
  }
 });
 perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
-backingStyleUi=installBackingStyles(update);
+backingStyleUi=installBackingStyles(update,async()=>{if(busy||stopping||exercisePreparing)return;if(exercisePlaying)stopExercisePreview();if(playing)await stop();await toggle();},()=>playing||exercisePlaying);
 update();
 applyStudioIcons();
 renderCustomBuilder();

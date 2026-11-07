@@ -147,3 +147,28 @@ Every style now has five related parts: the main figure, development, thinner re
 A cached 32-bar arrangement selects whole two-bar phrases, revisits the theme and introduces space and answers between developments. Jazz also revisits both halves of its four-bar theme. Chart-ending cues select a turnaround. Bossa and Cuban son retain their first/second-bar orientation and thumb/octave anchors in every part; the drum/clave patterns are untouched. Each variant is bounded to at most seven attacks per bar, and the thinner parts use fewer notes. Turnarounds can contain a deliberate pickup instead of suppressing all accompaniment on the last beat.
 
 The new choices reuse the existing harmonic pitch maps, instrument samples, mixer and FX settings. Phrase cells are prepared once, and selection does not allocate pattern arrays or use random note decisions in the audio callback. Disabling `backingVariation` retains the original stable figure. Tests verify actual note/rhythm changes with humanisation and voicing movement off, thinner sections, current-mode pitches, preserved Latin/Brazilian anchors, deterministic restarts, chart-ending cues and native audio headroom.
+
+### Arrangement auditions
+
+Legato Fusion and Blues offer **Compare arrangements** in Backing styles.
+A keeps the existing backing; B selects an authored, reviewed phrase library
+(`web/src/audio/audition-arrangements.js`), not an external generation service.
+The 16-bar fusion and 12-bar blues forms coordinate comping, bass, drums and
+melodic questions/answers. The blues form follows the chart's actual harmony;
+it does not substitute a standard twelve-bar progression.
+
+Both versions use the same instrument patches, faders, sends, tempo, chord
+chart and humanisation. A/B requests take effect at the next musical barline;
+**Restart from beginning** starts the selected version from the beginning of
+the current chart/loop with the existing count-in. Other styles keep A, and
+changing styles returns the audition selector to A. The trial is for four
+beats per bar; other meters keep A and explain how to enable B. Audition
+selection is temporary and is not saved into practice presets.
+
+Phrase material uses harmonic roles and diatonic offsets. Existing pitch
+resolution follows chord qualities/scale guides, voice leading and actual
+changes; no audio/network request is needed. Supporting/Countermelody/Featured
+still controls the melodic part. Mixer mute/solo remains the way to hear an
+individual part. Focused tests cover complete forms, harmonic membership,
+barline switching through mixer updates, reset, audio block independence,
+real-sample headroom, and the two-style mobile browser workflow.

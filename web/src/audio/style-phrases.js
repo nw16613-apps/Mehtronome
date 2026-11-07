@@ -1,3 +1,4 @@
+import {trialEnabled,trialSequenceStep} from './audition-arrangements.js';
 import {accompanimentPhrase} from './accompaniment.js';
 // Six-note themes, expressed as diatonic offsets and sixteenth-note positions.
 // A phrase keeps its identity as it is developed and answered over sixteen bars.
@@ -95,6 +96,7 @@ function build(settings){
  const result={bars,barGrid};if(cache.size>=64)cache.delete(cache.keys().next().value);cache.set(key,result);return result;
 }
 export function styleSequenceStep(settings,grid,length){
+ if(trialEnabled(settings))return trialSequenceStep(settings,grid,length);
  if(!length||!(Number(settings.sequenceDensity)>0))return null;
  const plan=build(settings);if(!plan)return null;
  const bar=Math.floor(grid/plan.barGrid),event=plan.bars[bar%plan.bars.length].find(n=>n.local===grid%plan.barGrid);

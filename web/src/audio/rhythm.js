@@ -1,3 +1,4 @@
+import {trialDrums,trialBass} from './audition-arrangements.js';
 import {CYMBAL_TRIM_DB} from './mix-balance.js';
 import {ADDITIONAL_STYLES,additionalDrumCell} from './additional-styles.js';
 const additionalGrooves=Object.fromEntries(Object.entries(ADDITIONAL_STYLES).map(([id,s])=>[s.groove,id]));
@@ -293,7 +294,7 @@ export class Rhythm {
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }
   playDrums(settings, sub, beat, bar, sample, step, onEvent) {
-    const added=additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
+    const added=trialDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
     if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);}return;}
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
       this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
@@ -370,7 +371,8 @@ export class Rhythm {
     const pattern=BASS_LINES[settings.bassPattern]?settings.bassPattern:'roots';
     const cell=(beat*4+sub)%16;
     const bassBars=BASS_LINES[pattern],bassBar=additionalGrooves[settings.drumGroove]?(bar%bassBars.length):(settings.backingVariation>0&&Math.floor(bar/4)%2?[0,2,1,3][bar%4]:bar%4);
-    let note=bassBars[bassBar%bassBars.length].find(event=>event[0]===cell);
+    const trial=trialBass(settings,bar);
+    let note=(trial||bassBars[bassBar%bassBars.length]).find(event=>event[0]===cell);
     if(pattern==='tumbao'&&cell===0&&notes.join(',')!==this.lastBassChord)note=[cell,0,0,1.4,.76];
     if(pattern==='roots'&&bar%2===1&&beat===settings.beats-1&&sub===2)note=[cell,-1,0,.38,.48];
     if(!note)return;

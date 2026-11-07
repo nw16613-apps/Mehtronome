@@ -1,3 +1,4 @@
+import {trialEnabled} from './audition-arrangements.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
@@ -13,7 +14,7 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  backingStyle:'popRock',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
+  backingStyle:'popRock',backingArrangement:'current',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
@@ -301,7 +302,11 @@ export class Engine {
     // Rhythm envelopes need the current tempo; the public setting remains the
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
+    const activeArrangement=this.clockSettings.backingArrangement;
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm});
+    // A/B requests become audible at a complete bar boundary, even if another
+    // mixer/settings message arrives before that boundary. Reset starts immediately.
+    this.clockSettings.backingArrangement=this.running&&this.beat>=0?activeArrangement||'current':trialEnabled(s)?'trial':'current';
     const timeline=s.progression?progressionTimeline(s):[];
     const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){
@@ -497,6 +502,7 @@ export class Engine {
         const counting = this.beat < this.remainingCount;
         const musicalBeat = Math.max(0, this.beat - this.remainingCount);
         const bar = Math.floor(musicalBeat / s.beats);
+        if(!counting&&musicalBeat%s.beats===0)this.clockSettings.backingArrangement=trialEnabled(s)?'trial':'current';
         if (this.running && !counting && s.trainerEnabled && musicalBeat % s.beats === 0 && bar >= this.trainerNextBar) {
           this.currentBpm = Math.min(Math.max(s.bpm,s.trainerTarget),this.currentBpm+s.trainerIncrement);
           this.clockSettings.bpm = this.currentBpm;
@@ -516,7 +522,7 @@ export class Engine {
         this.clickStrength = strength===0?0:strength===2?1:.72;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
-        onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+        onBeat({ backingArrangement:this.clockSettings.backingArrangement, gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
           extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
