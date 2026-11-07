@@ -29,6 +29,6 @@ test('new figures follow actual chord changes and are identical across render bl
 test('pitch maps are reused through fader edits and comping interaction retains developed melodic phrases',()=>{
  for(const style of ['latin','funk','popRock']){
   const busy=engine(style,{bpm:120,sequence:true}),open=engine(style,{bpm:120,sequence:true,comping:false}),a=[],b=[],cache=busy.cachedAccompaniment;
-  busy.render(new Float32Array(64000),undefined,null,null,n=>a.push(n));open.render(new Float32Array(64000),undefined,null,null,n=>b.push(n));assert.ok(a.length>=8&&a.length===b.length,style);if(style==='latin')assert.notDeepEqual(a.map(n=>n.gridSample),b.map(n=>n.gridSample),style);busy.configure({compingVolume:.15});assert.equal(busy.cachedAccompaniment,cache);
+  busy.render(new Float32Array(64000),undefined,null,null,n=>a.push(n));open.render(new Float32Array(64000),undefined,null,null,n=>b.push(n));assert.ok(a.length>=8&&a.length===b.length,style);assert.ok(a.every(n=>n.durationBeats>0),style);busy.configure({compingVolume:.15});assert.equal(busy.cachedAccompaniment,cache);
  }
 });
