@@ -150,7 +150,7 @@ export class Sequence {
   }
   installKit(kit,clear=true){this.instrument.installKit(kit,clear);}
   reset() {
-    this.instrument.clear();this.legatoHarmony=undefined;this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
+    this.instrument.clear();this.legatoHarmony=undefined;this.melodyPhrase=undefined;this.melodyHarmony=undefined;this.melodyStarted=false;this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
@@ -172,7 +172,8 @@ export class Sequence {
     if(settings.sequenceStyle==='legatoFusion'){const signature=notes.join(',')+':'+(context?.counterline||[]).join(',');if(this.legatoHarmony!==signature){for(const voice of this.instrument.voices)if(voice.active)this.instrument.releaseVoice(voice);this.legatoHarmony=signature;}}
     const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
     const styled=musical&&!!settings.sequenceStyle;
-    const roleNotes=styled&&settings.sequenceStyle==='blues'?notes:musical?(context?.[settings.sequenceRole]||notes):notes;
+    const bluesFamily=['blues','secondLine','boogaloo'].includes(settings.sequenceStyle);
+    const roleNotes=styled?(bluesFamily?context?.pentatonic||notes:context?.counterline||notes):musical?(context?.[settings.sequenceRole]||notes):notes;
     const density=Math.max(0,Math.min(1,settings.sequenceDensity));
     if(!musical&&(grid*37+17)%100 >= density*100)return;
     const note=styled?styleSequenceStep(settings,grid,roleNotes.length):musical?musicalSequenceStep(settings,grid,roleNotes.length):sequenceStep(settings.sequencePattern,grid,notes.length,Number(settings.sequenceRate)||2);
@@ -181,24 +182,35 @@ export class Sequence {
     const offset=Number.isFinite(register)?register:12;
     let midi=roleNotes[note.index]+offset+note.semitones;
     const rate=Number(settings.sequenceRate)||2;
-    const leads=!musical && settings.sequencePattern==='voiceLead' && settings.progression && beat%settings.beats===settings.beats-1 && grid%rate===rate-1;
-    if(leads&&nextNotes.length)midi=nearest(this.lastMidi,nextNotes.map(value=>value+(Number.isFinite(register)?register:12)));
-    if(musical&&note.target==='chord'&&context?.chordResponse?.length)midi=nearest(midi,context.chordResponse.map(value=>value+offset));
-    if(musical&&note.target==='next'&&context?.nextChord?.length)midi=nearest(this.lastMidi,context.nextChord.map(value=>value+offset));
-    if(styled&&note.target==='resolve'&&context?.chordResponse?.length){
-      const target=context.nextChord?.[0]??midi;
-      midi=nearest(target+offset,context.chordResponse.map(value=>value+offset));
-    }
-    if(styled&&(settings.sequenceRole==='guideLine'||settings.sequenceRole==='counterline')){
-      const alternatives=[midi-12,midi,midi+12].filter(value=>value>=55&&value<=88);
-      midi=nearest(this.lastMidi,alternatives);
+    if(styled){
+      const signature=roleNotes.join(',')+':'+(context?.melodyTargets||[]).join(','),harmonicEntry=this.melodyHarmony!==signature;
+      const targets=context?.melodyTargets?.length?context.melodyTargets:context?.chordResponse||roleNotes;
+      const target=targets[note.targetIndex%targets.length],anchor=roleNotes.findIndex(n=>n%12===target%12);
+      if(note.phraseStart||this.melodyPhrase!==note.phraseId||this.melodyHarmony!==signature){
+        this.melodyPhrase=note.phraseId;this.melodyHarmony=signature;this.melodyAnchor=anchor<0?0:anchor;
+        const base=roleNotes[this.melodyAnchor]+offset;
+        const candidates=[base-24,base-12,base,base+12].filter(n=>n>=57&&n<=84);
+        this.melodyRegister=(nearest(this.melodyStarted?this.lastMidi:71,candidates.length?candidates:[base])-base);this.melodyStarted=true;
+      }
+      const degree=this.melodyAnchor+note.degree,index=((degree%roleNotes.length)+roleNotes.length)%roleNotes.length;
+      midi=roleNotes[index]+12*Math.floor(degree/roleNotes.length)+offset+this.melodyRegister;
+      if(note.target==='guide'||note.target==='resolve'||harmonicEntry){
+        const aimed=targets[(note.targetIndex+(note.target==='resolve'?1:0))%targets.length];
+        midi=nearest(midi,[aimed-12,aimed,aimed+12,aimed+24,aimed+36].filter(n=>n>=55&&n<=88));
+      }
+      while(midi<55)midi+=12;while(midi>88)midi-=12;
+    }else{
+      const leads=!musical && settings.sequencePattern==='voiceLead' && settings.progression && beat%settings.beats===settings.beats-1 && grid%rate===rate-1;
+      if(leads&&nextNotes.length)midi=nearest(this.lastMidi,nextNotes.map(value=>value+(Number.isFinite(register)?register:12)));
+      if(musical&&note.target==='chord'&&context?.chordResponse?.length)midi=nearest(midi,context.chordResponse.map(value=>value+offset));
+      if(musical&&note.target==='next'&&context?.nextChord?.length)midi=nearest(this.lastMidi,context.nextChord.map(value=>value+offset));
     }
     this.lastMidi=midi;
     if(styled){
       const tone=settings.sequenceTone||settings.compingTone||'brightTine',duration=note.duration||.5;
       const touch=performanceTouch(settings,'sequence',Math.floor(beat/settings.beats),(beat%settings.beats)*4+(grid%rate)*4/rate,this.rate);
-      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames);
-      onNote({sample:sample+touch.delayFrames,gridSample:sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar,style:settings.sequenceStyle,tone,durationBeats:duration});return;
+      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression);
+      onNote({sample:sample+touch.delayFrames,gridSample:sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar,style:settings.sequenceStyle,tone,durationBeats:duration,section:note.section,phraseId:note.phraseId,phraseStart:note.phraseStart,phraseEnd:note.phraseEnd,target:note.target,activity:settings.sequenceActivity||'countermelody'});return;
     }
     const voice=this.voices[this.cursor++%this.voices.length];
     const frequency=440*2**((midi-69)/12);

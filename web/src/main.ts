@@ -1022,6 +1022,7 @@ function commitCustomEdit(field:string){
 function update() {
   fxUi?.sync();
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
+  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
@@ -1773,6 +1774,7 @@ function sendMixerSettings(){
   queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);
 }
 function updateMixerLevels(){
+  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   settings.click=Number(input('click').value)/100;
   settings.harmony=Number(input('harmony').value)/100;
@@ -2243,7 +2245,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);

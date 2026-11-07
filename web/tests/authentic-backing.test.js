@@ -78,7 +78,7 @@ test('minimal Latin/bossa downloads sound identical to the full installed bank',
 
 test('active melodic phrases follow every ii–V–I chord without playing a future harmony early',()=>{
  for(const style of Object.keys(BACKING_STYLES)){
-  const {melody,e}=play(style,4,{comping:false,progression:true,template:'major251essential',sequenceDensity:1});
+  const {melody,e}=play(style,4,{comping:false,progression:true,template:'major251essential',sequenceDensity:1,sequenceActivity:'featured'});
   assert.ok(melody.some(n=>n.step===1),style);
   for(const note of melody){const harmony=harmonyAt(e.settings,note.step);assert.ok([...harmony.scalePcs,...harmony.chordPcs].includes(note.midi%12),style);}
  }

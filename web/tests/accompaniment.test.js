@@ -26,9 +26,9 @@ test('new figures follow actual chord changes and are identical across render bl
   for(const note of a){const h=harmonyAt(whole.settings,note.step);assert.ok(note.notes.every(midi=>[...h.chordPcs,...h.scalePcs].includes(midi%12)),style);}
  }
 });
-test('pitch maps are reused through render/fader edits, and melodic answers leave room for the riff',()=>{
+test('pitch maps are reused through fader edits and comping interaction retains developed melodic phrases',()=>{
  for(const style of ['latin','funk','popRock']){
   const busy=engine(style,{bpm:120,sequence:true}),open=engine(style,{bpm:120,sequence:true,comping:false}),a=[],b=[],cache=busy.cachedAccompaniment;
-  busy.render(new Float32Array(64000),undefined,null,null,n=>a.push(n));open.render(new Float32Array(64000),undefined,null,null,n=>b.push(n));assert.ok(a.length>0&&a.length<b.length,style);busy.configure({compingVolume:.15});assert.equal(busy.cachedAccompaniment,cache);
+  busy.render(new Float32Array(64000),undefined,null,null,n=>a.push(n));open.render(new Float32Array(64000),undefined,null,null,n=>b.push(n));assert.ok(a.length>=8&&a.length===b.length,style);if(style==='latin')assert.notDeepEqual(a.map(n=>n.gridSample),b.map(n=>n.gridSample),style);busy.configure({compingVolume:.15});assert.equal(busy.cachedAccompaniment,cache);
  }
 });

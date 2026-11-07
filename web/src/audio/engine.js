@@ -21,7 +21,7 @@ export const DEFAULTS = {
   trainerEnabled:false, trainerBars:4, trainerIncrement:2, trainerTarget:120,
   drums:false, drumGroove:'straight', drumsVolume:MIX_REFERENCE_LEVEL, bass:false, bassPattern:'roots', bassVolume:MIX_REFERENCE_LEVEL,
   comping:false, compingPattern:'sparse', compingTone:'brightKeys', compingVolume:MIX_REFERENCE_LEVEL, compingMovement:'modal', compingMovementAmount:.5, compingHookLength:3,
-  sequence:false, sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:MIX_REFERENCE_LEVEL,
+  sequence:false, sequenceActivity:'countermelody', sequenceRole:'modalHook', sequencePhraseBars:4, sequenceDevelopment:'subtle', sequenceInteraction:'independent', sequenceSource:'chord', sequenceRegister:12, sequencePattern:'sparse', sequenceRate:2, sequenceSwing:0, sequenceDensity:.5, sequenceVolume:MIX_REFERENCE_LEVEL,
   click: MIX_REFERENCE_LEVEL, harmony: MIX_REFERENCE_LEVEL, countIn: true, sound: 'warm', padMovement:'evolving', padDepth:'wide', padDepthMotion:'breathing', padDepthAmount:.65, padBrightness:'balanced', template: 'parallel1', subdivision: 1, accent: true,
 };
 export function gapAt(settings, bar) {
@@ -46,12 +46,21 @@ export function melodicNotePool(source, harmony, chordMidi) {
   return chordMidi;
 }
 
+function melodyTargets(harmony,chordMidi){
+ const root=harmony.midi[0],targets=[];
+ const add=pc=>{if(Number.isFinite(pc)&&!targets.some(n=>n%12===pc))targets.push(root+((pc-root%12+12)%12));};
+ harmony.chordPcs.forEach((pc,i)=>{if([3,7].includes(Number(harmony.intervals[i]?.replace(/[^0-9]/g,''))))add(pc);});
+ harmony.chordPcs.forEach((pc,i)=>{if(Number(harmony.intervals[i]?.replace(/[^0-9]/g,''))>7)add(pc);});
+ if(!targets.length)chordMidi.forEach(n=>add(n%12));
+ characteristicNotes(harmony).forEach(n=>add(n.pc));
+ return targets;
+}
 export function melodicRoleContext(settings,harmony,nextHarmony,chordMidi,nextChordMidi){
   const anchor=settings.sequenceStyle?harmony:harmonyAt({...settings,progression:false},0),modal=melodicNotePool('mode',anchor,anchor.midi);
   const root=modal[0],colourPc=characteristicNotes(anchor)[0]?.pc??anchor.scalePcs[3];
   const colour=root+((colourPc-anchor.scalePcs[0]+12)%12),fifth=modal[Math.min(4,modal.length-1)];
   return {modalHook:[root,fifth,colour,fifth],chordResponse:[...chordMidi],counterline:modal,
-    guideLine:melodicNotePool('guide',harmony,chordMidi),ambientPulse:[root,colour],nextChord:[...nextChordMidi]};
+    melodyTargets:melodyTargets(harmony,chordMidi),pentatonic:melodicNotePool('pentatonic',harmony,chordMidi),guideLine:melodicNotePool('guide',harmony,chordMidi),ambientPulse:[root,colour],nextChord:[...nextChordMidi]};
 }
 
 export function chordNotes(key, isMinor, degree = 0) {

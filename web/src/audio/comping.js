@@ -188,7 +188,7 @@ export class CompingInstrument{
     }
   }
   releaseVoice(voice){voice.pendingLegato=null;if(voice.delay>0){voice.active=false;return;}voice.releaseAt=voice.age+1;voice.firstRelease=voice.release;voice.releaseFactor=this.transitionFactor;}
-  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0,group=null){
+  strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0,group=null,expression=null){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     if(tone==='legatoGuitar'&&type==='sequence'&&pitches.length===1){
       const held=this.voices.find(v=>v.active&&v.tone===tone&&v.age<v.hold&&v.releaseAt>v.age+1&&!v.delay);
@@ -200,7 +200,8 @@ export class CompingInstrument{
       const shape=this.shapes[tone]||this.shapes.warmTine;
       Object.assign(voice,{pendingLegato:null,glideRemaining:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
-      voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
+      voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.bendRemaining=0;
+      if(expression==='bend'){voice.bendRemaining=Math.round(this.rate*.06);voice.bendTarget=voice.pcm?voice.sampleIncrement:voice.increment;const start=voice.bendTarget*2**(-.5/12);voice.bendStep=(voice.bendTarget-start)/voice.bendRemaining;if(voice.pcm)voice.sampleIncrement=start;else voice.increment=start;}voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
     onEvent?.({type,sample:sample+delayFrames,gridSample:sample,delayFrames,step,notes:pitches,duration,velocity});
@@ -217,6 +218,7 @@ export class CompingInstrument{
       if(voice.delay>0){voice.delay--;continue;}
       if(voice.pendingLegato&&voice.pendingLegato.delay--<=0){this.connectLegato(voice,voice.pendingLegato);voice.pendingLegato=null;}
       if(voice.glideRemaining>0){voice.increment+=voice.glideStep;if(--voice.glideRemaining===0)voice.increment=voice.targetIncrement;}
+      if(voice.bendRemaining>0){if(voice.pcm)voice.sampleIncrement+=voice.bendStep;else voice.increment+=voice.bendStep;if(--voice.bendRemaining===0){if(voice.pcm)voice.sampleIncrement=voice.bendTarget;else voice.increment=voice.bendTarget;}}
       const increment=voice.increment,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;
