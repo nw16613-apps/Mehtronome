@@ -63,7 +63,7 @@ test('comping variation is a deterministic vocabulary of whole modal chords or i
   for(const movement of Object.keys(COMPING_MOVEMENTS)){
    const voicings=compingChordVoicings(h,h,movement,4);
    assert.ok(voicings.length);assert.deepEqual(voicings,compingChordVoicings(h,h,movement,4));
-   for(const notes of voicings){assert.ok(notes.length>=3);assert.ok(notes.every(n=>h.chordPcs.includes(n%12)||['modal','extensions'].includes(movement)&&h.scalePcs.includes(n%12)));}
+   for(const notes of voicings){assert.ok(notes.length>=3);assert.ok(notes.every(n=>h.chordPcs.includes(n%12)||['modal','extensions','spread'].includes(movement)&&h.scalePcs.includes(n%12)));}
   }
  }
 });
@@ -133,8 +133,8 @@ test('full backing is block-size independent, bounded, and fades to silence',()=
 });
 
 test('drum and bass styles produce distinct event patterns and articulations',()=>{
-  assert.equal(Object.keys(DRUM_GROOVES).length,22);
-  assert.equal(Object.keys(BASS_PATTERNS).length,23);
+  assert.equal(Object.keys(DRUM_GROOVES).length,23);
+  assert.equal(Object.keys(BASS_PATTERNS).length,24);
   const drumSignatures=Object.keys(DRUM_GROOVES).map(drumGroove=>JSON.stringify(render(setup({drumGroove,bass:false}),16000).events));
   assert.equal(new Set(drumSignatures).size,Object.keys(DRUM_GROOVES).length);
   const bassSignatures=Object.keys(BASS_PATTERNS).map(bassPattern=>{

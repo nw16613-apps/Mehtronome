@@ -110,7 +110,7 @@ const PART_VARIATIONS={
 };
 for(const [id,s] of Object.entries(ADDITIONAL_STYLES)){
  ACCOMPANIMENT_PARTS[id]={name:s.part,bars:s.base};
- PART_VARIATIONS[id]={develop:s.develop,answer:s.answer,turn:s.turn,space:s.base.map(bar=>bar.slice(0,1).map(([at,role,duration,velocity,group])=>[at,role,Math.min(s.beats,duration*1.8),velocity*.9,group]))};
+ PART_VARIATIONS[id]={develop:s.develop,answer:s.answer,turn:s.turn,space:s.space||s.base.map(bar=>bar.slice(0,1).map(([at,role,duration,velocity,group])=>[at,role,Math.min(s.beats,duration*1.8),velocity*.9,group]))};
 }
 // A 32-bar form revisits the theme and places quieter/answering parts around it.
 // Each selection is a whole two-bar pair, so clave sides never get reordered.

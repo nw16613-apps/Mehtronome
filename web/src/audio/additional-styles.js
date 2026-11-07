@@ -63,6 +63,12 @@ export const ADDITIONAL_STYLES={
   bass:[[[0,0,0,.55,.77],[3,-1,0,.3,.57],[6,1,0,.45,.61],[10,-2,0,.8,.65],[14,-1,0,.3,.54]],[[0,0,0,.85,.77],[6,-1,0,.45,.59],[9,0,1,.45,.64],[12,1,0,.65,.59]]],
   part:'Guitar ostinato and sustained jazz voicings',base:[[[0,'lowDyad',.7,.4],[3,'third',.3,.27],[6,'fifth',.45,.28],[10,'chord',1.3,.4]],[[0,'root',.8,.3],[5,'seventh',.45,.26],[8,'upperColour',1.7,.38]]],develop:[[[0,'lowDyad',.7,.39],[3,'fifth',.35,.27],[7,'third',.45,.27],[10,'upperInversion',1.3,.38]],[[1,'root',.7,.29],[6,'seventh',.5,.25],[9,'chord',1.5,.39]]],answer:[[[0,'lowDyad',1.5,.38],[10,'chord',1.4,.39]],[[2,'third',.6,.26],[8,'upperColour',1.8,.37]]],turn:[[[0,'lowDyad',.9,.39],[6,'fifth',.6,.27],[10,'chord',1.2,.39]],[[0,'root',1.3,.29],[8,'seventh',.4,.25],[11,'thirdDown',.4,.26],[14,'upper',.5,.36]]],
   melody:[[[3,0,.35,.56],[10,2,.55,.57]],[[6,1,.65,.51]],[[3,0,.35,.55],[10,2,.55,.56]],[[5,2,.4,.52],[11,1,.4,.51],[14,0,.6,.58]]],line:'Developing electric-guitar motifs',role:'modalHook',density:.4},
+ legatoFusion:{name:'Legato fusion',beats:4,groove:'legatoFusion',tone:'swelledGuitar',kit:'fusion',bassInstrument:'electric',
+  description:'Floating spread guitar chords, flowing acoustic ride and melodic electric bass, with sparse connected phrases on a modeled legato voice. Written harmony and scale guides stay in control.',
+  drums:[[[0,'ride',.25],[2,'ride',.12],[4,'ride',.2],[6,'ride',.13],[8,'rideBell',.25],[10,'ride',.12],[12,'ride',.21],[14,'ride',.13],[0,'kick',.36],[7,'kick',.23],[11,'kick',.25],[5,'snare',.23],[12,'snare',.3]],[[0,'ride',.24],[2,'ride',.12],[4,'ride',.2],[6,'ride',.13],[8,'ride',.24],[10,'ride',.12],[12,'rideBell',.23],[14,'ride',.13],[0,'kick',.35],[6,'kick',.23],[13,'kick',.24],[3,'snare',.19],[10,'snare',.27],[15,'snare',.11]]],
+  bass:[[[0,0,0,1.4,.66],[7,-1,0,.75,.52],[12,1,0,.8,.54]],[[0,0,0,1.8,.64],[9,-2,0,.65,.51],[14,-1,0,.4,.49]]],
+  part:'Sustained spread guitar voicings',space:[[[0,'chord',3.9,.32]],[]],base:[[[0,'chord',3.7,.36]],[[2,'chord',3.2,.34]]],develop:[[[1,'chord',2.9,.35],[13,'top',.8,.22]],[[4,'chord',2.7,.34]]],answer:[[[2,'chord',2.8,.34]],[[5,'seventh',1.2,.23],[11,'chord',1.1,.32]]],turn:[[[0,'chord',3.5,.35]],[[1,'chord',2.2,.34],[12,'thirdDown',.9,.23]]],
+  melody:[[[2,0,.86,.47],[5,4,1.1,.45]],[[9,1,1,.43]],[[3,1,.9,.45],[6,5,1.25,.44]],[[7,4,.85,.44],[10,2,1,.43]]],line:'Sparse connected wide-interval motifs',role:'counterline',density:.28},
 };
 // Phrase endings answer the groove without interrupting bell/clave anchors.
 export function additionalDrumCell(id,bar,varied=true,turnaround=false){
@@ -74,7 +80,7 @@ export function additionalDrumCell(id,bar,varied=true,turnaround=false){
  return [...cell,...fill.filter(e=>!cell.some(n=>n[0]===e[0]&&n[1]===e[1]))];
 }
 // Two answering bars develop the written groove while keeping its main pulse.
-const drumAnswers={jazzWaltz:[[5,'snare',.12],[9,'kick',.16]],afroCuban68:[[8,'congaOpen',.18],[2,'congaMute',.12]],samba:[[12,'rim',.16],[5,'rim',.14]],secondLine:[[11,'snare',.17],[6,'snare',.15]],reggae:[[14,'rim',.13],[6,'rim',.11]],slowSoul128:[[10,'snare',.12],[14,'snare',.16]],boogaloo:[[11,'snare',.13],[6,'rim',.15]],modernStraightJazz:[[7,'snare',.14],[12,'kick',.17]],hardRock:[[11,'kick',.4],[7,'snare',.16]],jazzRock:[[14,'snare',.17],[9,'kick',.3]]};
+const drumAnswers={jazzWaltz:[[5,'snare',.12],[9,'kick',.16]],afroCuban68:[[8,'congaOpen',.18],[2,'congaMute',.12]],samba:[[12,'rim',.16],[5,'rim',.14]],secondLine:[[11,'snare',.17],[6,'snare',.15]],reggae:[[14,'rim',.13],[6,'rim',.11]],slowSoul128:[[10,'snare',.12],[14,'snare',.16]],boogaloo:[[11,'snare',.13],[6,'rim',.15]],modernStraightJazz:[[7,'snare',.14],[12,'kick',.17]],hardRock:[[11,'kick',.4],[7,'snare',.16]],jazzRock:[[14,'snare',.17],[9,'kick',.3]],legatoFusion:[[9,'snare',.13],[14,'tomHigh',.18]]};
 for(const [id,style]of Object.entries(ADDITIONAL_STYLES)){
  const answer=drumAnswers[id];
  style.drums.push([...style.drums[0].filter(n=>!(n[0]===answer[0][0]&&n[1]===answer[0][1])),answer[0]],[...style.drums[1].filter(n=>!(n[0]===answer[1][0]&&n[1]===answer[1][1])),answer[1]]);

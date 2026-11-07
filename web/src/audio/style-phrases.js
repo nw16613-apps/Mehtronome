@@ -24,7 +24,7 @@ export function styleSequenceStep(settings,grid,length){
  const pair=settings.sequenceStyle==='latin'||settings.sequenceStyle==='bossa'||['afroCuban68','samba'].includes(settings.sequenceStyle);
  const order=pair?[0,1,2,3]:[0,3,2,1],active=pair?Math.max(2,Math.ceil(density*2)*2):Math.max(1,Math.ceil(density*4));
  const accompaniment=settings.accompanimentStyle&&settings.comping&&(settings.compingVolume??.25)>0&&!String(settings.mutedChannels||'').split(',').includes('comping');
- const riff=accompaniment&&riffStyles.has(settings.accompanimentStyle);
+ const riff=accompaniment&&settings.sequenceStyle!=='legatoFusion'&&riffStyles.has(settings.accompanimentStyle);
  if(riff?phraseBar!==3:!order.slice(0,active).includes(phraseBar))return null;
  const events=phrase[phraseBar],event=events.find(([position])=>position<beats*4&&Math.round(position*rate/4)===local);
  if(!event)return null;

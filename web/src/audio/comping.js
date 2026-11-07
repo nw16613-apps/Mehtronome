@@ -12,11 +12,11 @@ export const COMPING_PATTERNS={
 };
 for(const [id,s]of Object.entries(ADDITIONAL_STYLES))COMPING_PATTERNS[id]=s.part;
 export const COMPING_MOVEMENTS={
-  still:'Still chords', extensions:'Chord extensions & inversions', modal:'Modal chord colours', inner:'Chord inversions',
+  spread:'Spread chord colours',still:'Still chords', extensions:'Chord extensions & inversions', modal:'Modal chord colours', inner:'Chord inversions',
   response:'Chord responses', voiceLead:'Voice-led chords',
 };
 export const COMPING_TONES={
-  drawbarOrgan:'Drawbar-style organ',drivenGuitar:'Driven electric guitar',acousticPiano:'Acoustic piano',softPiano:'Soft acoustic piano',cleanGuitar:'Clean electric guitar',bluesGuitar:'Blues electric guitar',nylonGuitar:'Nylon-string guitar',
+  legatoGuitar:'Modeled legato guitar',swelledGuitar:'Soft-attack electric guitar',drawbarOrgan:'Drawbar-style organ',drivenGuitar:'Driven electric guitar',acousticPiano:'Acoustic piano',softPiano:'Soft acoustic piano',cleanGuitar:'Clean electric guitar',bluesGuitar:'Blues electric guitar',nylonGuitar:'Nylon-string guitar',
   brightKeys:'Bright percussive keys', brightTine:'Bright electric tine', clav:'Dry clav-style keys',
   warmTine:'Warm tine', felt:'Dark felt electric', suitcase:'Suitcase shimmer', reed:'Reed electric',
 };
@@ -67,6 +67,7 @@ export function compingExtensionVoicings(harmony){
  * ordinary tertian triads. Future harmony never sounds ahead of its change. */
 export function compingChordVoicings(harmony,nextHarmony,movement='inner',length=4){
  if(!harmony?.chordPcs?.length)return [];
+ if(movement==='spread')return spreadCompingVoicings(harmony);
  const pcs=[...new Set(voicingTones(harmony).map(index=>harmony.chordPcs[index]))],base=inversions(pcs);
  if(!base.length)return [];
  if(movement==='still')return [base[0]];
@@ -92,6 +93,23 @@ export function compingChordVoicings(harmony,nextHarmony,movement='inner',length
  return variants.slice(0,count);
 }
 
+/** Spread complete voicings across registers; preserve each selected pitch class. */
+export function spreadCompingVoicings(harmony){
+ const close=compingChordVoicings(harmony,harmony,'extensions',4),result=[];
+ for(const chord of close){
+  const pcs=[...new Set(chord.map(n=>n%12))],candidates=[];
+  const visit=(notes,index)=>{
+   if(index===pcs.length){const ordered=notes.slice().sort((a,b)=>a-b),span=ordered.at(-1)-ordered[0];
+    if(span>=19&&span<=29&&ordered.every((n,i)=>!i||n-ordered[i-1]>=3))candidates.push(ordered);return;}
+   for(let midi=48;midi<=84;midi++)if(midi%12===pcs[index])visit([...notes,midi],index+1);
+  };visit([],0);
+  candidates.sort((a,b)=>Math.abs((a[0]+a.at(-1))/2-66)-Math.abs((b[0]+b.at(-1))/2-66)||Math.abs(a.at(-1)-a[0]-23)-Math.abs(b.at(-1)-b[0]-23));
+  const spread=candidates[0]||chord;
+  if(!result.some(v=>v.join(',')===spread.join(',')))result.push(spread);
+ }
+ return result;
+}
+
 // [sixteenth position, duration in beats, velocity]. Four related bars create
 // a phrase with one or two supportive attacks per bar and room for a soloist.
 const CELLS={
@@ -110,6 +128,7 @@ const CELLS={
 
 for(const [id,s]of Object.entries(ADDITIONAL_STYLES))CELLS[id]=s.base.map(bar=>bar.map(([position,,duration,velocity])=>[position,duration,velocity]));
 const TONE_SHAPES={
+ legatoGuitar:{level:.55,attack:.018,release:.22,decay:.085,fm:.14,second:.18,third:.065,tremolo:.006},
  drawbarOrgan:{level:.6,attack:.004,release:.085,decay:.03,fm:0,second:.28,third:.16,tremolo:.018},
  brightKeys:{level:.7,attack:.0015,release:.085,decay:1.15,fm:.65,second:.3,third:.18,tremolo:0},
  brightTine:{level:.7,attack:.0025,release:.12,decay:.9,fm:1.05,second:.23,third:.09,tremolo:.008},
@@ -120,12 +139,13 @@ const TONE_SHAPES={
  reed:{attack:.009,release:.2,decay:.62,fm:.12,second:.06,third:.13,tremolo:.025},
 };
 
-for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['drivenGuitar','electricGuitar',5600,.11,3.2],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
+for(const [id,bank,cutoff,release,drive] of [['acousticPiano','piano',11000,.1,0],['softPiano','piano',4500,.25,0],['cleanGuitar','electricGuitar',7800,.08,0],['bluesGuitar','electricGuitar',6500,.12,1.5],['drivenGuitar','electricGuitar',5600,.11,3.2],['swelledGuitar','electricGuitar',4800,.38,.35],['nylonGuitar','nylonGuitar',6500,.12,0]])TONE_SHAPES[id]={...TONE_SHAPES.brightKeys,bank,cutoff,release,drive,level:.65};
 
+TONE_SHAPES.swelledGuitar.attack=.045;
 export class CompingInstrument{
   constructor(rate,voiceCount=32){this.rate=rate;this.transitionFactor=Math.exp(-1/(rate*.025));this.banks={};this.shapes=Object.fromEntries(Object.entries(TONE_SHAPES).map(([id,shape])=>[id,{...shape,attackFrames:rate*shape.attack,releaseFrames:rate*shape.release,releaseFactor:Math.exp(-1/(rate*shape.release)),bodyFactor:Math.exp(-shape.decay/rate),bellFactor:Math.exp(-(id==='felt'?4.8:3.2)/rate)}]));this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;this.cursor=0;this.output=0;this.voices=Array.from({length:voiceCount},()=>({active:false,phase:0,modPhase:0,midi:0,age:0,hold:0,gain:0,pan:0,tone:'warmTine'}));}
   installKit(kit,clear=true){if(clear)this.clear();this.banks=Object.fromEntries(Object.entries(INSTRUMENT_SAMPLE_ZONES).map(([bank,zones])=>[bank,zones.filter(zone=>kit?.[zone.id]?.length).map(zone=>({...zone,pcm:kit[zone.id]}))]));}
-  clear(){for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
+  clear(){for(const voice of this.voices)voice.pendingLegato=null;for(const voice of this.voices)voice.active=false;this.output=0;this.lastGrid=-1;this.hits=0;this.lastChord='';this.partSignature='';this.partOption=0;this.partLastVoicing=null;}
   tick(settings,beat,phase,notes,voicings,sample,step,onEvent,audible=true,part=null){
     const grid=beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
     if(grid===this.lastGrid)return;this.lastGrid=grid;if(!audible)return;
@@ -167,25 +187,36 @@ export class CompingInstrument{
       this.partLastVoicing=option.chord;this.hits++;
     }
   }
-  releaseVoice(voice){if(voice.delay>0){voice.active=false;return;}voice.releaseAt=voice.age+1;voice.firstRelease=voice.release;voice.releaseFactor=this.transitionFactor;}
+  releaseVoice(voice){voice.pendingLegato=null;if(voice.delay>0){voice.active=false;return;}voice.releaseAt=voice.age+1;voice.firstRelease=voice.release;voice.releaseFactor=this.transitionFactor;}
   strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0,group=null){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
+    if(tone==='legatoGuitar'&&type==='sequence'&&pitches.length===1){
+      const held=this.voices.find(v=>v.active&&v.tone===tone&&v.age<v.hold&&v.releaseAt>v.age+1&&!v.delay);
+      if(held){const transition={midi:pitches[0],duration,velocity,bpm,delay:delayFrames};if(delayFrames>0)held.pendingLegato=transition;else this.connectLegato(held,transition);onEvent?.({type,sample:sample+delayFrames,step,notes:pitches,duration,velocity,legato:true});return;}
+    }
     if(group)for(const voice of this.voices)if(voice.active&&(group==='inner'?voice.group==='inner':pitches.includes(voice.midi)))this.releaseVoice(voice);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       const shape=this.shapes[tone]||this.shapes.warmTine;
-      Object.assign(voice,{group,releaseFactor:shape.releaseFactor,delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      Object.assign(voice,{pendingLegato:null,glideRemaining:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames,shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const zones=this.banks[shape.bank]||[],zone=zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
       voice.pcm=zone?.pcm;voice.samplePosition=0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min(shape.cutoff||11000,this.rate*.45)/this.rate);
       voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=Math.exp(-(voice.releaseAt-voice.hold)/shape.releaseFrames);
     }
     onEvent?.({type,sample:sample+delayFrames,gridSample:sample,delayFrames,step,notes:pitches,duration,velocity});
   }
+  connectLegato(voice,note){
+    voice.midi=note.midi;voice.targetIncrement=440*2**((note.midi-69)/12)/this.rate;
+    voice.glideRemaining=Math.max(1,Math.round(this.rate*.015));voice.glideStep=(voice.targetIncrement-voice.increment)/voice.glideRemaining;
+    voice.hold=voice.age+Math.max(.08,note.duration)*60/Math.max(30,note.bpm)*this.rate;voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=1;voice.release=1;
+  }
   render(audible=true){
     let output=0;
     for(const voice of this.voices){
       if(!voice.active)continue;
       if(voice.delay>0){voice.delay--;continue;}
+      if(voice.pendingLegato&&voice.pendingLegato.delay--<=0){this.connectLegato(voice,voice.pendingLegato);voice.pendingLegato=null;}
+      if(voice.glideRemaining>0){voice.increment+=voice.glideStep;if(--voice.glideRemaining===0)voice.increment=voice.targetIncrement;}
       const increment=voice.increment,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;

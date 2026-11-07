@@ -150,7 +150,7 @@ export class Sequence {
   }
   installKit(kit,clear=true){this.instrument.installKit(kit,clear);}
   reset() {
-    this.instrument.clear();this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
+    this.instrument.clear();this.legatoHarmony=undefined;this.lastGrid=-1;this.cursor=0;this.lastMidi=60;
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
@@ -169,6 +169,7 @@ export class Sequence {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
     this.lastGrid=grid;if(!audible)return;
+    if(settings.sequenceStyle==='legatoFusion'){const signature=notes.join(',')+':'+(context?.counterline||[]).join(',');if(this.legatoHarmony!==signature){for(const voice of this.instrument.voices)if(voice.active)this.instrument.releaseVoice(voice);this.legatoHarmony=signature;}}
     const musical=settings.sequenceRole&&settings.sequenceRole!=='pattern';
     const styled=musical&&!!settings.sequenceStyle;
     const roleNotes=styled&&settings.sequenceStyle==='blues'?notes:musical?(context?.[settings.sequenceRole]||notes):notes;
