@@ -1,3 +1,4 @@
+import {drumStrokeGain} from './drum-performance.js';
 import {referenceEvents,referenceGrid} from './reference-performances.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
@@ -272,7 +273,8 @@ export class Rhythm {
       if (settings.bass&&bassAudible) this.playBass(settings, bassGrid % 4, inBar, bar, notes, sample, step, onEvent,nextNotes);
     }
   }
-  hitDrum(name,gain,sample,step,beat,sub,onEvent,kitName='rock',delayFrames=0) {
+  hitDrum(name,gain,sample,step,beat,sub,onEvent,kitName='rock',delayFrames=0,style=null) {
+    gain=drumStrokeGain(style,name,gain);
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const jazz=profile.bank==='jazz'&&(this.jazzGroups.kick.length||this.jazzGroups.kickSoft.length);
@@ -310,12 +312,12 @@ export class Rhythm {
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'drums',this.lastGrid)){
         const touch=performanceTouch(settings,event.name,bar,beat*4+sub,this.rate);
-        this.hitDrum(event.name,event.velocity*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);
+        this.hitDrum(event.name,event.velocity*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);
       }
       return;
     }
     const added=ensembleDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
-    if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);}return;}
+    if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);}return;}
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
       this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
     }
@@ -329,7 +331,7 @@ export class Rhythm {
     const latin=groove==='bossa'||groove==='tumbao';
     const hit=(name,gain)=>{
       const touch=performanceTouch(settings,name,bar,beat*4+sub,this.rate);
-      this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames);
+      this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);
     };
     if(this.kitProfiles[settings.drumKit]?.tambourine&&sub%2===0)hit('tambourine',sub===0?(beat%2?.22:.12):.085);
     for(const [offset,name,gain]of GROOVES[groove][phrase]){
@@ -378,7 +380,7 @@ export class Rhythm {
     const cell=(beat*4+sub)%16,son=settings.drumGroove==='tumbao',varied=settings.backingVariation>0;
     const hit=(name,gain)=>{
       const touch=performanceTouch(settings,name,bar,beat*4+sub,this.rate);
-      this.hitDrum(name,gain*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,name==='clave'?0:touch.delayFrames);
+      this.hitDrum(name,gain*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,name==='clave'?0:touch.delayFrames,settings.backingStyle);
     };
     for(const [offset,name,gain]of latinDrumCell(settings.drumGroove,bar))if(offset===cell)hit(name,gain);
     if(son&&varied&&Math.floor(bar/8)%2===1)for(const [offset,name,gain]of SON_BELL)if(offset===cell)hit(name,gain);

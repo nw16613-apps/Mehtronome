@@ -199,3 +199,14 @@ for the internal source catalogue and supported limits. Neither path calls an
 external music-generation service or listens/responds to live audio. The finite,
 deterministic compositions remain listening targets, rather than a claim of
 player-level improvisation.
+
+### Firmer drum performance
+
+Style-specific stroke dynamics now act before recorded velocity-layer selection
+for both the automatic arranger and fallback grooves. Main kick and snare hits
+move into stronger recorded layers, with firmer tom fills and modestly stronger
+rim accents. Rock, funk, blues and fusion receive the largest change; acoustic
+Latin, jazz and ballad retain a lighter touch. Snare ghost notes, light kick
+taps, cymbals, Latin percussion, groove onsets and kit decay are preserved.
+The change adds no controls or new sample banks. Real-bank checks cover harder
+layer selection, increased hit energy, retained timing and all-style headroom.
