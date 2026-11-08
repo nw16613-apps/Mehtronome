@@ -141,7 +141,9 @@ upcoming destination can change an earlier newly composed phrase while leaving
 the opening harmony unchanged. Rhythm/contour grammars remain authored musical
 vocabulary; this is a deterministic composition system.
 
-`ensemble-conversation.js` then responds to the **audible** melodic activity:
+`ensemble-conversation.js` then responds to the **selected** melodic phrases before mixer mute/fader
+controls. Muting a track leaves the prepared musical spaces available for your
+playing rather than recomposing the band:
 
 - Conversational comping softens beneath the lead and removes selected colliding
   stabs. Prepared upper-voice replies can fill genuine gaps. Ostinatos retain
