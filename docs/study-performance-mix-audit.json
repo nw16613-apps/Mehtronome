@@ -1,0 +1,1397 @@
+{
+  "sampleRate": 12000,
+  "kits": [
+    {
+      "kit": "tama",
+      "bank": "tama",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.09,
+          "peakDb": -4.69
+        },
+        "snare": {
+          "rmsDb": -28.37,
+          "peakDb": -5.22
+        },
+        "tomHigh": {
+          "rmsDb": -29.95,
+          "peakDb": -9.89
+        },
+        "tomLow": {
+          "rmsDb": -31.74,
+          "peakDb": -8.37
+        },
+        "hat": {
+          "rmsDb": -40.69,
+          "peakDb": -19.79
+        },
+        "hatOpen": {
+          "rmsDb": -44.79,
+          "peakDb": -21.44
+        },
+        "hatPedal": {
+          "rmsDb": -49.21,
+          "peakDb": -24.91
+        },
+        "ride": {
+          "rmsDb": -32.24,
+          "peakDb": -18.18
+        },
+        "rideBell": {
+          "rmsDb": -42.28,
+          "peakDb": -17.32
+        },
+        "flatRide": {
+          "rmsDb": -35.85,
+          "peakDb": -20.66
+        },
+        "crash": {
+          "rmsDb": -40.84,
+          "peakDb": -16.98
+        }
+      }
+    },
+    {
+      "kit": "close",
+      "bank": "close",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.97,
+          "peakDb": -7.24
+        },
+        "snare": {
+          "rmsDb": -29.84,
+          "peakDb": -3.86
+        },
+        "tomHigh": {
+          "rmsDb": -32.56,
+          "peakDb": -8.51
+        },
+        "tomLow": {
+          "rmsDb": -32.66,
+          "peakDb": -10.49
+        },
+        "hat": {
+          "rmsDb": -36.29,
+          "peakDb": -19.47
+        },
+        "hatOpen": {
+          "rmsDb": -44.32,
+          "peakDb": -21.02
+        },
+        "hatPedal": {
+          "rmsDb": -51.25,
+          "peakDb": -24.89
+        },
+        "ride": {
+          "rmsDb": -33.58,
+          "peakDb": -15.12
+        },
+        "rideBell": {
+          "rmsDb": -41.42,
+          "peakDb": -16.86
+        },
+        "flatRide": {
+          "rmsDb": -38.83,
+          "peakDb": -17.1
+        },
+        "crash": {
+          "rmsDb": -44.76,
+          "peakDb": -17.28
+        }
+      }
+    },
+    {
+      "kit": "rock",
+      "bank": "live",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.31,
+          "peakDb": -4.55
+        },
+        "snare": {
+          "rmsDb": -27.54,
+          "peakDb": -5.27
+        },
+        "tomHigh": {
+          "rmsDb": -29.22,
+          "peakDb": -8.37
+        },
+        "tomLow": {
+          "rmsDb": -30.58,
+          "peakDb": -8.37
+        },
+        "hat": {
+          "rmsDb": -39.27,
+          "peakDb": -19.2
+        },
+        "hatOpen": {
+          "rmsDb": -43.67,
+          "peakDb": -20.88
+        },
+        "hatPedal": {
+          "rmsDb": -49.21,
+          "peakDb": -24.91
+        },
+        "ride": {
+          "rmsDb": -30.41,
+          "peakDb": -16.49
+        },
+        "rideBell": {
+          "rmsDb": -39.99,
+          "peakDb": -15.72
+        },
+        "flatRide": {
+          "rmsDb": -38.83,
+          "peakDb": -17.1
+        },
+        "crash": {
+          "rmsDb": -49.03,
+          "peakDb": -15.29
+        }
+      }
+    },
+    {
+      "kit": "jazz",
+      "bank": "jazz",
+      "pieces": {
+        "kick": {
+          "rmsDb": -26.29,
+          "peakDb": -10.01
+        },
+        "snare": {
+          "rmsDb": -29.06,
+          "peakDb": -5.24
+        },
+        "tomHigh": {
+          "rmsDb": -30.24,
+          "peakDb": -9.36
+        },
+        "tomLow": {
+          "rmsDb": -30.42,
+          "peakDb": -10.35
+        },
+        "hat": {
+          "rmsDb": -46.5,
+          "peakDb": -19.36
+        },
+        "hatOpen": {
+          "rmsDb": -50.98,
+          "peakDb": -20.72
+        },
+        "hatPedal": {
+          "rmsDb": -49.46,
+          "peakDb": -24.69
+        },
+        "ride": {
+          "rmsDb": -37.32,
+          "peakDb": -13.9
+        },
+        "rideBell": {
+          "rmsDb": -42.51,
+          "peakDb": -15.98
+        },
+        "flatRide": {
+          "rmsDb": -45.58,
+          "peakDb": -16.19
+        },
+        "crash": {
+          "rmsDb": -38.91,
+          "peakDb": -16.11
+        }
+      }
+    },
+    {
+      "kit": "fusion",
+      "bank": "sonor",
+      "pieces": {
+        "kick": {
+          "rmsDb": -26.89,
+          "peakDb": -6.03
+        },
+        "snare": {
+          "rmsDb": -27.79,
+          "peakDb": -6.67
+        },
+        "tomHigh": {
+          "rmsDb": -30.6,
+          "peakDb": -3.86
+        },
+        "tomLow": {
+          "rmsDb": -30.8,
+          "peakDb": -4.37
+        },
+        "hat": {
+          "rmsDb": -40.6,
+          "peakDb": -19.15
+        },
+        "hatOpen": {
+          "rmsDb": -49.78,
+          "peakDb": -20.77
+        },
+        "hatPedal": {
+          "rmsDb": -49.98,
+          "peakDb": -24.47
+        },
+        "ride": {
+          "rmsDb": -34.76,
+          "peakDb": -10.8
+        },
+        "rideBell": {
+          "rmsDb": -39.36,
+          "peakDb": -11.74
+        },
+        "flatRide": {
+          "rmsDb": -42.47,
+          "peakDb": -13.78
+        },
+        "crash": {
+          "rmsDb": -43.83,
+          "peakDb": -12.67
+        }
+      }
+    },
+    {
+      "kit": "vintage",
+      "bank": "live",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.49,
+          "peakDb": -4.62
+        },
+        "snare": {
+          "rmsDb": -27.68,
+          "peakDb": -5.39
+        },
+        "tomHigh": {
+          "rmsDb": -30.02,
+          "peakDb": -8.41
+        },
+        "tomLow": {
+          "rmsDb": -31.93,
+          "peakDb": -8.43
+        },
+        "hat": {
+          "rmsDb": -39.74,
+          "peakDb": -19.35
+        },
+        "hatOpen": {
+          "rmsDb": -44.94,
+          "peakDb": -21.29
+        },
+        "hatPedal": {
+          "rmsDb": -49.78,
+          "peakDb": -25.57
+        },
+        "ride": {
+          "rmsDb": -32.8,
+          "peakDb": -19.69
+        },
+        "rideBell": {
+          "rmsDb": -41.17,
+          "peakDb": -15.93
+        },
+        "flatRide": {
+          "rmsDb": -40.83,
+          "peakDb": -17.5
+        },
+        "crash": {
+          "rmsDb": -51.37,
+          "peakDb": -15.54
+        }
+      }
+    },
+    {
+      "kit": "motown",
+      "bank": "live",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.55,
+          "peakDb": -4.63
+        },
+        "snare": {
+          "rmsDb": -27.73,
+          "peakDb": -5.42
+        },
+        "tomHigh": {
+          "rmsDb": -30.25,
+          "peakDb": -8.41
+        },
+        "tomLow": {
+          "rmsDb": -32.26,
+          "peakDb": -8.45
+        },
+        "hat": {
+          "rmsDb": -39.81,
+          "peakDb": -19.35
+        },
+        "hatOpen": {
+          "rmsDb": -45.24,
+          "peakDb": -21.36
+        },
+        "hatPedal": {
+          "rmsDb": -49.91,
+          "peakDb": -25.62
+        },
+        "ride": {
+          "rmsDb": -33.28,
+          "peakDb": -19.97
+        },
+        "rideBell": {
+          "rmsDb": -41.37,
+          "peakDb": -15.94
+        },
+        "flatRide": {
+          "rmsDb": -41.12,
+          "peakDb": -17.51
+        },
+        "crash": {
+          "rmsDb": -51.84,
+          "peakDb": -15.54
+        }
+      }
+    },
+    {
+      "kit": "tight",
+      "bank": "live",
+      "pieces": {
+        "kick": {
+          "rmsDb": -27.49,
+          "peakDb": -4.6
+        },
+        "snare": {
+          "rmsDb": -27.67,
+          "peakDb": -5.33
+        },
+        "tomHigh": {
+          "rmsDb": -30.02,
+          "peakDb": -8.38
+        },
+        "tomLow": {
+          "rmsDb": -31.93,
+          "peakDb": -8.41
+        },
+        "hat": {
+          "rmsDb": -39.32,
+          "peakDb": -19.14
+        },
+        "hatOpen": {
+          "rmsDb": -44.55,
+          "peakDb": -20.99
+        },
+        "hatPedal": {
+          "rmsDb": -49.5,
+          "peakDb": -25.06
+        },
+        "ride": {
+          "rmsDb": -32.62,
+          "peakDb": -19.23
+        },
+        "rideBell": {
+          "rmsDb": -40.69,
+          "peakDb": -15.66
+        },
+        "flatRide": {
+          "rmsDb": -40.5,
+          "peakDb": -16.98
+        },
+        "crash": {
+          "rmsDb": -50.97,
+          "peakDb": -15.19
+        }
+      }
+    },
+    {
+      "kit": "soul",
+      "bank": "jazz",
+      "pieces": {
+        "kick": {
+          "rmsDb": -26.99,
+          "peakDb": -10.22
+        },
+        "snare": {
+          "rmsDb": -29.28,
+          "peakDb": -5.45
+        },
+        "tomHigh": {
+          "rmsDb": -30.82,
+          "peakDb": -9.53
+        },
+        "tomLow": {
+          "rmsDb": -31.57,
+          "peakDb": -10.43
+        },
+        "hat": {
+          "rmsDb": -47.36,
+          "peakDb": -20.36
+        },
+        "hatOpen": {
+          "rmsDb": -53.21,
+          "peakDb": -21.31
+        },
+        "hatPedal": {
+          "rmsDb": -50.57,
+          "peakDb": -25.92
+        },
+        "ride": {
+          "rmsDb": -39.88,
+          "peakDb": -14.89
+        },
+        "rideBell": {
+          "rmsDb": -44.46,
+          "peakDb": -17.42
+        },
+        "flatRide": {
+          "rmsDb": -48.22,
+          "peakDb": -17.84
+        },
+        "crash": {
+          "rmsDb": -43.07,
+          "peakDb": -18.21
+        }
+      }
+    },
+    {
+      "kit": "latin",
+      "bank": "jazz",
+      "pieces": {
+        "kick": {
+          "rmsDb": -26.61,
+          "peakDb": -10.11
+        },
+        "snare": {
+          "rmsDb": -29.15,
+          "peakDb": -5.31
+        },
+        "tomHigh": {
+          "rmsDb": -30.5,
+          "peakDb": -9.43
+        },
+        "tomLow": {
+          "rmsDb": -30.99,
+          "peakDb": -10.38
+        },
+        "hat": {
+          "rmsDb": -46.86,
+          "peakDb": -19.73
+        },
+        "hatOpen": {
+          "rmsDb": -52.07,
+          "peakDb": -20.92
+        },
+        "hatPedal": {
+          "rmsDb": -49.94,
+          "peakDb": -25.21
+        },
+        "ride": {
+          "rmsDb": -38.58,
+          "peakDb": -14.28
+        },
+        "rideBell": {
+          "rmsDb": -43.39,
+          "peakDb": -16.53
+        },
+        "flatRide": {
+          "rmsDb": -46.92,
+          "peakDb": -16.84
+        },
+        "crash": {
+          "rmsDb": -41.08,
+          "peakDb": -16.99
+        }
+      }
+    },
+    {
+      "kit": "soft",
+      "bank": "jazz",
+      "pieces": {
+        "kick": {
+          "rmsDb": -26.56,
+          "peakDb": -10.09
+        },
+        "snare": {
+          "rmsDb": -29.19,
+          "peakDb": -5.42
+        },
+        "tomHigh": {
+          "rmsDb": -30.47,
+          "peakDb": -9.43
+        },
+        "tomLow": {
+          "rmsDb": -30.9,
+          "peakDb": -10.39
+        },
+        "hat": {
+          "rmsDb": -47.28,
+          "peakDb": -20.35
+        },
+        "hatOpen": {
+          "rmsDb": -52.38,
+          "peakDb": -21.3
+        },
+        "hatPedal": {
+          "rmsDb": -50.11,
+          "peakDb": -25.67
+        },
+        "ride": {
+          "rmsDb": -39.04,
+          "peakDb": -14.84
+        },
+        "rideBell": {
+          "rmsDb": -43.95,
+          "peakDb": -17.41
+        },
+        "flatRide": {
+          "rmsDb": -47.46,
+          "peakDb": -17.77
+        },
+        "crash": {
+          "rmsDb": -41.25,
+          "peakDb": -17.21
+        }
+      }
+    }
+  ],
+  "styles": [
+    {
+      "style": "popRock",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -24.3,
+            "peakDb": -6
+          },
+          "drums": {
+            "rmsDb": -28.92,
+            "peakDb": -8.06
+          },
+          "bass": {
+            "rmsDb": -28.61,
+            "peakDb": -16.37
+          },
+          "comping": {
+            "rmsDb": -30.65,
+            "peakDb": -15.63
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -36.34,
+            "peakDb": -18.04
+          },
+          "drums": {
+            "rmsDb": -40.97,
+            "peakDb": -20.1
+          },
+          "bass": {
+            "rmsDb": -40.65,
+            "peakDb": -28.41
+          },
+          "comping": {
+            "rmsDb": -42.69,
+            "peakDb": -27.67
+          }
+        }
+      }
+    },
+    {
+      "style": "traditionalJazz",
+      "kit": "jazz",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -27.13,
+            "peakDb": -11.28
+          },
+          "drums": {
+            "rmsDb": -41.7,
+            "peakDb": -16.94
+          },
+          "bass": {
+            "rmsDb": -30.02,
+            "peakDb": -17.6
+          },
+          "comping": {
+            "rmsDb": -31.85,
+            "peakDb": -13.47
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -39.17,
+            "peakDb": -23.33
+          },
+          "drums": {
+            "rmsDb": -53.74,
+            "peakDb": -28.98
+          },
+          "bass": {
+            "rmsDb": -42.06,
+            "peakDb": -29.64
+          },
+          "comping": {
+            "rmsDb": -43.89,
+            "peakDb": -25.51
+          }
+        }
+      }
+    },
+    {
+      "style": "fusionJazz",
+      "kit": "fusion",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.97,
+            "peakDb": -6.2
+          },
+          "drums": {
+            "rmsDb": -31.1,
+            "peakDb": -6.58
+          },
+          "bass": {
+            "rmsDb": -29.52,
+            "peakDb": -16.27
+          },
+          "comping": {
+            "rmsDb": -32.71,
+            "peakDb": -16.78
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -38.01,
+            "peakDb": -18.24
+          },
+          "drums": {
+            "rmsDb": -43.14,
+            "peakDb": -18.62
+          },
+          "bass": {
+            "rmsDb": -41.56,
+            "peakDb": -28.31
+          },
+          "comping": {
+            "rmsDb": -44.75,
+            "peakDb": -28.82
+          }
+        }
+      }
+    },
+    {
+      "style": "blues",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -23.89,
+            "peakDb": -6.88
+          },
+          "drums": {
+            "rmsDb": -29.29,
+            "peakDb": -8.03
+          },
+          "bass": {
+            "rmsDb": -26.96,
+            "peakDb": -15.32
+          },
+          "comping": {
+            "rmsDb": -31.81,
+            "peakDb": -16.48
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -35.94,
+            "peakDb": -18.92
+          },
+          "drums": {
+            "rmsDb": -41.33,
+            "peakDb": -20.07
+          },
+          "bass": {
+            "rmsDb": -39,
+            "peakDb": -27.36
+          },
+          "comping": {
+            "rmsDb": -43.85,
+            "peakDb": -28.52
+          }
+        }
+      }
+    },
+    {
+      "style": "motown",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -23.72,
+            "peakDb": -4.59
+          },
+          "drums": {
+            "rmsDb": -27.84,
+            "peakDb": -4.2
+          },
+          "bass": {
+            "rmsDb": -28.21,
+            "peakDb": -15.57
+          },
+          "comping": {
+            "rmsDb": -31.24,
+            "peakDb": -14.22
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -35.76,
+            "peakDb": -16.64
+          },
+          "drums": {
+            "rmsDb": -39.88,
+            "peakDb": -16.24
+          },
+          "bass": {
+            "rmsDb": -40.25,
+            "peakDb": -27.61
+          },
+          "comping": {
+            "rmsDb": -43.28,
+            "peakDb": -26.26
+          }
+        }
+      }
+    },
+    {
+      "style": "funk",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.48,
+            "peakDb": -6.42
+          },
+          "drums": {
+            "rmsDb": -29.12,
+            "peakDb": -8.48
+          },
+          "bass": {
+            "rmsDb": -30.23,
+            "peakDb": -16.27
+          },
+          "comping": {
+            "rmsDb": -33.42,
+            "peakDb": -14.85
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -37.53,
+            "peakDb": -18.46
+          },
+          "drums": {
+            "rmsDb": -41.16,
+            "peakDb": -20.52
+          },
+          "bass": {
+            "rmsDb": -42.27,
+            "peakDb": -28.31
+          },
+          "comping": {
+            "rmsDb": -45.47,
+            "peakDb": -26.89
+          }
+        }
+      }
+    },
+    {
+      "style": "neoSoul",
+      "kit": "soul",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.45,
+            "peakDb": -7.69
+          },
+          "drums": {
+            "rmsDb": -30.89,
+            "peakDb": -10.21
+          },
+          "bass": {
+            "rmsDb": -29.12,
+            "peakDb": -15.98
+          },
+          "comping": {
+            "rmsDb": -32.33,
+            "peakDb": -15.5
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -37.49,
+            "peakDb": -19.73
+          },
+          "drums": {
+            "rmsDb": -42.93,
+            "peakDb": -22.25
+          },
+          "bass": {
+            "rmsDb": -41.16,
+            "peakDb": -28.02
+          },
+          "comping": {
+            "rmsDb": -44.37,
+            "peakDb": -27.54
+          }
+        }
+      }
+    },
+    {
+      "style": "bossa",
+      "kit": "latin",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.59,
+            "peakDb": -8.63
+          },
+          "drums": {
+            "rmsDb": -36.56,
+            "peakDb": -15.13
+          },
+          "bass": {
+            "rmsDb": -30.91,
+            "peakDb": -17.72
+          },
+          "comping": {
+            "rmsDb": -28.32,
+            "peakDb": -10.97
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -37.63,
+            "peakDb": -20.67
+          },
+          "drums": {
+            "rmsDb": -48.6,
+            "peakDb": -27.17
+          },
+          "bass": {
+            "rmsDb": -42.95,
+            "peakDb": -29.76
+          },
+          "comping": {
+            "rmsDb": -40.36,
+            "peakDb": -23.01
+          }
+        }
+      }
+    },
+    {
+      "style": "latin",
+      "kit": "latin",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -26.57,
+            "peakDb": -10.36
+          },
+          "drums": {
+            "rmsDb": -33.93,
+            "peakDb": -11.92
+          },
+          "bass": {
+            "rmsDb": -32,
+            "peakDb": -19.06
+          },
+          "comping": {
+            "rmsDb": -30.13,
+            "peakDb": -14.1
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -38.61,
+            "peakDb": -22.4
+          },
+          "drums": {
+            "rmsDb": -45.97,
+            "peakDb": -23.96
+          },
+          "bass": {
+            "rmsDb": -44.04,
+            "peakDb": -31.1
+          },
+          "comping": {
+            "rmsDb": -42.17,
+            "peakDb": -26.14
+          }
+        }
+      }
+    },
+    {
+      "style": "ballad",
+      "kit": "soft",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -29.14,
+            "peakDb": -12.61
+          },
+          "drums": {
+            "rmsDb": -43.99,
+            "peakDb": -20.13
+          },
+          "bass": {
+            "rmsDb": -32.61,
+            "peakDb": -17.49
+          },
+          "comping": {
+            "rmsDb": -32.88,
+            "peakDb": -16.55
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -41.18,
+            "peakDb": -24.66
+          },
+          "drums": {
+            "rmsDb": -56.03,
+            "peakDb": -32.17
+          },
+          "bass": {
+            "rmsDb": -44.66,
+            "peakDb": -29.53
+          },
+          "comping": {
+            "rmsDb": -44.92,
+            "peakDb": -28.59
+          }
+        }
+      }
+    },
+    {
+      "style": "jazzWaltz",
+      "kit": "jazz",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -26.86,
+            "peakDb": -10.01
+          },
+          "drums": {
+            "rmsDb": -39.92,
+            "peakDb": -14.11
+          },
+          "bass": {
+            "rmsDb": -29.63,
+            "peakDb": -16.97
+          },
+          "comping": {
+            "rmsDb": -32.2,
+            "peakDb": -13.58
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -38.9,
+            "peakDb": -22.05
+          },
+          "drums": {
+            "rmsDb": -51.96,
+            "peakDb": -26.15
+          },
+          "bass": {
+            "rmsDb": -41.67,
+            "peakDb": -29.01
+          },
+          "comping": {
+            "rmsDb": -44.24,
+            "peakDb": -25.62
+          }
+        }
+      }
+    },
+    {
+      "style": "afroCuban68",
+      "kit": "latin",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -24.67,
+            "peakDb": -10.36
+          },
+          "drums": {
+            "rmsDb": -32.93,
+            "peakDb": -11.45
+          },
+          "bass": {
+            "rmsDb": -29.31,
+            "peakDb": -17.45
+          },
+          "comping": {
+            "rmsDb": -28.08,
+            "peakDb": -14.05
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -36.71,
+            "peakDb": -22.4
+          },
+          "drums": {
+            "rmsDb": -44.97,
+            "peakDb": -23.49
+          },
+          "bass": {
+            "rmsDb": -41.35,
+            "peakDb": -29.49
+          },
+          "comping": {
+            "rmsDb": -40.12,
+            "peakDb": -26.09
+          }
+        }
+      }
+    },
+    {
+      "style": "samba",
+      "kit": "latin",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -23.19,
+            "peakDb": -6.6
+          },
+          "drums": {
+            "rmsDb": -32.91,
+            "peakDb": -17.14
+          },
+          "bass": {
+            "rmsDb": -28.95,
+            "peakDb": -17.74
+          },
+          "comping": {
+            "rmsDb": -25.55,
+            "peakDb": -9.32
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -35.23,
+            "peakDb": -18.64
+          },
+          "drums": {
+            "rmsDb": -44.95,
+            "peakDb": -29.18
+          },
+          "bass": {
+            "rmsDb": -40.99,
+            "peakDb": -29.78
+          },
+          "comping": {
+            "rmsDb": -37.59,
+            "peakDb": -21.36
+          }
+        }
+      }
+    },
+    {
+      "style": "secondLine",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -23.89,
+            "peakDb": -4.54
+          },
+          "drums": {
+            "rmsDb": -29.07,
+            "peakDb": -5.45
+          },
+          "bass": {
+            "rmsDb": -27.9,
+            "peakDb": -14.24
+          },
+          "comping": {
+            "rmsDb": -30.43,
+            "peakDb": -12.51
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -35.93,
+            "peakDb": -16.58
+          },
+          "drums": {
+            "rmsDb": -41.12,
+            "peakDb": -17.49
+          },
+          "bass": {
+            "rmsDb": -39.94,
+            "peakDb": -26.28
+          },
+          "comping": {
+            "rmsDb": -42.47,
+            "peakDb": -24.55
+          }
+        }
+      }
+    },
+    {
+      "style": "reggae",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -26.53,
+            "peakDb": -6.68
+          },
+          "drums": {
+            "rmsDb": -35.3,
+            "peakDb": -7.03
+          },
+          "bass": {
+            "rmsDb": -28.72,
+            "peakDb": -15.58
+          },
+          "comping": {
+            "rmsDb": -33.81,
+            "peakDb": -15.64
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -38.57,
+            "peakDb": -18.72
+          },
+          "drums": {
+            "rmsDb": -47.34,
+            "peakDb": -19.08
+          },
+          "bass": {
+            "rmsDb": -40.76,
+            "peakDb": -27.63
+          },
+          "comping": {
+            "rmsDb": -45.85,
+            "peakDb": -27.68
+          }
+        }
+      }
+    },
+    {
+      "style": "slowSoul128",
+      "kit": "soul",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.24,
+            "peakDb": -8.12
+          },
+          "drums": {
+            "rmsDb": -31.19,
+            "peakDb": -10.13
+          },
+          "bass": {
+            "rmsDb": -28.08,
+            "peakDb": -13.66
+          },
+          "comping": {
+            "rmsDb": -32.09,
+            "peakDb": -16.37
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -37.28,
+            "peakDb": -20.16
+          },
+          "drums": {
+            "rmsDb": -43.23,
+            "peakDb": -22.17
+          },
+          "bass": {
+            "rmsDb": -40.12,
+            "peakDb": -25.7
+          },
+          "comping": {
+            "rmsDb": -44.13,
+            "peakDb": -28.41
+          }
+        }
+      }
+    },
+    {
+      "style": "boogaloo",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -24.35,
+            "peakDb": -4.39
+          },
+          "drums": {
+            "rmsDb": -29.12,
+            "peakDb": -5.48
+          },
+          "bass": {
+            "rmsDb": -27.46,
+            "peakDb": -14.09
+          },
+          "comping": {
+            "rmsDb": -33.74,
+            "peakDb": -20.38
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -36.4,
+            "peakDb": -16.43
+          },
+          "drums": {
+            "rmsDb": -41.16,
+            "peakDb": -17.52
+          },
+          "bass": {
+            "rmsDb": -39.5,
+            "peakDb": -26.13
+          },
+          "comping": {
+            "rmsDb": -45.78,
+            "peakDb": -32.42
+          }
+        }
+      }
+    },
+    {
+      "style": "modernStraightJazz",
+      "kit": "jazz",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -27.76,
+            "peakDb": -10.17
+          },
+          "drums": {
+            "rmsDb": -39.16,
+            "peakDb": -13.78
+          },
+          "bass": {
+            "rmsDb": -31.37,
+            "peakDb": -18.26
+          },
+          "comping": {
+            "rmsDb": -31.94,
+            "peakDb": -13.6
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -39.8,
+            "peakDb": -22.21
+          },
+          "drums": {
+            "rmsDb": -51.2,
+            "peakDb": -25.82
+          },
+          "bass": {
+            "rmsDb": -43.41,
+            "peakDb": -30.31
+          },
+          "comping": {
+            "rmsDb": -43.98,
+            "peakDb": -25.64
+          }
+        }
+      }
+    },
+    {
+      "style": "hardRock",
+      "kit": "tama",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -23.14,
+            "peakDb": -3.02
+          },
+          "drums": {
+            "rmsDb": -27.32,
+            "peakDb": -3.45
+          },
+          "bass": {
+            "rmsDb": -28.01,
+            "peakDb": -14.1
+          },
+          "comping": {
+            "rmsDb": -28.9,
+            "peakDb": -18.71
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -35.18,
+            "peakDb": -15.06
+          },
+          "drums": {
+            "rmsDb": -39.36,
+            "peakDb": -15.49
+          },
+          "bass": {
+            "rmsDb": -40.05,
+            "peakDb": -26.15
+          },
+          "comping": {
+            "rmsDb": -40.94,
+            "peakDb": -30.76
+          }
+        }
+      }
+    },
+    {
+      "style": "legatoFusion",
+      "kit": "fusion",
+      "levels": {
+        "1": {
+          "mix": {
+            "rmsDb": -25.64,
+            "peakDb": -7.8
+          },
+          "drums": {
+            "rmsDb": -31.16,
+            "peakDb": -8.48
+          },
+          "bass": {
+            "rmsDb": -28.39,
+            "peakDb": -13.94
+          },
+          "comping": {
+            "rmsDb": -34.42,
+            "peakDb": -19.94
+          }
+        },
+        "0.25": {
+          "mix": {
+            "rmsDb": -37.69,
+            "peakDb": -19.84
+          },
+          "drums": {
+            "rmsDb": -43.2,
+            "peakDb": -20.52
+          },
+          "bass": {
+            "rmsDb": -40.43,
+            "peakDb": -25.98
+          },
+          "comping": {
+            "rmsDb": -46.46,
+            "peakDb": -31.98
+          }
+        }
+      }
+    }
+  ]
+}

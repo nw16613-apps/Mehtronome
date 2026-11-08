@@ -1,3 +1,4 @@
+import {buildStudyPerformance,articulateStudyPerformance} from './study-performance.js';
 import {CHORDS,MODES} from './music.js';
 import {segmentAt,pitchForDegree} from './reference-catalogue.js';
 import {COMPOSITION_STYLES,CHORUS_ROLES} from './composition-vocabulary.js';
@@ -122,6 +123,7 @@ function generateParts(score,targets,profile,clip){
    const notes=voicings(h,profile.power)[0];if(notes)add(score,'comping',beat,{notes,duration:Math.min(1.5,h.duration),velocity:.34,changeEntry:true},targets);
   }
  }
+ buildStudyPerformance(score,targets,clip,add);
  // The actual destination constrains both ends of a cadence, including wraps.
  const melody=entries(score.sequence);
  for(const c of score.form.cadences){
@@ -135,6 +137,7 @@ export function composeProgression(base,settings,def,targets,clip){
  const profile=COMPOSITION_STYLES[def.id],score={...base,developmentBeats:base.developmentBeats};
  generateParts(score,targets,profile,clip);
  planMelody(score,targets,null,clip);planBass(score,targets,null,clip);planChords(score,targets,profile,null,clip);
+ articulateStudyPerformance(score,targets,clip);
  const energy=[.87,1,.8,.94];
  for(const track of ['sequence','bass','comping','drums'])for(const events of score[track])for(const event of events)event.velocity*=energy[event.chorus];
  score.choruses=CHORUS_ROLES.map((role,index)=>({index,role,start:index*score.developmentBeats,end:(index+1)*score.developmentBeats}));

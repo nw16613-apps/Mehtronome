@@ -1,3 +1,4 @@
+import {hasStudyPerformance} from './study-performance.js';
 import {COMPOSITION_STYLES} from './composition-vocabulary.js';
 const walking=new Set(['traditionalJazz','jazzWaltz','blues','modernStraightJazz']);
 const protectedPercussion=new Set(['latin','bossa','samba','afroCuban68']);
@@ -23,6 +24,7 @@ export function coordinateEnsemble(source){
   });
   for(const event of score.comping[grid])for(let i=grid;i<Math.min(length,grid+Math.ceil(event.duration*rate));i++)chords[i]=1;
   for(const event of score.drums[grid]){
+   if(hasStudyPerformance(score.id)&&['tomHigh','tomLow'].includes(event.name)&&event.at>=beats-1&&score.form.bars[Math.floor(grid/(beats*rate))]?.phraseEnd){event.transition=true;event.performanceCue='answer';}
    if(event.name==='kick'&&score.bass[grid].length&&!walking.has(score.id)&&!protectedPercussion.has(score.id)&&score.id!=='reggae'){
     event.velocity=Math.min(.85,event.velocity*1.07);event.matchedBass=true;matched++;for(const bass of score.bass[grid])bass.locksKick=true;
    }
@@ -37,7 +39,9 @@ export function coordinateEnsemble(source){
   if(grid-lastAnswer<beats*rate*2||chords[grid])continue;
   let clear=true;for(let i=Math.max(0,grid-3);i<Math.min(length,grid+9);i++)if(lead[i]){clear=false;break;}
   if(!clear)continue;
-  const event={...candidate,notes:[...candidate.notes],conversation:'reply'};score.comping[grid].push(event);lastAnswer=grid;answers++;
+  const event={...candidate,notes:[...candidate.notes],conversation:'reply'};
+  if(score.id==='blues'){let next=grid+9;while(next<Math.min(length,grid+beats*rate)&&!attacks[next])next++;event.duration=Math.min(event.duration,Math.max(.12,(next-grid)/rate-.15));event.articulation='damped';}
+  score.comping[grid].push(event);lastAnswer=grid;answers++;
   for(let i=grid;i<Math.min(length,grid+Math.ceil(event.duration*rate));i++)chords[i]=1;
  }
  // Only ornaments move. Kick, backbeat, one-drop and Latin/compound foundations

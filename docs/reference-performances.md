@@ -123,7 +123,8 @@ and Return. A short vamp repeats for at least four bars before changing pass;
 a longer chart uses a complete chart cycle per pass. This finite development cycle
 repeats; it is not unlimited improvisation.
 
-The statement and return keep a recognisable connection to the reference. The
+Except for the refined Blues and Legato Fusion performances described below,
+the statement and return keep a recognisable connection to the reference. The
 middle passes compose new melodic phrases from a style-specific rhythm and motif
 grammar, with goals selected from the actual upcoming changes and cadences.
 Contrast develops a slower, inverted motif in a different register. Bass routes
@@ -168,3 +169,26 @@ remain internal source material; the developed arranger is the normal playback p
 four-pass performances are ready for listening-led assessment on familiar and
 unfamiliar charts. External AI-model investigation remains deferred until this
 local arranger work has been assessed; no such model has been integrated.
+
+## Blues and Legato Fusion performance refinement
+
+Normal chart playback for these two styles now uses authored eight-bar melodic
+conversations across all four passes, adapted to the current harmony. Recurring
+motifs have varied rhythms, held answers and breathing space. Development changes
+the motif and placement; contrast thins the part. These are deterministic phrase
+rules, not an external AI model or newly recorded performances. Raw reference
+scores remain unchanged.
+
+Blues guitar uses two- or three-note voicings emphasizing thirds and sevenths,
+with distinct damped and ringing releases. Legato Fusion uses more open, sustained
+guitar swells and connected melodic notes. The existing ensemble coordinator
+places replies in melodic gaps; phrase-ending toms participate in those handoffs.
+Supporting, Countermelody and Featured remain the existing activity choices.
+No new controls are required. Other styles retain their current arrangements,
+and the free sound palette, Sonor kit and sustained Harmony settings remain.
+
+Verification: 31 audio/composer/regression checks, six browser workflows including
+mobile playback, TypeScript and an all-style dry mix audit passed. The audit uses
+a 12 kHz offline rendering with effects disabled; it checks levels and headroom,
+not perceived realism or every possible progression. Listening on the user's
+playback device remains the final musical assessment.

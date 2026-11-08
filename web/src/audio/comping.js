@@ -162,7 +162,7 @@ export class CompingInstrument{
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'comping',grid)){
         const pitches=event.notes.map(midi=>midi+plan.transpose);
-        this.strike(pitches,event.duration,event.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone);
+        this.strike(pitches,event.duration,event.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,0,null,event.articulation);
         onEvent?.({type:'comping',sample,step,notes:pitches,duration:event.duration,velocity:event.velocity,reference:plan.score.id,bar:event.bar});
       }
       return;
@@ -218,7 +218,8 @@ export class CompingInstrument{
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
       const originalShape=this.shapes[tone]||this.shapes.warmTine,expanded=this.soundLibrary==='expanded',bank=expanded?expandedBankForTone(tone):null;
-      const shape=expanded&&bank?{...originalShape,bank:'expanded:'+bank,cutoff:bank==='flute'?9000:bank==='wurlitzer'?9000:tone==='legatoGuitar'?6500:originalShape.cutoff}:originalShape;
+      let shape=expanded&&bank?{...originalShape,bank:'expanded:'+bank,cutoff:bank==='flute'?9000:bank==='wurlitzer'?9000:tone==='legatoGuitar'?6500:originalShape.cutoff}:originalShape;
+      if(expression==='damped'){const seconds=.035;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='ringing'){const seconds=.18;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='swell')shape={...shape,attackFrames:Math.max(shape.attackFrames,this.rate*.065)};
       Object.assign(voice,{pendingLegato:null,glideRemaining:0,noiseState:Math.imul(midi+1,1664525),breathFiltered:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames+(strum?Math.round((strumDown?index:pitches.length-1-index)*this.rate*.006):0),shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const muted=expanded&&!STUDIO_BANKS.has(bank)&&['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone)&&duration<.42&&this.banks['expanded:guitarMuted']?.length;
       const zones=this.banks[muted?'expanded:guitarMuted':shape.bank]?.length?this.banks[muted?'expanded:guitarMuted':shape.bank]:this.banks[originalShape.bank]||[];
