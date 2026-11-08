@@ -13,8 +13,9 @@ test('blues uses dyads and small upper replies with real damped/ringing articula
  const fusion=referencePlan(settings('legatoFusion')).score;assert.ok(fusion.comping.flat().every(e=>e.articulation==='swell'));assert.ok(fusion.comping.flat().some(e=>e.duration>4));assert.ok(fusion.comping.flat().filter(e=>e.notes.at(-1)-e.notes[0]>=12).length>fusion.comping.flat().length*.4);assert.ok(fusion.sequence.flat().some(e=>e.articulation==='connected'));
  for(const id of ['blues','legatoFusion']){const a=referencePlan(settings(id,{sequenceActivity:'supporting'})).score,b=referencePlan(settings(id,{sequenceActivity:'featured'})).score;assert.ok(a.sequence.flat().length<b.sequence.flat().length);assert.ok(a.interaction.chordReplies>0,id+' replies in actual melodic gaps');}
 });
-test('the study pass is limited to Blues/Fusion and leaves other styles and cached source data untouched',()=>{
- const score=referenceBasePlan(settings('funk')).score,snapshot=JSON.stringify(score);const fail=()=>{throw new Error('unexpected planning');};buildStudyPerformance(score,[],fail,fail);articulateStudyPerformance(score,[],fail);assert.equal(JSON.stringify(score),snapshot);assert.equal(score.performanceStudy,undefined);
+test('unknown styles are a no-op, and the two approved studies retain their original performance version',()=>{
+ const score={...referenceBasePlan(settings('funk')).score,id:'unknown'},snapshot=JSON.stringify(score);const fail=()=>{throw new Error('unexpected planning');};buildStudyPerformance(score,[],fail,fail);articulateStudyPerformance(score,[],fail);assert.equal(JSON.stringify(score),snapshot);
+ for(const id of ['blues','legatoFusion'])assert.equal(referenceBasePlan(settings(id)).score.performanceStudy.version,1);
 });
 const rate=16000,kit=await readSampleBank(rate);
 test('written damping and swells change the actual recorded guitar envelope',()=>{

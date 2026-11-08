@@ -1,5 +1,6 @@
 import {CHORDS} from './music.js';
 import {segmentAt} from './reference-catalogue.js';
+import {hasStylePerformance,buildStylePerformance,articulateStylePerformance} from './style-performance.js';
 const pc=n=>(n%12+12)%12;
 const nearest=(n,pcs,low=55,high=86)=>{let best=low,d=Infinity;for(let p=low;p<=high;p++)if(pcs.includes(pc(p))&&Math.abs(p-n)<d){best=p;d=Math.abs(p-n);}return best;};
 const cell=s=>s.split('|').map(bar=>bar.split(' ').filter(Boolean).map(n=>n.split(':').map(Number)));
@@ -9,9 +10,9 @@ const STUDIES={
  blues:{motif:[0,3,5,3,0,-2,-3,0],lead:cell('.5:.34:0 1:.34:1 1.5:.95:2|1.5:.34:2 2:.34:1 2.5:.85:0|.5:.34:0 1:.34:1 1.5:.34:2 2:.85:3|.5:.34:3 1:.34:4 1.5:1.1:5|.5:.34:0 1:.34:1 2:1.1:2|1:.34:2 1.5:.34:3 2.5:.8:4|.5:.34:4 1:.34:5 1.5:.34:6 2:.85:7|.5:.34:3 1:.34:4 1.5:1.2:7'),comp:cell('0:.8:0|1.5:.45:1 3:.55:2|0:.7:0 2.5:.5:1|1:1.1:2|0:.85:0 2.5:.4:1|1.5:.9:2|0:.8:0 3:.4:1|.5:.45:1 1.5:.65:2')},
  legatoFusion:{motif:[0,2,5,4,1,3,-1,0],lead:cell('.5:.82:0 1.25:.85:1 2:1.5:2|0:1.08:2 1:.83:3 1.75:1.6:4|.75:1.35:4 2:1.3:5|1:1.8:7|.25:1.08:0 1.25:.58:1 1.75:1.2:2 3:.5:3|.5:1.2:3 2:1.4:4|0:.83:4 .75:.83:5 1.5:1.4:6|.5:2.1:7'),comp:cell('0:5.5:0||1:3.3:1||.5:4.8:0||1:2.5:2|2:.9:1')},
 };
-export const hasStudyPerformance=id=>Object.hasOwn(STUDIES,id);
+export const hasStudyPerformance=id=>Object.hasOwn(STUDIES,id)||hasStylePerformance(id);
 export function buildStudyPerformance(score,targets,clip,add){
- const study=STUDIES[score.id];if(!study)return;
+ const study=STUDIES[score.id];if(!study)return buildStylePerformance(score,targets,clip,add);
  const rate=12,beats=score.beats,total=score.sequence.length/rate,at=b=>segmentAt(targets,b),third=h=>pc(h.root+(CHORDS[h.chord].intervals.includes(3)?3:CHORDS[h.chord].intervals.includes(4)?4:CHORDS[h.chord].intervals[1]||0));
  score.sequence=score.sequence.map(()=>[]);score.comping=score.comping.map(()=>[]);
  for(let bar=0;bar<Math.ceil(total/beats);bar++){
@@ -41,7 +42,7 @@ export function buildStudyPerformance(score,targets,clip,add){
  score.performanceStudy={version:1,style:score.id,phraseBars:8};
 }
 export function articulateStudyPerformance(score,targets,clip){
- if(!hasStudyPerformance(score.id))return;
+ if(!Object.hasOwn(STUDIES,score.id))return articulateStylePerformance(score,targets,clip);
  const at=b=>segmentAt(targets,b),rate=12,rows=score.sequence.flatMap((es,grid)=>es.map(event=>({grid,event})));
  for(let i=0;i<rows.length;i++){
   const {grid,event:e}=rows[i],next=rows[i+1],beat=grid/rate;

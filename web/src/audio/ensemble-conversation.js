@@ -41,6 +41,12 @@ export function coordinateEnsemble(source){
   if(!clear)continue;
   const event={...candidate,notes:[...candidate.notes],conversation:'reply'};
   if(score.id==='blues'){let next=grid+9;while(next<Math.min(length,grid+beats*rate)&&!attacks[next])next++;event.duration=Math.min(event.duration,Math.max(.12,(next-grid)/rate-.15));event.articulation='damped';}
+  // New style replies finish before the audible line re-enters. Long chord
+  // beds can still support a melody; a labelled answer should leave it room.
+  if(score.performanceStudy?.version>=2){
+   const end=Math.min(length,grid+Math.ceil(event.duration*rate)+3);
+   for(let next=grid+1;next<end;next++)if(attacks[next]){event.duration=Math.min(event.duration,Math.max(.12,(next-grid)/rate-.15));break;}
+  }
   score.comping[grid].push(event);lastAnswer=grid;answers++;
   for(let i=grid;i<Math.min(length,grid+Math.ceil(event.duration*rate));i++)chords[i]=1;
  }

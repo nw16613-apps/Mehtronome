@@ -123,10 +123,11 @@ and Return. A short vamp repeats for at least four bars before changing pass;
 a longer chart uses a complete chart cycle per pass. This finite development cycle
 repeats; it is not unlimited improvisation.
 
-Except for the refined Blues and Legato Fusion performances described below,
-the statement and return keep a recognisable connection to the reference. The
-middle passes compose new melodic phrases from a style-specific rhythm and motif
-grammar, with goals selected from the actual upcoming changes and cadences.
+All twenty styles now use an eight-bar performance vocabulary across the four
+passes, with goals selected from the actual upcoming changes and cadences.
+Statement and return share recognisable motifs; development changes their
+rhythmic placement and contour. See [performance development](style-performance-development.md)
+for the per-style chordal and melodic treatment.
 Contrast develops a slower, inverted motif in a different register. Bass routes
 and chordal parts also change across passes: walking/two-feel, sustained parts,
 comping replies or ostinatos are chosen to fit the style. Written slash bass and
@@ -184,8 +185,9 @@ with distinct damped and ringing releases. Legato Fusion uses more open, sustain
 guitar swells and connected melodic notes. The existing ensemble coordinator
 places replies in melodic gaps; phrase-ending toms participate in those handoffs.
 Supporting, Countermelody and Featured remain the existing activity choices.
-No new controls are required. Other styles retain their current arrangements,
-and the free sound palette, Sonor kit and sustained Harmony settings remain.
+No new controls are required. The same approach has now been extended to the
+other eighteen styles; the two approved performances described here remain.
+The free sound palette, Sonor kit and sustained Harmony settings remain.
 
 Verification: 31 audio/composer/regression checks, six browser workflows including
 mobile playback, TypeScript and an all-style dry mix audit passed. The audit uses
