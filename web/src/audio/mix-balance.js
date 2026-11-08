@@ -10,4 +10,8 @@ export const COMPING_TRIMS=Object.fromEntries(Object.entries(COMPING_TRIM_DB).ma
 export const BASS_TRIMS={electric:10**(2/20),upright:1};
 
 // Audited with repeating hits and recorded tails; hats already have source trims.
-export const CYMBAL_TRIM_DB={tama:{ride:-8,rideBell:-3,flatRide:-6,crash:-3},close:{ride:-3,rideBell:-3,flatRide:-2,crash:-3},live:{ride:-7.5,rideBell:-2,flatRide:-2,crash:-1.5},jazz:{ride:-2,rideBell:-2,flatRide:-1,crash:-2.5},default:{ride:-2,rideBell:-2,flatRide:-1,crash:-2}};
+export const CYMBAL_TRIM_DB={sonor:{ride:1,rideBell:2,flatRide:1,crash:1},tama:{ride:-8,rideBell:-3,flatRide:-6,crash:-3},close:{ride:-3,rideBell:-3,flatRide:-2,crash:-3},live:{ride:-9,rideBell:-2,flatRide:-2,crash:-1.5},jazz:{ride:-2,rideBell:-2,flatRide:-1,crash:-2.5},default:{ride:-2,rideBell:-2,flatRide:-1,crash:-2}};
+
+// Fixed per-piece source calibration from the common real-bank kit audit.
+// These trims do not change the played velocities or recorded layer choice.
+export const DRUM_PIECE_TRIM_DB={sonor:{kick:-1.5,snare:-1.5,tomHigh:4.5,tomLow:4},close:{kick:-2,snare:1.5,tomLow:-2},jazz:{kick:-5.5,tomHigh:-1,tomLow:-2},tama:{tomHigh:-1.5}};

@@ -1,9 +1,10 @@
+import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
 import {drumStrokeGain} from './drum-performance.js';
 import {referenceEvents,referenceGrid} from './reference-performances.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
 import {ensembleDrums,ensembleBass} from './ensemble-arrangements.js';
-import {CYMBAL_TRIM_DB} from './mix-balance.js';
+import {CYMBAL_TRIM_DB,DRUM_PIECE_TRIM_DB} from './mix-balance.js';
 import {ADDITIONAL_STYLES,additionalDrumCell} from './additional-styles.js';
 const additionalGrooves=Object.fromEntries(Object.entries(ADDITIONAL_STYLES).map(([id,s])=>[s.groove,id]));
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
@@ -234,7 +235,7 @@ export class Rhythm {
     this.bassCursor = 0;
     this.sampleCursors = Object.create(null);
     this.chokeDecay = Math.exp(-1 / (rate * .006));
-    this.kitProfiles=Object.fromEntries(Object.entries(DRUM_KITS).map(([id,profile])=>[id,{...profile,cymbalGains:Object.fromEntries(Object.entries(CYMBAL_TRIM_DB[profile.bank]||CYMBAL_TRIM_DB.default).map(([name,db])=>[name,10**(db/20)])),decayFactor:profile.decay?Math.exp(-1/(rate*profile.decay)):1}]));
+    this.kitProfiles=Object.fromEntries(Object.entries(DRUM_KITS).map(([id,profile])=>[id,{...profile,pieceGains:Object.fromEntries(Object.entries(DRUM_PIECE_TRIM_DB[profile.bank]||{}).map(([name,db])=>[name,10**(db/20)])),cymbalGains:Object.fromEntries(Object.entries(CYMBAL_TRIM_DB[profile.bank]||CYMBAL_TRIM_DB.default).map(([name,db])=>[name,10**(db/20)])),decayFactor:profile.decay?Math.exp(-1/(rate*profile.decay)):1}]));
     this.drumVoices = Array.from({length:24}, () => ({sample:null, position:0, increment:1, gain:0, filter:0, tone:1, choke:1, choking:false, kind:''}));
     this.bassInstrument = new SampledBass(rate,kit);
     this.bassVoices = this.bassInstrument.voices;
@@ -250,7 +251,7 @@ export class Rhythm {
   }
   prepareGroups(){
     const available=groups=>Object.fromEntries(Object.entries(groups).map(([name,ids])=>[name,ids.filter(id=>this.kit[id]?.length)]));
-    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);this.expandedGroups=available(EXPANDED_DRUM_GROUPS);this.tamaGroups=available(TAMA_DRUM_GROUPS);this.liveDynamics=available(LIVE_DYNAMIC_GROUPS);this.expandedLiveGroups={...this.liveGroups,...this.liveDynamics,hatSoft:this.expandedGroups.hatSoft,rideSoft:this.expandedGroups.rideSoft};
+    this.groups=available(DRUM_SAMPLE_GROUPS);this.jazzGroups=available(JAZZ_DRUM_GROUPS);this.liveGroups=available(LIVE_DRUM_GROUPS);this.latinGroups=available(LATIN_DRUM_GROUPS);this.expandedGroups=available(EXPANDED_DRUM_GROUPS);this.tamaGroups=available(TAMA_DRUM_GROUPS);this.sonorGroups=available(SONOR_DRUM_GROUPS);this.liveDynamics=available(LIVE_DYNAMIC_GROUPS);this.expandedLiveGroups={...this.liveGroups,...this.liveDynamics,hatSoft:this.expandedGroups.hatSoft,rideSoft:this.expandedGroups.rideSoft};
   }
   gridAt(settings, beat, phase) {
     return settings.referencePlan?.score.gridRate?referenceGrid(settings.referencePlan,'drums',beat,phase,settings):beat*4+backingSubdivision(phase,settings.drumGroove,settings.bpm);
@@ -278,8 +279,8 @@ export class Rhythm {
     const profile=this.kitProfiles[kitName]||this.kitProfiles.rock;
     const fallback = name==='flatRide'?'ride':name==='hatOpen'||name==='hatPedal'?'hat':name.startsWith('tom')?'snare':name;
     const jazz=profile.bank==='jazz'&&(this.jazzGroups.kick.length||this.jazzGroups.kickSoft.length);
-    const live=profile.bank==='live'&&this.liveGroups.kick.length,tama=profile.bank==='tama'&&this.tamaGroups.kick.length,layered=jazz||live||tama;
-    const groups=tama?this.tamaGroups:jazz?this.jazzGroups:live?this.liveGroups:this.groups,dynamic=this.expandedSounds||tama;
+    const live=profile.bank==='live'&&this.liveGroups.kick.length,tama=profile.bank==='tama'&&this.tamaGroups.kick.length,sonor=profile.bank==='sonor'&&this.sonorGroups.kick.length,layered=jazz||live||tama||sonor;
+    const groups=sonor?this.sonorGroups:tama?this.tamaGroups:jazz?this.jazzGroups:live?this.liveGroups:this.groups,dynamic=this.expandedSounds||tama||sonor;
     const candidates=tama?groups:live&&dynamic?this.expandedLiveGroups:groups;
     let group=name;
     if(name==='snare')group=gain<(jazz?.17:.2)?'snareGhost':layered&&gain<.4?'snareSoft':'snare';
@@ -290,7 +291,7 @@ export class Rhythm {
       if(alternative&&candidates[alternative]?.length)group=alternative;
     }
     const ids=this.latinGroups[name]||candidates[group]||groups[name]||this.groups[group]||this.groups[name]||[];
-    const cursorKey=(this.latinGroups[name]?'latin:':tama?'tama:':jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
+    const cursorKey=(this.latinGroups[name]?'latin:':sonor?'sonor:':tama?'tama:':jazz?'jazz:':live?'live:':'rock:')+group,cursor=this.sampleCursors[cursorKey]||0;
     const id=ids.length?ids[cursor%ids.length]:fallback;
     const pcm=this.kit[id];
     if(!pcm?.length)return;
@@ -303,7 +304,7 @@ export class Rhythm {
     // any kick, backbeat or grid onset away from the shared sample clock.
     const tuning=[1,.997,1.003,.999][cursor%4];
     const tone=name==='kick'?.85:name==='snare'||name==='rim'?.48+.42*Math.min(1,gain/.7):.94;
-    const balancedGain=gain*(DRUM_BALANCE[name]??1)*(profile.cymbalGains[name]??1);
+    const balancedGain=gain*(DRUM_BALANCE[name]??1)*(profile.cymbalGains[name]??1)*(profile.pieceGains[name]??1);
     Object.assign(voice,{sample:pcm,position:0,increment:tuning,gain:balancedGain,filter:0,tone:Math.min(.98,tone*profile.brightness),envelope:1,decayFactor:profile.decayFactor,choke:1,choking:false,kind:name,delay:delayFrames});
     onEvent({type:name,sample:sample+delayFrames,gridSample:sample,delayFrames,step,beat,sub,gain,sampleId:id});
   }

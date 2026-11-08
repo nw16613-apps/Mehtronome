@@ -147,3 +147,14 @@ revisions, microphone choices and processing; full CC BY 4.0 licences are in
 PCM16 recordings (3.47 MiB), keeping the tightened kick release and natural
 acoustic tuning. Group data are separated from asset URLs for AudioWorklet
 compatibility. No artist recordings are sampled.
+
+## Sonor Force 3001 replacement fusion kit
+
+Sam Greene, Sonor Force 3001; SFZ/FLAC mapping and conversion by kinwie.
+Source: https://github.com/sfzinstruments/SamsSonor/tree/ef3e32058924ed1c3335e86d03094d3f310a9104
+Original and modified recordings: CC BY-SA 4.0. Full licence and per-file source
+and derivative hashes are in `sonor/LICENSE` and `sonor/sources.json`.
+45 selected original velocity/left-right-hand articulations. Derivatives are
+mono 32 kHz PCM16 with onset trim, gentle filtering/low-mid cuts, normalization,
+edge fades and shortened kick-only decay. Derived WAVs retain CC BY-SA 4.0.
+Used for Fusion jazz and Legato fusion. No DRS recordings complete this bank.

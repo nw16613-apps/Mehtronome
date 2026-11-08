@@ -168,8 +168,8 @@ remain available.
 
 The standard style palette uses the newly imported Tama Superstar/MuldjordKit
 for Pop/rock, Blues, Motown, Funk, Second-line, Reggae, Boogaloo and Hard rock.
-Fusion jazz and Legato Fusion retain the preferred live-fusion DRS character
-with broader recorded dynamics. Jazz, bossa, Latin, ballad and other light
+Fusion jazz and Legato Fusion now use the separate Sonor Force 3001 recordings,
+with stronger snare/tom attack definition and a short kick tail. Jazz, bossa, Latin, ballad and other light
 styles retain their appropriate club-jazz profiles. Legacy source assets and
 sampler support remain for reproducibility, without comparison controls.
 
@@ -210,3 +210,30 @@ Latin, jazz and ballad retain a lighter touch. Snare ghost notes, light kick
 taps, cymbals, Latin percussion, groove onsets and kit decay are preserved.
 The change adds no controls or new sample banks. Real-bank checks cover harder
 layer selection, increased hit energy, retained timing and all-style headroom.
+
+### Sonor replacement for the live-fusion kit
+
+Fusion jazz and Legato fusion use Sam Greene’s Sonor Force 3001 library
+(CC BY-SA 4.0), with 45 recordings covering original velocity layers and
+alternating snare hands. This replaces the DRS session for those two styles;
+their prepared note/onset patterns and stronger stroke dynamics are unchanged.
+A separate worklet-safe group map and fingerprinted asset manifest load only
+Sonor hits for these styles. Kick decay is short, snare/tom low-mid buildup is
+reduced, and cymbals have independent fixed trims. Original source/derivative
+hashes, modification details and the full licence accompany the samples.
+
+### Kit balance audit
+
+`kit-mix-audit.json` records the real-bank common-pattern measurements for all
+11 kit profiles and 16-bar/four-pass automatic vamps in all 20 styles at reference
+and full faders. Fixed source trims bring the close snare forward, reduce the
+jazz-family kick imbalance, balance Sonor toms and its cymbals, and keep accented
+DRS rides behind the snare. These trims do not change played velocities, selected
+recording layers, note timing, mixer settings or reverb sends. Snare RMS across
+the common-pattern kit audit spans about 2.3 dB; the largest full-fader dry
+ensemble peak in this audit is -3.61 dBFS. These are pre-FX measurements, not a
+claim about perceived quality on every speaker or added-effect configuration.
+
+The separate comping-library investigation is documented in
+[comping-library-research.md](comping-library-research.md); commercial agreements
+and prices have not been obtained and no comping replacement is claimed yet.

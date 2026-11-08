@@ -1,3 +1,4 @@
+import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
 import {EXPANDED_SAMPLE_ZONES,EXPANDED_DRUM_GROUPS,expandedBankForTone,sourceFor} from './sound-library.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {DRUM_KITS} from './instrumentation.js';
@@ -8,7 +9,7 @@ export function sampleNamesForSettings(s){
  const muted=new Set(String(s.mutedChannels||'').split(',')),names=new Set(),audible=id=>s[id]===true&&!muted.has(id)&&(s[id+'Volume']??.25)>0;
  const addGroups=groups=>{for(const ids of Object.values(groups))for(const id of ids)names.add(id);},addZones=zones=>{for(const z of zones||[])names.add(z.id);};
  if(audible('drums')){
-  const profile=DRUM_KITS[s.drumKit]||DRUM_KITS.rock,groups=profile.bank==='tama'?TAMA_DRUM_GROUPS:profile.bank==='live'?LIVE_DRUM_GROUPS:profile.bank==='jazz'?JAZZ_DRUM_GROUPS:DRUM_SAMPLE_GROUPS;
+  const profile=DRUM_KITS[s.drumKit]||DRUM_KITS.rock,groups=profile.bank==='sonor'?SONOR_DRUM_GROUPS:profile.bank==='tama'?TAMA_DRUM_GROUPS:profile.bank==='live'?LIVE_DRUM_GROUPS:profile.bank==='jazz'?JAZZ_DRUM_GROUPS:DRUM_SAMPLE_GROUPS;
   const latin=profile.bank==='jazz'&&['bossa','tumbao'].includes(s.drumGroove);if(latin)for(const ids of s.drumGroove==='bossa'?[groups.kickSoft,groups.rim,groups.hat]:[groups.kickSoft])for(const id of ids)names.add(id);else addGroups(groups);
   addGroups(latinSampleGroups(s.drumGroove));if(profile.tambourine||['samba','motown'].includes(s.drumGroove))for(const id of DRUM_SAMPLE_GROUPS.tambourine)names.add(id);
   if(sourceFor(s,'drums')==='expanded'&&profile.bank==='live'){addGroups(EXPANDED_DRUM_GROUPS);addGroups(LIVE_DYNAMIC_GROUPS);}

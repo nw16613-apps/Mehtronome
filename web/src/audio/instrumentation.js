@@ -6,7 +6,7 @@ export const DRUM_KITS={
  close:{name:'Close acoustic kit',bank:'close',brightness:1,decay:0},
  rock:{name:'Live acoustic kit',bank:'live',brightness:1,decay:0},
  jazz:{name:'Club jazz kit',bank:'jazz',brightness:1,decay:0},
- fusion:{name:'Live fusion kit',bank:'live',brightness:1,decay:0},
+ fusion:{name:'Sonor Force 3001 kit',bank:'sonor',brightness:1.04,decay:0},
  vintage:{name:'Live blues kit',bank:'live',brightness:.96,decay:1},
  motown:{name:'Live soul kit + tambourine',bank:'live',brightness:.96,decay:.75,tambourine:true},
  tight:{name:'Live funk kit',bank:'live',brightness:1.02,decay:1},
