@@ -13,12 +13,12 @@ export function installBackingStyles(changed:()=>void,referenceActions?:{load:(i
  const reportError=(error:unknown)=>{references.querySelector('#reference-status')!.textContent=error instanceof Error?error.message:'Could not load the reference performance.';};
  references.addEventListener('click',async event=>{const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button');if(!button||button.disabled||!referenceActions)return;referenceBusy=true;button.disabled=true;try{if(button.dataset.loadReference)await referenceActions.load(button.dataset.loadReference);else if(button.id==='reference-arrange')await referenceActions.arrange();else if(button.id==='reference-clear')await referenceActions.clear();else await referenceActions.play();}catch(error){referenceBusy=false;changed();reportError(error);return;}finally{referenceBusy=false;}changed();});
  const reflect=(settings:any,locked=false)=>{const state=referenceStatus(settings),def=state.id?REFERENCE_PERFORMANCES[state.id as keyof typeof REFERENCE_PERFORMANCES]:null;
-  references.querySelector('#reference-status')!.textContent=state.active?(state.adapted?'Developed arrangement ready · phrases follow your chord changes.':`${def!.name} · written performance ready. Tempo and transposition are supported.`):state.id?state.reason:'Load a study to hear its written parts. Undo in the chord sheet restores your previous chart.';
+  references.querySelector('#reference-status')!.textContent=state.active?(state.adapted?'Developed arrangement ready · sections and cadences shape the phrases.':`${def!.name} · written performance ready. Tempo and transposition are supported.`):state.id?state.reason:'Load a study to hear its written parts. Undo in the chord sheet restores your previous chart.';
   references.querySelectorAll<HTMLButtonElement>('[data-load-reference]').forEach(button=>button.disabled=locked||referenceBusy);
   references.querySelector<HTMLButtonElement>('#reference-play')!.disabled=!state.active||locked||referenceBusy;
   references.querySelector<HTMLButtonElement>('#reference-arrange')!.disabled=locked||referenceBusy;
   const clear=references.querySelector<HTMLButtonElement>('#reference-clear')!;clear.hidden=!settings.customProgression?.arrangedPerformance;clear.disabled=locked||referenceBusy;
-  activity.disabled=state.active;
+  activity.disabled=false;
  };
  page.append(section);if(movement){page.append(movement);movement.classList.add('workspace-group');}
  page.querySelector(':scope>p')!.textContent='Choose a backing style, then unmute the instruments you want in the mixer.';document.getElementById('open-sound-settings')!.textContent='Backing styles →';

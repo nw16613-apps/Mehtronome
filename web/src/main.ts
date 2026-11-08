@@ -2374,7 +2374,7 @@ for(const selector of ['.guitar-controls','.guitar-legend']){const element=guita
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
 
-async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
+async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);if(customProgression.referencePerformance||customProgression.arrangedPerformance){const activity=document.querySelector<HTMLSelectElement>('#sequence-activity');if(activity)activity.value='supporting';}chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
 
 installRepertoire({
  templates:[
@@ -2410,14 +2410,14 @@ backingStyleUi=installBackingStyles(update,{
  load:async(id:string)=>{
   if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before loading a reference study.');
   const chart=referenceChart(id);
-  select('backing-style').value=id;select('sequence-activity').value='countermelody';
+  select('backing-style').value=id;select('sequence-activity').value='supporting';
   input('trainer-enabled').checked=false;input('gap-enabled').checked=false;
   await loadWorkingChart(chart);tempo(chart.bpm);update();
  },
  arrange:async()=>{
   if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before arranging the chart.');
   materializeWorkingChart();const progression={...customProgression,arrangedPerformance:settings.backingStyle};delete progression.referencePerformance;
-  rememberCustomEdit();customProgression=progression;input('extension-morph').checked=false;saveCustomProgression('Developed arrangement applied.');update();
+  rememberCustomEdit();customProgression=progression;select('sequence-activity').value='supporting';input('extension-morph').checked=false;saveCustomProgression('Developed arrangement applied.');update();
  },
  clear:async()=>{
   if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;

@@ -5,7 +5,7 @@ import {Engine} from '../src/audio/engine.js';
 import {harmonyAt,MODES,CHORDS} from '../src/audio/music.js';
 import {BACKING_STYLES,backingStyleInstruments,resolveDrumKit} from '../src/practice/backing-styles.js';
 import {readSampleBank} from '../scripts/read-sample-bank.mjs';
-function config(id,extra={}){const chart=referenceChart(id),s={...BACKING_STYLES[id].settings,...backingStyleInstruments(id),backingStyle:id,...chart,customProgression:normalizeCustomProgression(chart.progression),template:'custom',progression:true,bpm:120,countIn:false,loopEnabled:false,extensionMorph:false,drums:true,bass:true,comping:true,sequence:true,click:0,harmony:0,backingHumanize:0,soundLibrary:'expanded',...extra};s.drumKit=resolveDrumKit(s);return s;}
+function config(id,extra={}){const chart=referenceChart(id),s={...BACKING_STYLES[id].settings,...backingStyleInstruments(id),backingStyle:id,...chart,customProgression:normalizeCustomProgression(chart.progression),template:'custom',progression:true,bpm:120,countIn:false,loopEnabled:false,extensionMorph:false,drums:true,bass:true,comping:true,sequence:true,click:0,harmony:0,backingHumanize:0,soundLibrary:'expanded',sequenceActivity:'featured',...extra};s.drumKit=resolveDrumKit(s);return s;}
 test('both complete scores survive normalization, use valid harmony, and have independent developed parts',()=>{
  for(const [id,def]of Object.entries(REFERENCE_PERFORMANCES).filter(([id])=>['blues','legatoFusion'].includes(id))){
   const s=config(id),plan=referencePlan(s);assert.equal(plan.score.bars,def.bars);assert.equal(plan.transpose,0);assert.equal(s.customProgression.referencePerformance,id);

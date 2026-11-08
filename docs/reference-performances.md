@@ -21,9 +21,14 @@ Open Sound Settings, select a backing style, then use Reference performances:
   restores the arrangement. The existing standard arrangement library remains
   the default for charts that have not had an arrangement applied.
 
-Only the selected style's study is displayed, keeping the panel compact. The
-melodic activity selector is inactive during a scored performance: its phrase
-lengths, rests and note counts are written into the score.
+Only the selected style's study is displayed, keeping the panel compact. All
+reference studies and newly applied arrangements default to **Supporting**.
+Reopening a saved reference chart also selects Supporting. The melodic activity
+selector remains available during playback: Supporting keeps short connected
+phrases with longer rests, Countermelody retains more of the line, and Featured
+plays the complete written or adapted line. Whole phrase windows are selected rather than
+random individual notes. A short cadential answer can finish a retained lead-in
+across a phrase boundary. Activity changes do not restart playback.
 
 ## Style catalogue
 
@@ -83,8 +88,8 @@ playback, including split bars, chord or beat loops, and slash bass notes. It:
   lengths. It does not restart a one-bar melody at every chord change.
 
 Plans are cached across mixer/FX/tempo changes and rebuilt when the harmony,
-style, key, metre or loop changes. No generation or network access occurs in the
-sample callback. Markers survive draft, export/import and saved-setup normalization.
+style, key, metre or loop changes. Activity changes only re-filter the cached
+melodic score, without recomposing or restarting the rhythm section. No generation or network access occurs in the sample callback. Markers survive draft, export/import and saved-setup normalization.
 
 Exact reference playback requires its matching harmony, durations, native metre,
 style, Full chart and chord morphing off. Editing an exact reference falls back
@@ -92,6 +97,25 @@ to standard backing with a visible explanation. Applied arrangements instead
 recompile for subsequent chord edits. The first adaptive implementation supports
 the style's native metre and playback timelines up to 512 beats; unsupported
 settings fall back with a visible reason. Tempo and transposition are supported.
+
+## Section and cadence checkpoint
+
+Applied arrangements now analyse the actual rehearsal sections and common
+cadences before playback. A–B–A forms select opening, contrasting and returning
+source material. Unmarked short vamps keep a longer four-bar phrase arc instead
+of restarting the melody each cycle. Section cues can occur inside a bar.
+
+Dominant resolutions, tritone substitutes, backdoor movement and minor plagal
+returns guide nearby melodic arrivals; deceptive movement resolves into the
+actual written destination. Suitable walking, shuffle and Motown bass parts
+approach that destination, while son keeps its anticipated bass placement.
+Target-section endings receive restrained percussion transitions. Source-location
+tom/crash fills are removed when they do not fit the target form. Son clave,
+one-drop kicks and twelve-triplet soul patterns retain their native placement.
+Contrast sections reduce comping intensity, leaving room around the lead.
+
+The complete Featured source scores remain intact for direct reference playback;
+structural recomposition applies only to **Arrange my chart**.
 
 ## Scope of this checkpoint
 

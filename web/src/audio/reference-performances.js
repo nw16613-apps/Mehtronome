@@ -1,3 +1,4 @@
+import {withReferenceActivity} from './reference-activity.js';
 import {arrangeReference,arrangementSupport} from './reference-arranger.js';
 import {STYLE_REFERENCES,catalogueScore} from './reference-catalogue.js';
 // Original, explicitly written ensemble studies. This is score playback, not
@@ -142,7 +143,7 @@ export function referenceScore(id){
 export function referenceChart(id){
  const def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)throw new Error('Unknown reference performance.');let beat=0;
  const letters=[0,1,1,2,2,3,3,4,5,5,6,6];
- return {key:def.key,beats:def.beats||4,bpm:def.bpm,progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored reference performance. Exact written ensemble parts; no external music-generation service. Changing harmony, durations, metre or style returns to standard backing. Transposition and tempo changes are supported.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/(def.beats||4)];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
+ return {key:def.key,beats:def.beats||4,bpm:def.bpm,sequenceActivity:'supporting',progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored reference performance. Exact written ensemble parts; no external music-generation service. Changing harmony, durations, metre or style returns to standard backing. Transposition and tempo changes are supported.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/(def.beats||4)];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
 }
 // Validate once per configure, never per sample. An edited chart must not keep
 // playing the old pitches under new chord symbols. Keep the marker for Undo.
@@ -158,7 +159,18 @@ export function referenceStatus(settings){
  if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*(def.beats||4))!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
  return {active:true,id,adapted:false,reason:''};
 }
-export function referencePlan(settings){const status=referenceStatus(settings);if(!status.active)return null;const def=REFERENCE_PERFORMANCES[status.id];let transpose=((settings.key-def.key+18)%12)-6;return status.adapted?{score:arrangeReference(referenceScore(status.id),def,settings),transpose:0}:{score:referenceScore(status.id),transpose};}
+export function referenceBasePlan(settings){
+ const status=referenceStatus(settings);if(!status.active)return null;
+ const def=REFERENCE_PERFORMANCES[status.id],transpose=status.adapted?0:((settings.key-def.key+18)%12)-6;
+ const score=status.adapted?arrangeReference(referenceScore(status.id),def,settings):referenceScore(status.id);
+ return {score,transpose};
+}
+export function referenceActivityPlan(base,activity){
+ if(!base)return null;
+ return {...base,score:withReferenceActivity(base.score,REFERENCE_PERFORMANCES[base.score.id],activity)};
+}
+export function referencePlan(settings){return referenceActivityPlan(referenceBasePlan(settings),settings.sequenceActivity);}
+
 export function referenceEvents(plan,track,grid){const slots=plan.score[track];return slots[((grid%slots.length)+slots.length)%slots.length];}
 
 // Native scores use twelve ticks per beat so thirds and sixteenths coexist.

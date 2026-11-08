@@ -1,3 +1,4 @@
+import {arrangementForm,finishArrangement} from './arrangement-form.js';
 import {CHORDS,MODES,harmonyAt,progressionTimeline} from './music.js';
 import {harmonySegments,segmentAt,pitchForDegree} from './reference-catalogue.js';
 const pc=n=>((n%12)+12)%12;
@@ -12,7 +13,7 @@ export function arrangementSupport(settings,def){
  if(!total||total>512)return 'Use a chart or loop of up to 512 beats for this arrangement.';
  return '';
 }
-function targetSegments(settings){let at=0;return progressionTimeline(settings).map(s=>{const h=harmonyAt(settings,s.step),entry={...h,start:at,end:at+s.duration,root:h.chordPcs[0],chord:h.chordId,mode:h.mode,duration:s.duration,step:s.step};at+=s.duration;return entry;});}
+function targetSegments(settings){let at=0;return progressionTimeline(settings).map(s=>{const h=harmonyAt(settings,s.step),entry={...h,start:at,end:at+s.duration,root:h.chordPcs[0],chord:h.chordId,mode:h.mode,duration:s.duration,step:s.step,section:settings.customProgression.steps[s.step]?.section||''};at+=s.duration;return entry;});}
 const role=(interval,chord)=>{const ints=CHORDS[chord].intervals;for(const degree of ['1','3','5','7','9'])if(pc(pitchForDegree(chord,degree))===pc(interval))return degree;return null;};
 function degreePitch(to,degree){
  const mapped=pc(to.root+pitchForDegree(to.chord,degree)),allowed=[...new Set([...to.scalePcs,...to.chordPcs])];
@@ -50,6 +51,7 @@ export function arrangeReference(source,def,settings){
  const beats=settings.beats,targets=targetSegments(settings),chartBeats=targets.at(-1).end,sourceBeats=def.bars*beats;
  const common=chartBeats*sourceBeats/gcd(chartBeats,sourceBeats),total=common<=512?common:Math.max(chartBeats,Math.ceil(sourceBeats/chartBeats)*chartBeats);
  const gridRate=12,length=total*gridRate,score={id:def.id,bars:total/beats,beats,rate:12,gridRate,adapted:true,chartBeats,sequence:Array.from({length},()=>[]),bass:Array.from({length},()=>[]),comping:Array.from({length},()=>[]),drums:Array.from({length},()=>[])};
+ score.form=arrangementForm(settings,def,targets,total);
  const sourceSegments=harmonySegments(def),getTarget=beat=>segmentAt(targets,beat),allowed=h=>[...new Set([...h.scalePcs,...h.chordPcs])];
  const clip=(at,duration,pitches)=>{
   let remaining=duration,position=at;
@@ -65,15 +67,14 @@ export function arrangeReference(source,def,settings){
  const previousSourceGrid={sequence:-1,bass:-1,comping:-1,drums:-1};
  for(let grid=0;grid<length;grid++){
   const beat=grid/12,bar=Math.floor(beat/beats),inBar=beat%beats;
-  let sourceBeat=beat%sourceBeats;
-  // Give an irregular-length chart a real closing bar, not a chopped phrase.
-  if(beat>=total-beats)sourceBeat=sourceBeats-beats+inBar;
-  const from=segmentAt(sourceSegments,sourceBeat),to=getTarget(beat);
+  const to=getTarget(beat),phrase=score.form.bars[bar];
   for(const track of ['sequence','bass','comping','drums']){
+   const sourceBeat=track==='drums'?beat%sourceBeats:phrase.sourceBar*beats+inBar;
+   const from=segmentAt(sourceSegments,sourceBeat);
    const rate=source.gridRate||(track==='sequence'?source.rate:4),sourceGrid=Math.floor(sourceBeat*rate+1e-7);
    if(previousSourceGrid[track]===sourceGrid)continue;previousSourceGrid[track]=sourceGrid;
    for(const event of source[track][sourceGrid%source[track].length]){
-    let result={...event,at:inBar,bar,sourceBar:event.bar,targetStep:to.step};
+    let result={...event,at:inBar,bar,sourceBar:event.bar,targetStep:to.step,phraseRole:phrase.role,section:phrase.section};
     if(track==='drums'){score[track][grid].push(result);continue;}
     if(track==='sequence'){
      const degree=role(pc(event.midi-from.root),from.chord),mapped=degree?degreePitch(to,degree):scaleMap(event.midi,from,to);
@@ -118,5 +119,5 @@ export function arrangeReference(source,def,settings){
    if(!first){const notes=chordVoicing(sourceSegments[0],[60,64,67,71],target,null,def.id);score.comping[grid].push({at:at%beats,bar:Math.floor(at/beats),notes,duration:Math.min(1.5,target.duration),velocity:.34,targetStep:target.step,changeEntry:true});}
   }
  }
- return score;
+ return finishArrangement(score,settings,def,targets,clip);
 }

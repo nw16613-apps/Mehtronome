@@ -1,4 +1,4 @@
-import {referencePlan} from './reference-performances.js';
+import {referenceBasePlan,referenceActivityPlan} from './reference-performances.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
@@ -304,7 +304,9 @@ export class Engine {
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
     const referenceKey=JSON.stringify([s.key,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
-    if(referenceKey!==this.referenceCacheKey){this.referenceCacheKey=referenceKey;this.cachedReferencePlan=referencePlan(s);}
+    const referenceChanged=referenceKey!==this.referenceCacheKey;
+    if(referenceChanged){this.referenceCacheKey=referenceKey;this.cachedReferenceBasePlan=referenceBasePlan(s);}
+    if(referenceChanged||this.referenceActivity!==s.sequenceActivity){this.referenceActivity=s.sequenceActivity;this.cachedReferencePlan=referenceActivityPlan(this.cachedReferenceBasePlan,s.sequenceActivity);}
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:this.cachedReferencePlan});
     const timeline=s.progression?progressionTimeline(s):[];
     const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
