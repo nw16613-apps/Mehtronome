@@ -1,0 +1,33 @@
+{
+  "status": "inputs-prepared",
+  "generated": false,
+  "style": "legatoFusion",
+  "fixtureSha256": "35e85bc393e549e80fb85191315cdb69df19f8e562003dff46ec65f6571313b7",
+  "sourceCommit": "e854147d266c137134102940c84a836c7ebcfa41",
+  "bpm": 104,
+  "primerBeats": 16,
+  "totalBeats": 64,
+  "seeds": [
+    1729,
+    2718,
+    3141,
+    5772
+  ],
+  "upstream": "https://github.com/jthickstun/anticipation",
+  "inputs": {
+    "baseline": "feb5d1476774b0c9827d1adc204f461444cd22af284df4c44a7138bce3ee720a",
+    "primer": "3bcc9d51754f38619805d52a3ca0a8357a19942f587d96371538b1d95aeed42b",
+    "controls": "e761d9beea9564ab8947352b1ab7d7b2d70b9d2ece0bdf7f7f36397c995f4a13"
+  },
+  "preflight": {
+    "upstreamRevision": "af37397922665a0fb8d474d7988b0f3755a38d45",
+    "torch": "2.6.0+cpu",
+    "modelClassImport": true,
+    "gpu": false,
+    "primerEvents": 30,
+    "controlEvents": 57,
+    "controlTokensSeparated": true,
+    "pitchRoundTripPassed": true,
+    "generationRan": false
+  }
+}

@@ -4,6 +4,18 @@ Research checkpoint: 8 November 2026. The twelve-pass arranger is implemented;
 external-model work now begins with an offline audition. No model inference has
 been run yet and no model-generated parts are in the published app.
 
+Implementation checkpoint: the [audition workbench](../tools/model-audition/README.md)
+now exports both real study charts, writes baseline/primer/control MIDI, pins the
+author implementation, and provides a local-checkpoint runner with seed/hash
+receipts. CPU dependencies and the authors' MIDI/token conversions are verified.
+Five fixture/MIDI unit checks pass. The environment proxy blocks Hugging Face
+checkpoint downloads with HTTP 403; model generation and listening assessment
+remain pending network access. The existing app has not changed in this phase.
+
+The inspected AMT converter supplies fixed MIDI velocities. Its contribution
+must therefore be assessed as note timing, lengths and instrument/pitch choices;
+any later dynamic/articulation shaping by the app must be identified separately.
+
 ## Shortlist
 
 | Candidate | Verified capability | Fit for this app |

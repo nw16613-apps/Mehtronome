@@ -1,0 +1,7 @@
+# Isolated development environment only; no browser dependency.
+# Install CPU PyTorch separately from https://download.pytorch.org/whl/cpu.
+torch==2.6.0
+transformers==4.57.1
+numpy==1.26.4
+mido==1.2.10
+tqdm==4.65.0

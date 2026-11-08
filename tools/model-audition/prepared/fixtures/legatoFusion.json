@@ -1,0 +1,1216 @@
+{
+  "version": 1,
+  "kind": "external-model-audition-input",
+  "style": "legatoFusion",
+  "bpm": 104,
+  "beatsPerBar": 4,
+  "key": 9,
+  "totalBeats": 64,
+  "primerBeats": 16,
+  "seeds": [
+    1729,
+    2718,
+    3141,
+    5772
+  ],
+  "generated": false,
+  "sourceCommit": "e854147d266c137134102940c84a836c7ebcfa41",
+  "programs": {
+    "controls": 0,
+    "bass": 33,
+    "comping": 27,
+    "sequence": 73
+  },
+  "chords": [
+    {
+      "beat": 0,
+      "step": 0,
+      "symbol": "Amaj9♯11",
+      "chord": "maj9sharp11",
+      "mode": "lydian",
+      "chordPcs": [
+        9,
+        1,
+        4,
+        8,
+        11,
+        3
+      ],
+      "controlNotes": [
+        57,
+        61,
+        64,
+        68,
+        71,
+        75
+      ],
+      "scalePcs": [
+        9,
+        11,
+        1,
+        3,
+        4,
+        6,
+        8
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 8,
+      "step": 1,
+      "symbol": "Cm9",
+      "chord": "min9",
+      "mode": "dorian",
+      "chordPcs": [
+        0,
+        3,
+        7,
+        10,
+        2
+      ],
+      "controlNotes": [
+        48,
+        51,
+        55,
+        58,
+        62
+      ],
+      "scalePcs": [
+        0,
+        2,
+        3,
+        5,
+        7,
+        9,
+        10
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 16,
+      "step": 2,
+      "symbol": "E♭maj9♯11",
+      "chord": "maj9sharp11",
+      "mode": "lydian",
+      "chordPcs": [
+        3,
+        7,
+        10,
+        2,
+        5,
+        9
+      ],
+      "controlNotes": [
+        51,
+        55,
+        58,
+        62,
+        65,
+        69
+      ],
+      "scalePcs": [
+        3,
+        5,
+        7,
+        9,
+        10,
+        0,
+        2
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 24,
+      "step": 3,
+      "symbol": "Dm9",
+      "chord": "min9",
+      "mode": "dorian",
+      "chordPcs": [
+        2,
+        5,
+        9,
+        0,
+        4
+      ],
+      "controlNotes": [
+        50,
+        53,
+        57,
+        60,
+        64
+      ],
+      "scalePcs": [
+        2,
+        4,
+        5,
+        7,
+        9,
+        11,
+        0
+      ],
+      "bassMidi": null,
+      "duration": 4
+    },
+    {
+      "beat": 28,
+      "step": 4,
+      "symbol": "G13",
+      "chord": "dom13",
+      "mode": "mixolydian",
+      "chordPcs": [
+        7,
+        11,
+        2,
+        5,
+        9,
+        4
+      ],
+      "controlNotes": [
+        55,
+        59,
+        62,
+        65,
+        69,
+        76
+      ],
+      "scalePcs": [
+        7,
+        9,
+        11,
+        0,
+        2,
+        4,
+        5
+      ],
+      "bassMidi": null,
+      "duration": 4
+    },
+    {
+      "beat": 32,
+      "step": 5,
+      "symbol": "Cmaj9♯11",
+      "chord": "maj9sharp11",
+      "mode": "lydian",
+      "chordPcs": [
+        0,
+        4,
+        7,
+        11,
+        2,
+        6
+      ],
+      "controlNotes": [
+        48,
+        52,
+        55,
+        59,
+        62,
+        66
+      ],
+      "scalePcs": [
+        0,
+        2,
+        4,
+        6,
+        7,
+        9,
+        11
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 40,
+      "step": 6,
+      "symbol": "F♯m9",
+      "chord": "min9",
+      "mode": "dorian",
+      "chordPcs": [
+        6,
+        9,
+        1,
+        4,
+        8
+      ],
+      "controlNotes": [
+        54,
+        57,
+        61,
+        64,
+        68
+      ],
+      "scalePcs": [
+        6,
+        8,
+        9,
+        11,
+        1,
+        3,
+        4
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 48,
+      "step": 7,
+      "symbol": "B♭maj9♯11",
+      "chord": "maj9sharp11",
+      "mode": "lydian",
+      "chordPcs": [
+        10,
+        2,
+        5,
+        9,
+        0,
+        4
+      ],
+      "controlNotes": [
+        58,
+        62,
+        65,
+        69,
+        72,
+        76
+      ],
+      "scalePcs": [
+        10,
+        0,
+        2,
+        4,
+        5,
+        7,
+        9
+      ],
+      "bassMidi": null,
+      "duration": 8
+    },
+    {
+      "beat": 56,
+      "step": 8,
+      "symbol": "E13",
+      "chord": "dom13",
+      "mode": "mixolydian",
+      "chordPcs": [
+        4,
+        8,
+        11,
+        2,
+        6,
+        1
+      ],
+      "controlNotes": [
+        52,
+        56,
+        59,
+        62,
+        66,
+        73
+      ],
+      "scalePcs": [
+        4,
+        6,
+        8,
+        9,
+        11,
+        1,
+        2
+      ],
+      "bassMidi": null,
+      "duration": 4
+    },
+    {
+      "beat": 60,
+      "step": 9,
+      "symbol": "Amaj9♯11",
+      "chord": "maj9sharp11",
+      "mode": "lydian",
+      "chordPcs": [
+        9,
+        1,
+        4,
+        8,
+        11,
+        3
+      ],
+      "controlNotes": [
+        57,
+        61,
+        64,
+        68,
+        71,
+        75
+      ],
+      "scalePcs": [
+        9,
+        11,
+        1,
+        3,
+        4,
+        6,
+        8
+      ],
+      "bassMidi": null,
+      "duration": 4
+    }
+  ],
+  "tracks": {
+    "bass": [
+      {
+        "beat": 0,
+        "duration": 2.8,
+        "notes": [
+          33
+        ],
+        "velocity": 0.560976,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 3.5,
+        "duration": 0.5,
+        "notes": [
+          28
+        ],
+        "velocity": 0.523218,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 5,
+        "duration": 1.5999999999999996,
+        "notes": [
+          32
+        ],
+        "velocity": 0.523218,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 7,
+        "duration": 0.7999999999999998,
+        "notes": [
+          35
+        ],
+        "velocity": 0.523218,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 8,
+        "duration": 2.5999999999999996,
+        "notes": [
+          36
+        ],
+        "velocity": 0.560976,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 11,
+        "duration": 0.8499999999999996,
+        "notes": [
+          31
+        ],
+        "velocity": 0.523218,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 12.5,
+        "duration": 1.3000000000000007,
+        "notes": [
+          34
+        ],
+        "velocity": 0.523218,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 14.5,
+        "duration": 1.3000000000000007,
+        "notes": [
+          38
+        ],
+        "velocity": 0.523218,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 16,
+        "duration": 2.8000000000000007,
+        "notes": [
+          39
+        ],
+        "velocity": 0.560976,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 19.25,
+        "duration": 0.6000000000000014,
+        "notes": [
+          34
+        ],
+        "velocity": 0.523218,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 20.5,
+        "duration": 1.3999999999999986,
+        "notes": [
+          38
+        ],
+        "velocity": 0.523218,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 22.5,
+        "duration": 0.6999999999999993,
+        "notes": [
+          34
+        ],
+        "velocity": 0.523218,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 23.5,
+        "duration": 0.3999999999999986,
+        "notes": [
+          37
+        ],
+        "velocity": 0.523218,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 24,
+        "duration": 2.5,
+        "notes": [
+          38
+        ],
+        "velocity": 0.560976,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 27,
+        "duration": 0.8000000000000007,
+        "notes": [
+          33
+        ],
+        "velocity": 0.523218,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 28,
+        "duration": 1.3999999999999986,
+        "notes": [
+          31
+        ],
+        "velocity": 0.560976,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 30,
+        "duration": 0.8000000000000007,
+        "notes": [
+          35
+        ],
+        "velocity": 0.523218,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 31,
+        "duration": 0.8000000000000007,
+        "notes": [
+          35
+        ],
+        "velocity": 0.523218,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 32,
+        "duration": 3.3999999999999986,
+        "notes": [
+          36
+        ],
+        "velocity": 0.560976,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 36.75,
+        "duration": 1.2999999999999972,
+        "notes": [
+          31
+        ],
+        "velocity": 0.523218,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 38.5,
+        "duration": 0.8999999999999986,
+        "notes": [
+          35
+        ],
+        "velocity": 0.523218,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 39.5,
+        "duration": 0.3999999999999986,
+        "notes": [
+          41
+        ],
+        "velocity": 0.523218,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 40,
+        "duration": 2.700000000000003,
+        "notes": [
+          42
+        ],
+        "velocity": 0.560976,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 43.25,
+        "duration": 0.6000000000000014,
+        "notes": [
+          37
+        ],
+        "velocity": 0.523218,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 44.5,
+        "duration": 1.3999999999999986,
+        "notes": [
+          40
+        ],
+        "velocity": 0.523218,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 46.5,
+        "duration": 0.7000000000000028,
+        "notes": [
+          37
+        ],
+        "velocity": 0.523218,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 47.5,
+        "duration": 0.3999999999999986,
+        "notes": [
+          33
+        ],
+        "velocity": 0.523218,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 48,
+        "duration": 2.799999999999997,
+        "notes": [
+          34
+        ],
+        "velocity": 0.560976,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 51.25,
+        "duration": 0.6000000000000014,
+        "notes": [
+          29
+        ],
+        "velocity": 0.523218,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 52.5,
+        "duration": 1.5,
+        "notes": [
+          33
+        ],
+        "velocity": 0.523218,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 54.75,
+        "duration": 0.6499999999999986,
+        "notes": [
+          36
+        ],
+        "velocity": 0.523218,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 55.5,
+        "duration": 0.3999999999999986,
+        "notes": [
+          39
+        ],
+        "velocity": 0.523218,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 56,
+        "duration": 1.5,
+        "notes": [
+          40
+        ],
+        "velocity": 0.560976,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 58,
+        "duration": 0.7999999999999972,
+        "notes": [
+          44
+        ],
+        "velocity": 0.523218,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 59,
+        "duration": 0.75,
+        "notes": [
+          47
+        ],
+        "velocity": 0.523218,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 60,
+        "duration": 3.700000000000003,
+        "notes": [
+          45
+        ],
+        "velocity": 0.560976,
+        "targetStep": 9,
+        "origin": "current-arranger",
+        "articulation": null
+      }
+    ],
+    "comping": [
+      {
+        "beat": 0,
+        "duration": 5.5,
+        "notes": [
+          59,
+          61,
+          63,
+          64,
+          80
+        ],
+        "velocity": 0.2958,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 8,
+        "duration": 0.6500000000000004,
+        "notes": [
+          55,
+          58,
+          62,
+          75
+        ],
+        "velocity": 0.261,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 9,
+        "duration": 3.3000000000000007,
+        "notes": [
+          55,
+          58,
+          62,
+          75
+        ],
+        "velocity": 0.25229999999999997,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 13.5,
+        "duration": 2,
+        "notes": [
+          55,
+          62,
+          75
+        ],
+        "velocity": 0.3,
+        "targetStep": 1,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 16.5,
+        "duration": 4.800000000000001,
+        "notes": [
+          57,
+          58,
+          62,
+          67,
+          77
+        ],
+        "velocity": 0.2958,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 21.5,
+        "duration": 2,
+        "notes": [
+          62,
+          67,
+          77
+        ],
+        "velocity": 0.3,
+        "targetStep": 2,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 24,
+        "duration": 0.6499999999999986,
+        "notes": [
+          52,
+          53,
+          57,
+          72
+        ],
+        "velocity": 0.20358,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 25,
+        "duration": 2.5,
+        "notes": [
+          52,
+          53,
+          57,
+          72
+        ],
+        "velocity": 0.19679399999999997,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 28,
+        "duration": 0.6499999999999986,
+        "notes": [
+          50,
+          59,
+          65,
+          69,
+          76
+        ],
+        "velocity": 0.261,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 30,
+        "duration": 0.8999999999999986,
+        "notes": [
+          50,
+          59,
+          65,
+          69,
+          76
+        ],
+        "velocity": 0.19679399999999997,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 32,
+        "duration": 5.5,
+        "notes": [
+          52,
+          54,
+          59,
+          62,
+          67
+        ],
+        "velocity": 0.2958,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 37.5,
+        "duration": 2,
+        "notes": [
+          54,
+          62,
+          67
+        ],
+        "velocity": 0.3,
+        "targetStep": 5,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 40,
+        "duration": 0.6499999999999986,
+        "notes": [
+          49,
+          52,
+          56,
+          69
+        ],
+        "velocity": 0.261,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 41,
+        "duration": 3.299999999999997,
+        "notes": [
+          49,
+          52,
+          56,
+          69
+        ],
+        "velocity": 0.25229999999999997,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 48.5,
+        "duration": 4.799999999999997,
+        "notes": [
+          52,
+          53,
+          57,
+          62,
+          72
+        ],
+        "velocity": 0.2958,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 53.5,
+        "duration": 2,
+        "notes": [
+          57,
+          62,
+          72
+        ],
+        "velocity": 0.3,
+        "targetStep": 7,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 56,
+        "duration": 0.6499999999999986,
+        "notes": [
+          47,
+          56,
+          62,
+          66,
+          73
+        ],
+        "velocity": 0.20358,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 57,
+        "duration": 2.5,
+        "notes": [
+          47,
+          56,
+          62,
+          66,
+          73
+        ],
+        "velocity": 0.19679399999999997,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 60,
+        "duration": 0.6499999999999986,
+        "notes": [
+          52,
+          56,
+          59,
+          63,
+          73
+        ],
+        "velocity": 0.261,
+        "targetStep": 9,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      },
+      {
+        "beat": 62,
+        "duration": 0.8999999999999986,
+        "notes": [
+          52,
+          56,
+          59,
+          63,
+          73
+        ],
+        "velocity": 0.19679399999999997,
+        "targetStep": 9,
+        "origin": "current-arranger",
+        "articulation": "swell"
+      }
+    ],
+    "sequence": [
+      {
+        "beat": 0.5,
+        "duration": 0.8300000000000001,
+        "notes": [
+          73
+        ],
+        "velocity": 0.4820148000000001,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 1.25,
+        "duration": 0.8300000000000001,
+        "notes": [
+          75
+        ],
+        "velocity": 0.44631,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 2,
+        "duration": 1.5,
+        "notes": [
+          80
+        ],
+        "velocity": 0.44631,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 4,
+        "duration": 1.08,
+        "notes": [
+          81
+        ],
+        "velocity": 0.44631,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 5,
+        "duration": 0.8300000000000001,
+        "notes": [
+          80
+        ],
+        "velocity": 0.44631,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 5.75,
+        "duration": 1.5999999999999996,
+        "notes": [
+          76
+        ],
+        "velocity": 0.44631,
+        "targetStep": 0,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 24,
+        "duration": 0.8299999999999983,
+        "notes": [
+          72
+        ],
+        "velocity": 0.44631,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 24.75,
+        "duration": 0.8299999999999983,
+        "notes": [
+          74
+        ],
+        "velocity": 0.44631,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 25.5,
+        "duration": 1.3999999999999986,
+        "notes": [
+          72
+        ],
+        "velocity": 0.44631,
+        "targetStep": 3,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 28.5,
+        "duration": 2.1000000000000014,
+        "notes": [
+          71
+        ],
+        "velocity": 0.401679,
+        "targetStep": 4,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 45,
+        "duration": 1.7999999999999972,
+        "notes": [
+          73
+        ],
+        "velocity": 0.401679,
+        "targetStep": 6,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 56,
+        "duration": 0.8299999999999983,
+        "notes": [
+          73
+        ],
+        "velocity": 0.44631,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 56.75,
+        "duration": 0.8299999999999983,
+        "notes": [
+          74
+        ],
+        "velocity": 0.44631,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": "connected"
+      },
+      {
+        "beat": 57.5,
+        "duration": 1.3999999999999986,
+        "notes": [
+          71
+        ],
+        "velocity": 0.44631,
+        "targetStep": 8,
+        "origin": "current-arranger",
+        "articulation": null
+      },
+      {
+        "beat": 60.5,
+        "duration": 2.1000000000000014,
+        "notes": [
+          73
+        ],
+        "velocity": 0.401679,
+        "targetStep": 9,
+        "origin": "current-arranger",
+        "articulation": null
+      }
+    ]
+  },
+  "notes": "Four-bar authored primer, twelve-bar model continuation. Current drums stay constant. Controls are not an audible extra instrument."
+}
