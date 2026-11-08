@@ -145,7 +145,7 @@ export function referenceScore(id){
 export function referenceChart(id){
  const def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)throw new Error('Unknown reference performance.');let beat=0;
  const letters=[0,1,1,2,2,3,3,4,5,5,6,6];
- return {key:def.key,beats:def.beats||4,bpm:def.bpm,sequenceActivity:'supporting',progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored reference performance. Exact written ensemble parts; no external music-generation service. Changing harmony, durations, metre or style returns to standard backing. Transposition and tempo changes are supported.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/(def.beats||4)];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
+ return {key:def.key,beats:def.beats||4,bpm:def.bpm,sequenceActivity:'supporting',progression:{version:2,name:def.name,referencePerformance:id,sourceNotes:'Original authored backing study chart. The selected backing style automatically adapts to these changes. Transposition, tempo changes and chart edits are supported; no external music-generation service.',steps:def.harmony.map(([pc,chord,mode,duration])=>{const section=def.sections[beat/(def.beats||4)];beat+=duration;return {root:(pc-def.key+12)%12,letter:(letters[pc]-letters[def.key]+7)%7,chord,mode,beats:duration,...(section?{section}:{})};})}};
 }
 // Validate once per configure, never per sample. An edited chart must not keep
 // playing the old pitches under new chord symbols. Keep the marker for Undo.

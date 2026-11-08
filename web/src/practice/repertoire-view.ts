@@ -1,3 +1,4 @@
+import {REFERENCE_PERFORMANCES,referenceChart} from '../audio/reference-performances.js';
 import {JAZZ_STANDARDS} from './jazz-standards.js';
 import {REPERTOIRE_KEY,REPERTOIRE_STUDIES,normalizeRepertoire} from './repertoire.js';
 const esc=(s:any)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -14,7 +15,7 @@ export function installRepertoire({capture,load,makeTemplate,draft,templates,ref
  let items:any[]=[],selectedSaved='',selectedSource='single',loading=false,workingDraft=draft();
  const report=(e:any)=>status.textContent=e.message||String(e);
  const render=()=>{
-  choice.innerHTML=templates.map((group:any)=>`<optgroup label="${esc(group.name)}">${group.options.map((o:any)=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</optgroup>`).join('')+`<optgroup label="Jazz standards">${JAZZ_STANDARDS.map(s=>`<option value="standard:${s.id}">${esc(s.name)} · ${s.barCount} bars</option>`).join('')}</optgroup><optgroup label="Original studies">${REPERTOIRE_STUDIES.map(s=>`<option value="study:${s.id}">${esc(s.name.replace(/^Original study · /,''))}</option>`).join('')}</optgroup><optgroup label="My saved charts">${items.length?items.map(i=>`<option value="saved:${esc(i.id)}">${esc(i.name)}</option>`).join(''):'<option disabled>No saved charts yet</option>'}</optgroup><optgroup label="Working copy"><option value="custom">Current working chart</option></optgroup>`;
+  choice.innerHTML=templates.map((group:any)=>`<optgroup label="${esc(group.name)}">${group.options.map((o:any)=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</optgroup>`).join('')+`<optgroup label="Jazz standards">${JAZZ_STANDARDS.map(s=>`<option value="standard:${s.id}">${esc(s.name)} · ${s.barCount} bars</option>`).join('')}</optgroup><optgroup label="Backing reference studies">${Object.values(REFERENCE_PERFORMANCES).map(s=>`<option value="reference:${s.id}">${esc(s.name)} · ${s.bars} bars</option>`).join('')}</optgroup><optgroup label="Original studies">${REPERTOIRE_STUDIES.map(s=>`<option value="study:${s.id}">${esc(s.name.replace(/^Original study · /,''))}</option>`).join('')}</optgroup><optgroup label="My saved charts">${items.length?items.map(i=>`<option value="saved:${esc(i.id)}">${esc(i.name)}</option>`).join(''):'<option disabled>No saved charts yet</option>'}</optgroup><optgroup label="Working copy"><option value="custom">Current working chart</option></optgroup>`;
   choice.value=selectedSource;
   for(const id of ['repertoire-update','repertoire-delete'])(byId(id) as HTMLButtonElement).disabled=!selectedSaved||loading;
   choice.disabled=loading;(byId('repertoire-save') as HTMLButtonElement).disabled=loading;reflect();
@@ -28,6 +29,7 @@ export function installRepertoire({capture,load,makeTemplate,draft,templates,ref
    let chart:any;selectedSaved='';brief.hidden=true;
    if(source.startsWith('saved:')){const item=items.find(i=>i.id===source.slice(6));if(!item)throw new Error('That saved chart is no longer available.');chart=structuredClone(item);chart.progression.name=chart.name;selectedSaved=item.id;}
    else if(source.startsWith('standard:')){const standard=JAZZ_STANDARDS.find(s=>s.id===source.slice(9));if(!standard)throw new Error('That standard is unavailable.');chart=structuredClone(standard);}
+   else if(source.startsWith('reference:')){chart=referenceChart(source.slice(10));brief.textContent='Original backing study chart. Edit or transpose this working copy; the original stays available in this menu.';brief.hidden=false;}
    else if(source.startsWith('study:')){const study=REPERTOIRE_STUDIES.find(s=>s.id===source.slice(6));if(!study)throw new Error('That study is unavailable.');chart=structuredClone(study);brief.textContent=(study as any).brief||'Edit this working copy or loop its rehearsal sections. The original study stays available in this menu.';brief.hidden=false;}
    else if(source==='custom')chart=structuredClone(workingDraft);
    else chart=makeTemplate(source);

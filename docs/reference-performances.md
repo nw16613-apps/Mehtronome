@@ -19,8 +19,11 @@ with longer rests, Countermelody retains more of the line, and Featured plays
 longer lines. Whole phrase windows are selected rather than random individual
 notes. Activity changes do not restart playback.
 
-The studies below are internal musical source material, not a separate user
-workflow. Previously saved reference/arrangement labels do not override the
+The study charts below are also available in Harmony → Choose a progression
+under **Backing reference studies**, with their style, title and bar count.
+Selecting one loads an editable chart in its original key and metre; it keeps
+your current backing style and tempo, like the other progression options.
+The written ensemble studies remain musical source material for the arranger. Previously saved reference/arrangement labels do not override the
 currently selected backing style.
 
 ## Style catalogue
