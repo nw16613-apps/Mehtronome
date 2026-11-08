@@ -1,3 +1,4 @@
+import {harmonyAt,progressionBeatDurations,progressionDefinition,MODES,ROOT_NAMES} from './music.js';
 import {coordinateEnsemble} from './ensemble-conversation.js';
 import {withReferenceActivity} from './reference-activity.js';
 import {arrangeReference,arrangementSupport} from './reference-arranger.js';
@@ -148,7 +149,22 @@ export function referenceChart(id){
 }
 // Validate once per configure, never per sample. An edited chart must not keep
 // playing the old pitches under new chord symbols. Keep the marker for Undo.
+// Automatic playback derives an ephemeral chart from the actual harmonic
+// context. The user's chart, metadata, loop and settings are never rewritten.
+export function automaticBackingSettings(settings){
+ const def=Object.hasOwn(REFERENCE_PERFORMANCES,settings.backingStyle)?REFERENCE_PERFORMANCES[settings.backingStyle]:null;if(!def)return null;
+ const definition=progressionDefinition(settings),durations=settings.progression?progressionBeatDurations(settings):[settings.beats*4];
+ const steps=durations.map((duration,index)=>{
+  const h=harmonyAt(settings,index),root=h.chordPcs[0],intervals=[...new Set(h.scalePcs.map(pc=>(pc-root+12)%12))].sort((a,b)=>a-b);
+  const matches=id=>MODES[id]&&JSON.stringify([...MODES[id].intervals].sort((a,b)=>a-b))===JSON.stringify(intervals);
+  const mode=matches(h.mode)?h.mode:Object.keys(MODES).find(matches)||h.mode;
+  const section=definition.steps?.[index]?.section;
+  return {root:(root-settings.key+12)%12,letter:('CDEFGAB'.indexOf(h.name[0])-'CDEFGAB'.indexOf(ROOT_NAMES[settings.key][0])+7)%7,chord:h.chordId,mode,beats:duration,bass:Number.isFinite(h.bassMidi)?(h.bassMidi-settings.key+120)%12:null,...(section?{section}:{})};
+ });
+ return {...settings,progression:true,template:'custom',extensionMorph:false,loopEnabled:!!settings.progression&&settings.loopEnabled,customProgression:{version:2,kind:'custom',name:definition.name||'Current chart',steps,roman:steps.map((_,i)=>harmonyAt(settings,i).roman||'I')}};
+}
 export function referenceStatus(settings){
+ if(settings.automaticBacking){const source=automaticBackingSettings(settings),def=REFERENCE_PERFORMANCES[settings.backingStyle],reason=source?arrangementSupport(source,def):'Choose a backing style.';return {active:!reason,id:settings.backingStyle,adapted:true,reason};}
  const adapted=settings.template==='custom'?settings.customProgression?.arrangedPerformance:null;
  const id=settings.template==='custom'?(adapted||settings.customProgression?.referencePerformance):null,def=Object.hasOwn(REFERENCE_PERFORMANCES,id)?REFERENCE_PERFORMANCES[id]:null;if(!def)return {active:false,id:null,adapted:false,reason:''};
  const fail=reason=>({active:false,id,adapted:!!adapted,reason});
@@ -160,8 +176,9 @@ export function referenceStatus(settings){
  if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*(def.beats||4))!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
  return {active:true,id,adapted:false,reason:''};
 }
-export function referencePlanKey(s){return JSON.stringify([s.key,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);}
+export function referencePlanKey(s){return JSON.stringify([!!s.automaticBacking,s.key,s.mode,s.chord,s.minor,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);}
 export function referenceBasePlan(settings){
+ if(settings.automaticBacking){const source=automaticBackingSettings(settings),def=REFERENCE_PERFORMANCES[settings.backingStyle];if(!source||arrangementSupport(source,def))return null;return {score:arrangeReference(referenceScore(def.id),def,source),transpose:0};}
  const status=referenceStatus(settings);if(!status.active)return null;
  const def=REFERENCE_PERFORMANCES[status.id],transpose=status.adapted?0:((settings.key-def.key+18)%12)-6;
  const score=status.adapted?arrangeReference(referenceScore(status.id),def,settings):referenceScore(status.id);

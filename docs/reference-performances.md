@@ -7,28 +7,21 @@ form: statement, development, contrast and return. Blues remains 24 bars.
 
 ## Listening
 
-Open Sound Settings, select a backing style, then use Reference performances:
+Choose a backing style in Sound Settings, then use the normal Play controls.
+The developed arranger follows the current chart automatically; there are no
+reference-study, arrange, remove-arrangement or full-band audition controls.
+Your chart, tempo, loop and mixer choices remain yours. Unmute the instruments
+you want to hear in the existing mixer.
 
-- **Load reference study** loads that style's original chart and suggested tempo.
-  The chord-sheet Undo history retains the previous chart.
-- **Arrange my chart** composes a four-pass performance around the current chart.
-  It preserves the chord entries, key, tempo, metre and selected loop; automatic
-  chord-extension morphing is disabled so the written changes govern the score.
-- **Play full band** unmutes Drums, Bass, Comping and Melodic movement, clears
-  solos and mutes Metronome and sustained Harmony. Faders and FX stay as set.
-  Stop with the usual transport.
-- **Remove arrangement** restores standard backing for the same chart. Undo
-  restores the arrangement. The existing standard arrangement library remains
-  the default for charts that have not had an arrangement applied.
+Melodic movement defaults to **Supporting** on the first upgrade. Subsequent
+activity choices are saved normally. Supporting keeps short connected phrases
+with longer rests, Countermelody retains more of the line, and Featured plays
+longer lines. Whole phrase windows are selected rather than random individual
+notes. Activity changes do not restart playback.
 
-Only the selected style's study is displayed, keeping the panel compact. All
-reference studies and newly applied arrangements default to **Supporting**.
-Reopening a saved reference chart also selects Supporting. The melodic activity
-selector remains available during playback: Supporting keeps short connected
-phrases with longer rests, Countermelody retains more of the line, and Featured
-plays the complete written or adapted line. Whole phrase windows are selected rather than
-random individual notes. A short cadential answer can finish a retained lead-in
-across a phrase boundary. Activity changes do not restart playback.
+The studies below are internal musical source material, not a separate user
+workflow. Previously saved reference/arrangement labels do not override the
+currently selected backing style.
 
 ## Style catalogue
 
@@ -89,18 +82,21 @@ playback, including split bars, chord or beat loops, and slash bass notes. It:
 
 Plans are cached across mixer/FX/tempo changes and rebuilt when the harmony,
 style, key, metre or loop changes. Activity changes only re-filter the cached
-melodic score, without recomposing or restarting the rhythm section. No generation or network access occurs in the sample callback. Markers survive draft, export/import and saved-setup normalization.
+melodic score, without recomposing or restarting the rhythm section. No composition or network access occurs in the sample callback. Legacy chart markers remain compatible with saved data but do not select the active arranger.
 
-Exact reference playback requires its matching harmony, durations, native metre,
-style, Full chart and chord morphing off. Editing an exact reference falls back
-to standard backing with a visible explanation. Applied arrangements instead
-recompile for subsequent chord edits. The arranger supports the style's native metre and selected chart timelines
-up to 512 beats; the compiled development cycle can span up to four chart passes; unsupported
-settings fall back with a visible reason. Tempo and transposition are supported.
+The app prepares an ephemeral harmony snapshot from the actual template or
+custom chart, including each chord's modal guide, duration and bass note. It
+does not rewrite the chart. Extension morphing is excluded from this prepared
+snapshot; the user's stored morph setting is retained. Plans recompile when the
+chart or style changes. Native three- or four-beat style metres and selected
+chart timelines up to 512 beats use the developed composer. Unsupported metres
+or longer timelines retain the established style-aware backing fallback. Tempo
+and transposition are supported. Internal exact-source playback remains available
+for regression checks, without a separate interface.
 
 ## Section and cadence checkpoint
 
-Applied arrangements now analyse the actual rehearsal sections and common
+Automatic arrangements analyse the actual rehearsal sections and common
 cadences before playback. A–B–A forms select opening, contrasting and returning
 source material. Unmarked short vamps keep a longer four-bar phrase arc instead
 of restarting the melody each cycle. Section cues can occur inside a bar.
@@ -114,15 +110,14 @@ tom/crash fills are removed when they do not fit the target form. Son clave,
 one-drop kicks and twelve-triplet soul patterns retain their native placement.
 Contrast sections reduce comping intensity, leaving room around the lead.
 
-The complete Featured source scores remain intact for direct reference playback;
-structural recomposition applies only to **Arrange my chart**.
+The complete source scores remain intact for internal reference checks; normal
+app playback uses structural recomposition against the current chart.
 
 ## Chorus development and ensemble interaction
 
-**Arrange my chart** now prepares four passes: Statement, Development, Contrast
+The automatic arranger prepares four passes: Statement, Development, Contrast
 and Return. A short vamp repeats for at least four bars before changing pass;
-a longer chart uses a complete chart cycle per pass. The active pass is shown
-beneath the arrangement controls during playback. This finite development cycle
+a longer chart uses a complete chart cycle per pass. This finite development cycle
 repeats; it is not unlimited improvisation.
 
 The statement and return keep a recognisable connection to the reference. The
@@ -166,7 +161,7 @@ recorded instrument palette is retained.
 
 The chorus-development, ensemble-interaction and first whole-progression
 composition checkpoints are implemented together. The fixed reference studies
-remain available for comparison and default to Supporting. The arranger's finite
+remain internal source material; the developed arranger is the normal playback path. The arranger's finite
 four-pass performances are ready for listening-led assessment on familiar and
 unfamiliar charts. External AI-model investigation remains deferred until this
 local arranger work has been assessed; no such model has been integrated.

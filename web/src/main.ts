@@ -1,5 +1,4 @@
 import {createReferencePreparation} from './audio/reference-plan-preparation.js';
-import {referenceChart} from './audio/reference-performances.js';
 import {shapeColor,emphasizeFullNeck,perStringMapRegions} from './guitar/shape-emphasis.js';
 import {PER_STRING_STUDIES,perStringExerciseChoice,perStringExerciseGroups} from './practice/per-string-exercises.js';
 import {arpeggioFingeringControls} from './practice/per-string-exercise-view.js';
@@ -219,7 +218,7 @@ const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pulse-large" aria-labelledby="pulse-large-title"><div class="pulse-large-toolbar"><h2 id="pulse-large-title">The pulse</h2><button id="pulse-large-close" type="button" class="practice-button">Close</button></div><div id="pulse-large-number" class="pulse-large-number">Ready</div><p id="pulse-large-status">Ready to practice</p><button id="pulse-large-play" type="button" class="practice-button">Start practicing</button></dialog>`);
 let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
-let settings = { ...DEFAULTS, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
+let settings = { ...DEFAULTS, automaticBacking:true, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
 let master: GainNode | undefined;
 let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
 let masterVolume=DEFAULT_MASTER_VOLUME;
@@ -1023,10 +1022,11 @@ function commitCustomEdit(field:string){
 }
 function update() {
   fxUi?.sync();
+  settings.automaticBacking=true;
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
-  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
+  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   if (previewGripShape) stopPreview();
   const previousLoop = [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|');
@@ -1106,7 +1106,6 @@ function update() {
   if (!playing && previous !== [settings.key, settings.mode, settings.chord, settings.template].join('|')) { stopPreview(); step = 0; }
   if (!playing && settings.progression && settings.loopEnabled && previousLoop !== [settings.loopEnabled,settings.loopStart,settings.loopEnd,settings.loopUnit,settings.loopBeatStart,settings.loopBeatEnd].join('|')) { stopPreview(); step = progressionStep(settings,0); }
   settings.mutedChannels=mixerMuteMask();
-  backingStyleUi?.reflect(settings,playing||exercisePlaying||exercisePreparing||busy||stopping);
   reflectMixerChannels();
   queueAudioSettings(settings);
 
@@ -1124,7 +1123,6 @@ function tempo(value: number) {
   queueAudioSettings(settings);
 }
 function reflectPlayback() {
-  if(!playing)backingStyleUi?.playback(null);
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
@@ -1244,7 +1242,6 @@ async function initialiseAudio(requested:any=settings) {
       // Instrument note notifications are not transport beat messages.
       if(!Number.isInteger(data.beat)||!Number.isFinite(data.bpm))return;
       currentBpm = data.bpm;fxBuses?.setTempo(currentBpm);
-      backingStyleUi?.playback(data.arrangementRole||null,data.arrangementPass);
       syncMiniTransport();
       syncTrainerStatus();
       if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'between colours'}`;
@@ -1788,7 +1785,7 @@ function sendMixerSettings(){
 function updateMixerLevels(){
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
-  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'countermelody';
+  settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
   for(const id of BACKING_CHANNELS)input(id).checked=true;
   settings.click=Number(input('click').value)/100;
   settings.harmony=Number(input('harmony').value)/100;
@@ -1982,7 +1979,6 @@ function syncWorkspaceStates(){
  for(const channel of MIX_CHANNELS){const badge=document.querySelector<HTMLElement>(`[data-sound-state=${channel.id}]`);if(!badge)continue;const muted=input('mute-'+channel.id).checked,excluded=soloChannels.size>0&&!soloChannels.has(channel.id);badge.textContent=muted?'Muted in mixer':excluded?'Excluded by solo':Number(input(channel.control).value)===0?'Level at 0%':'In mix';badge.classList.toggle('is-muted',muted||excluded);}
 }
 function syncMiniTransport() {
-  backingStyleUi?.reflect(settings,playing||exercisePlaying||exercisePreparing||busy||stopping);
   document.dispatchEvent(new Event('mehtronome-playback-state'));
   syncExerciseRouteCards();
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button=>{button.disabled=playing||exercisePlaying||exercisePreparing;});
@@ -2260,7 +2256,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sequence-activity':'countermelody','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sequence-activity':'supporting','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
@@ -2382,7 +2378,7 @@ for(const selector of ['.guitar-controls','.guitar-legend']){const element=guita
 guitarOverview.append(guitarSetup);
 const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-fretboard-panel');for(const element of [el('position-overview'),el('guitar-diagrams'),document.querySelector('.position-navigation')!])guitarPanel.insertBefore(element,contextMap);
 
-async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);if(customProgression.referencePerformance||customProgression.arrangedPerformance){const activity=document.querySelector<HTMLSelectElement>('#sequence-activity');if(activity)activity.value='supporting';}chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
+async function loadWorkingChart(chart:any){if(busy||stopping)throw new Error('Wait for playback to finish stopping.');stopPreview();stopExercisePreview();if(playing)await stop();if(chart.persist!==false)rememberCustomEdit();customProgression=normalizeCustomProgression(chart.progression);chartEditSteps=[];customStepIndex=0;step=0;settings.progression=true;if(chart.key!==undefined){settings.key=chart.key;select('key').value=String(chart.key);}settings.beats=chart.beats??4;select('beats').value=String(settings.beats);select('template').value='custom';input('loop-enabled').checked=false;if(chart.persist!==false)input('extension-morph').checked=false;if(chart.persist===false){settings.customProgression=customProgression;(PROGRESSIONS as any).custom=customProgression;}else saveCustomProgression('');select('quality').value=customProgression.steps[0].mode;fillChords();select('chord').value=customProgression.steps[0].chord;fillLoopOptions(true);update();el('guided-session').hidden=true;if(chart.practise){Object.assign(exerciseView,{study:'harmonized',stage:'full',backing:true,fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');}}
 
 installRepertoire({
  templates:[
@@ -2414,32 +2410,7 @@ installProgressionGenerator({
  }
 });
 perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
-backingStyleUi=installBackingStyles(update,{
- load:async(id:string)=>{
-  if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before loading a reference study.');
-  const chart=referenceChart(id);
-  select('backing-style').value=id;select('sequence-activity').value='supporting';
-  input('trainer-enabled').checked=false;input('gap-enabled').checked=false;
-  await loadWorkingChart(chart);tempo(chart.bpm);update();
- },
- arrange:async()=>{
-  if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before arranging the chart.');
-  materializeWorkingChart();const progression={...customProgression,arrangedPerformance:settings.backingStyle};delete progression.referencePerformance;
-  rememberCustomEdit();customProgression=progression;select('sequence-activity').value='supporting';input('extension-morph').checked=false;saveCustomProgression('Developed arrangement applied.');update();
- },
- clear:async()=>{
-  if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
-  const progression={...customProgression};delete progression.arrangedPerformance;
-  rememberCustomEdit();customProgression=progression;saveCustomProgression('Arrangement removed.');update();
- },
- play:async()=>{
-  if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;
-  soloChannels.clear();
-  for(const id of ['drums','bass','comping','sequence'])input('mute-'+id).checked=false;
-  for(const id of ['click','harmony'])input('mute-'+id).checked=true;
-  applyMixerMutes();update();await toggle();
- }
-});
+backingStyleUi=installBackingStyles(update);
 update();
 applyStudioIcons();
 renderCustomBuilder();
