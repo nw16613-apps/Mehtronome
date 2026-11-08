@@ -20,9 +20,9 @@ longer lines. Whole phrase windows are selected rather than random individual
 notes. Activity changes do not restart playback.
 
 The study charts below are also available in Harmony → Choose a progression
-under **Backing reference studies**, with their style, title and bar count.
+under **Backing reference studies**, with their style, title, bar count and suggested BPM.
 Selecting one loads an editable chart in its original key and metre; it keeps
-your current backing style and tempo, like the other progression options.
+your current backing style and applies the study’s suggested tempo.
 The written ensemble studies remain musical source material for the arranger. Previously saved reference/arrangement labels do not override the
 currently selected backing style.
 

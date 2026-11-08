@@ -3,7 +3,7 @@ import {JAZZ_STANDARDS} from './jazz-standards.js';
 import {REPERTOIRE_KEY,REPERTOIRE_STUDIES,normalizeRepertoire} from './repertoire.js';
 const esc=(s:any)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 /** One source menu and explicit save actions for the chart already on screen. */
-export function installRepertoire({capture,load,makeTemplate,draft,templates,reflect}:any){
+export function installRepertoire({capture,load,makeTemplate,draft,templates,reflect,setTempo}:any){
  const builder=document.getElementById('custom-progression-builder')!;
  const chooserRow=document.createElement('div');chooserRow.className='progression-chooser';chooserRow.innerHTML='<label>Choose a progression<select id="progression-choice"></select></label><p id="repertoire-brief" class="practice-help" hidden></p>';
  builder.before(chooserRow);
@@ -15,7 +15,7 @@ export function installRepertoire({capture,load,makeTemplate,draft,templates,ref
  let items:any[]=[],selectedSaved='',selectedSource='single',loading=false,workingDraft=draft();
  const report=(e:any)=>status.textContent=e.message||String(e);
  const render=()=>{
-  choice.innerHTML=templates.map((group:any)=>`<optgroup label="${esc(group.name)}">${group.options.map((o:any)=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</optgroup>`).join('')+`<optgroup label="Jazz standards">${JAZZ_STANDARDS.map(s=>`<option value="standard:${s.id}">${esc(s.name)} · ${s.barCount} bars</option>`).join('')}</optgroup><optgroup label="Backing reference studies">${Object.values(REFERENCE_PERFORMANCES).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<option value="reference:${s.id}">${esc(s.name)} · ${s.bars} bars</option>`).join('')}</optgroup><optgroup label="Original studies">${REPERTOIRE_STUDIES.map(s=>`<option value="study:${s.id}">${esc(s.name.replace(/^Original study · /,''))}</option>`).join('')}</optgroup><optgroup label="My saved charts">${items.length?items.map(i=>`<option value="saved:${esc(i.id)}">${esc(i.name)}</option>`).join(''):'<option disabled>No saved charts yet</option>'}</optgroup><optgroup label="Working copy"><option value="custom">Current working chart</option></optgroup>`;
+  choice.innerHTML=templates.map((group:any)=>`<optgroup label="${esc(group.name)}">${group.options.map((o:any)=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</optgroup>`).join('')+`<optgroup label="Jazz standards">${JAZZ_STANDARDS.map(s=>`<option value="standard:${s.id}">${esc(s.name)} · ${s.barCount} bars</option>`).join('')}</optgroup><optgroup label="Backing reference studies">${Object.values(REFERENCE_PERFORMANCES).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<option value="reference:${s.id}">${esc(s.name)} · ${s.bars} bars · ${s.bpm} BPM</option>`).join('')}</optgroup><optgroup label="Original studies">${REPERTOIRE_STUDIES.map(s=>`<option value="study:${s.id}">${esc(s.name.replace(/^Original study · /,''))}</option>`).join('')}</optgroup><optgroup label="My saved charts">${items.length?items.map(i=>`<option value="saved:${esc(i.id)}">${esc(i.name)}</option>`).join(''):'<option disabled>No saved charts yet</option>'}</optgroup><optgroup label="Working copy"><option value="custom">Current working chart</option></optgroup>`;
   choice.value=selectedSource;
   for(const id of ['repertoire-update','repertoire-delete'])(byId(id) as HTMLButtonElement).disabled=!selectedSaved||loading;
   choice.disabled=loading;(byId('repertoire-save') as HTMLButtonElement).disabled=loading;reflect();
@@ -34,7 +34,7 @@ export function installRepertoire({capture,load,makeTemplate,draft,templates,ref
    else if(source==='custom')chart=structuredClone(workingDraft);
    else chart=makeTemplate(source);
    // Initial default is transient: preserve the previous draft until an edit.
-   await load({...chart,persist:!initial});selectedSource=source;
+   await load({...chart,persist:!initial});if(source.startsWith('reference:'))setTempo(chart.bpm);selectedSource=source;
    status.textContent=initial?'':selectedSaved?'Saved chart loaded.':'Working copy ready.';
   }catch(e){selectedSource=previous;selectedSaved=previousSaved;report(e);}finally{loading=false;render();if(focused==='progression-choice'||focused==='mini-progression')document.getElementById(focused)?.focus({preventScroll:true});}
  };
