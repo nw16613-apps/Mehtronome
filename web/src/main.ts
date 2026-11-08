@@ -1,3 +1,4 @@
+import {createReferencePreparation} from './audio/reference-plan-preparation.js';
 import {referenceChart} from './audio/reference-performances.js';
 import {shapeColor,emphasizeFullNeck,perStringMapRegions} from './guitar/shape-emphasis.js';
 import {PER_STRING_STUDIES,perStringExerciseChoice,perStringExerciseGroups} from './practice/per-string-exercises.js';
@@ -562,7 +563,7 @@ async function toggleExercisePreview() {
     if(!prepared||generation!==exercisePrepareGeneration)return;exerciseBuffers=prepared;
     exercisePreparing=false;el('exercise-preview').removeAttribute('aria-busy');playbackCounting=settings.countIn;exercisePlaying=true;exerciseBackingStep=exercisePlan?.resolution?0:exercisePlan?.slots[0]?.step??0;if(exercisePlan&&settings.progression)showExerciseGroup(currentExerciseGroups[exercisePlan.slots[0].slot]);syncMiniTransport();refreshBackingSymbols();
     const backingStart=exerciseView.backing?context!.currentTime+.12:undefined;
-    if(exerciseView.backing){const sampleNames=sampleNamesForSettings(exerciseAudioSettings());node!.port.postMessage({type:'start',startTime:backingStart,sampleNames,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});installedSampleNames=new Set(sampleNames);}
+    if(exerciseView.backing){const sampleNames=sampleNamesForSettings(exerciseAudioSettings());postPreparedAudio(node!,{type:'start',startTime:backingStart,sampleNames,settings:{...exerciseAudioSettings(),countIn:settings.countIn}});installedSampleNames=new Set(sampleNames);}
     const button=el<HTMLButtonElement>('exercise-preview');button.textContent='■ Stop exercise';button.setAttribute('aria-pressed','true');
     reflectExerciseSelection();
     if(backingStart!==undefined){const countIn=settings.countIn?settings.beats*60/exerciseView.tempo:0;scheduleExercise(backingStart+countIn,backingStart);}
@@ -1123,6 +1124,7 @@ function tempo(value: number) {
   queueAudioSettings(settings);
 }
 function reflectPlayback() {
+  if(!playing)backingStyleUi?.playback(null);
   document.querySelectorAll<HTMLButtonElement>('#guitar-diagrams button').forEach(button => { button.disabled = playing; });
   el('position-path').querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = playing||exercisePlaying||exercisePreparing; });
   const exercisePreview=document.querySelector<HTMLButtonElement>('#exercise-preview');
@@ -1179,9 +1181,14 @@ function stopPreview() {
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
   }
 }
+const referencePreparation=createReferencePreparation();let deliveredReferenceKey='';
+function postPreparedAudio(target:AudioWorkletNode,message:any){
+ const referencePlan=referencePreparation.message(message.settings,deliveredReferenceKey);
+ target.port.postMessage({...message,referencePlan});deliveredReferenceKey=referencePlan.key;
+}
 async function prepareAudio(requested:any=exercisePreparing?exerciseAudioSettings():settings){
   audioPreparation??=initialiseAudio(requested).finally(()=>{audioPreparation=undefined;});
-  await audioPreparation;await ensureSamples(requested);
+  await audioPreparation;await ensureSamples(requested);referencePreparation.get(requested);
 }
 async function ensureSamples(requested:any){
  const audio=context,target=node;if(!audio||!target||audio.state==='closed')return;
@@ -1191,18 +1198,18 @@ async function ensureSamples(requested:any){
  if(Object.keys(fresh).length){target.port.postMessage({type:'drum-kit',kit:fresh,merge:true},Object.values(fresh).map(pcm=>pcm.buffer));for(const name of Object.keys(fresh))installedSampleNames.add(name);}
 }
 function queueAudioSettings(requested:any){
- const names=sampleNamesForSettings(requested),generation=++sampleSettingsGeneration,target=node;
+ const names=sampleNamesForSettings(requested),generation=++sampleSettingsGeneration,target=node;referencePreparation.get(requested);
  if(!target||!context||context.state==='closed'){void loadDrumKit.prefetch(names).catch(()=>{});return;}
- if(names.every(name=>installedSampleNames.has(name))){target.port.postMessage({type:'settings',settings:requested,sampleNames:names});installedSampleNames=new Set(names);return;}
+ if(names.every(name=>installedSampleNames.has(name))){postPreparedAudio(target,{type:'settings',settings:requested,sampleNames:names});installedSampleNames=new Set(names);return;}
  const snapshot=structuredClone(requested);
- void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node){target.port.postMessage({type:'settings',settings:snapshot,sampleNames:names});installedSampleNames=new Set(names);}}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
+ void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node){postPreparedAudio(target,{type:'settings',settings:snapshot,sampleNames:names});installedSampleNames=new Set(names);}}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
 }
 async function initialiseAudio(requested:any=settings) {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
     context = createPlaybackContext(AudioContext,navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContext;
     harmonyFxSource=undefined;fxBuses=undefined;
-    installedSampleNames=new Set();
+    installedSampleNames=new Set();deliveredReferenceKey='';
     let kit: Record<string, Float32Array>;
     try { [,kit]=await Promise.all([context.audioWorklet.addModule(workletUrl),loadDrumKit(context,sampleNamesForSettings(requested))]); }
     catch (error) { await context.close(); throw error; }
@@ -1237,6 +1244,7 @@ async function initialiseAudio(requested:any=settings) {
       // Instrument note notifications are not transport beat messages.
       if(!Number.isInteger(data.beat)||!Number.isFinite(data.bpm))return;
       currentBpm = data.bpm;fxBuses?.setTempo(currentBpm);
+      backingStyleUi?.playback(data.arrangementRole||null,data.arrangementPass);
       syncMiniTransport();
       syncTrainerStatus();
       if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'between colours'}`;
@@ -1288,7 +1296,7 @@ async function previewChord(index: number, hold: string, retainExercise=false) {
       return;
     }
     previewing = true;
-    node!.port.postMessage({type: 'audition', settings, step});
+    postPreparedAudio(node!,{type: 'audition', settings, step});
     el('preview-status').hidden = false;
   } catch (error) {
     el('error').textContent = error instanceof Error ? error.message : 'Could not preview chord.';
@@ -1327,7 +1335,7 @@ async function previewGrip(shape: string) {
       return;
     }
     previewing = true;
-    node!.port.postMessage({type:'audition',settings,step,acoustic:true,notes:grip.notes.map((note: any)=>note.midi)});
+    postPreparedAudio(node!,{type:'audition',settings,step,acoustic:true,notes:grip.notes.map((note: any)=>note.midi)});
     el('grip-preview-status').hidden = false;
     gripRingTimer = setTimeout(() => { if (generation === previewGeneration) stopPreview(); }, 8000);
   } catch (error) {
@@ -1734,7 +1742,7 @@ async function toggle() {
     step = settings.progression ? progressionStep(settings,0) : 0;
     playbackCounting=settings.countIn;playing = true;
     el('pulse-time').textContent=settings.sessionSeconds?`${formatTime(settings.sessionSeconds)} remaining`:'0:00 elapsed';
-    node!.port.postMessage({ type: 'start', settings, sampleNames:sampleNamesForSettings(settings) });installedSampleNames=new Set(sampleNamesForSettings(settings));
+    postPreparedAudio(node!,{ type: 'start', settings, sampleNames:sampleNamesForSettings(settings) });installedSampleNames=new Set(sampleNamesForSettings(settings));
     renderMusic();
     reflectPlayback();
     el('play-status').textContent = settings.countIn ? 'Counting you in…' : 'Playing…';

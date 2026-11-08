@@ -1,3 +1,4 @@
+import {coordinateEnsemble} from './ensemble-conversation.js';
 import {withReferenceActivity} from './reference-activity.js';
 import {arrangeReference,arrangementSupport} from './reference-arranger.js';
 import {STYLE_REFERENCES,catalogueScore} from './reference-catalogue.js';
@@ -159,6 +160,7 @@ export function referenceStatus(settings){
  if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*(def.beats||4))!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
  return {active:true,id,adapted:false,reason:''};
 }
+export function referencePlanKey(s){return JSON.stringify([s.key,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);}
 export function referenceBasePlan(settings){
  const status=referenceStatus(settings);if(!status.active)return null;
  const def=REFERENCE_PERFORMANCES[status.id],transpose=status.adapted?0:((settings.key-def.key+18)%12)-6;
@@ -167,7 +169,7 @@ export function referenceBasePlan(settings){
 }
 export function referenceActivityPlan(base,activity){
  if(!base)return null;
- return {...base,score:withReferenceActivity(base.score,REFERENCE_PERFORMANCES[base.score.id],activity)};
+ return {...base,score:coordinateEnsemble(withReferenceActivity(base.score,REFERENCE_PERFORMANCES[base.score.id],activity))};
 }
 export function referencePlan(settings){return referenceActivityPlan(referenceBasePlan(settings),settings.sequenceActivity);}
 

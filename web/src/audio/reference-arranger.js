@@ -1,9 +1,9 @@
+import {composeProgression} from './progression-composer.js';
 import {arrangementForm,finishArrangement} from './arrangement-form.js';
 import {CHORDS,MODES,harmonyAt,progressionTimeline} from './music.js';
 import {harmonySegments,segmentAt,pitchForDegree} from './reference-catalogue.js';
 const pc=n=>((n%12)+12)%12;
 const nearest=(wanted,pcs,low,high)=>{let best=low,cost=Infinity;for(let n=low;n<=high;n++)if(pcs.includes(pc(n))&&Math.abs(n-wanted)<cost){best=n;cost=Math.abs(n-wanted);}return best;};
-const gcd=(a,b)=>b?gcd(b,a%b):a;
 export function arrangementSupport(settings,def){
  if(!settings.progression||settings.template!=='custom'||!settings.customProgression?.steps?.length)return 'Choose a chord chart first.';
  if(settings.backingStyle!==def.style)return 'Choose the matching backing style to use this arrangement.';
@@ -49,8 +49,8 @@ function chordVoicing(from,sourceNotes,to,previous,id){
 // target chord functions, future changes and prior pitches govern the new notes.
 export function arrangeReference(source,def,settings){
  const beats=settings.beats,targets=targetSegments(settings),chartBeats=targets.at(-1).end,sourceBeats=def.bars*beats;
- const common=chartBeats*sourceBeats/gcd(chartBeats,sourceBeats),total=common<=512?common:Math.max(chartBeats,Math.ceil(sourceBeats/chartBeats)*chartBeats);
- const gridRate=12,length=total*gridRate,score={id:def.id,bars:total/beats,beats,rate:12,gridRate,adapted:true,chartBeats,sequence:Array.from({length},()=>[]),bass:Array.from({length},()=>[]),comping:Array.from({length},()=>[]),drums:Array.from({length},()=>[])};
+ const developmentBeats=chartBeats*Math.max(1,Math.ceil(beats*4/chartBeats)),total=developmentBeats*4;
+ const gridRate=12,length=total*gridRate,score={id:def.id,bars:total/beats,beats,rate:12,gridRate,adapted:true,chartBeats,developmentBeats,sequence:Array.from({length},()=>[]),bass:Array.from({length},()=>[]),comping:Array.from({length},()=>[]),drums:Array.from({length},()=>[])};
  score.form=arrangementForm(settings,def,targets,total);
  const sourceSegments=harmonySegments(def),getTarget=beat=>segmentAt(targets,beat),allowed=h=>[...new Set([...h.scalePcs,...h.chordPcs])];
  const clip=(at,duration,pitches)=>{
@@ -93,8 +93,8 @@ export function arrangeReference(source,def,settings){
      let midi;
      if(approach){const delta=pc(event.midi-nextSource.root)===11?-1:1;midi=nearest(previousBass,[pc(getTarget(beat+boundary).root+delta)],28,55);}
      else{
-      const mapped=degree?degreePitch(target,degree):scaleMap(event.midi,from,target);
-      const bassPc=degree==='1'&&Number.isFinite(target.bassMidi)?pc(target.bassMidi):mapped;
+      const mapped=anticipated?target.root:degree?degreePitch(target,degree):scaleMap(event.midi,from,target);
+      const bassPc=(degree==='1'||anticipated)&&Number.isFinite(target.bassMidi)?pc(target.bassMidi):mapped;
       midi=nearest(degree==='1'?34+pc(bassPc-10):previousBass,[bassPc],28,55);
      }
      previousBass=midi;result={...result,midi,anticipation:!!anticipated,approach,duration:clip(beat,event.duration,[midi])};
@@ -119,5 +119,5 @@ export function arrangeReference(source,def,settings){
    if(!first){const notes=chordVoicing(sourceSegments[0],[60,64,67,71],target,null,def.id);score.comping[grid].push({at:at%beats,bar:Math.floor(at/beats),notes,duration:Math.min(1.5,target.duration),velocity:.34,targetStep:target.step,changeEntry:true});}
   }
  }
- return finishArrangement(score,settings,def,targets,clip);
+ return composeProgression(finishArrangement(score,settings,def,targets,clip),settings,def,targets,clip);
 }

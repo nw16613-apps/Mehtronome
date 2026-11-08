@@ -18,20 +18,20 @@ class HarmonyProcessor extends AudioWorkletProcessor {
       if (data.type === 'drum-kit') {
         if(data.merge)this.engine.mergeDrumKit(data.kit);else this.engine.installDrumKit(data.kit);
       } else if (data.type === 'start') {
-        this.engine.configure(data.settings);
+        this.engine.configure(data.settings,data.referencePlan);
         if(data.sampleNames)this.engine.mergeDrumKit({},data.sampleNames);
         this.engine.reset();
         this.startFrame = Number.isFinite(data.startTime) ? Math.round(data.startTime * sampleRate) : null;
         this.active = true;
       } else if (data.type === 'audition') {
-        this.engine.configure(data.settings);
+        this.engine.configure(data.settings,data.referencePlan);
         if(data.sampleNames)this.engine.mergeDrumKit({},data.sampleNames);
         this.engine.audition(data.step, data.notes, data.acoustic);
         this.active = true;
       } else if (data.type === 'stop') {
         this.engine.running = false;
       } else if (data.type === 'settings') {
-        this.engine.configure(data.settings);
+        this.engine.configure(data.settings,data.referencePlan);
         if(data.sampleNames)this.engine.mergeDrumKit({},data.sampleNames);
         this.port.postMessage({ type: 'harmony', step: this.engine.step });
       }

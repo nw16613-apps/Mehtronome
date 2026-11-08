@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {referenceChart,referencePlan,referenceScore,REFERENCE_PERFORMANCES} from '../src/audio/reference-performances.js';
+import {referenceChart,referencePlan,referenceScore,referenceBasePlan,REFERENCE_PERFORMANCES} from '../src/audio/reference-performances.js';
 import {cadenceKind} from '../src/audio/arrangement-form.js';import {normalizeCustomProgression} from '../src/practice/custom-progression.js';
 import {BACKING_STYLES,backingStyleInstruments} from '../src/practice/backing-styles.js';import {Engine} from '../src/audio/engine.js';import {harmonyAt,progressionPositionAtBeat,CHORDS} from '../src/audio/music.js';import {readSampleBank} from '../scripts/read-sample-bank.mjs';
 function config(id,activity='supporting'){const c=referenceChart(id);return {...BACKING_STYLES[id].settings,...backingStyleInstruments(id),...c,backingStyle:id,template:'custom',progression:true,customProgression:normalizeCustomProgression(c.progression),extensionMorph:false,loopEnabled:false,sequenceActivity:activity,countIn:false,bpm:120,beats:c.beats,drums:true,bass:true,comping:true,sequence:true,soundLibrary:'expanded',click:0,harmony:0,backingHumanize:0};}
@@ -24,9 +24,9 @@ test('actual A–B–A sections control source phrases and transitions, includin
  const s=chart('traditionalJazz',changes,'featured'),score=referencePlan(s).score;
  const explicit=score.form.phrases.filter(p=>p.explicit).slice(0,3);assert.deepEqual(explicit.map(p=>[p.start,p.section,p.role]),[[0,'A','opening'],[16,'B','contrast'],[32,'A','return']]);
  assert.ok(score.form.cadences.some(c=>c.at===12&&c.kind==='dominant'));assert.ok(score.form.cadences.some(c=>c.at===24&&c.kind==='backdoor'));
- for(const at of [16,32])assert.ok(score.drums[Math.round((at-.5)*12)].some(e=>e.transition),'fill before section '+at);
+ const planned=referenceBasePlan(s).score;for(const at of [16,32])assert.ok(planned.drums[Math.round((at-.5)*12)].some(e=>e.transition),'fill before section '+at);
  const split=chart('funk',[A(0,'min9','dorian',2,'A'),A(1,'dom9sharp11','lydian_dominant',2,'B'),A(6,'maj9sharp11','lydian',4,'A')],'featured');const p=referencePlan(split).score;
- assert.ok(p.form.phrases.some(f=>f.start===2&&f.section==='B'));assert.ok(p.drums[18].some(e=>e.transition),'split-bar cue before beat 2');
+ assert.ok(p.form.phrases.some(f=>f.start===2&&f.section==='B'));assert.ok(referenceBasePlan(split).score.drums[18].some(e=>e.transition),'split-bar cue before beat 2');
 });
 test('cadential melody resolves by nearby guide tones and bass approaches point at the actual destination',()=>{
  const s=chart('traditionalJazz',changes,'featured'),score=referencePlan(s).score;

@@ -11,7 +11,7 @@ Open Sound Settings, select a backing style, then use Reference performances:
 
 - **Load reference study** loads that style's original chart and suggested tempo.
   The chord-sheet Undo history retains the previous chart.
-- **Arrange my chart** applies that style's longer phrasing to the current chart.
+- **Arrange my chart** composes a four-pass performance around the current chart.
   It preserves the chord entries, key, tempo, metre and selected loop; automatic
   chord-extension morphing is disabled so the written changes govern the score.
 - **Play full band** unmutes Drums, Bass, Comping and Melodic movement, clears
@@ -83,9 +83,9 @@ playback, including split bars, chord or beat loops, and slash bass notes. It:
 - Preserves explicit bass anticipations and chromatic approaches, states new
   changes when needed, and shortens holds that would cross into incompatible
   harmony. Son bass remains anticipated rather than receiving forced downbeats.
-- Keeps a full source phrase window across short repeated charts, aligning source
-  and target cycles where practical and supplying a closing bar for irregular
-  lengths. It does not restart a one-bar melody at every chord change.
+- Builds a complete development cycle over actual chart repetitions. Short vamps
+  keep at least a four-bar phrase arc before changing pass, while real rehearsal
+  sections cue returning themes and newly composed phrases.
 
 Plans are cached across mixer/FX/tempo changes and rebuilt when the harmony,
 style, key, metre or loop changes. Activity changes only re-filter the cached
@@ -94,8 +94,8 @@ melodic score, without recomposing or restarting the rhythm section. No generati
 Exact reference playback requires its matching harmony, durations, native metre,
 style, Full chart and chord morphing off. Editing an exact reference falls back
 to standard backing with a visible explanation. Applied arrangements instead
-recompile for subsequent chord edits. The first adaptive implementation supports
-the style's native metre and playback timelines up to 512 beats; unsupported
+recompile for subsequent chord edits. The arranger supports the style's native metre and selected chart timelines
+up to 512 beats; the compiled development cycle can span up to four chart passes; unsupported
 settings fall back with a visible reason. Tempo and transposition are supported.
 
 ## Section and cadence checkpoint
@@ -117,10 +117,54 @@ Contrast sections reduce comping intensity, leaving room around the lead.
 The complete Featured source scores remain intact for direct reference playback;
 structural recomposition applies only to **Arrange my chart**.
 
+## Chorus development and ensemble interaction
+
+**Arrange my chart** now prepares four passes: Statement, Development, Contrast
+and Return. A short vamp repeats for at least four bars before changing pass;
+a longer chart uses a complete chart cycle per pass. The active pass is shown
+beneath the arrangement controls during playback. This finite development cycle
+repeats; it is not unlimited improvisation.
+
+The statement and return keep a recognisable connection to the reference. The
+middle passes compose new melodic phrases from a style-specific rhythm and motif
+grammar, with goals selected from the actual upcoming changes and cadences.
+Contrast develops a slower, inverted motif in a different register. Bass routes
+and chordal parts also change across passes: walking/two-feel, sustained parts,
+comping replies or ostinatos are chosen to fit the style. Written slash bass and
+son anticipations retain their harmonic destinations.
+
+`progression-composer.js` plans complete pitch paths for melody, bass register
+and chord voicings. Its shortest-path search considers later candidates and
+cadential constraints before tracing the earlier choices. This goes beyond
+mapping each reference note independently onto the current chord. Editing an
+upcoming destination can change an earlier newly composed phrase while leaving
+the opening harmony unchanged. Rhythm/contour grammars remain authored musical
+vocabulary; this is a deterministic composition system.
+
+`ensemble-conversation.js` then responds to the **audible** melodic activity:
+
+- Conversational comping softens beneath the lead and removes selected colliding
+  stabs. Prepared upper-voice replies can fill genuine gaps. Ostinatos retain
+  their defining accents, and sustained chord tails are not cut for a reply.
+- Bass attacks can reinforce existing kick accents in suitable styles. Walking,
+  son and one-drop foundations are protected rather than forced into that rule.
+- Optional tom/soft-snare ornaments move into gaps between lead attacks, including
+  space beneath held notes, or are omitted when there is no room. Backbeats,
+  clave, conga/bell foundations, one-drop kicks and triplet grids remain in place.
+- Shared pass dynamics let the ensemble build, contrast and return together.
+
+The full composition is prepared on the browser's main thread before being sent
+to the audio worklet. The engine accepts a matching keyed prepared plan; subsequent
+fader and activity messages carry the key without resending or recomposing the
+whole score. Activity changes reselect phrases and coordinate the band from the
+cached composition. No external model/service is called, and the established
+recorded instrument palette is retained.
+
 ## Scope of this checkpoint
 
-This is a deterministic, reference-driven arranger authored with AI-assisted
-software/composition work. It does not call Suno or another external generative
-music model, learn from audio, or claim live player-level improvisation. The next
-musical refinement is listening-led revision of phrase choices, transitions and
-adaptation constraints, using these references and unfamiliar charts as evidence.
+The chorus-development, ensemble-interaction and first whole-progression
+composition checkpoints are implemented together. The fixed reference studies
+remain available for comparison and default to Supporting. The arranger's finite
+four-pass performances are ready for listening-led assessment on familiar and
+unfamiliar charts. External AI-model investigation remains deferred until this
+local arranger work has been assessed; no such model has been integrated.

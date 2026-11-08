@@ -189,12 +189,13 @@ The standard backing retains the earlier development-time phrase-library approac
 short cells placed into longer forms, with harmonic roles resolved against the
 current chord and scale guide. It remains the default for unarranged charts.
 
-A separate reference-driven checkpoint now provides a complete original study
+A separate reference and composition workflow now provides a complete original study
 for all twenty styles and an **Arrange my chart** action. That action compiles
-longer source phrasing against the actual progression, including split bars,
-loops, guide tones, altered qualities, slash bass and connected voicings.
+a four-pass performance against the actual progression, including newly composed
+middle passes, global voice-leading paths, split bars, loops, guide tones, altered
+qualities, slash bass and activity-dependent ensemble interaction.
 See [Reference performances and chart-aware arrangements](reference-performances.md)
 for the catalogue, supported metres, limits and validation contract.
 Neither path calls an external music-generation service or listens/responds to
-live audio. The written references and first deterministic adaptation pass should
-be assessed by listening before describing them as player-level improvisation.
+live audio. The references and deterministic compositions remain listening targets,
+rather than a claim of player-level improvisation.

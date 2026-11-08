@@ -1,4 +1,4 @@
-import {referenceBasePlan,referenceActivityPlan} from './reference-performances.js';
+import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
@@ -255,7 +255,7 @@ export class Engine {
     this.configure({});
   }
 
-  configure(settings) {
+  configure(settings,preparedReference=null) {
     const previousTrainer = [this.settings.bpm,this.settings.trainerEnabled,this.settings.trainerBars,this.settings.trainerIncrement,this.settings.trainerTarget,this.settings.beats].join('/');
     const previousBassMuted=this.muted?.has('bass')||false;
     const previousDrums=this.settings.drums, previousBass=this.settings.bass, previousComping=this.settings.comping, previousGroove=this.settings.drumGroove;
@@ -303,9 +303,9 @@ export class Engine {
     // Rhythm envelopes need the current tempo; the public setting remains the
     // user's starting tempo so unrelated UI edits never reset a trained tempo.
     this.clockSettings = this.clockSettings || {};
-    const referenceKey=JSON.stringify([s.key,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
+    const referenceKey=referencePlanKey(s);
     const referenceChanged=referenceKey!==this.referenceCacheKey;
-    if(referenceChanged){this.referenceCacheKey=referenceKey;this.cachedReferenceBasePlan=referenceBasePlan(s);}
+    if(referenceChanged){this.referenceCacheKey=referenceKey;this.cachedReferenceBasePlan=preparedReference?.key===referenceKey&&Object.hasOwn(preparedReference,'plan')?preparedReference.plan:referenceBasePlan(s);}
     if(referenceChanged||this.referenceActivity!==s.sequenceActivity){this.referenceActivity=s.sequenceActivity;this.cachedReferencePlan=referenceActivityPlan(this.cachedReferenceBasePlan,s.sequenceActivity);}
     Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:this.cachedReferencePlan});
     const timeline=s.progression?progressionTimeline(s):[];
@@ -522,7 +522,8 @@ export class Engine {
         this.clickStrength = strength===0?0:strength===2?1:.72;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
-        onBeat({ gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+        const composition=this.clockSettings.referencePlan?.score,development=!counting&&composition?.composition?composition.choruses[Math.min(3,Math.floor((Math.max(0,musicalBeat)%(composition.developmentBeats*4))/composition.developmentBeats))]:null;
+        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1}:{}), gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
           extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
