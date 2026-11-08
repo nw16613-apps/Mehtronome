@@ -1,3 +1,4 @@
+import {STUDIO_SAMPLE_FILES} from './studio-manifest.js';
 import {SONOR_SAMPLE_FILES} from './sonor-samples.js';
 import {TAMA_SAMPLE_FILES} from './tama-samples.js';
 import {EXPANDED_SAMPLE_FILES} from './expanded-manifest.js';
@@ -5,7 +6,7 @@ import {EXPANDED_SAMPLE_FILES} from './expanded-manifest.js';
 // are documented in samples/README.md and samples/CREDITS.md.
 // Literal URLs let Vite fingerprint and bundle every recording.
 export const SAMPLE_FILES = {
-  ...EXPANDED_SAMPLE_FILES,...TAMA_SAMPLE_FILES,...SONOR_SAMPLE_FILES,
+  ...EXPANDED_SAMPLE_FILES,...TAMA_SAMPLE_FILES,...SONOR_SAMPLE_FILES,...STUDIO_SAMPLE_FILES,
   latinClave1: new URL('./samples/latin/latinClave1.wav', import.meta.url),
   latinClave2: new URL('./samples/latin/latinClave2.wav', import.meta.url),
   latinCongaOpen1: new URL('./samples/latin/latinCongaOpen1.wav', import.meta.url),

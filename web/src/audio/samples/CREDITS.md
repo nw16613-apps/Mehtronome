@@ -158,3 +158,41 @@ and derivative hashes are in `sonor/LICENSE` and `sonor/sources.json`.
 mono 32 kHz PCM16 with onset trim, gentle filtering/low-mid cuts, normalization,
 edge fades and shortened kick-only decay. Derived WAVs retain CC BY-SA 4.0.
 Used for Fusion jazz and Legato fusion. No DRS recordings complete this bank.
+
+## Free comping and melodic palette (studio-instruments)
+
+All 244 bundled derivatives are usable without purchases. Exact source paths,
+pinned revisions, original and derivative SHA-256 hashes and mapping information
+are in `studio-instruments/sources.json`. Full licences/attribution records are
+retained in that directory. Preparation downmixes to mono 32 kHz PCM16, removes
+DC, trims leading silence except looped organ sources, normalizes peaks and adds
+short edge fades. Recorded decays are retained up to each documented crop length.
+
+- Meta Open Sound, Meta Creative Audio team: acoustic upright piano (four real
+  dynamic layers) and nylon guitar (fingerstyle and two picked strengths).
+  https://github.com/facebookincubator/Meta-open-sound/tree/251c0be57d5d1b3242b91f53e0cde62ab1cb42d9
+  CC0 1.0. These derivatives use the official mono OGG web recordings, not the
+  large stereo lossless WAV releases. Piano is a recorded upright, not a grand.
+- Electric Guitar FSBS clean, FreePats contributors:
+  https://github.com/freepats/electric-guitar-FSBS-clean/tree/192cf0d9bf2c4ba6ead8e3524ba3f78818e4fe91
+  CC0 1.0. Original FLAC soft/normal layers with alternate recorded takes.
+- Ixox Flute, Xavier Hosxe; SFZ/FLAC mapping by kinwie:
+  https://github.com/sfzinstruments/Ixox.Flute/tree/0cc54468bb0d2d9b32921958585caad65ba8df21
+  CC BY 4.0. Original FLAC recordings in three normal-note dynamics, tuning from
+  the source map. Modified as described above; playback crossfades connected notes.
+- Drawbar Organ Emulation, Roberto / FreePats, generated with setBfree:
+  https://freepats.zenvoid.org/Organ/electric-organ.html
+  CC0 1.0. WAV source mirror with original sustain-loop points:
+  https://github.com/adewale/keyboardia/tree/90ecc152330cabc33060788f14c67795307d4bba/app/public/instruments/hammond-organ
+  This is sampled organ-model output, not a newly recorded physical Hammond.
+- Wurlitzer EP200, Greg Sullivan; SFZ mapping by kinwie:
+  https://github.com/sfzinstruments/GregSullivan.E-Pianos/tree/8c3e581acda3594b553948ff0222d4f84a698376
+  CC BY 3.0. Four recorded dynamics and source-mapped tuning, replacing the
+  previous two-layer subset. Same recording session, expanded coverage.
+- VCSL Clavisynth TX81Z patch, Sam Gossner / Versilian Studios and contributors:
+  https://github.com/sgossner/VCSL/tree/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e
+  CC0 1.0. Three recorded FM-patch dynamics, including the formerly missing
+  middle layer; this is not a sampled acoustic Hohner Clavinet.
+
+Both comping and melodic tracks use this palette automatically by style.
+Bass, drums and the independent fretboard/exercise guitar retain their sources.

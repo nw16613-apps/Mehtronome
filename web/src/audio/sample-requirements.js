@@ -1,5 +1,5 @@
 import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
-import {EXPANDED_SAMPLE_ZONES,EXPANDED_DRUM_GROUPS,expandedBankForTone,sourceFor} from './sound-library.js';
+import {EXPANDED_SAMPLE_ZONES,EXPANDED_DRUM_GROUPS,expandedBankForTone,sourceFor,STUDIO_BANKS} from './sound-library.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {DRUM_KITS} from './instrumentation.js';
 import {DRUM_SAMPLE_GROUPS,JAZZ_DRUM_GROUPS,LIVE_DRUM_GROUPS,BASS_SAMPLE_ZONES,latinSampleGroups} from './sample-map.js';
@@ -17,8 +17,8 @@ export function sampleNamesForSettings(s){
  if(audible('bass')){addZones(s.bassInstrument==='upright'?INSTRUMENT_SAMPLE_ZONES.upright:BASS_SAMPLE_ZONES);if(sourceFor(s,'bass')==='expanded')addZones(EXPANDED_SAMPLE_ZONES[s.bassInstrument==='upright'?'upright':'electricBass']);}
  for(const channel of ['comping','sequence'])if(audible(channel)){
   const tone=channel==='comping'?s.compingTone:s.sequenceTone||s.compingTone,expanded=sourceFor(s,channel)==='expanded',bank=expandedBankForTone(tone);
-  if(!expanded||!['electricGuitar','flute','wurlitzer','clav'].includes(bank))addZones(INSTRUMENT_SAMPLE_ZONES[originalBanks[tone]]);
-  if(expanded){addZones(EXPANDED_SAMPLE_ZONES[bank]);if(['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone))addZones(EXPANDED_SAMPLE_ZONES.guitarMuted);}
+  if(!expanded||!STUDIO_BANKS.has(bank)&&!['electricGuitar','flute','wurlitzer','clav'].includes(bank))addZones(INSTRUMENT_SAMPLE_ZONES[originalBanks[tone]]);
+  if(expanded){addZones(EXPANDED_SAMPLE_ZONES[bank]);if(!STUDIO_BANKS.has(bank)&&['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone))addZones(EXPANDED_SAMPLE_ZONES.guitarMuted);}
  }
  return [...names];
 }

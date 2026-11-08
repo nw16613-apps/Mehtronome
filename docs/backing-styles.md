@@ -234,6 +234,7 @@ the common-pattern kit audit spans about 2.3 dB; the largest full-fader dry
 ensemble peak in this audit is -3.61 dBFS. These are pre-FX measurements, not a
 claim about perceived quality on every speaker or added-effect configuration.
 
-The separate comping-library investigation is documented in
-[comping-library-research.md](comping-library-research.md); commercial agreements
-and prices have not been obtained and no comping replacement is claimed yet.
+The earlier source investigation is retained in
+[comping-library-research.md](comping-library-research.md). The subsequent free
+comping and melodic upgrade is implemented in [free-backing-palette.md](free-backing-palette.md);
+commercial licensing is no longer part of the active scope.

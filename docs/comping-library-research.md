@@ -1,8 +1,10 @@
 # Comping library replacement research — 8 November 2026
 
-The current comping sound bank has not been replaced by this research. The user
-has requested investigation of higher-quality redistributable and commercial
-options. No vendor has been contacted, no quote obtained and no purchase made.
+This records the earlier investigation of redistributable and commercial options.
+The latest user preference is **free only**, covering both comping and melodic
+movement. The free palette is now implemented as described in
+[free-backing-palette.md](free-backing-palette.md). Commercial candidates below
+remain archived research; no vendor was contacted and no purchase was made.
 
 ## Candidate sources
 
