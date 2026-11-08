@@ -67,5 +67,7 @@ outside the audio callback; activity and fader messages reuse the cached score.
   does not establish subjective realism or cover every chart/FX setting.
 - Browser builds include TypeScript validation. No new samples or dependencies.
 
-The deterministic four-pass performance repeats. Future external-model work is
-separate; this release makes no claim to use Suno or another music model.
+The [longer-session development](long-session-development.md) now wraps these
+four passes in three ensemble cycles, giving twelve passes before the complete
+performance repeats. External-model evaluation remains separate; the app does
+not yet use Suno or another music model.

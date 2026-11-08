@@ -1,6 +1,6 @@
 import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
 import {drumStrokeGain} from './drum-performance.js';
-import {referenceEvents,referenceGrid} from './reference-performances.js';
+import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
 import {TAMA_DRUM_GROUPS,LIVE_DYNAMIC_GROUPS} from './tama-groups.js';
 import {EXPANDED_DRUM_GROUPS,sourceFor} from './sound-library.js';
 import {ensembleDrums,ensembleBass} from './ensemble-arrangements.js';
@@ -313,7 +313,7 @@ export class Rhythm {
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'drums',this.lastGrid)){
         const touch=performanceTouch(settings,event.name,bar,beat*4+sub,this.rate);
-        this.hitDrum(event.name,event.velocity*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);
+        this.hitDrum(event.name,event.velocity*touch.velocity*sessionEventGain(plan,'drums',this.lastGrid,event.name),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);
       }
       return;
     }
@@ -394,9 +394,10 @@ export class Rhythm {
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'bass',this.lastBassGrid)){
         const midi=event.midi+plan.transpose;
-        this.bassInstrument.noteOn(midi,event.duration*60/settings.bpm,event.velocity,settings.bassPattern,settings.bassInstrument,sourceFor(settings,'bass'));
+        const velocity=event.velocity*sessionEventGain(plan,'bass',this.lastBassGrid);
+        this.bassInstrument.noteOn(midi,event.duration*60/settings.bpm,velocity,settings.bassPattern,settings.bassInstrument,sourceFor(settings,'bass'));
         this.bassCursor=this.bassInstrument.cursor;this.lastBassMidi=midi;
-        onEvent({type:'bass',sample,step,beat,sub,midi,gain:event.velocity,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
+        onEvent({type:'bass',sample,step,beat,sub,midi,gain:velocity,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
       }
       return;
     }

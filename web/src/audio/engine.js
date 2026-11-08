@@ -1,4 +1,5 @@
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
+import {sessionCycle,SESSION_ROLES} from './session-performance.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
 import {extensionChoices,extensionBlend} from './extensions.js';
@@ -523,7 +524,7 @@ export class Engine {
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
         const composition=this.clockSettings.referencePlan?.score,development=!counting&&composition?.composition?composition.choruses[Math.min(3,Math.floor((Math.max(0,musicalBeat)%(composition.developmentBeats*4))/composition.developmentBeats))]:null;
-        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1}:{}), gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1,...(composition.sessionPerformance?{arrangementCycle:Math.floor(Math.max(0,musicalBeat)/composition.sessionPerformance.cycleBeats)+1,sessionRole:SESSION_ROLES[sessionCycle(composition,musicalBeat)]}:{})}:{}), gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
           extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }

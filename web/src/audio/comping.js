@@ -1,4 +1,4 @@
-import {referenceEvents,referenceGrid} from './reference-performances.js';
+import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
 import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone,sourceFor,STUDIO_BANKS} from './sound-library.js';
 import {ensembleComping} from './ensemble-arrangements.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
@@ -162,8 +162,9 @@ export class CompingInstrument{
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'comping',grid)){
         const pitches=event.notes.map(midi=>midi+plan.transpose);
-        this.strike(pitches,event.duration,event.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,0,null,event.articulation);
-        onEvent?.({type:'comping',sample,step,notes:pitches,duration:event.duration,velocity:event.velocity,reference:plan.score.id,bar:event.bar});
+        const velocity=event.velocity*sessionEventGain(plan,'comping',grid);
+        this.strike(pitches,event.duration,velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,0,null,event.articulation);
+        onEvent?.({type:'comping',sample,step,notes:pitches,duration:event.duration,velocity,reference:plan.score.id,bar:event.bar});
       }
       return;
     }

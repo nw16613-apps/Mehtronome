@@ -3,6 +3,8 @@ import {coordinateEnsemble} from './ensemble-conversation.js';
 import {withReferenceActivity} from './reference-activity.js';
 import {arrangeReference,arrangementSupport} from './reference-arranger.js';
 import {STYLE_REFERENCES,catalogueScore} from './reference-catalogue.js';
+import {sessionEvents} from './session-performance.js';
+export {sessionEventGain} from './session-performance.js';
 // Original, explicitly written ensemble studies. This is score playback, not
 // runtime AI generation. Rows are bars; onsets/durations are quarter-note beats.
 // Blues half-beats swing through the existing common clock.
@@ -190,7 +192,7 @@ export function referenceActivityPlan(base,activity){
 }
 export function referencePlan(settings){return referenceActivityPlan(referenceBasePlan(settings),settings.sequenceActivity);}
 
-export function referenceEvents(plan,track,grid){const slots=plan.score[track];return slots[((grid%slots.length)+slots.length)%slots.length];}
+export function referenceEvents(plan,track,grid){const slots=plan.score[track],local=((grid%slots.length)+slots.length)%slots.length;return sessionEvents(plan.score,track,grid,local);}
 
 // Native scores use twelve ticks per beat so thirds and sixteenths coexist.
 // Preserve the approved two initial studies' original timing exactly.

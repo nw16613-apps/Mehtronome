@@ -1,4 +1,5 @@
 import {buildStudyPerformance,articulateStudyPerformance} from './study-performance.js';
+import {prepareSessionPerformance} from './session-performance.js';
 import {CHORDS,MODES} from './music.js';
 import {segmentAt,pitchForDegree} from './reference-catalogue.js';
 import {COMPOSITION_STYLES,CHORUS_ROLES} from './composition-vocabulary.js';
@@ -142,5 +143,5 @@ export function composeProgression(base,settings,def,targets,clip){
  for(const track of ['sequence','bass','comping','drums'])for(const events of score[track])for(const event of events)event.velocity*=energy[event.chorus];
  score.choruses=CHORUS_ROLES.map((role,index)=>({index,role,start:index*score.developmentBeats,end:(index+1)*score.developmentBeats}));
  score.composition={method:'whole-progression-paths',roles:CHORUS_ROLES,goals:score.form.cadences.map(c=>({beat:c.at,kind:c.kind,toStep:c.toStep})),ostinato:!!profile.ostinato};
- return score;
+ return prepareSessionPerformance(score,targets,clip);
 }

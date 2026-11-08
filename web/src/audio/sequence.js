@@ -1,4 +1,4 @@
-import {referenceEvents,referenceGrid} from './reference-performances.js';
+import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
 import {sourceFor} from './sound-library.js';
 import {performanceTouch} from './groove-time.js';
 import {CompingInstrument} from './comping.js';
@@ -178,7 +178,7 @@ export class Sequence {
       for(const event of referenceEvents(plan,'sequence',grid)){
         const midi=event.midi+plan.transpose,tone=settings.sequenceTone;
         this.instrument.soundLibrary=sourceFor(settings,'sequence');
-        this.instrument.strike([midi],event.duration,event.velocity*.65,settings.bpm,sample,step,undefined,'sequence',tone);
+        this.instrument.strike([midi],event.duration,event.velocity*.65*sessionEventGain(plan,'sequence',grid),settings.bpm,sample,step,undefined,'sequence',tone);
         this.lastMidi=midi;onNote({sample,grid,midi,step,tone,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
       }
       return;

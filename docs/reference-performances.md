@@ -121,7 +121,8 @@ app playback uses structural recomposition against the current chart.
 The automatic arranger prepares four passes: Statement, Development, Contrast
 and Return. A short vamp repeats for at least four bars before changing pass;
 a longer chart uses a complete chart cycle per pass. This finite development cycle
-repeats; it is not unlimited improvisation.
+now participates in a [three-cycle session arc](long-session-development.md),
+giving twelve passes before repeating; it is not unlimited improvisation.
 
 All twenty styles now use an eight-bar performance vocabulary across the four
 passes, with goals selected from the actual upcoming changes and cadences.
