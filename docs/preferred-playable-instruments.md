@@ -8,8 +8,8 @@ No audition/source selector is added to the app.
 
 ## Actual recordings
 
-`preferred/sources.json` pins original and derivative hashes and licences for 94
-recordings: 60 Emilyguitar, 12 Yamaha RBX Finger and 22 Sneakybass. Emily retains
+`preferred/sources.json` pins original and derivative hashes and licences for 92
+recordings: 60 Emilyguitar, 12 Yamaha RBX Finger and 20 distinct Sneakybass. Emily retains
 two takes per note and two useful dynamic layers across 15 source pitches. Its
 natural recorded decay is retained up to four seconds. This keeps the active
 guitar transfer below 16 MiB and decoded mobile bank around 30 MiB, similar to the

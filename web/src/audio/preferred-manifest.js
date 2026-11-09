@@ -73,8 +73,6 @@ export const PREFERRED_SAMPLE_FILES={
  qYamahaBass39v0r1:new URL("./samples/preferred/qYamahaBass39v0r1.wav",import.meta.url),
  qSneakyBass36v0r1:new URL("./samples/preferred/qSneakyBass36v0r1.wav",import.meta.url),
  qSneakyBass36v0r2:new URL("./samples/preferred/qSneakyBass36v0r2.wav",import.meta.url),
- qSneakyBass36v0r3:new URL("./samples/preferred/qSneakyBass36v0r3.wav",import.meta.url),
- qSneakyBass36v0r4:new URL("./samples/preferred/qSneakyBass36v0r4.wav",import.meta.url),
  qSneakyBass39v0r1:new URL("./samples/preferred/qSneakyBass39v0r1.wav",import.meta.url),
  qSneakyBass39v0r2:new URL("./samples/preferred/qSneakyBass39v0r2.wav",import.meta.url),
  qSneakyBass42v0r1:new URL("./samples/preferred/qSneakyBass42v0r1.wav",import.meta.url),

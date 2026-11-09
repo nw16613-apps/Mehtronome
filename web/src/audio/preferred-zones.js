@@ -671,24 +671,6 @@ export const PREFERRED_SAMPLE_ZONES={
       "velHigh": 1.01
     },
     {
-      "id": "qSneakyBass36v0r3",
-      "nominalMidi": 36,
-      "rootMidi": 35.75,
-      "layer": 0,
-      "take": 3,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass36v0r4",
-      "nominalMidi": 36,
-      "rootMidi": 35.75,
-      "layer": 0,
-      "take": 4,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
       "id": "qSneakyBass39v0r1",
       "nominalMidi": 39,
       "rootMidi": 38.67,
