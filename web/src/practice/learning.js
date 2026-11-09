@@ -1,5 +1,3 @@
-import {MUSICAL_STUDIES} from './musical-phrases.js';
-import {exerciseGuidance} from './exercise-options.js';
 import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {characteristicNotes} from '../audio/music.js';
 import {recommendedGrip} from '../guitar/grips.js';
@@ -80,14 +78,13 @@ export function exerciseLesson(study,groups,harmony,source,options={}){
  if(['groups3','groups4'].includes(study))pattern+=' Groups continue through bar lines, keeping the note ordinal when adapting to a new harmony or position; they reverse after the last complete fitting group.';
  if(['thirds','fourths','sixths','groups3','groups4','digital1324','cells'].includes(study))pattern+=' Downward first mirrors the scale-step offsets. Only exact, complete cells available in the chosen diagram are used; a missing pitch is not replaced by the next available note.';
  if(options.progression&&study==='positional')listen+=' With Shape default, each new chord or position starts at the lowest available arpeggio note for upward first, or the highest for downward first. Repeated bars in the same position continue the traversal. Explicit Pattern start choices use their selected degree. The backing chart stays unchanged.';
- if(options.progression&&!(study in MUSICAL_STUDIES)&&!['positional','positionalscale'].includes(study))listen+=' The pattern is rebuilt from the new chord’s scale guide while continuing in the current direction from the nearest valid cell. A position change adapts that sequence rather than resetting at the edge; repeated harmony retains its cursor. At the usable range boundary, the sequence turns into the opposite pattern. Study cells do not change the backing progression.';
+ if(options.progression&&!['positional','positionalscale'].includes(study))listen+=' The pattern is rebuilt from the new chord’s scale guide while continuing in the current direction from the nearest valid cell. A position change adapts that sequence rather than resetting at the edge; repeated harmony retains its cursor. At the usable range boundary, the sequence turns into the opposite pattern. Study cells do not change the backing progression.';
  if(harmony.scalePcs.length!==7){
   const count=harmony.scalePcs.length;
   const intro=`This is a ${count}-note scale. Numeric patterns count positions in its ordered collection, including octave wrapping. `;
   pattern=intro+(['harmonized','alternating','chordtones','chordtonesalternating','approach','approacheverytone'].includes(study)?(count===6?'Stack alternate scale notes. Four notes repeat the starting pitch class an octave higher. On whole-tone and augmented scales the three-note stacks are augmented triads. These are not ordinary diatonic seventh chords.':count===5?'Stack alternate notes of the five-note scale, wrapping at the octave. The groups are scale-step patterns, not ordinary diatonic seventh chords.':'Stack alternate scale notes in groups of three or four.'):pattern);
  }
 
- if(study in MUSICAL_STUDIES){trains='Shape a musical phrase around the chord changes.';pattern=exerciseGuidance(study);listen='Hear the target notes, quieter connecting notes and the space between phrases.';apply='Keep the written rhythm, change the middle notes, and retain the chord-tone landing.';}
  const first=groups.flatMap(g=>g.notes||[])[0];
  const starting=first?`First written note: ${first.name} · string ${6-first.string}, fret ${first.fret}. ${options.progression?study==='positionalscale'?'The scale continues through chord slots and turns at the position boundary.':study==='harmonized'&&options.stage!=='cell'?'Arpeggio cells continue through bar lines, retaining their note ordinal at a harmony or position change.':'Each chord slot uses complete available cells; unused time is a rest.':'The chosen direction and the notes available in this position determine the starting note.'}`:'No complete cell is available here. Choose another position or, in a progression, allow a longer chord slot.';
  return {trains,pattern,listen,apply,starting,cells:lessonCells(groups),rhythm:`Try this yourself in 4/4: play ${harmony.tones[1]||harmony.name} on beat 1, hold through beat 2, rest on beat 3, then play ${harmony.tones[0]} on beat 4. This is an application prompt, not the subdivision exercise playback.`};

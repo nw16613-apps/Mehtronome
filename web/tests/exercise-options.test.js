@@ -34,3 +34,7 @@ test('saved triplet phrase formulas retire without changing explicit Pattern sta
   assert.equal(view.phrase,undefined);assert.equal(view.startTone,'5:0');assert.equal(view.motion,'descending');
  }
 });
+
+test('retired musical phrasing favourites restore to positional arpeggios',()=>{
+ for(const study of ['motifspace','changetargets','questionanswer']){const view=normalizeExerciseOptions({study,motion:'descending',rhythm:'triplets'});assert.equal(view.study,'positional');assert.equal(view.motion,'descending');assert.equal(view.rhythm,'triplets');}
+});
