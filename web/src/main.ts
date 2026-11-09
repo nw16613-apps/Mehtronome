@@ -1,3 +1,4 @@
+import {installStudyPath} from './practice/study-path-view';
 import {createReferencePreparation} from './audio/reference-plan-preparation.js';
 import {createGuitarChannel,loadGuitarCabinet,needsGuitarCabinet} from './audio/guitar-processing.js';
 import {shapeColor,emphasizeFullNeck,perStringMapRegions} from './guitar/shape-emphasis.js';
@@ -51,6 +52,7 @@ import { loadDrumKit } from './audio/load-kit.js';
 import './style.css';
 import './themes.css';
 import './practice.css';
+import './practice/study-path.css';
 import './interface.css';
 import './console.css';
 import './studio.css';
@@ -219,6 +221,7 @@ const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pulse-large" aria-labelledby="pulse-large-title"><div class="pulse-large-toolbar"><h2 id="pulse-large-title">The pulse</h2><button id="pulse-large-close" type="button" class="practice-button">Close</button></div><div id="pulse-large-number" class="pulse-large-number">Ready</div><p id="pulse-large-status">Ready to practice</p><button id="pulse-large-play" type="button" class="practice-button">Start practicing</button></dialog>`);
 let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
+let studyPathUi:ReturnType<typeof installStudyPath>|undefined;
 let settings = { ...DEFAULTS, automaticBacking:true, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
 let master: GainNode | undefined;
 let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
@@ -1977,6 +1980,7 @@ function syncTrainerStatus() {
   el('trainer-status').textContent = playing?`${currentBpm} BPM${currentBpm>=Math.max(settings.bpm,settings.trainerTarget)?' · Target reached':''}`:`Starts at ${settings.bpm} BPM.`;
 }
 function syncWorkspaceStates(){
+ studyPathUi?.sync();
  const context=document.getElementById('setup-current-context');if(context)context.textContent=`Current setup: ${names[settings.key]} · ${settings.bpm} BPM · ${progressionDefinition(settings).name}`;
  const locked=playing||exercisePlaying||exercisePreparing;
  document.querySelectorAll<HTMLInputElement|HTMLButtonElement|HTMLSelectElement>('[data-practice-task],[data-checklist-action],#checklist-position,#checklist-idea').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
@@ -2400,6 +2404,29 @@ installRepertoire({
 });
 
 organizeWorkspaces(showWorkspace);
+studyPathUi=installStudyPath({
+ locked:()=>playing||exercisePlaying||exercisePreparing||busy||stopping,
+ fingerprint:()=>JSON.stringify([settings.key,settings.beats,settings.progression,progressionDefinition(settings),select('featured-position').value,select('position-region').value,input('manual-position-route').value,exerciseView.study,exerciseView.fingering]),
+ navigate:showWorkspace,
+ load:async(plan:any)=>{
+  if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before loading a study.');
+  stopPreview();stopExercisePreview();
+  await loadWorkingChart(plan.chart);
+  input('manual-position-route').value='';input('pattern-start-route').value='';
+  try{localStorage.setItem('mehtronome-pattern-start-route','');}catch{}
+  select('featured-position').value=plan.navigation;select('position-region').value=plan.selection.region;
+  overviewPosition=plan.selection.position;
+  if(plan.positions)restoreChartPracticeChoices({positions:plan.positions,starts:null});
+  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';gripOnly=false;
+  select('fret-view').value=['positional','arpgroups3','arpgroups4'].includes(plan.study)?'arpeggio':'scale';
+  select('exercise').value=select('fret-view').value;
+  Object.assign(exerciseView,{study:plan.study,fingering:'caged',material:'seventh',stage:'full',startTone:'default',fretboard:true,backing:true,loop:true,autoTempo:false,tempoLinked:true});
+  exerciseSelectionStart=null;exerciseSelectionEnd=null;step=0;
+  input('loop-enabled').checked=false;fillLoopOptions(true);update();
+  document.dispatchEvent(new Event('chart-context-restored'));
+  showWorkspace('exercises','caged-exercise');
+ }
+});
 installChartTools({view:chartView,render:renderCustomBeatGrid,getChart:()=>({progression:customProgression,sections:rehearsalSections(customProgression,settings.beats),locked:playing||exercisePlaying||exercisePreparing||stopping}),clearSelection:()=>{chartEditSteps=[];renderCustomBuilder();renderCustomBeatGrid();},sectionAction:editChartSection});
 installProgressionGenerator({
  getContext:()=>{const info=chordInfo(step);return {key:settings.key,beats:settings.beats,chord:info.chordId,mode:info.mode,positions:select('featured-position').value==='all'?chartPracticeChoices().positions:null};},
