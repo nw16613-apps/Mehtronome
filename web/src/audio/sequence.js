@@ -1,3 +1,4 @@
+import {performanceExpression} from './performance-expression.js';
 import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
 import {sourceFor} from './sound-library.js';
 import {performanceTouch} from './groove-time.js';
@@ -178,7 +179,8 @@ export class Sequence {
       for(const event of referenceEvents(plan,'sequence',grid)){
         const midi=event.midi+plan.transpose,tone=settings.sequenceTone;
         this.instrument.soundLibrary=sourceFor(settings,'sequence');
-        this.instrument.strike([midi],event.duration,event.velocity*.65*sessionEventGain(plan,'sequence',grid),settings.bpm,sample,step,undefined,'sequence',tone);
+        const expression=performanceExpression(settings.backingStyle,'sequence',tone,event.duration,Math.floor(beat/settings.beats));
+        this.instrument.strike([midi],event.duration,event.velocity*.65*sessionEventGain(plan,'sequence',grid)*expression.velocity,settings.bpm,sample,step,undefined,'sequence',tone,0,null,event.articulation||expression.articulation);
         this.lastMidi=midi;onNote({sample,grid,midi,step,tone,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
       }
       return;
@@ -224,7 +226,8 @@ export class Sequence {
       this.instrument.soundLibrary=sourceFor(settings,'sequence');
       const tone=settings.sequenceTone||settings.compingTone||'brightTine',duration=note.duration||.5;
       const touch=performanceTouch(settings,'sequence',Math.floor(beat/settings.beats),(beat%settings.beats)*4+(grid%rate)*4/rate,this.rate);
-      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression==='bend'&&['cleanGuitar','bluesGuitar','drivenGuitar','jazzGuitar','legatoGuitar'].includes(tone)?'bend':null);
+      const expression=performanceExpression(settings.sequenceStyle,'sequence',tone,duration,Math.floor(beat/settings.beats));
+      this.instrument.strike([midi],duration*touch.length,note.velocity*.65*touch.velocity*expression.velocity,settings.bpm,sample,step,undefined,'sequence',tone,touch.delayFrames,null,note.expression==='bend'&&['cleanGuitar','bluesGuitar','drivenGuitar','jazzGuitar','legatoGuitar'].includes(tone)?'bend':expression.articulation);
       onNote({sample:sample+touch.delayFrames,gridSample:sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar,style:settings.sequenceStyle,tone,durationBeats:duration,section:note.section,phraseId:note.phraseId,phraseStart:note.phraseStart,phraseEnd:note.phraseEnd,target:note.target,activity:settings.sequenceActivity||'countermelody'});return;
     }
     const voice=this.voices[this.cursor++%this.voices.length];

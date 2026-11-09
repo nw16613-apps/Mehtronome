@@ -20,7 +20,7 @@ test('organ sustain loops keep sounding and release cleanly; guitar chords have 
  const guitar=player();guitar.strike([60,64,67],2,.45,120,0,0,undefined,'comping','cleanGuitar');assert.deepEqual(guitar.voices.filter(v=>v.active).map(v=>v.delay),[0,96,192]);guitar.strike([60,64,67],2,.45,120,0,0,undefined,'comping','cleanGuitar');assert.deepEqual(guitar.voices.slice(3,6).map(v=>v.delay),[192,96,0]);
 });
 test('connected sampled flute notes crossfade into the sustained recording rather than repeating each breath attack',()=>{
- const p=player();p.strike([72],2,.5,120,0,0,undefined,'sequence','fluteLead');for(let n=0;n<100;n++)p.render();p.strike([74],2,.5,120,100,0,undefined,'sequence','fluteLead');const v=p.voices[1];assert.ok(v.samplePosition>=rate*.069);assert.equal(p.voices[0].releaseAt,p.voices[0].age+1);for(let n=0;n<rate;n++)assert.ok(Number.isFinite(p.render()));
+ const p=player();p.strike([72],2,.5,120,0,0,undefined,'sequence','fluteLead');for(let n=0;n<100;n++)p.render();p.strike([74],2,.5,120,100,0,undefined,'sequence','fluteLead',0,null,'legato');const v=p.voices[1];assert.ok(v.samplePosition>=rate*.069);assert.equal(p.voices[0].releaseAt,p.voices[0].age+1);for(let n=0;n<rate;n++)assert.ok(Number.isFinite(p.render()));
 });
 test('the new sources retain stereo mix headroom at the mobile render rate with all instrument faders up',async()=>{
  const {Engine,DEFAULTS}=await import('../src/audio/engine.js'),{backingStyleInstruments,resolveDrumKit}=await import('../src/practice/backing-styles.js'),nativeRate=32000,native=await readSampleBank(nativeRate);

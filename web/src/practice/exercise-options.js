@@ -1,3 +1,4 @@
+import {MUSICAL_STUDIES} from './musical-phrases.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
@@ -17,7 +18,7 @@ export function normalizeExerciseOptions(view){
  return view;
 }
 export function exerciseMenuOptions(study){
- return {material:!fixedMaterial.has(study),directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
+ return {material:!(study in MUSICAL_STUDIES)&&!fixedMaterial.has(study),directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
  [['ascending','Ascending'],['descending','Descending'],['up-down','Ascending and descending'],['down-up','Descending and ascending']]:
  [['ascending','Upward first'],['descending','Downward first']]};
 }
@@ -34,6 +35,9 @@ export function exerciseCollectionLabels(study,nonDiatonic=false){
 export function exerciseGuidance(study){
  if(study.startsWith('enclosures'))return 'Surround each target chord tone with the written approach notes, then resolve to it.';
  const descriptions={
+  motifspace:'Repeat a short scale motif with a changed chord-tone ending. Hold the written notes and leave the rests silent; keep the same shape of the rhythm across changes.',
+  changetargets:'Land on a nearby third or seventh when each chord arrives, then use the current scale and chord tones to lead toward the next change. Shorter chords use their available core tones.',
+  questionanswer:'Play a short question, leave space, then give a softer answer with a reversed contour. Each phrase begins and ends on a tone of the current chord.',
   positional:'Ascend and descend through the chord’s core tones without repeating the turning notes. Pattern start chooses the entry note; the line flows across bar lines.',
   positionalscale:'Play the scale through the selected CAGED position, ascending and descending. Pattern start chooses the entry note; the line flows across bar lines.',
   thirds:'Play scale-note pairs 1–3, 2–4, 3–5 and so on. The interval follows the selected scale.',

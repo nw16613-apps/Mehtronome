@@ -1,3 +1,4 @@
+import {performanceExpression} from './performance-expression.js';
 import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
 import {EXPANDED_SAMPLE_ZONES,expandedBankForTone,recordedZone,sourceFor,STUDIO_BANKS} from './sound-library.js';
 import {ensembleComping} from './ensemble-arrangements.js';
@@ -163,7 +164,8 @@ export class CompingInstrument{
       for(const event of referenceEvents(plan,'comping',grid)){
         const pitches=event.notes.map(midi=>midi+plan.transpose);
         const velocity=event.velocity*sessionEventGain(plan,'comping',grid);
-        this.strike(pitches,event.duration,velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,0,null,event.articulation);
+        const expression=performanceExpression(settings.backingStyle,'comping',settings.compingTone,event.duration,bar);
+        this.strike(pitches,event.duration,velocity*expression.velocity,settings.bpm,sample,step,undefined,'comping',settings.compingTone,0,null,event.articulation||expression.articulation);
         onEvent?.({type:'comping',sample,step,notes:pitches,duration:event.duration,velocity,reference:plan.score.id,bar:event.bar});
       }
       return;
@@ -180,7 +182,7 @@ export class CompingInstrument{
       const index=vary?1+Math.floor(this.hits/4)%(voicings.length-1):0;
       const chord=Array.isArray(voicings[index])?voicings[index]:notes;
       // All comping attacks are full chords on the style's existing rhythm.
-      if(chord.length>=3){const touch=performanceTouch(settings,'comping',bar,offset,this.rate);this.strike(chord,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone,touch.delayFrames);}
+      if(chord.length>=3){const touch=performanceTouch(settings,'comping',bar,offset,this.rate);const expression=performanceExpression(settings.backingStyle,'comping',settings.compingTone,duration,bar);this.strike(chord,duration*touch.length,velocity*touch.velocity*expression.velocity,settings.bpm,sample,step,onEvent,'comping',settings.compingTone,touch.delayFrames,null,expression.articulation);}
       this.lastChord=chordSignature;this.hits++;
     }
   }
@@ -200,8 +202,9 @@ export class CompingInstrument{
       const pitches=option[role];if(!pitches?.length)continue;
       const touch=performanceTouch(settings,'comping',bar,offset,this.rate);
       const tone=part.style==='reggae'&&['third','seventh'].includes(role)?'drawbarOrgan':settings.compingTone;
-      this.strike(pitches,duration*touch.length,velocity*touch.velocity,settings.bpm,sample,step,undefined,'comping',tone,touch.delayFrames,group||role);
-      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity,part:part.style,variant:phrase.variant,role,tone});
+      const expression=performanceExpression(part.style,'comping',tone,duration,bar,role);
+      this.strike(pitches,duration*touch.length,velocity*touch.velocity*expression.velocity,settings.bpm,sample,step,undefined,'comping',tone,touch.delayFrames,group||role,expression.articulation);
+      onEvent?.({type:'comping',sample:sample+touch.delayFrames,gridSample:sample,delayFrames:touch.delayFrames,step,notes:pitches,duration:duration*touch.length,velocity:velocity*touch.velocity*expression.velocity,articulation:expression.articulation,part:part.style,variant:phrase.variant,role,tone});
       this.partLastVoicing=option.chord;this.hits++;
     }
   }
@@ -209,12 +212,12 @@ export class CompingInstrument{
   strike(notes,duration,velocity,bpm,sample,step,onEvent,type='comping',tone='brightKeys',delayFrames=0,group=null,expression=null){
     const pitches=[...new Set(notes)].filter(Number.isFinite).slice(-6);
     const guitar=this.soundLibrary==='expanded'&&STUDIO_BANKS.has('electricGuitar')&&['cleanGuitar','bluesGuitar','drivenGuitar','swelledGuitar','jazzGuitar','nylonGuitar','legatoGuitar'].includes(tone),strum=guitar&&type==='comping'&&pitches.length>1,strumDown=this.strumCount%2===0;this.strumCount++;if(strum)pitches.sort((a,b)=>a-b);
-    const continuation=this.soundLibrary==='expanded'&&type==='sequence'&&pitches.length===1&&this.voices.some(v=>v.active&&v.pcm&&v.tone===tone&&v.age<v.hold&&!v.delay);
-    if(['legatoGuitar','fluteLead'].includes(tone)&&type==='sequence'&&pitches.length===1){
-      const held=this.voices.find(v=>v.active&&v.tone===tone&&v.age<v.hold&&v.releaseAt>v.age+1&&!v.delay);
+    const continuation=this.soundLibrary==='expanded'&&type==='sequence'&&pitches.length===1&&this.voices.some(v=>v.active&&v.pcm&&v.tone===tone&&v.age<v.hold&&!v.delay&&v.midi!==pitches[0]&&Math.abs(v.midi-pitches[0])<=7)&&expression==='legato';
+    if(expression==='legato'&&['legatoGuitar','fluteLead'].includes(tone)&&type==='sequence'&&pitches.length===1){
+      const held=this.voices.find(v=>v.active&&v.tone===tone&&v.age<v.hold&&v.releaseAt>v.age+1&&!v.delay&&v.midi!==pitches[0]&&Math.abs(v.midi-pitches[0])<=7);
       if(held&&!held.pcm){const transition={midi:pitches[0],duration,velocity,bpm,delay:delayFrames};if(delayFrames>0)held.pendingLegato=transition;else this.connectLegato(held,transition);onEvent?.({type,sample:sample+delayFrames,step,notes:pitches,duration,velocity,legato:true});return;}
     }
-    if(this.soundLibrary==='expanded'&&type==='sequence')for(const voice of this.voices)if(voice.active&&voice.pcm&&voice.tone===tone)this.releaseVoice(voice);
+    if(this.soundLibrary==='expanded'&&type==='sequence')for(const voice of this.voices)if(voice.active&&voice.pcm&&voice.tone===tone){if(delayFrames>0&&voice.delay===0){voice.releaseAt=voice.age+delayFrames+1;voice.firstRelease=voice.release;voice.releaseFactor=this.transitionFactor;}else this.releaseVoice(voice);}
     if(group)for(const voice of this.voices)if(voice.active&&(group==='inner'?voice.group==='inner':pitches.includes(voice.midi)))this.releaseVoice(voice);
     for(const [index,midi] of pitches.entries()){
       const voice=this.voices[this.cursor++%this.voices.length];
@@ -223,12 +226,13 @@ export class CompingInstrument{
       // Emily's DI feeds the shared native amp/cab after summing the strings.
       // Avoid distorting each note separately before that amplifier stage.
       if(expanded&&bank==='electricGuitar'&&this.banks['expanded:electricGuitar']?.[0]?.id.startsWith('qEmily'))shape={...shape,drive:0,cutoff:14000};
-      if(expression==='damped'){const seconds=.035;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='ringing'){const seconds=.18;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='swell')shape={...shape,attackFrames:Math.max(shape.attackFrames,this.rate*.065)};
-      Object.assign(voice,{pendingLegato:null,glideRemaining:0,noiseState:Math.imul(midi+1,1664525),breathFiltered:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames+(strum?Math.round((strumDown?index:pitches.length-1-index)*this.rate*.006):0),shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
+      if(continuation)shape={...shape,attackFrames:Math.max(shape.attackFrames,this.rate*.012)};
+      if(expression==='damped'){const seconds=.035;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='ringing'){const seconds=/Guitar$/.test(tone)?.22:.26;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='swell')shape={...shape,attackFrames:Math.max(shape.attackFrames,this.rate*.065)};
+      Object.assign(voice,{pendingLegato:null,glideRemaining:0,noiseState:Math.imul(midi+1,1664525),breathFiltered:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames+(strum?Math.round((strumDown?index:pitches.length-1-index)*this.rate*(expression==='damped'?.0035:tone==='swelledGuitar'?.009:.006)):0),shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(strum?1+.065*(strumDown?1-2*index/Math.max(1,pitches.length-1):2*index/Math.max(1,pitches.length-1)-1):1)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const muted=expanded&&!STUDIO_BANKS.has(bank)&&['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone)&&duration<.42&&this.banks['expanded:guitarMuted']?.length;
       const zones=this.banks[muted?'expanded:guitarMuted':shape.bank]?.length?this.banks[muted?'expanded:guitarMuted':shape.bank]:this.banks[originalShape.bank]||[];
       const zone=expanded?recordedZone(zones,midi,velocity,this.sampleCursors):zones.reduce((best,item)=>!best||Math.abs(item.rootMidi-midi)<Math.abs(best.rootMidi-midi)?item:best,null);
-      voice.sourceGain=expanded&&zone?(bank==='electricGuitar'?(tone==='legatoGuitar'?1.25:.9):bank==='flute'?1.05:bank==='wurlitzer'?1:bank==='nylonGuitar'?1.15:bank==='clav'?1.35:1.05):1;voice.sourceId=zone?.id;voice.articulation=muted?'recorded staccato':zone?.layer||'normal';voice.expanded=expanded;
+      voice.sourceGain=expanded&&zone?(bank==='electricGuitar'?(tone==='legatoGuitar'?1.25:.9):bank==='flute'?1.05:bank==='wurlitzer'?1:bank==='nylonGuitar'?1.15:bank==='clav'?1.35:1.05):1;voice.sourceId=zone?.id;voice.articulation=muted?'recorded staccato':continuation?'connected crossfade':expression||zone?.layer||'normal';voice.expanded=expanded;
       voice.organPartials=expanded&&tone==='drawbarOrgan'&&!zone?.pcm?ORGAN_RATIOS.map((ratio,i)=>440*2**((midi-69)/12)*ratio<this.rate*.45?[.17,.1,1,.24,.1,.07,.035,.02,.01][i]:0):null;
       voice.pcm=zone?.pcm;voice.samplePosition=continuation&&zone?.legatoStart?zone.legatoStart*this.rate:0;voice.loopStart=(zone?.loopStartSeconds||0)*this.rate;voice.loopEnd=zone?.loopEndSeconds?Math.min(zone.loopEndSeconds*this.rate,(zone.pcm?.length||1)-2):0;voice.sampleIncrement=zone?2**((midi-zone.rootMidi)/12):0;voice.bendRemaining=0;
       if(expression==='bend'){voice.bendRemaining=Math.round(this.rate*.06);voice.bendTarget=voice.pcm?voice.sampleIncrement:voice.increment;const start=voice.bendTarget*2**(-.5/12);voice.bendStep=(voice.bendTarget-start)/voice.bendRemaining;if(voice.pcm)voice.sampleIncrement=start;else voice.increment=start;}voice.filtered=0;voice.filterAlpha=1-Math.exp(-2*Math.PI*Math.min((shape.cutoff||11000)*(expanded?.65+.7*Math.min(1,velocity):1),this.rate*.45)/this.rate);
@@ -262,7 +266,8 @@ export class CompingInstrument{
         if(!audible)continue;
         const value=pcm[index]+(pcm[index+1]-pcm[index])*(position-index);
         voice.filtered+=voice.filterAlpha*(value-voice.filtered);
-        const wave=shape.drive?Math.tanh(voice.filtered*shape.drive)/Math.tanh(shape.drive):voice.filtered;
+        const remaining=(pcm.length-1-position)/Math.max(.0001,voice.sampleIncrement),endFade=Math.min(1,Math.max(0,remaining/64));
+        const wave=(shape.drive?Math.tanh(voice.filtered*shape.drive)/Math.tanh(shape.drive):voice.filtered)*endFade;
         output+=wave*voice.gain*voice.sourceGain*Math.min(1,voice.age/shape.attackFrames)*release;
         continue;
       }

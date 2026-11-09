@@ -1,3 +1,4 @@
+import {performanceExpression} from './performance-expression.js';
 import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
 import {drumStrokeGain} from './drum-performance.js';
 import {referenceEvents,referenceGrid,sessionEventGain} from './reference-performances.js';
@@ -394,7 +395,7 @@ export class Rhythm {
       const plan=settings.referencePlan;
       for(const event of referenceEvents(plan,'bass',this.lastBassGrid)){
         const midi=event.midi+plan.transpose;
-        const velocity=event.velocity*sessionEventGain(plan,'bass',this.lastBassGrid);
+        const velocity=event.velocity*sessionEventGain(plan,'bass',this.lastBassGrid)*performanceExpression(settings.backingStyle,'bass','',event.duration,bar).velocity;
         this.bassInstrument.noteOn(midi,event.duration*60/settings.bpm,velocity,settings.bassPattern,settings.bassInstrument,sourceFor(settings,'bass'));
         this.bassCursor=this.bassInstrument.cursor;this.lastBassMidi=midi;
         onEvent({type:'bass',sample,step,beat,sub,midi,gain:velocity,durationBeats:event.duration,reference:plan.score.id,bar:event.bar});
@@ -442,7 +443,7 @@ export class Rhythm {
     while(midi>59)midi-=12;
     this.lastBassMidi=midi;this.lastBassChord=notes.join(',');
     const touch=performanceTouch(settings,'bass',bar,beat*4+sub,this.rate);
-    gain*=touch.velocity;length*=touch.length;
+    gain*=touch.velocity*performanceExpression(settings.backingStyle,'bass','',length,bar).velocity;length*=touch.length;
     const seconds=length*60/settings.bpm;
     this.bassInstrument.noteOn(midi,seconds,gain,pattern,settings.bassInstrument,sourceFor(settings,'bass'));
     this.bassCursor=this.bassInstrument.cursor;

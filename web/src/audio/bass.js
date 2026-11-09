@@ -76,7 +76,11 @@ export class SampledBass {
     const level=Number.isFinite(gain)?Math.max(0,Math.min(1.2,gain)):0;
     // Every new pluck releases the previous one smoothly. Three slots preserve
     // the short overlap without stealing the immediately preceding attack.
-    for (const old of this.voices) old.releasing=true;
+    for (const old of this.voices) {
+      old.releasing=true;
+      // The next pluck damps the preceding low string without a hard cut.
+      old.releaseDecay=Math.min(old.releaseDecay,Math.exp(-1/(this.rate*.025)));
+    }
     const voice=this.voices[this.cursor++%this.voices.length];
     let zone=null;
     let zones=this.banks[instrument]?.length?this.banks[instrument]:this.zones;
@@ -101,8 +105,8 @@ export class SampledBass {
       increment:sample?2**((pitch-zone.rootMidi)/12):440*2**((pitch-69)/12)/this.rate,
       age:0,envelope:1,releasing:false,gain:level*(BASS_TRIMS[instrument]??1),
       gate:Math.max(1,Math.round(seconds*this.rate)),
-      attackFrames:Math.max(1,Math.round(articulation.attack*this.rate)),
-      releaseDecay:Math.exp(-1/(this.rate*articulation.release)),
+      attackFrames:Math.max(1,Math.round(articulation.attack*(1.25-.45*Math.min(1,level))*this.rate)),
+      releaseDecay:Math.exp(-1/(this.rate*Math.min(articulation.release,Math.max(.025,seconds*.3)))),
       // Recorded decays supply the sustain shape. The fallback needs its own
       // plucked envelope and stays responsive to the same note articulation.
       decay:sample?1:Math.exp(-1/(this.rate*seconds*articulation.decay)),
