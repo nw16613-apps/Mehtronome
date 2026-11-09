@@ -105,3 +105,23 @@ was made. Neither unavailable candidate is represented as having been auditioned
 Publish the new output under `/instrument-audition-2/`, retaining the earlier
 audition and the main app unchanged. Only offline scripts/listening renders are
 added; this does not add per-sample work, sample downloads or controls to the app.
+
+### Clean Emily chorus follow-up
+
+The user prefers Emilyguitar and Yamaha RBX. The round-two page now initially
+selects those choices, and adds a sixth clean-guitar version: Emily amp + chorus.
+`chorus.py` applies a slow, shallow stereo modulated delay after the same clean
+amp/cab output (0.32 Hz, 14 ms centre, 1.3 ms depth, 18% wet). The dry attack stays
+undelayed, wet lows/highs are filtered, and there is no feedback. Blues/Fusion
+guitar and both bass performances have no added chorus. The main app remains
+unchanged pending this final tone audition.
+
+All solo renders now have two channels, including dual-mono references, so stereo
+chorus and mono sources are matched on the same loudness basis. There are 44
+listening files. `test-chorus.py` checks silence, exact bypass, undelayed attack,
+no long feedback echo, stereo difference and preserved mono body. The existing
+amp tests and event/stem/headroom/decoded-loudness checks still apply.
+
+The main clean-guitar sampler adds no chorus itself. FreePats documents amp/effects
+processing in its source recordings but does not identify the effects, so a
+baked-in chorus is plausible but unconfirmed. Do not report it as established.

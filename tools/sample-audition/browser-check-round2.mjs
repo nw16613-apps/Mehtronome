@@ -21,5 +21,5 @@ try{
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'mobile overflow');
  await page.screenshot({path:'/workspace/guitar-bass-round2-mobile.png',fullPage:true});
  await page.setViewportSize({width:1440,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'desktop overflow');
- assert.deepEqual(errors,[]);assert.equal(files,42);console.log('42 audio versions decoded and played; source-position switching, restart and mobile/desktop layouts passed.');
+ assert.deepEqual(errors,[]);assert.equal(files,44);console.log('44 audio versions decoded and played; source-position switching, restart and mobile/desktop layouts passed.');
 }finally{await browser.close();}

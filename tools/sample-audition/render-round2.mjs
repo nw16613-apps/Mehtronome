@@ -56,20 +56,27 @@ for(const c of cases){
    execFileSync('python3',[new URL('./amp.py',import.meta.url).pathname,input,output,c.amp,join(cache,'cabinet.wav')]);
    const data=await readFile(output),pcm=new Float32Array(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength));assert.equal(pcm.length,result.frames);
    variants.push({id:family+'-amp',label:label+' · amp',description:`${c.amp} amp model + recorded Deluxe Reverb speaker response`,result:{...result,stems:{...result.stems,comping:pcm}}});
+   if(family==='emily'&&c.id==='clean-guitar'){
+    const chorused=join(cache,c.id+'-emily-chorus.raw');
+    execFileSync('python3',[new URL('./chorus.py',import.meta.url).pathname,output,chorused]);
+    const bytes=await readFile(chorused),data=new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));assert.equal(data.length,result.frames*2);
+    const left=new Float32Array(result.frames),right=new Float32Array(result.frames);for(let n=0;n<result.frames;n++){left[n]=data[n*2];right[n]=data[n*2+1];}
+    variants.push({id:'emily-chorus',label:'Emilyguitar · amp + chorus',description:'Emily through the clean amp/cab, then subtle stereo chorus: 0.32 Hz, 14 ms delay, 1.3 ms depth, 18% wet; dry attack stays undelayed',stereo:[left,right],result:{...result,stems:{...result.stems,comping:pcm}}});
+   }
   }
  }
- for(const v of variants){v.raw=join(cache,c.id+'-'+v.id+'-solo.raw');await raw(v.raw,[v.result.stems[c.track]]);v.solo=measure(v.raw,1);}
+ for(const v of variants){v.raw=join(cache,c.id+'-'+v.id+'-solo.raw');await raw(v.raw,v.stereo||[v.result.stems[c.track],v.result.stems[c.track]]);v.solo=measure(v.raw,2);}
  const target=Math.min(-23,...variants.map(v=>v.solo.lufs-v.solo.truePeakDb-2));
  for(const v of variants){
   v.sourceGainDb=variants[0].solo.lufs-v.solo.lufs;
-  encode(v.raw,join(out,`${c.id}-${v.id}-solo.mp3`),1,target-v.solo.lufs);
+  encode(v.raw,join(out,`${c.id}-${v.id}-solo.mp3`),2,target-v.solo.lufs);
   const s=v.result.stems,channels=[new Float32Array(baseline.frames),new Float32Array(baseline.frames)],gain=10**(v.sourceGainDb/20);
-  for(let n=0;n<baseline.frames;n++)for(let ch=0;ch<2;ch++)channels[ch][n]=s.drums[n]+s.bass[n]*(c.track==='bass'?gain:1)+s.comping[n]*(c.track==='comping'?gain:1)+(ch?s.sequenceRight[n]:s.sequenceLeft[n]);
+  for(let n=0;n<baseline.frames;n++)for(let ch=0;ch<2;ch++)channels[ch][n]=s.drums[n]+s.bass[n]*(c.track==='bass'?gain:1)+(v.stereo?v.stereo[ch][n]:s.comping[n])*(c.track==='comping'?gain:1)+(ch?s.sequenceRight[n]:s.sequenceLeft[n]);
   v.mixRaw=join(cache,c.id+'-'+v.id+'-mix.raw');await raw(v.mixRaw,channels);v.mix=measure(v.mixRaw,2);
  }
  const mixGain=Math.min(-20-variants[0].mix.lufs,...variants.map(v=>-2-v.mix.truePeakDb));
  const row={...c,bpm:baseline.bpm,bars:8,seconds:baseline.frames/rate,eventParity:true,unaffectedStemsIdentical:true,soloTargetLufs:target,variants:[]};
- for(const v of variants){encode(v.mixRaw,join(out,`${c.id}-${v.id}-mix.mp3`),2,mixGain);const encodedSolo=measure(join(out,`${c.id}-${v.id}-solo.mp3`),1,true),encodedMix=measure(join(out,`${c.id}-${v.id}-mix.mp3`),2,true);
+ for(const v of variants){encode(v.mixRaw,join(out,`${c.id}-${v.id}-mix.mp3`),2,mixGain);const encodedSolo=measure(join(out,`${c.id}-${v.id}-solo.mp3`),2,true),encodedMix=measure(join(out,`${c.id}-${v.id}-mix.mp3`),2,true);
   assert.ok(encodedSolo.truePeakDb<0&&encodedMix.truePeakDb<0);
   // Encoder padding can shift short-file integrated readings. Compare decoded
   // versions with the decoded reference, rather than only the pre-encode target.

@@ -102,3 +102,17 @@ provenance, processing, limitations, reproduction and validation. The actual app
 source maps, guitar/bass instrument assignments, worklet DSP and controls remain
 unchanged while the user listens. The previous preferred upright candidate is
 preserved in the first audition. No new replacement is selected automatically.
+
+## Preferred sources and subtle clean-guitar chorus
+
+The user subsequently selected Emilyguitar and Yamaha RBX over the other round-two
+candidates, and requested a chorus-like treatment similar to the original clean
+guitar. The normal clean-guitar path has no chorus stage; the source documentation
+names an amplifier/effects rack but does not establish whether chorus was used.
+
+A new offline clean Emily amp + chorus comparison uses a filtered stereo wet
+signal (18%), slow 0.32 Hz modulation, 14 ms centre delay and 1.3 ms depth after
+the existing audition amp/cab. The dry attack is undelayed. The other guitar
+parts and bass tracks remain free of this added effect. The user's preferred
+Emily/Yamaha sources are selected initially on the listening page. Normal app
+sample assignments remain unchanged while this tone is auditioned.
