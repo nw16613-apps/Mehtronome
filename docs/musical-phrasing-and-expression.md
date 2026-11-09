@@ -30,3 +30,7 @@ Pitches, backing rhythms, drum parts and the selected instrument libraries are p
 - Production TypeScript/Vite build passed. The callback benchmark was run; it measures this machine, not a physical phone's audio stability.
 
 An older ensemble test still expected the superseded qElectricGuitar source prefix; its assertion now checks the preferred qEmilyGuitar bank. The flute transition test now requests legato explicitly and additional tests verify reattacks after rests/repetitions/leaps.
+
+## Swell balance follow-up
+
+The native swelled-guitar **comping** output now has a +5dB post-amplifier trim. This brings the soft body forward without increasing sample velocities, changing the amplifier drive, attack/release shape, chorus mix, other guitar tones or melodic movement. The mixer fader remains a linear level control. Native offline browser coverage includes reference and full-fader swell levels.

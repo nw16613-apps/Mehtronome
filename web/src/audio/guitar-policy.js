@@ -9,5 +9,8 @@ export function guitarToneProfile(tone,channel='comping'){
  const base=tone==='bluesGuitar'||tone==='drivenGuitar'?{gain:85,lowcut:95,tone:4800,outputCut:6500,trim:chorus?8.82:6.26}:tone==='swelledGuitar'||tone==='legatoGuitar'?{gain:24,lowcut:85,tone:5600,outputCut:6500,trim:chorus?3.52:.84}:{gain:28,lowcut:75,tone:7000,outputCut:7800,trim:chorus?4.42:1.78};
  if(tone==='drivenGuitar')base.gain=140;
  if(tone==='jazzGuitar'){base.tone=4200;base.outputCut=5200;}
+ // Bring the soft swell body forward after the amplifier. Preserve its
+ // recorded velocity layers, soft attack, drive and independent melody level.
+ if(tone==='swelledGuitar'&&channel==='comping')base.trim+=5;
  return {...base,chorus:chorus?.35:0};
 }

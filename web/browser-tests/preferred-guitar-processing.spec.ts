@@ -12,9 +12,10 @@ test('native guitar amp/cab has stereo chorus, faders preserve drive and desktop
    for(let n=rate;n<result.length;n++){const a=result.getChannelData(0)[n],b=result.getChannelData(1)[n];power+=(a*a+b*b)/2;side+=(a-b)*(a-b)/4;peak=Math.max(peak,Math.abs(a),Math.abs(b));}
    return {rms:Math.sqrt(power/(result.length-rate)),side:Math.sqrt(side/(result.length-rate)),peak};
   }
-  return {mobile:await render(32000,.25),desktop:await render(48000,.25),loud:await render(32000,1),blues:await render(32000,.25,'bluesGuitar'),fusion:await render(32000,.25,'swelledGuitar')};
+  return {mobile:await render(32000,.25),desktop:await render(48000,.25),loud:await render(32000,1),blues:await render(32000,.25,'bluesGuitar'),fusion:await render(32000,.25,'swelledGuitar'),fusionFull:await render(32000,1,'swelledGuitar')};
  },graphCode);
  for(const value of Object.values(data)){expect(value.rms).toBeGreaterThan(.00001);expect(value.peak).toBeLessThan(1);expect(value.side).toBeGreaterThan(.000001);}
+ expect(data.fusionFull.rms/data.fusion.rms).toBeGreaterThan(3.9);expect(data.fusionFull.rms/data.fusion.rms).toBeLessThan(4.1);
  expect(data.loud.rms/data.mobile.rms).toBeGreaterThan(3.9);expect(data.loud.rms/data.mobile.rms).toBeLessThan(4.1);
  expect(Math.abs(20*Math.log10(data.desktop.rms/data.mobile.rms))).toBeLessThan(.5);
 });
