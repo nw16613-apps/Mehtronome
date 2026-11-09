@@ -125,3 +125,10 @@ amp tests and event/stem/headroom/decoded-loudness checks still apply.
 The main clean-guitar sampler adds no chorus itself. FreePats documents amp/effects
 processing in its source recordings but does not identify the effects, so a
 baked-in chorus is plausible but unconfirmed. Do not report it as established.
+
+The user then requested a 30% chorus mix and the same test on Blues and Fusion
+swells. The default is now 30% wet / 70% dry, with modulation, delay and filtering
+unchanged. All three Emily amp versions have a separate 30% chorus option beside
+the amp-only version. Descriptions identify each part's actual amp profile. The
+audition now has 48 files; browser checks verify the three labelled 30% options
+and play every solo/ensemble version. Bass, drums and app runtime are unchanged.

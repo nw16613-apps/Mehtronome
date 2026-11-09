@@ -4,6 +4,9 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless
 try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(process.argv[2]||'http://127.0.0.1:4185/');await page.locator('article').nth(4).waitFor();assert.equal(await page.locator('article').count(),5);
+ for(const id of ['clean-guitar','blues-guitar','fusion-guitar']){
+  const chorus=page.locator(`#${id} [data-source="emily-chorus"]`);assert.match(await chorus.textContent(),/30%/);assert.equal(await chorus.getAttribute('aria-pressed'),'true');
+ }
  let files=0;
  for(const card of await page.locator('article').all())for(const mode of ['solo','mix']){
   await card.locator('select').selectOption(mode);
@@ -21,5 +24,5 @@ try{
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'mobile overflow');
  await page.screenshot({path:'/workspace/guitar-bass-round2-mobile.png',fullPage:true});
  await page.setViewportSize({width:1440,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'desktop overflow');
- assert.deepEqual(errors,[]);assert.equal(files,44);console.log('44 audio versions decoded and played; source-position switching, restart and mobile/desktop layouts passed.');
+ assert.deepEqual(errors,[]);assert.equal(files,48);console.log('48 audio versions decoded and played; source-position switching, restart and mobile/desktop layouts passed.');
 }finally{await browser.close();}

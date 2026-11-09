@@ -116,3 +116,9 @@ the existing audition amp/cab. The dry attack is undelayed. The other guitar
 parts and bass tracks remain free of this added effect. The user's preferred
 Emily/Yamaha sources are selected initially on the listening page. Normal app
 sample assignments remain unchanged while this tone is auditioned.
+
+The user subsequently asked to raise the mix to 30% and extend the test to Blues
+and Fusion swell clips. All three Emily amp parts now have an additional 30%
+chorus option, using each part's existing amp/cab output and the same slow/shallow
+modulation. Amp-only references remain available. There is no chorus on bass or
+other instruments, and no change to the main app's sounds in this audition step.
