@@ -14,7 +14,7 @@ export function sampleNamesForSettings(s){
   addGroups(latinSampleGroups(s.drumGroove));if(profile.tambourine||['samba','motown'].includes(s.drumGroove))for(const id of DRUM_SAMPLE_GROUPS.tambourine)names.add(id);
   if(sourceFor(s,'drums')==='expanded'&&profile.bank==='live'){addGroups(EXPANDED_DRUM_GROUPS);addGroups(LIVE_DYNAMIC_GROUPS);}
  }
- if(audible('bass')){addZones(s.bassInstrument==='upright'?INSTRUMENT_SAMPLE_ZONES.upright:BASS_SAMPLE_ZONES);if(sourceFor(s,'bass')==='expanded')addZones(EXPANDED_SAMPLE_ZONES[s.bassInstrument==='upright'?'upright':'electricBass']);}
+ if(audible('bass')){const bank=s.bassInstrument==='upright'?'upright':'electricBass';if(sourceFor(s,'bass')!=='expanded'||!STUDIO_BANKS.has(bank))addZones(s.bassInstrument==='upright'?INSTRUMENT_SAMPLE_ZONES.upright:BASS_SAMPLE_ZONES);if(sourceFor(s,'bass')==='expanded')addZones(EXPANDED_SAMPLE_ZONES[bank]);}
  for(const channel of ['comping','sequence'])if(audible(channel)){
   const tone=channel==='comping'?s.compingTone:s.sequenceTone||s.compingTone,expanded=sourceFor(s,channel)==='expanded',bank=expandedBankForTone(tone);
   if(!expanded||!STUDIO_BANKS.has(bank)&&!['electricGuitar','flute','wurlitzer','clav'].includes(bank))addZones(INSTRUMENT_SAMPLE_ZONES[originalBanks[tone]]);

@@ -122,3 +122,9 @@ and Fusion swell clips. All three Emily amp parts now have an additional 30%
 chorus option, using each part's existing amp/cab output and the same slow/shallow
 modulation. Amp-only references remain available. There is no chorus on bass or
 other instruments, and no change to the main app's sounds in this audition step.
+
+The user then requested 35% and clarified that the updates should be usable in
+the app, not just comparison clips. The playable preview now uses the preferred
+sources and native amp/cab/chorus graph; see `preferred-playable-instruments.md`.
+The comparison page keeps its historical Original reference and is refreshed to
+35% without rendering those old references through the new app assignments.

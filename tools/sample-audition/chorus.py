@@ -6,7 +6,7 @@ import json,pathlib,sys
 import numpy as np
 from scipy.signal import butter,sosfilt
 
-SETTINGS=dict(rateHz=.32,centreDelayMs=14,depthMs=1.3,wet=.30,wetLowcutHz=160,wetHighcutHz=7000)
+SETTINGS=dict(rateHz=.32,centreDelayMs=14,depthMs=1.3,wet=.35,wetLowcutHz=160,wetHighcutHz=7000)
 def process(x,rate=32000,wet=SETTINGS['wet']):
  x=np.asarray(x,dtype=np.float64);frames=len(x);positions=np.arange(frames);time=positions/rate
  filtered=sosfilt(butter(1,SETTINGS['wetLowcutHz'],btype='highpass',fs=rate,output='sos'),x)

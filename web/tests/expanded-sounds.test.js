@@ -6,11 +6,11 @@ test('expanded recordings have pinned provenance, valid redistribution licences,
 });
 test('recorded guitar dynamics and alternate takes change source content; short notes damp the selected natural recording',()=>{
  const i=new CompingInstrument(rate);i.installKit(kit);i.soundLibrary='expanded';const play=(velocity,duration=1)=>{i.strike([60],duration,velocity,120,0,0,null,'comping','cleanGuitar');return i.voices[(i.cursor-1)%i.voices.length];};
- const soft=play(.28),softId=soft.sourceId,softPcm=soft.pcm,next=play(.28);assert.notEqual(next.sourceId,softId);assert.notEqual(next.pcm,softPcm);assert.match(next.sourceId,/v0r[12]$/);assert.match(play(.9).sourceId,/v1r[12]$/);const short=play(.4,.2);assert.match(short.sourceId,/^qElectricGuitar/);assert.equal(short.hold,.2*60/120*rate);
+ const soft=play(.28),softId=soft.sourceId,softPcm=soft.pcm,next=play(.28);assert.notEqual(next.sourceId,softId);assert.notEqual(next.pcm,softPcm);assert.match(next.sourceId,/v0r[12]$/);assert.match(play(.9).sourceId,/v1r[12]$/);const short=play(.4,.2);assert.match(short.sourceId,/^qEmilyGuitar/);assert.equal(short.hold,.2*60/120*rate);
  i.soundLibrary='original';assert.match(play(.4,.2).sourceId,/^electricGuitar/);
 });
-test('electric bass uses three recorded attack levels and upright rotates distinct plucks',()=>{
- const b=new SampledBass(rate,kit);const soft=b.noteOn(33,.3,.4,'blues','electric','expanded');assert.equal(soft.layer,'p');const source=soft.sample;const next=b.noteOn(33,.3,.4,'blues','electric','expanded');assert.notEqual(next.sample,source);assert.equal(b.noteOn(33,.3,.65,'blues','electric','expanded').layer,null);assert.equal(b.noteOn(33,.3,.9,'blues','electric','expanded').layer,'f');
+test('preferred Yamaha bass keeps velocity dynamics without inventing source layers; upright rotates distinct plucks',()=>{
+ const b=new SampledBass(rate,kit);const soft=b.noteOn(33,.3,.4,'blues','electric','expanded');assert.match(soft.sourceId,/^qYamahaBass/);assert.equal(soft.layer,0);const source=soft.sample,quiet=soft.gain;const firm=b.noteOn(33,.3,.9,'blues','electric','expanded');assert.equal(firm.sample,source);assert.ok(firm.gain>quiet*2);
  const a=b.noteOn(45,.3,.6,'walk','upright','expanded').sample,c=b.noteOn(45,.3,.6,'walk','upright','expanded').sample;assert.notEqual(a,c);
 });
 test('expanded melodic and keyboard sounds use recordings; the organ uses sustained recordings of the dedicated organ model',()=>{

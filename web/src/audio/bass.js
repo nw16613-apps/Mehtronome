@@ -1,4 +1,4 @@
-import {EXPANDED_SAMPLE_ZONES} from './sound-library.js';
+import {EXPANDED_SAMPLE_ZONES,STUDIO_BANKS,recordedZone} from './sound-library.js';
 import {BASS_TRIMS} from './mix-balance.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import { BASS_WAVE, readWave } from './waves.js';
@@ -82,7 +82,9 @@ export class SampledBass {
     let zones=this.banks[instrument]?.length?this.banks[instrument]:this.zones;
     if(soundLibrary==='expanded'){
       const extra=this.expandedBanks[instrument==='upright'?'upright':'electricBass']||[];
-      if(instrument==='upright')zones=[...zones,...extra];
+      const bank=instrument==='upright'?'upright':'electricBass';
+      if(STUDIO_BANKS.has(bank)&&extra.length){const selected=recordedZone(extra,pitch,level,this.roundRobin);zones=selected?[selected]:extra;}
+      else if(instrument==='upright')zones=[...zones,...extra];
       else {const layer=level<.55?'p':level>.75?'f':null;if(layer&&extra.some(z=>z.layer===layer))zones=extra.filter(z=>z.layer===layer);}
     }
     for (const candidate of zones) {

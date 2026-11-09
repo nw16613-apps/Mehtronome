@@ -1,4 +1,5 @@
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
+import {nativeGuitarChannel} from './guitar-policy.js';
 import {sessionCycle,SESSION_ROLES} from './session-performance.js';
 import {prepareAccompaniment} from './accompaniment.js';
 import {BUS_GAINS,MIX_REFERENCE_LEVEL} from './mix-balance.js';
@@ -464,6 +465,7 @@ export class Engine {
     const harmonyVolume=this.muted.has('harmony')?0:s.harmony;
     const drumsVolume=this.muted.has('drums')?0:s.drumsVolume,bassVolume=this.muted.has('bass')?0:s.bassVolume;
     const compingVolume=this.muted.has('comping')?0:s.compingVolume,sequenceVolume=this.muted.has('sequence')?0:s.sequenceVolume;
+    const nativeComping=s.nativeGuitarProcessing&&nativeGuitarChannel(s,'comping'),nativeSequence=s.nativeGuitarProcessing&&nativeGuitarChannel(s,'sequence');
     if (this.guitar) {
       if(stems)for(const key in stems)stems[key]?.fill(0);
       // Guitar bypasses pad layers and echoes; its harmony stem feeds the selected FX sends.
@@ -582,7 +584,7 @@ export class Engine {
       // The sampled rhythm section needs enough headroom to sit in front of the
       // wide, sustained pad. These trims keep the mixer controls perceptually
       // useful without forcing users to turn the harmony almost all the way down.
-      const rhythmSample=this.level*(drumGain*this.drumsLevel*this.rhythm.drums+bassGain*this.bassLevel*this.rhythm.bass+compingGain*this.compingLevel*comping);
+      const rhythmSample=this.level*(drumGain*this.drumsLevel*this.rhythm.drums+bassGain*this.bassLevel*this.rhythm.bass+(nativeComping?0:compingGain*this.compingLevel*comping));
       const padAudible=harmonyVolume>0||this.harmonyLevel>.000001;
       // Control-rate updates are independent of callback block boundaries.
       // Interpolated motion changes colour and width over several time scales.
@@ -697,8 +699,8 @@ export class Engine {
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.
       const rhythmDucking=1-.12*Math.max(this.drumsLevel,this.bassLevel);
-      let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+sequenceGain*this.sequenceLevel*this.sequence.left;
-      let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+sequenceGain*this.sequenceLevel*this.sequence.right;
+      let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+(nativeSequence?0:sequenceGain*this.sequenceLevel*this.sequence.left);
+      let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+(nativeSequence?0:sequenceGain*this.sequenceLevel*this.sequence.right);
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
       if(this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive

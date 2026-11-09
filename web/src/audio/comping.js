@@ -220,6 +220,9 @@ export class CompingInstrument{
       const voice=this.voices[this.cursor++%this.voices.length];
       const originalShape=this.shapes[tone]||this.shapes.warmTine,expanded=this.soundLibrary==='expanded',bank=expanded?expandedBankForTone(tone):null;
       let shape=expanded&&bank?{...originalShape,bank:'expanded:'+bank,cutoff:bank==='flute'?9000:bank==='wurlitzer'?9000:tone==='legatoGuitar'?6500:originalShape.cutoff}:originalShape;
+      // Emily's DI feeds the shared native amp/cab after summing the strings.
+      // Avoid distorting each note separately before that amplifier stage.
+      if(expanded&&bank==='electricGuitar'&&this.banks['expanded:electricGuitar']?.[0]?.id.startsWith('qEmily'))shape={...shape,drive:0,cutoff:14000};
       if(expression==='damped'){const seconds=.035;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='ringing'){const seconds=.18;shape={...shape,releaseFrames:this.rate*seconds,releaseFactor:Math.exp(-1/(this.rate*seconds))};}else if(expression==='swell')shape={...shape,attackFrames:Math.max(shape.attackFrames,this.rate*.065)};
       Object.assign(voice,{pendingLegato:null,glideRemaining:0,noiseState:Math.imul(midi+1,1664525),breathFiltered:0,group,releaseFactor:shape.releaseFactor,delay:delayFrames+(strum?Math.round((strumDown?index:pitches.length-1-index)*this.rate*.006):0),shape,increment:440*2**((midi-69)/12)/this.rate,body:1,bell:1,release:1,active:true,phase:0,modPhase:0,midi,age:0,hold:Math.max(.08,duration)*60/Math.max(30,bpm)*this.rate,gain:velocity/Math.sqrt(pitches.length)*(shape.level??1)*(COMPING_TRIMS[tone]??1),pan:pitches.length===1?0:index/(pitches.length-1)*2-1,tone});
       const muted=expanded&&!STUDIO_BANKS.has(bank)&&['cleanGuitar','bluesGuitar','drivenGuitar'].includes(tone)&&duration<.42&&this.banks['expanded:guitarMuted']?.length;

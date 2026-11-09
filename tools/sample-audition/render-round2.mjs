@@ -61,7 +61,7 @@ for(const c of cases){
     execFileSync('python3',[new URL('./chorus.py',import.meta.url).pathname,output,chorused]);
     const bytes=await readFile(chorused),data=new Float32Array(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));assert.equal(data.length,result.frames*2);
     const left=new Float32Array(result.frames),right=new Float32Array(result.frames);for(let n=0;n<result.frames;n++){left[n]=data[n*2];right[n]=data[n*2+1];}
-    variants.push({id:'emily-chorus',label:'Emilyguitar · amp + chorus 30%',description:`Emily through the ${c.amp} amp/cab, then stereo chorus: 0.32 Hz, 14 ms delay, 1.3 ms depth, 30% wet; dry attack stays undelayed`,stereo:[left,right],result:{...result,stems:{...result.stems,comping:pcm}}});
+    variants.push({id:'emily-chorus',label:'Emilyguitar · amp + chorus 35%',description:`Emily through the ${c.amp} amp/cab, then stereo chorus: 0.32 Hz, 14 ms delay, 1.3 ms depth, 35% wet; dry attack stays undelayed`,stereo:[left,right],result:{...result,stems:{...result.stems,comping:pcm}}});
    }
   }
  }

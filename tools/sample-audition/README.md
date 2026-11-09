@@ -132,3 +132,18 @@ unchanged. All three Emily amp versions have a separate 30% chorus option beside
 the amp-only version. Descriptions identify each part's actual amp profile. The
 audition now has 48 files; browser checks verify the three labelled 30% options
 and play every solo/ensemble version. Bass, drums and app runtime are unchanged.
+
+### Playable preview integration
+
+The selected sources are now integrated in ordinary app playback, documented in
+`docs/preferred-playable-instruments.md`. Chorus is 35% on the three requested
+Emily comping tones. The native browser graph supplies the live amp, cabinet and
+chorus; offline audition rendering is no longer the app's only implementation.
+
+The fixed comparison files retain their original pre-integration references.
+Use `update-chorus.py CACHE EXISTING_OUTPUT` to regenerate only the chorus against
+the preserved raw reference mix, rather than accidentally rebuilding “Original”
+through the new source assignments. Historical complete round-two renders should
+use the pre-integration source revision (`e512bf9`) in an isolated checkout.
+The update tool adds audio content revisions to avoid replaying cached older
+chorus files. No new sources need to be downloaded for chorus-only updates.

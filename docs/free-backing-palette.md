@@ -1,5 +1,10 @@
 # Free comping and melodic palette
 
+Electric-guitar and bass assignments are superseded by the selected playable
+[Emily/Yamaha/Sneaky update](preferred-playable-instruments.md). The recording
+details below remain provenance for the earlier palette and the unchanged keys,
+flute and nylon families.
+
 The user chose free, redistributable instruments for both backing tracks and
 prefers the current Sonor kit. No purchase, subscription, model service or extra
 sound-library selector is required. The normal style selector chooses this

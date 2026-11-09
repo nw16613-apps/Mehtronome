@@ -1,7 +1,8 @@
 import {EXPANDED_SAMPLE_ZONES as LEGACY_SAMPLE_ZONES,EXPANDED_DRUM_GROUPS} from './expanded-samples.js';
 import {STUDIO_SAMPLE_ZONES} from './studio-zones.js';
-export const EXPANDED_SAMPLE_ZONES={...LEGACY_SAMPLE_ZONES,...STUDIO_SAMPLE_ZONES};
-export const STUDIO_BANKS=new Set(Object.keys(STUDIO_SAMPLE_ZONES));
+import {PREFERRED_SAMPLE_ZONES} from './preferred-zones.js';
+export const EXPANDED_SAMPLE_ZONES={...LEGACY_SAMPLE_ZONES,...STUDIO_SAMPLE_ZONES,...PREFERRED_SAMPLE_ZONES};
+export const STUDIO_BANKS=new Set([...Object.keys(STUDIO_SAMPLE_ZONES),...Object.keys(PREFERRED_SAMPLE_ZONES)]);
 export {EXPANDED_DRUM_GROUPS};
 const TONE_BANKS={acousticPiano:'piano',softPiano:'piano',cleanGuitar:'electricGuitar',bluesGuitar:'electricGuitar',drivenGuitar:'electricGuitar',swelledGuitar:'electricGuitar',jazzGuitar:'electricGuitar',nylonGuitar:'nylonGuitar',fluteLead:'flute',brightTine:'wurlitzer',warmTine:'wurlitzer',suitcase:'wurlitzer',reed:'wurlitzer',felt:'wurlitzer',clav:'clav',drawbarOrgan:'organ',legatoGuitar:'electricGuitar'};
 export const expandedBankForTone=tone=>TONE_BANKS[tone];

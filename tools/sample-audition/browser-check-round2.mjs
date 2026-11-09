@@ -5,7 +5,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(process.argv[2]||'http://127.0.0.1:4185/');await page.locator('article').nth(4).waitFor();assert.equal(await page.locator('article').count(),5);
  for(const id of ['clean-guitar','blues-guitar','fusion-guitar']){
-  const chorus=page.locator(`#${id} [data-source="emily-chorus"]`);assert.match(await chorus.textContent(),/30%/);assert.equal(await chorus.getAttribute('aria-pressed'),'true');
+  const chorus=page.locator(`#${id} [data-source="emily-chorus"]`);assert.match(await chorus.textContent(),/35%/);assert.equal(await chorus.getAttribute('aria-pressed'),'true');
  }
  let files=0;
  for(const card of await page.locator('article').all())for(const mode of ['solo','mix']){

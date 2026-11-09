@@ -1,4 +1,5 @@
 import {createReferencePreparation} from './audio/reference-plan-preparation.js';
+import {createGuitarChannel,loadGuitarCabinet,needsGuitarCabinet} from './audio/guitar-processing.js';
 import {shapeColor,emphasizeFullNeck,perStringMapRegions} from './guitar/shape-emphasis.js';
 import {PER_STRING_STUDIES,perStringExerciseChoice,perStringExerciseGroups} from './practice/per-string-exercises.js';
 import {arpeggioFingeringControls} from './practice/per-string-exercise-view.js';
@@ -224,6 +225,7 @@ let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
 let masterVolume=DEFAULT_MASTER_VOLUME;
 try{masterVolume=masterVolumePercent(localStorage.getItem(MASTER_VOLUME_KEY));}catch{}
 let harmonyFxSource:GainNode|undefined;
+let compingGuitar:ReturnType<typeof createGuitarChannel>|undefined,sequenceGuitar:ReturnType<typeof createGuitarChannel>|undefined,guitarCabinet:AudioBuffer|null=null;
 let fxBuses: ReturnType<typeof createFxBuses> | undefined;
 let fxUi: ReturnType<typeof installFxControls> | undefined;
 let playing = false;
@@ -1182,7 +1184,8 @@ function stopPreview() {
 const referencePreparation=createReferencePreparation();let deliveredReferenceKey='';
 function postPreparedAudio(target:AudioWorkletNode,message:any){
  const referencePlan=referencePreparation.message(message.settings,deliveredReferenceKey);
- target.port.postMessage({...message,referencePlan});deliveredReferenceKey=referencePlan.key;
+ compingGuitar?.set(message.settings,'comping',guitarCabinet);sequenceGuitar?.set(message.settings,'sequence',guitarCabinet);
+ target.port.postMessage({...message,settings:{...message.settings,nativeGuitarProcessing:true},referencePlan});deliveredReferenceKey=referencePlan.key;
 }
 async function prepareAudio(requested:any=exercisePreparing?exerciseAudioSettings():settings){
   audioPreparation??=initialiseAudio(requested).finally(()=>{audioPreparation=undefined;});
@@ -1190,6 +1193,7 @@ async function prepareAudio(requested:any=exercisePreparing?exerciseAudioSetting
 }
 async function ensureSamples(requested:any){
  const audio=context,target=node;if(!audio||!target||audio.state==='closed')return;
+ const cabinet=await loadGuitarCabinet(audio,requested);if(audio===context&&cabinet)guitarCabinet=cabinet;
  const names=sampleNamesForSettings(requested).filter(name=>!installedSampleNames.has(name));if(!names.length)return;
  const bank:Record<string,Float32Array>=await loadDrumKit(audio,names);if(audio!==context||target!==node||String(audio.state)==='closed')return;
  const fresh:Record<string,Float32Array>=Object.fromEntries(Object.entries(bank).filter(([name])=>!installedSampleNames.has(name)));
@@ -1198,7 +1202,7 @@ async function ensureSamples(requested:any){
 function queueAudioSettings(requested:any){
  const names=sampleNamesForSettings(requested),generation=++sampleSettingsGeneration,target=node;referencePreparation.get(requested);
  if(!target||!context||context.state==='closed'){void loadDrumKit.prefetch(names).catch(()=>{});return;}
- if(names.every(name=>installedSampleNames.has(name))){postPreparedAudio(target,{type:'settings',settings:requested,sampleNames:names});installedSampleNames=new Set(names);return;}
+ if(names.every(name=>installedSampleNames.has(name))&&(!needsGuitarCabinet(requested)||guitarCabinet)){postPreparedAudio(target,{type:'settings',settings:requested,sampleNames:names});installedSampleNames=new Set(names);return;}
  const snapshot=structuredClone(requested);
  void ensureSamples(snapshot).then(()=>{if(generation===sampleSettingsGeneration&&target===node){postPreparedAudio(target,{type:'settings',settings:snapshot,sampleNames:names});installedSampleNames=new Set(names);}}).catch(error=>{if(generation!==sampleSettingsGeneration)return;el('error').textContent=error instanceof Error?error.message:'Could not load the selected sounds. Try again.';el('error').hidden=false;});
 }
@@ -1206,10 +1210,10 @@ async function initialiseAudio(requested:any=settings) {
   if (!window.isSecureContext || !window.AudioWorkletNode) throw new Error('Audio needs a secure HTTPS page and a current Safari, Chrome, or Firefox browser.');
   if (!context || context.state === 'closed') {
     context = createPlaybackContext(AudioContext,navigator.userAgent,matchMedia('(pointer:coarse)').matches) as AudioContext;
-    harmonyFxSource=undefined;fxBuses=undefined;
+    harmonyFxSource=undefined;fxBuses=undefined;compingGuitar=undefined;sequenceGuitar=undefined;guitarCabinet=null;
     installedSampleNames=new Set();deliveredReferenceKey='';
     let kit: Record<string, Float32Array>;
-    try { [,kit]=await Promise.all([context.audioWorklet.addModule(workletUrl),loadDrumKit(context,sampleNamesForSettings(requested))]); }
+    try { [,kit,guitarCabinet]=await Promise.all([context.audioWorklet.addModule(workletUrl),loadDrumKit(context,sampleNamesForSettings(requested)),loadGuitarCabinet(context,requested)]); }
     catch (error) { await context.close(); throw error; }
     node = new AudioWorkletNode(context, 'mehtronome', { numberOfInputs: 0, numberOfOutputs: 9, outputChannelCount: [2, 2, 2, 1, 1, 1, 1, 2, 2] });
     node.port.postMessage({type:'drum-kit', kit}, Object.values(kit).map(pcm => pcm.buffer));installedSampleNames=new Set(Object.keys(kit));
@@ -1217,6 +1221,7 @@ async function initialiseAudio(requested:any=settings) {
     master.gain.value = 0;
     masterOutput=createMasterOutput(context,masterVolume);
     master.connect(masterOutput.input);
+    compingGuitar=createGuitarChannel(context,{node,output:6},master);sequenceGuitar=createGuitarChannel(context,{node,output:7},master);
     node.connect(master, 0); // Click stays dry and rhythmically clear.
     node.connect(master, 1);
     node.connect(master, 2); // Drums and bass bypass pad reverb and echoes.
@@ -1271,7 +1276,7 @@ async function initialiseAudio(requested:any=settings) {
   }
   await context.resume();
   if (context.state !== 'running') throw new Error('Your browser could not enable audio. Check site sound permissions, then try Start again.');
-  if(!fxBuses)fxBuses=createFxBuses(context,master!,{click:{node:node!,output:0},harmony:{node:harmonyFxSource!},drums:{node:node!,output:4},bass:{node:node!,output:5},comping:{node:node!,output:6},sequence:{node:node!,output:7}},fxUi?.read());
+  if(!fxBuses)fxBuses=createFxBuses(context,master!,{click:{node:node!,output:0},harmony:{node:harmonyFxSource!},drums:{node:node!,output:4},bass:{node:node!,output:5},comping:{node:compingGuitar!.output},sequence:{node:sequenceGuitar!.output}},fxUi?.read());
   node!.port.postMessage({type:'fx-sends',channels:activeFxChannels(fxUi!.read())});
   fxBuses.set(fxUi!.read());fxBuses.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);fxBuses.reset();
   master!.gain.setTargetAtTime(1, context.currentTime, .04);
@@ -2314,7 +2319,7 @@ input('preset-file').addEventListener('change',async()=>{
 
 installConsole();
 
-function activeFxChannels(value:any){return Object.keys(value.sends).filter(id=>value.sends[id].reverb>0||value.sends[id].reverbB>0||value.sends[id].delay>0);}
+function activeFxChannels(value:any){return [...new Set(['comping','sequence',...Object.keys(value.sends).filter(id=>value.sends[id].reverb>0||value.sends[id].reverbB>0||value.sends[id].delay>0)])];}
 fxUi=installFxControls(value=>{node?.port.postMessage({type:'fx-sends',channels:activeFxChannels(value)});fxBuses?.set(value);fxBuses?.setTempo(exercisePlaying?exerciseView.tempo:settings.bpm);});
 
 input('master-volume').value=String(masterVolume);
