@@ -38,8 +38,8 @@ samples were also used in the app's earlier palette; they are not a new discover
 
 Next useful audition is Emilyguitar and the two SampleScience sources against the
 preferred current electric guitar, with identical parts and matched loudness.
-Standard Guitar remains conditional on the original included licence. No new
-guitar source has been downloaded or auditioned in this follow-up yet.
+At this research checkpoint no further guitar source had been downloaded or
+auditioned. Subsequent completed round-two work is recorded below.
 
 ## Further bass alternatives and guitar amplification
 
@@ -78,3 +78,27 @@ cabinet response and modest EQ using the same source/part. The amp treatment mus
 be identified separately from the recording-source change, and preserve mobile
 performance. Any impulse responses or model weights need their own redistribution
 licence. No new amp DSP, IR or sample replacement is implemented in this note.
+
+## Round-two implementation and confirmed Standard Guitar restriction
+
+The original publisher [About page](https://unreal-instruments.wixsite.com/unreal-instruments/about),
+lines under 音源の使用について, permits commercial works without credit but states
+“音源内のデータを許可無く加工、二次配布する事を禁止します。” This prohibits modifying or
+redistributing the sample data without permission. This resolves the earlier
+uncertainty: its published terms do not authorize bundling adapted samples in
+Mehtronome. Third-party “public domain” descriptions are not relied on. No vendor
+has been contacted, and the user has not authorized an outreach message.
+
+The completed offline round-two tools prepare Emilyguitar, FreePats Fender DI,
+Yamaha RBX Finger and Swagbass, plus a credited public-domain cabinet response.
+They compare three guitar parts and two bass parts; each guitar has DI and new
+amp/cab versions. The Fender DI is explicitly a processing control for the
+current Fender source, not a new recording session. SampleScience's Gumroad and
+Payhip download hosts returned network-policy 403; it is clearly marked omitted.
+
+The amp is original lightweight oversampled DSP plus a recorded speaker response,
+not a named hardware/neural model. See `tools/sample-audition/README.md` for exact
+provenance, processing, limitations, reproduction and validation. The actual app
+source maps, guitar/bass instrument assignments, worklet DSP and controls remain
+unchanged while the user listens. The previous preferred upright candidate is
+preserved in the first audition. No new replacement is selected automatically.
