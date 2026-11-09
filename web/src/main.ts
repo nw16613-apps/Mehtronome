@@ -91,12 +91,13 @@ app.innerHTML = `
 <nav class="workspace-nav" aria-label="Workspace navigation">
   <div class="workspace-nav-inner">
     <span class="workspace-nav-label">Workspace</span>
-    <button type="button" class="workspace-tab selected" data-workspace-target="pulse-title" aria-current="page"><span>01</span>Metronome &amp; Mixer</button>
-    <button type="button" class="workspace-tab" data-workspace-target="harmony-title"><span>02</span>Harmony</button>
-    <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>03</span>Fretboard</button>
-    <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>04</span>Exercises</button>
-    <button type="button" class="workspace-tab" data-workspace-target="progress-title"><span>05</span>Progress</button>
-    <button type="button" class="workspace-tab" data-workspace-target="sound-settings-title"><span>06</span>Sound Settings</button>
+    <button type="button" class="workspace-tab selected" data-workspace-target="study-path-title" aria-current="page"><span>01</span>Study</button>
+    <button type="button" class="workspace-tab" data-workspace-target="pulse-title"><span>02</span>Metronome &amp; Mixer</button>
+    <button type="button" class="workspace-tab" data-workspace-target="harmony-title"><span>03</span>Harmony</button>
+    <button type="button" class="workspace-tab" data-workspace-target="guitar-title"><span>04</span>Fretboard</button>
+    <button type="button" class="workspace-tab" data-workspace-target="caged-exercise"><span>05</span>Exercises</button>
+    <button type="button" class="workspace-tab" data-workspace-target="progress-title"><span>06</span>Progress</button>
+    <button type="button" class="workspace-tab" data-workspace-target="sound-settings-title"><span>07</span>Sound Settings</button>
   </div>
 </nav>
 <main><section id="guided-goals" class="panel guided-goals workspace-page workspace-practice"><div class="section-heading"><h2>Start with a musical goal</h2><button type="button" class="practice-button" data-learning-nav="progress">Learning path →</button></div><div class="goal-controls"><label>Today’s goal<select id="practice-goal">${GOALS.map(g=>`<option value="${g.id}">${g.name}</option>`).join('')}</select></label><label>Accompaniment<select id="practice-accompaniment"><option value="clear">Clear harmony study</option><option value="trio">Jazz trio</option><option value="modal">Modal exploration</option><option value="sparse">Sparse click / time</option></select></label><button type="button" class="practice-button" id="start-guided-goal">Set up this session</button></div><p id="goal-description" class="practice-help">${GOALS[0].tip}</p></section><section id="guided-session" class="guided-session" hidden><strong id="guided-session-title"></strong><div><button class="practice-button" data-learning-nav="harmony">1 · Hear the harmony</button><button class="practice-button" data-learning-nav="guitar">2 · Learn the shape</button><button class="practice-button" data-learning-nav="exercises">3 · Practise an idea</button><button class="practice-button" data-learning-nav="progress">Setups & progress</button><button id="dismiss-guided-session" class="practice-button">Dismiss guide</button></div></section><div class="studio-intro workspace-page workspace-practice"><div><p class="eyebrow">YOUR PRACTICE SPACE</p><h1>Metronome &amp; mixer</h1></div><p>Set your pulse. Shape your sound.</p></div>
@@ -2115,7 +2116,7 @@ el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
 el('open-sound-settings').addEventListener('click',()=>{setFloatingMixer(false);if(focusView)setFocusView(false);showWorkspace('settings','sound-settings-title');});
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
-const workspaceNames:Record<string,string>={'pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress','sound-settings-title':'settings'};
+const workspaceNames:Record<string,string>={'study-path-title':'study','pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress','sound-settings-title':'settings'};
 function selectWorkspaceTab(target:string) {
   for(const tab of workspaceTabs){
     const selected=tab.dataset.workspaceTarget===target;
@@ -2133,12 +2134,11 @@ function showWorkspace(name:string,target?:string) {
   if(name==='harmony'&&settings.template==='custom'&&!playing&&!exercisePlaying){if(step!==customStepIndex){customStepIndex=step;chartEditSteps=[];}renderCustomBuilder();}
   if(exerciseReferenceDirty&&name!=='exercises'){exerciseReferenceDirty=false;renderMusic(true,currentExerciseGroups[exerciseMapSlot]?.position);}
   selectWorkspaceTab(Object.entries(workspaceNames).find(([,value])=>value===name)?.[0]||'pulse-title');
-  try{localStorage.setItem('mehtronome-workspace',name);}catch{/* Session-only. */}
   if(target)requestAnimationFrame(()=>el(target).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
 }
-let initialWorkspace='practice';
-try{const saved=localStorage.getItem('mehtronome-workspace');if(saved&&Object.values(workspaceNames).includes(saved))initialWorkspace=saved;}catch{/* Use Metronome & Mixer. */}
-showWorkspace(initialWorkspace);
+// The study organiser is the landing page; saved charts and study choices
+// remain intact when the app opens.
+showWorkspace('study');
 
 const mixPanel=el('mix-panel');
 function setMixerCollapsed(collapsed:boolean){
@@ -2337,7 +2337,7 @@ input('master-volume').addEventListener('input',()=>{
 
 applyStudioIcons();
 
-const learningTargets:Record<string,string>={practice:'pulse-title',harmony:'harmony-title',guitar:'guitar-title',exercises:'caged-exercise',progress:'progress-title',settings:'sound-settings-title'};
+const learningTargets:Record<string,string>={study:'study-path-title',practice:'pulse-title',harmony:'harmony-title',guitar:'guitar-title',exercises:'caged-exercise',progress:'progress-title',settings:'sound-settings-title'};
 document.addEventListener('click',event=>{
  if(!(event.target instanceof Element))return;
  const focus=event.target.closest('[data-learning-focus]');if(focus){setFocusView(true);document.querySelector('.featured-position')?.scrollIntoView({block:'start'});return;}

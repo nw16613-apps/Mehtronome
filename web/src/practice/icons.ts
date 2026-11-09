@@ -36,7 +36,8 @@ function add(el:Element|null,name:string,badge=false){if(!el||el.querySelector('
  if(el.matches('button'))el.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE){const text=node.textContent||'';node.textContent=(name==='left'||name==='right'?text.replace(/[←→]/g,''):text).replace(/^[☆★▶]\s*/,'');}});
  el.insertAdjacentHTML('afterbegin',svg(name,badge));el.classList.add(badge?'studio-icon-heading':'studio-icon-label');}
 export function applyStudioIcons(root:ParentNode=document){
- const navIcons=['metronome','harmony','guitar','notes','route','settings'];root.querySelectorAll('.workspace-tab').forEach((tab,i)=>{add(tab,navIcons[i]);});
+ const navIcons:Record<string,string>={'study-path-title':'folder','pulse-title':'metronome','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'notes','progress-title':'route','sound-settings-title':'settings'};
+ root.querySelectorAll('.workspace-tab').forEach(tab=>add(tab,navIcons[tab.getAttribute('data-workspace-target')||'']||'settings'));
  const headings={'#pulse-title':'metronome','#mix-title':'settings','#harmony-title':'harmony','#notes-title':'chord','#guitar-title':'guitar','#caged-exercise-title':'notes','#presets-title':'save','#practice-roadmap-title':'route','#sound-settings-title':'settings','#rhythm-title':'ensemble','#sequence-title':'sequence'};
  for(const [selector,name] of Object.entries(headings))add(root.querySelector(selector),name,true);
  root.querySelectorAll('.studio-tools .section-heading h2').forEach(el=>add(el,'timer',true));

@@ -6,9 +6,8 @@ const esc=(value:unknown)=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>string;load:(plan:any)=>Promise<void>;navigate:(workspace:string,target:string)=>void}){
  let saved;try{saved=readStudyPath(localStorage.getItem(STUDY_PATH_KEY));}catch{saved=readStudyPath(null);}
  let selection=saved.selection,marked=new Set<string>(saved.marked),active:any=null,activeFingerprint='',loading=false,notice='',barSignature='';
- const panel=document.createElement('section');panel.id='study-path';panel.className='panel study-path workspace-page workspace-progress';panel.setAttribute('aria-labelledby','study-path-title');
+ const panel=document.createElement('section');panel.id='study-path';panel.className='panel study-path workspace-page workspace-study';panel.setAttribute('aria-labelledby','study-path-title');
  document.querySelector('.presets')!.before(panel);
- const intro=document.querySelector('.workspace-progress.intro')!;intro.querySelector('h1')!.textContent='Learning & progress';intro.querySelector('.intro-copy')!.textContent='Study pathway · saved setups';
  // Retain older tools without placing their beginner prompts in this pathway.
  const previous=document.createElement('details');previous.className='previous-practice-tools workspace-page workspace-progress';previous.innerHTML='<summary>Other practice tools</summary>';
  const oldGoals=document.getElementById('guided-goals')!,checklist=document.querySelector('.practice-roadmap')!;checklist.before(previous);previous.append(oldGoals,checklist);
@@ -38,7 +37,7 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
   const changed=context.fingerprint()!==activeFingerprint;
   bar.hidden=false;const signature=active.id+':'+changed;
   if(signature===barSignature){bar.querySelectorAll<HTMLButtonElement>('[data-study-reload]').forEach(b=>b.disabled=locked);return;}
-  barSignature=signature;bar.innerHTML=`<div><span class="eyebrow">TIER ${active.selection.tier} · DORIAN PATHWAY</span><strong>${esc(STUDY_MATERIALS.find((m:any)=>m[0]===active.study)?.[1])} · ${esc(active.navigation==='all'?'Position '+active.selection.position:FRET_REGIONS[active.selection.region as keyof typeof FRET_REGIONS].name)}</strong>${changed?'<small>Setup modified</small>':''}</div><div class="study-session-actions">${changed?'<button type="button" class="practice-button" data-study-reload>Reload study</button>':''}<button type="button" class="practice-button" data-study-nav="harmony">Chart</button><button type="button" class="practice-button" data-study-nav="guitar">Fretboard</button><button type="button" class="practice-button" data-study-nav="exercises">Exercises</button><button type="button" class="practice-button" data-study-nav="progress">Pathway</button><button type="button" class="study-dismiss" data-study-dismiss aria-label="End study navigation">×</button></div>`;
+  barSignature=signature;bar.innerHTML=`<div><span class="eyebrow">TIER ${active.selection.tier} · DORIAN PATHWAY</span><strong>${esc(STUDY_MATERIALS.find((m:any)=>m[0]===active.study)?.[1])} · ${esc(active.navigation==='all'?'Position '+active.selection.position:FRET_REGIONS[active.selection.region as keyof typeof FRET_REGIONS].name)}</strong>${changed?'<small>Setup modified</small>':''}</div><div class="study-session-actions">${changed?'<button type="button" class="practice-button" data-study-reload>Reload study</button>':''}<button type="button" class="practice-button" data-study-nav="harmony">Chart</button><button type="button" class="practice-button" data-study-nav="guitar">Fretboard</button><button type="button" class="practice-button" data-study-nav="exercises">Exercises</button><button type="button" class="practice-button" data-study-nav="study">Study</button><button type="button" class="study-dismiss" data-study-dismiss aria-label="End study navigation">×</button></div>`;
   bar.querySelectorAll<HTMLButtonElement>('[data-study-reload]').forEach(b=>b.disabled=locked);
  }
  async function load(value=selection){
@@ -64,7 +63,7 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
   const target=(event.target as Element).closest<HTMLElement>('button');if(!target)return;
   if(target.hasAttribute('data-study-dismiss')){active=null;barSignature='';bar.hidden=true;return;}
   if(target.hasAttribute('data-study-reload')){void load(active.selection);return;}
-  const name=target.dataset.studyNav;if(name)context.navigate(name,{harmony:'harmony-title',guitar:'guitar-title',exercises:'caged-exercise',progress:'study-path-title'}[name]||'study-path-title');
+  const name=target.dataset.studyNav;if(name)context.navigate(name,{harmony:'harmony-title',guitar:'guitar-title',exercises:'caged-exercise',study:'study-path-title'}[name]||'study-path-title');
  });
  document.addEventListener('input',()=>queueMicrotask(sync));document.addEventListener('change',()=>queueMicrotask(sync));
  render();return {sync};
