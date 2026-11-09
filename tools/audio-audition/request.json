@@ -1,0 +1,33 @@
+{
+  "status": "prepared-not-generated",
+  "candidateModel": "ACE-Step 1.5",
+  "preferredRoute": "Official hosted demo, within available free quota only",
+  "guide": "prepared/original-f-blues-guide.wav",
+  "sourceComposition": "Original 12-bar F blues; not taken from the YouTube example",
+  "task_type": "cover",
+  "audio_duration": 28.8,
+  "bpm": 100,
+  "time_signature": "4",
+  "caption": "Instrumental electric blues backing band in F, 100 BPM, 4/4 shuffle. Convincing live-band performance: tight acoustic drums, rounded electric bass, expressive electric rhythm guitar and sparse piano answers. Preserve the supplied guide harmony, chord-change times and 12-bar form. Leave generous space for a guitarist to practise. No vocals, no lead solo, no count-in, no added intro or outro. Start on beat one.",
+  "lyrics": "[Instrumental]",
+  "audio_cover_strength": 0.8,
+  "thinking": false,
+  "inference_steps": 8,
+  "seed": 1729,
+  "use_random_seed": false,
+  "batch_size": 1,
+  "acceptance": [
+    "A real generated audio file and elapsed generation time must be retained.",
+    "Listen before building an app feature.",
+    "Compare chord identities/timings to guide.json; do not infer success from the prompt.",
+    "Loudness-match the model output and baseline for listening.",
+    "Retain untouched output separately from any timing, harmonic or mix edits."
+  ],
+  "constraints": [
+    "No subscriptions, paid credits, card details or paid hardware.",
+    "Do not publish or alter normal Mehtronome playback.",
+    "Inspect the demo API schema; these are documented model parameters, not a guaranteed Gradio endpoint payload.",
+    "If free generation requires account approval or exceeds available quota, report that blocker.",
+    "Do not start another MIDI-generation experiment for this test."
+  ]
+}

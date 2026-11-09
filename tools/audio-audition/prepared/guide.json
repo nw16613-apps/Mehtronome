@@ -1,0 +1,76 @@
+{
+  "generatedByAI": false,
+  "kind": "current-arranger audio guide",
+  "originalComposition": true,
+  "style": "blues",
+  "key": "F",
+  "bpm": 100,
+  "metre": "4/4",
+  "bars": 12,
+  "durationSeconds": 28.8,
+  "sampleRate": 32000,
+  "channels": 2,
+  "drumKit": "tama",
+  "melodicLead": false,
+  "chords": [
+    {
+      "symbol": "F9",
+      "root": 0,
+      "beats": 16,
+      "startBeat": 0,
+      "startSeconds": 0,
+      "endSeconds": 9.6
+    },
+    {
+      "symbol": "B♭9",
+      "root": 5,
+      "beats": 8,
+      "startBeat": 16,
+      "startSeconds": 9.6,
+      "endSeconds": 14.399999999999999
+    },
+    {
+      "symbol": "F9",
+      "root": 0,
+      "beats": 8,
+      "startBeat": 24,
+      "startSeconds": 14.399999999999999,
+      "endSeconds": 19.2
+    },
+    {
+      "symbol": "C9",
+      "root": 7,
+      "beats": 4,
+      "startBeat": 32,
+      "startSeconds": 19.2,
+      "endSeconds": 21.599999999999998
+    },
+    {
+      "symbol": "B♭9",
+      "root": 5,
+      "beats": 4,
+      "startBeat": 36,
+      "startSeconds": 21.599999999999998,
+      "endSeconds": 24
+    },
+    {
+      "symbol": "F9",
+      "root": 0,
+      "beats": 4,
+      "startBeat": 40,
+      "startSeconds": 24,
+      "endSeconds": 26.4
+    },
+    {
+      "symbol": "C9",
+      "root": 7,
+      "beats": 4,
+      "startBeat": 44,
+      "startSeconds": 26.4,
+      "endSeconds": 28.799999999999997
+    }
+  ],
+  "sourcePeak": 0.21408870816230774,
+  "outputGain": 1,
+  "sha256": "074a46913ad048147e455d0e99f0cfbd900e4a218bac7fb1469fa245098eb2ee"
+}
