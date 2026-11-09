@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mehtronome · Guitar & bass recordings</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0b141d;color:#edf3f7}*{box-sizing:border-box}body{max-width:1000px;margin:auto;padding:28px 20px 64px}h1{font-size:clamp(30px,6vw,48px);line-height:1.1;margin:18px 0}p{color:#b5c5d1;line-height:1.6}a{color:#8ecbfa}header{margin-bottom:32px}.eyebrow{letter-spacing:.15em;text-transform:uppercase;color:#8ecbfa;font-size:12px}article{border:1px solid #3a5266;background:#122230;border-radius:12px;padding:22px;margin:18px 0}h2{margin:0 0 8px}button,select{font:inherit;color:inherit;background:#203a4e;border:1px solid #54718a;padding:12px 16px;border-radius:7px;min-height:44px}button[aria-pressed=true]{background:#9acff5;color:#102233;border-color:#9acff5;font-weight:700}button:focus-visible,select:focus-visible{outline:3px solid #efb76a;outline-offset:3px}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}label{display:flex;align-items:center;gap:10px}audio{width:100%;margin:18px 0 6px}small{display:block;color:#b5c5d1;line-height:1.6}.source{min-height:1.6em;margin-bottom:0}footer{margin-top:36px}#error{color:#ffc2b2}
+</style>
+<header><a href="/">← Back to Mehtronome</a><p class="eyebrow">Recorded instrument audition · no AI generation</p><h1>Different guitars.<br>Different bass recordings.</h1><p>The current arranger plays exactly the same notes, timing and articulations in both versions. Only the named instrument’s recordings change. Start with Solo to hear the source, then In the band to hear the balance.</p><p>These are candidates for you to judge. The app’s normal sounds have not been replaced. Shinyguitar is a steel-string archtop, not a nylon guitar; this first audition tests electric guitar tones. Growlybass has a forceful pluck; Sneakybass is a separate, softer upright recording session.</p></header>
+<main id="comparisons" aria-label="Guitar and bass comparisons"></main><p id="error" role="alert"></p>
+<footer><p>All three candidate libraries are CC0 from <a href="https://shop.karoryfer.com/pages/free-samples">Karoryfer Samples</a>. Two independent takes per sampled note/layer are used here. This audition uses ordinary sustained recordings; recorded slides, hammer-ons, palm mutes and release triggers are not implemented.</p><p>Solo pairs are matched in integrated loudness using constant gain. In the band, that source correction is applied to the candidate instrument; every other stem is identical. Both mixes then receive the same fixed gain. No compression, limiting or harmonic repair.</p><a href="comparisons.json">Measurements and comparison details</a> · <a href="sources.json">Pinned sources and hashes</a> · <a href="LICENSE-shiny.txt">CC0 licence</a></footer>
+<script type="module">
+const host=document.querySelector('#comparisons');
+try{
+ const response=await fetch('comparisons.json');if(!response.ok)throw Error('Could not load comparisons.');const cases=await response.json();
+ for(const c of cases){
+  const article=document.createElement('article');article.innerHTML=`<h2>${c.title}</h2><small>${c.bpm} BPM · ${c.bars} bars · identical arrangement</small><p class="source" aria-live="polite"></p><audio controls preload="none"></audio><div class="controls"><button type="button" data-source="current" aria-pressed="true">Current recordings</button><button type="button" data-source="candidate" aria-pressed="false">New candidate</button><label>Listen <select aria-label="${c.title} listening mode"><option value="solo">Solo</option><option value="mix">In the band</option></select></label></div>`;
+  host.append(article);const audio=article.querySelector('audio'),select=article.querySelector('select');let source='current',version=0;
+  function update(restore=false){
+   const time=restore?audio.currentTime:0,playing=restore&&!audio.paused,request=++version;
+   audio.src=`${c.id}-${source}-${select.value}.mp3`;article.querySelector('.source').textContent=source==='current'?c.current:c.candidate;
+   for(const b of article.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.source===source));
+   if(restore){audio.addEventListener('loadedmetadata',()=>{if(request!==version)return;audio.currentTime=Math.min(time,Math.max(0,audio.duration-.05));if(playing)audio.play().catch(()=>{});},{once:true});audio.load();}
+  }
+  for(const b of article.querySelectorAll('button'))b.addEventListener('click',()=>{source=b.dataset.source;update(true);});select.addEventListener('change',()=>update(true));
+  audio.addEventListener('play',()=>{for(const other of document.querySelectorAll('audio'))if(other!==audio)other.pause();});update();
+ }
+}catch(e){document.querySelector('#error').textContent=e.message;}
+</script></html>
