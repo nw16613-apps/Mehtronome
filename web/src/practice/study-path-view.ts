@@ -2,7 +2,7 @@ import {ROOT_NAMES,MODES,CHORDS} from '../audio/music.js';
 import {POSITIONS} from '../guitar/fretboard.js';
 import {FRET_REGIONS} from '../guitar/position-path.js';
 import {playbackChartKey} from './chord-playback.js';
-import {STUDY_PATH_KEY,STUDY_TIERS,STUDY_MATERIALS,STUDY_ROOT_ORDERS,STUDY_TURNAROUNDS,STUDY_VARIATIONS,STUDY_FORMS,studyChordChoices,studyModeChoices,studyPair,normalizeStudyPath,readStudyPath,studyPathPlan} from './study-path.js';
+import {STUDY_PATH_KEY,STUDY_TIERS,STUDY_MATERIALS,STUDY_ROOT_ORDERS,STUDY_TURNAROUNDS,STUDY_FORMS,studyChordChoices,studyModeChoices,studyPair,normalizeStudyPath,readStudyPath,studyPathPlan} from './study-path.js';
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>string;load:(plan:any)=>Promise<void>;navigate:(workspace:string,target:string)=>void;sources?:()=>any[]}){
  let saved;try{saved=readStudyPath(localStorage.getItem(STUDY_PATH_KEY));}catch{saved=readStudyPath(null);}
@@ -30,10 +30,10 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
   const forms=[...new Set(sources.map(f=>f.group))].map(group=>`<optgroup label="${esc(group)}">${options(sources.filter(f=>f.group===group).map(f=>[f.id,f.name]),selection.form)}</optgroup>`).join('');
   panel.innerHTML=`<div class="section-heading"><div><p class="eyebrow">ACROSS THE FRETBOARD</p><h2 id="study-path-title">Study pathway</h2></div></div>
    <div class="study-tiers" role="group" aria-label="Study tier">${STUDY_TIERS.map(t=>`<button type="button" class="study-tier" data-study-tier="${t.id}" aria-pressed="${selection.tier===t.id}"><span class="study-tier-number">${t.id}</span><strong>${esc(t.name)}</strong><small>${esc(t.scope)}</small></button>`).join('')}</div>
-   <div class="study-path-fields"><label>${plan.singleQuality?'Modal tonic':selection.tier===2?'Starting key':'Chart key'}<select id="study-root">${options(ROOT_NAMES.map((n,i)=>[i,n]),selection.root)}</select></label>
+   <div class="study-path-fields"><label>${plan.singleQuality?'Modal tonic':'Chart key'}<select id="study-root">${options(ROOT_NAMES.map((n,i)=>[i,n]),selection.root)}</select></label>
    <label>Material<select id="study-material">${materials}</select></label>
    ${selection.tier<4?`<label>${selection.tier===1?'Bars per pass':plan.singleQuality?'Bars per chord':'Chord duration multiplier'}<select id="study-bars">${options([1,2,4,8].map(n=>[n,selection.tier<3&&plan.singleQuality?n+' bar'+(n===1?'':'s'):n+'×']),selection.bars)}</select></label>`:''}
-   ${selection.tier===2?`<label>Root order<select id="study-order">${options(Object.entries(STUDY_ROOT_ORDERS),selection.order)}</select></label><label>Root coverage<select id="study-coverage">${options([['cycle','One interval cycle'],['all','All 12 roots']],selection.coverage?'all':'cycle')}</select></label><label>Harmony pattern<select id="study-variation">${options(Object.entries(STUDY_VARIATIONS),selection.variation)}</select></label>`:''}
+   ${selection.tier===2?`<label>Root order<select id="study-order">${options(Object.entries(STUDY_ROOT_ORDERS),selection.order)}</select></label><label>Root coverage<select id="study-coverage">${options([['cycle','One interval cycle'],['all','All 12 roots']],selection.coverage?'all':'cycle')}</select></label>`:''}
    ${selection.tier===3?`<label>Progression<select id="study-turnaround">${options(Object.entries(STUDY_TURNAROUNDS),selection.turnaround)}</select></label>`:''}
    ${selection.tier===4?`<label class="study-form-choice">Song / form<select id="study-form">${forms}</select></label><button type="button" class="practice-button" id="study-current-chart">Use current chart</button>`:''}
    <label>Position approach<select id="study-route">${options([['region','Fixed region'],['manual','Manual positions']],selection.route)}</select></label>
@@ -72,9 +72,9 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
    const pair=studyPair(input.id==='study-mode'?input.value:current.mode,input.id==='study-chord'?input.value:current.chord,input.id==='study-mode'?'mode':'chord');
    if(plan.singleQuality)selection={...selection,...pair};else{selection.editContext=plan.editContext;(selection.harmonyEdits as Record<number,any>)[selection.card]=pair;}
   }else{
-   const fields:Record<string,string>={'study-root':'root','study-material':'material','study-bars':'bars','study-order':'order','study-route':'route','study-region':'region','study-turnaround':'turnaround','study-passes':'passes','study-card':'card','study-variation':'variation','study-form':'form'};
+   const fields:Record<string,string>={'study-root':'root','study-material':'material','study-bars':'bars','study-order':'order','study-route':'route','study-region':'region','study-turnaround':'turnaround','study-passes':'passes','study-card':'card','study-form':'form'};
    const field=fields[input.id];if(field){
-    if(['order','variation','turnaround','form'].includes(field)){selection.harmonyEdits={};selection.manualPositions=[];selection.card=0;}
+    if(['order','turnaround','form'].includes(field)){selection.harmonyEdits={};selection.manualPositions=[];selection.card=0;}
     selection=normalizeStudyPath({...selection,[field]:input.value});
    }
    if(input.id==='study-coverage')selection={...selection,coverage:input.value==='all',manualPositions:[],harmonyEdits:{},card:0};

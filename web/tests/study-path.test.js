@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {studyPathPlan,normalizeStudyPath,readStudyPath,studyPathId,studyPair,studyModeChoices,STUDY_FORMS,STUDY_VARIATIONS,STUDY_ROOT_ORDERS,STUDY_MATERIALS} from '../src/practice/study-path.js';
+import {studyPathPlan,normalizeStudyPath,readStudyPath,studyPathId,studyPair,studyModeChoices,STUDY_FORMS,STUDY_TURNAROUNDS,STUDY_ROOT_ORDERS,STUDY_MATERIALS} from '../src/practice/study-path.js';
 import {MODES,CHORDS,progressionBeatDurations} from '../src/audio/music.js';
 const length=p=>progressionBeatDurations({key:p.chart.key,beats:p.chart.beats,template:'custom',progression:true,customProgression:p.chart.progression}).reduce((a,b)=>a+b,0);
 test('single-quality studies support both harmony workflows across all roots and modes',()=>{
@@ -32,19 +32,23 @@ test('all tiers support manual per-slot routes and repeated passes without adjac
  assert.deepEqual(studyPathPlan({route:'manual',passes:3,manualPositions:['I','IV','V']}).positions,['I','IV','V']);
  assert.equal(normalizeStudyPath({route:'framework'}).route,'manual');
 });
-test('tier two progression variants play all changes and preserve interval/key transpositions',()=>{
- for(const variation of Object.keys(STUDY_VARIATIONS).filter(v=>v!=='single')){
-  const p=studyPathPlan({tier:2,variation,order:'majorThird',root:9,bars:1});
-  assert.equal(p.singleQuality,false);assert.ok(p.baseCount>=9);assert.ok(new Set(p.harmonies.map(h=>h.chordId)).size>1);
-  const n=p.baseCount/3;
-  for(let i=0;i<n;i++)assert.equal((p.harmonies[i+n].chordPcs[0]-p.harmonies[i].chordPcs[0]+12)%12,4);
+test('mixed harmony patterns belong to tier three; tier two always retains one quality and mode',()=>{
+ for(const turnaround of ['major251altered','minor251','backdoor','tritone251','turnaround']){
+  assert.ok(Object.hasOwn(STUDY_TURNAROUNDS,turnaround));
+  const p=studyPathPlan({tier:3,turnaround,root:9,bars:1});
+  assert.equal(p.singleQuality,false);assert.ok(new Set(p.harmonies.map(h=>h.chordId)).size>1);
   for(const h of p.harmonies)assert.ok(h.chordPcs.every(pc=>h.scalePcs.includes(pc)),h.name+h.suffix);
+  const single=studyPathPlan({tier:2,variation:turnaround,order:'majorThird',mode:'lydian',chord:'maj7',editContext:'keys',harmonyEdits:{1:{mode:'altered',chord:'dom7alt'}}});
+  assert.equal(single.singleQuality,true);assert.equal(single.harmonies.length,3);assert.ok(single.harmonies.every(h=>h.mode==='lydian'&&h.chordId==='maj7'));
+  const migrated=readStudyPath(JSON.stringify({selection:{tier:2,variation:turnaround,route:'manual',root:9}}));
+  assert.equal(migrated.selection.tier,3);assert.equal(migrated.selection.turnaround,turnaround);assert.equal(migrated.selection.route,'manual');
  }
+ assert.equal(readStudyPath(JSON.stringify({selection:{tier:2,variation:'single'}})).selection.tier,2);
  assert.deepEqual(studyPathPlan({tier:3,root:9}).chords,['Bm7','E7','Amaj7']);
 });
 test('selected harmony edits affect one slot, preserve roots/durations and are scoped to their pattern',()=>{
- for(const tier of [2,3,4]){
-  const s={tier,variation:'minor251'},before=studyPathPlan(s);
+ for(const tier of [3,4]){
+  const s={tier,turnaround:'minor251'},before=studyPathPlan(s);
   const p=studyPathPlan({...s,editContext:before.editContext,harmonyEdits:{1:{mode:'lydian',chord:'maj7'}}});
   assert.equal(p.harmonies[1].mode,'lydian');assert.equal(p.harmonies[1].chordId,'maj7');
   assert.equal(p.harmonies[1].chordPcs[0],before.harmonies[1].chordPcs[0]);assert.equal(length(p),length(before));

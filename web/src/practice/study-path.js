@@ -8,7 +8,7 @@ import {REPERTOIRE_STUDIES} from './repertoire.js';
 export const STUDY_PATH_KEY='mehtronome-dorian-study-path-v1';
 export const STUDY_TIERS=[
  {id:1,name:'One mode · one key',scope:'Across the neck'},
- {id:2,name:'Changing keys',scope:'One sound · progression variations'},
+ {id:2,name:'Changing keys',scope:'One chord quality & mode'},
  {id:3,name:'Mixed qualities & modes',scope:'Turnarounds · across the neck'},
  {id:4,name:'Standards & songs',scope:'Complete forms · across the neck'},
 ];
@@ -22,7 +22,6 @@ export const STUDY_MATERIALS=[
 ];
 export const STUDY_ROOT_ORDERS={fourths:'Perfect fourths',fifths:'Perfect fifths',minorThird:'Minor thirds · ♭3',majorThird:'Major thirds',whole:'Whole steps',chromatic:'Semitones',tritone:'Tritones',random:'Random · all roots'};
 export const STUDY_TURNAROUNDS={two:'ii–V',three:'ii–V–I',four:'vi–ii–V–I',...Object.fromEntries(Object.entries(PROGRESSIONS).filter(([id,p])=>p.kind==='jazz'&&id!=='jazzBlues'&&id!=='major251').map(([id,p])=>[id,p.name]))};
-export const STUDY_VARIATIONS={single:'Same chord quality',major251altered:'Altered-dominant ii–V–I',minor251:'Minor ii–V–i',backdoor:'Backdoor cadence',tritone251:'Tritone substitution',turnaround:'Secondary-dominant turnaround'};
 const positions=['I','II','III','IV','V'],regions=['low','lowerMiddle','middle','upperMiddle','high'];
 export const studyModeChoices=chord=>scaleChoicesForChord(chord).filter(c=>c.strict);
 export const studyChordChoices=mode=>chordChoicesForMode(mode).filter(c=>c.strict);
@@ -52,7 +51,7 @@ export const STUDY_FORMS=[
  {id:'form:jazz-blues',name:'12-bar jazz blues',key:5,beats:4,group:'Complete forms',progression:cloneTemplate(PROGRESSIONS.jazzBlues,'dom7','mixolydian')},
  ...REPERTOIRE_STUDIES.map(s=>({...s,id:'form:'+s.id,key:9,beats:4,group:'Original studies'})),
 ];
-const patterns=s=>s.tier===1?'vamp':s.tier===2?'keys:'+s.variation:s.tier===3?'turnaround:'+s.turnaround:s.form;
+const patterns=s=>s.tier===1?'vamp':s.tier===2?'keys':s.tier===3?'turnaround:'+s.turnaround:s.form;
 export function normalizeStudyPath(value={}){
  value=value&&typeof value==='object'?value:{};const root=Number(value.root),pair=studyPair(value.mode,value.chord,value.workflow||'mode');
  const harmonyEdits={};for(const [i,e]of Object.entries(value.harmonyEdits||{}).slice(0,128))if(/^\d+$/.test(i)&&Number(i)<128&&e&&typeof e==='object')harmonyEdits[i]=studyPair(e.mode,e.chord,'mode');
@@ -61,13 +60,16 @@ export function normalizeStudyPath(value={}){
   position:positions.includes(value.position)?value.position:'I',region:regions.includes(value.region)?value.region:'middle',
   route:['manual','framework'].includes(value.route)?'manual':'region',order:Object.hasOwn(STUDY_ROOT_ORDERS,value.order)?value.order:'fourths',
   coverage:value.coverage===true,turnaround:Object.hasOwn(STUDY_TURNAROUNDS,value.turnaround)?value.turnaround:'three',
-  variation:Object.hasOwn(STUDY_VARIATIONS,value.variation)?value.variation:'single',form:typeof value.form==='string'&&value.form.length<100?value.form:'standard:autumn-leaves',
+  form:typeof value.form==='string'&&value.form.length<100?value.form:'standard:autumn-leaves',
   bars:[1,2,4,8].includes(Number(value.bars))?Number(value.bars):2,passes:Math.max(1,Math.min(8,Math.floor(Number(value.passes)||1))),
   manualPositions:Array.isArray(value.manualPositions)?value.manualPositions.slice(0,128).map(p=>positions.includes(p)?p:null):[],
   harmonyEdits,editContext:typeof value.editContext==='string'?value.editContext.slice(0,120):'',card:Math.max(0,Math.min(127,Math.floor(Number(value.card)||0)))};
 }
 export function readStudyPath(raw){
- try{const data=JSON.parse(raw||'{}');return {selection:normalizeStudyPath(data.selection),marked:Array.isArray(data.marked)?[...new Set(data.marked.filter(id=>typeof id==='string'&&id.length<500))].slice(0,3000):[]};}
+ try{const data=JSON.parse(raw||'{}'),previous=data?.selection;
+  // Existing mixed-pattern drafts belong to Tier 3; the loaded working chart is untouched.
+  const selection=Number(previous?.tier)===2&&Object.hasOwn(STUDY_TURNAROUNDS,previous.variation)?{...previous,tier:3,turnaround:previous.variation,editContext:'',harmonyEdits:{}}:previous;
+  return {selection:normalizeStudyPath(selection),marked:Array.isArray(data.marked)?[...new Set(data.marked.filter(id=>typeof id==='string'&&id.length<500))].slice(0,3000):[]};}
  catch{return {selection:normalizeStudyPath(),marked:[]};}
 }
 const hash=text=>{let n=2166136261;for(const c of text)n=Math.imul(n^c.charCodeAt(0),16777619);return (n>>>0).toString(36);};
@@ -90,17 +92,17 @@ export function studyPathPlan(value,sources=STUDY_FORMS){
  else{
   const cycle={fourths:12,fifths:12,minorThird:4,majorThird:3,whole:6,chromatic:12,tritone:2,random:12};
   const roots=s.tier===1?[s.root]:orderedRoots({start:s.root,order:s.order,coverage:s.order==='random'||s.coverage,count:s.coverage?12:cycle[s.order]});
-  base=roots.flatMap(root=>s.tier===2&&s.variation!=='single'?turnaround(s.variation,s.bars).map(step=>({...step,root:(root-key+step.root+12)%12,letter:(generatorRootLetter(key,root,['fourths','minorThird','majorThird','tritone'].includes(s.order))+(step.letter||0))%7})): [{root:(root-key+12)%12,letter:generatorRootLetter(key,root,['fourths','minorThird','majorThird','tritone'].includes(s.order)),chord:s.chord,mode:s.mode,bars:s.bars}]);
-  name=s.tier===1?`${MODES[s.mode].name} · ${CHORDS[s.chord].name}`:s.variation==='single'?`${MODES[s.mode].name} · ${STUDY_ROOT_ORDERS[s.order]}`:`${STUDY_VARIATIONS[s.variation]} · ${STUDY_ROOT_ORDERS[s.order]}`;
+  base=roots.map(root=>({root:(root-key+12)%12,letter:generatorRootLetter(key,root,['fourths','minorThird','majorThird','tritone'].includes(s.order)),chord:s.chord,mode:s.mode,bars:s.bars}));
+  name=s.tier===1?`${MODES[s.mode].name} · ${CHORDS[s.chord].name}`:`${MODES[s.mode].name} · ${STUDY_ROOT_ORDERS[s.order]}`;
  }
  const maxPasses=Math.min(8,Math.max(1,Math.floor(MAX_CHART_STEPS/base.length)));s.passes=Math.min(s.passes,maxPasses);
  const steps=Array.from({length:s.passes},(_,pass)=>base.map((step,i)=>({...step,...(s.passes>1&&i===0?{section:`Pass ${pass+1}${step.section?' · '+step.section:''}`}:{})}))).flat();
- if(s.editContext===patterns(s))for(const [i,e]of Object.entries(s.harmonyEdits))if(steps[Number(i)])Object.assign(steps[Number(i)],e);
+ if(s.tier>=3&&s.editContext===patterns(s))for(const [i,e]of Object.entries(s.harmonyEdits))if(steps[Number(i)])Object.assign(steps[Number(i)],e);
  const progression=normalizeCustomProgression({name,...metadata,steps}),chart={key,beats,progression};
  const settings={key,mode:s.mode,chord:s.chord,template:'custom',progression:true,beats,customProgression:progression};
  const harmonies=steps.map((_,i)=>harmonyAt(settings,i)),chords=harmonies.map(h=>h.name+h.suffix);
  const route=navigation==='all'?steps.map((_,i)=>s.manualPositions[i]||s.position):null;
  const id='v2:'+s.tier+':'+hash(JSON.stringify([key,beats,progression,route||s.region,s.material]));
- return {selection:s,chart,navigation,positions:route,study:s.material==='voicings'?'positional':s.material,chords,harmonies,id,maxPasses,baseCount:base.length,editContext:patterns(s),singleQuality:s.tier===1||s.tier===2&&s.variation==='single',sources,view:s.material==='voicings'?'guitar':'exercises'};
+ return {selection:s,chart,navigation,positions:route,study:s.material==='voicings'?'positional':s.material,chords,harmonies,id,maxPasses,baseCount:base.length,editContext:patterns(s),singleQuality:s.tier<=2,sources,view:s.material==='voicings'?'guitar':'exercises'};
 }
 export const studyPathId=(s,sources)=>studyPathPlan(s,sources).id;
