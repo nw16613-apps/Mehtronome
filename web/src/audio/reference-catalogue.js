@@ -1,3 +1,4 @@
+import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {CHORDS} from './music.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
@@ -19,7 +20,7 @@ export const STYLE_REFERENCES={
  '.5:65:.45 1:69:.45 1.5:72:.9 3:69:.8|.5:71:.45 1:69:.45 1.5:65:1.3|1:64:.45 1.5:67:.45 2:71:1.4|.5:72:.45 1:71:.45 1.5:67:.9 3:64:.8|.5:65:.45 1:69:.45 1.5:72:.45 2:76:.9 3.5:74:.45|.5:71:.45 1:69:.45 1.5:65:.45 2:62:1.4|1:64:1.4 3:67:.8|.5:70:.45 1:69:.45 1.5:67:.9 3:64:.8|.5:69:.9 2:72:.45 2.5:76:1.3|.5:75:.45 1:72:.45 1.5:68:1.4|.5:67:.45 1:71:.45 1.5:74:.9 3:71:.8|.5:70:.45 1:67:.45 1.5:65:.9 3:61:.8|.5:62:.45 1:65:.45 1.5:69:.9 3:72:.8|.5:71:.45 1:69:.45 1.5:65:.45 2:62:1.4|1:64:.45 1.5:62:.45 2:60:1.7|1:59:.9 2.5:62:1.3',
  '0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:9:.9 2:3:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:5:.9 2:3:.9 3:>1:.9|0:1:.9 1:9:.9 2:3:.9 3:5:.9|0:1:.9 1:7:.9 2:5:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:5:.9 2:7:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:7:.9 2:5:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:7:.9 2:5:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:7:.9|0:1:.9 1:9:.9 2:3:.9 3:>1:.9|0:1:.9 1:3:.9 2:5:.9 3:9:.9|0:1:.9 1:7:.9 2:5:.9 3:>1:.9',
  '.5:.6 2.5:.8|1.5:.7|0:1.2 3:.5|1:.8 3.5:.4|.5:.8|1.5:.65 3:.6|0:1.6|.5:.7 2.5:.8|1:1.7|.5:1.2 3:.5|1.5:.8|.5:.7 2.5:.8|1:.9 3.5:.4|.5:.7 2.5:.8|0:2.2|1.5:.8 3:.6'),
- fusionJazz:study('fusionJazz','Fusion jazz · Side streets',2,118,4,'A displaced electric-key hook and answering lead, with a developing sixteenth-note bass route and ride-to-bell transitions.',
+ fusionJazz:study('fusionJazz','Fusion jazz · Side streets',2,118,4,'A displaced electric-key hook and answering lead, with a developing sixteenth-note bass route and a crisp hi-hat pocket, syncopated kick and snare ghost notes.',
  'D:min11:2 G:dom9sharp11:2 Bb:maj9sharp11:2 A:dom7alt:2 D:min9:2 F:maj9sharp11:2 E:min9 A:dom7alt D:min9:2',
  '.25:69:.65 1:72:.4 1.75:76:1.1 3.25:74:1.2|1:72:.4 1.75:69:.65 2.5:65:1.2|.25:71:.65 1:73:.4 1.75:76:1.1 3.25:74:1.2|.75:73:.4 1.5:71:.65 2.5:69:1.2|.25:69:.65 1:72:.4 1.75:76:1.1 3.25:77:1.2|1:76:.4 1.75:74:.65 2.5:72:1.2|.25:70:.65 1:72:.4 1.75:75:1.1 3.25:73:.65|1:72:.4 1.75:70:.65 2.5:67:1.2|.75:77:1.1 2:76:.4 2.75:74:1.1|1:72:.65 2:69:1.6|.25:71:.65 1:72:.4 1.75:76:1.1 3.25:79:1.2|1:76:.65 2:72:1.6|.25:74:.65 1:76:.4 1.75:79:1.1 3.25:78:.65|.75:77:.4 1.5:75:.65 2.5:73:1.2|.25:74:.65 1:72:.4 1.75:69:1.1|1:65:2.7',
  '0:1:1.2 1.75:5:.6 3.25:7:.5|.5:9:.7 2:3:1.2 3.5:>1:.4|0:1:1.1 1.5:5:.6 3:7:.7|.75:3:.6 2.25:9:.7 3.5:>1:.4|0:1:1.6 2.25:5:.7 3.5:7:.4|.5:9:.7 2:3:1.3|0:1:1.2 1.75:7:.6 3:5:.7|.5:3:.7 2.25:7:.7 3.5:>1:.4|0:1:2.5 3.25:5:.5|.75:3:.7 2.5:9:1|0:1:1.8 2.5:5:.8|.5:7:.7 2:3:1.3|0:1:1.2 1.75:5:.6 3.25:7:.5|.5:3:.7 2.25:7:.7 3.5:>1:.4|0:1:2.8 3.25:5:.5|0:1:3.8',
@@ -103,7 +104,7 @@ export const STYLE_REFERENCES={
 const cores={
  popRock:[[[0,'kick',.62],[1.5,'kick',.36],[2,'kick',.52],[1,'snare',.52],[3,'snare',.55]],[[0,'kick',.63],[2,'kick',.52],[3.5,'kick',.35],[1,'snare',.52],[3,'snare',.55]]],
  traditionalJazz:[[[0,'ride',.25],[1,'ride',.19],[1.5,'ride',.12],[2,'ride',.24],[3,'ride',.19],[3.5,'ride',.12],[1,'hatPedal',.14],[3,'hatPedal',.14],[0,'kick',.2],[2.5,'snare',.16]],[[0,'ride',.25],[1,'ride',.19],[1.5,'ride',.12],[2,'ride',.24],[3,'ride',.19],[3.5,'ride',.12],[1,'hatPedal',.14],[3,'hatPedal',.14],[1.5,'snare',.15],[3,'kick',.17]]],
- fusionJazz:[[[0,'ride',.24],[1,'ride',.19],[2,'ride',.23],[2.75,'ride',.13],[3.5,'ride',.17],[0,'kick',.57],[1.75,'kick',.37],[3,'snare',.47],[1.25,'snare',.12]],[[0,'ride',.24],[1,'ride',.19],[2,'ride',.23],[3,'ride',.19],[3.75,'ride',.13],[.75,'kick',.37],[2.5,'kick',.4],[1,'snare',.44],[2.75,'snare',.12]]],
+ fusionJazz:Array.from({length:4},(_,bar)=>fusionJazzDrumCell(bar).map(([slot,name,v])=>[slot/4,name,v])),
  motown:[[[0,'kick',.55],[1,'kick',.42],[2,'kick',.51],[3,'kick',.42],[1,'snare',.5],[3,'snare',.54]],[[0,'kick',.55],[1,'kick',.42],[2,'kick',.51],[3,'kick',.42],[3.5,'kick',.3],[1,'snare',.5],[3,'snare',.54]]],
  funk:[[[0,'kick',.6],[.75,'kick',.35],[2.5,'kick',.49],[1,'snare',.52],[3,'snare',.55],[1.75,'snare',.1]],[[0,'kick',.6],[1.75,'kick',.36],[2.75,'kick',.46],[1,'snare',.52],[3,'snare',.55],[3.75,'snare',.1]]],
  neoSoul:[[[0,'kick',.52],[1.75,'kick',.3],[2.5,'kick',.39],[1,'snare',.45],[3,'snare',.48],[2.75,'snare',.09]],[[0,'kick',.52],[2.25,'kick',.35],[3.5,'kick',.29],[1,'snare',.45],[3,'snare',.48],[1.75,'snare',.09]]],
@@ -112,7 +113,7 @@ const cores={
 const transitions={
  popRock:[[3,3.5,'snare',.23],[7,3,'tomHigh',.28],[7,3.5,'tomLow',.32],[12,0,'crash',.25],[15,3.5,'snare',.25]],
  traditionalJazz:[[3,3.5,'snare',.19],[7,2.5,'snare',.22],[7,3.5,'tomHigh',.2],[11,3.5,'snare',.17],[15,3,'snare',.21]],
- fusionJazz:[[3,3.25,'snare',.16],[7,3,'tomHigh',.25],[7,3.5,'tomLow',.29],[12,0,'crash',.22],[15,2.75,'snare',.23],[15,3.5,'tomLow',.25]],
+ fusionJazz:[[3,3.5,'snare',.17],[7,3.25,'tomHigh',.25],[7,3.5,'tomLow',.29],[7,3.75,'snare',.2],[12,0,'crash',.22],[15,3.25,'snare',.19],[15,3.5,'tomHigh',.23],[15,3.75,'tomLow',.27]],
  motown:[[3,3.5,'snare',.22],[7,3.5,'tomHigh',.26],[12,0,'crash',.21],[15,3.5,'snare',.23]],
  funk:[[3,3.75,'snare',.14],[7,3.25,'snare',.19],[7,3.75,'tomLow',.26],[12,0,'crash',.2],[15,3.25,'snare',.18]],
  neoSoul:[[3,3.75,'snare',.13],[7,3.5,'tomLow',.21],[11,3.75,'snare',.12],[15,3.5,'tomHigh',.2]],
@@ -150,11 +151,11 @@ function drumBar(def,bar){
   cell=[[0,'kick',.5],[2,'kick',.43],[1,'snare',.47],[3,'snare',.51]];
   for(let beat=0;beat<4;beat++)for(let third=0;third<3;third++)cell.push([beat+third/3,'hat',third===0?.15:third===1?.07:.095]);
  }else if(ADDITIONAL_STYLES[id])cell=ADDITIONAL_STYLES[id].drums[bar%2].map(([slot,name,v])=>[slot/4,name,v]);
- else cell=cores[id][bar%2].map(e=>[...e]);
+ else cell=cores[id][bar%cores[id].length].map(e=>[...e]);
  if(['popRock','motown','funk','neoSoul'].includes(id))for(let eighth=0;eighth<8;eighth++)cell.push([eighth/2,'hat',eighth%2?.12:.19]);
  if(id==='motown')for(let eighth=0;eighth<8;eighth++)cell.push([eighth/2,'tambourine',eighth%2?.09:bar>=8?.18:.14]);
  if(id==='latin'&&(bar>=4&&bar<8||bar>=12&&bar<15))cell.push(...SON_BELL.map(([slot,name,v])=>[slot/4,name,v]));
- if(id==='fusionJazz'&&bar>=4&&bar<8)cell=cell.map(([at,name,v])=>[at,name==='ride'&&Number.isInteger(at)?'rideBell':name,v]);
+ if(id==='fusionJazz'&&bar%8===7)cell=cell.filter(([at,name])=>!['hat','hatOpen'].includes(name)||at<=3);
  const sparse=bar>=8&&bar<12;
  if(sparse&&!['latin','bossa','samba','afroCuban68','reggae','slowSoul128'].includes(id))cell=cell.filter(([at,name])=>!['hat','ride','rideBell'].includes(name)||Number.isInteger(at));
  const events=cell.map(([at,name,velocity])=>({at,name,velocity:velocity*dynamics[bar]}));

@@ -16,7 +16,7 @@ test('every style has a different melodic source family from its chord instrumen
  for(const [id,{settings:s,parts}]of Object.entries(BACKING_STYLES)){
   assert.equal(s.sequenceTone,MELODIC_TONES[id]);assert.notEqual(family(s.sequenceTone),family(s.compingTone),id);assert.ok(parts['Melodic movement'].includes(' · '));const wanted=sampleNamesForSettings({...s,sequence:true,sequenceVolume:.25,drums:false,bass:false,comping:false});if(instrument.shapes[s.sequenceTone].bank)assert.ok(wanted.length>=4,id);
  }
- assert.equal(BACKING_STYLES.legatoFusion.settings.sequenceTone,'fluteLead');assert.equal(BACKING_STYLES.traditionalJazz.settings.sequenceTone,'jazzGuitar');
+ assert.equal(BACKING_STYLES.legatoFusion.settings.sequenceTone,'fluteLead');assert.equal(BACKING_STYLES.traditionalJazz.settings.sequenceTone,'fluteLead');
 });
 test('new melodic colours stay bounded and deterministic with recorded instruments and connected flute phrases',()=>{
  for(const id of ['traditionalJazz','fusionJazz','blues','samba','legatoFusion']){

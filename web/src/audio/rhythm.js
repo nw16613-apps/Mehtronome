@@ -1,3 +1,4 @@
+import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {performanceExpression} from './performance-expression.js';
 import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
 import {drumStrokeGain} from './drum-performance.js';
@@ -16,7 +17,7 @@ import { DRUM_SAMPLE_GROUPS, JAZZ_DRUM_GROUPS, LIVE_DRUM_GROUPS, LATIN_DRUM_GROU
 
 export const DRUM_GROOVES = {
   straight: 'Pop / rock', shuffle: 'Blues shuffle', swing: 'Jazz swing', halftime: 'Neo-soul half-time', bossa: 'Bossa nova',
-  fusionRide:'Fusion jazz ride pocket', fusion: 'Funk / fusion sixteenths', neoSoul: 'Neo-soul pocket', motown: 'Motown drive', tumbao: 'Afro-Cuban son · 2–3 clave',
+  fusionRide:'Fusion jazz syncopated hi-hat pocket', fusion: 'Funk / fusion sixteenths', neoSoul: 'Neo-soul pocket', motown: 'Motown drive', tumbao: 'Afro-Cuban son · 2–3 clave',
   modernJazz: 'Modern jazz comping', ballad: 'Ambient ballad',
 };
 export const BASS_PATTERNS = {
@@ -43,12 +44,6 @@ const GROOVES = {
     [[0,'kick',.58],[4,'kick',.39],[8,'kick',.52],[12,'kick',.4],[4,'snare',.58],[12,'snare',.62],[11,'snare',.1]],
     [[0,'kick',.6],[4,'kick',.4],[8,'kick',.53],[12,'kick',.39],[4,'snare',.57],[12,'snare',.63],[7,'snare',.1]],
     [[0,'kick',.58],[4,'kick',.39],[8,'kick',.52],[12,'kick',.4],[4,'snare',.58],[12,'snare',.62]],
-  ],
-  fusionRide: [
-    [[0,'kick',.66],[7,'kick',.44],[10,'kick',.54],[4,'snare',.59],[12,'snare',.64],[11,'snare',.11]],
-    [[0,'kick',.66],[6,'kick',.43],[8,'kick',.54],[14,'kick',.37],[4,'snare',.58],[12,'snare',.64]],
-    [[0,'kick',.67],[3,'kick',.36],[10,'kick',.53],[4,'snare',.59],[12,'snare',.63],[15,'snare',.1]],
-    [[0,'kick',.66],[6,'kick',.42],[11,'kick',.47],[4,'snare',.58],[12,'snare',.64]],
   ],
   swing: [
     [[0,'kick',.35],[10,'kick',.22],[6,'snare',.22],[12,'snare',.28],[15,'snare',.1]],
@@ -320,6 +315,15 @@ export class Rhythm {
     }
     const added=ensembleDrums(settings,bar)||additionalDrumCell(additionalGrooves[settings.drumGroove],bar,settings.backingVariation>0,settings.backingTurnaround);
     if(added){const cell=beat*4+sub;for(const [offset,name,gain]of added)if(offset===cell){const touch=performanceTouch(settings,name,bar,cell,this.rate);this.hitDrum(name,Math.min(.85,gain*touch.velocity),sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);}return;}
+    if(settings.drumGroove==='fusionRide'){
+      const fill=settings.backingTurnaround||bar%8===7||(settings.backingVariation>0&&bar%4===3);
+      const cell=beat*4+sub;
+      for(const [offset,name,gain]of fusionJazzDrumCell(bar,fill))if(Math.round(offset*settings.beats/4)===cell){
+        const touch=performanceTouch(settings,name,bar,cell,this.rate);
+        this.hitDrum(name,gain*touch.velocity,sample,step,beat,sub,onEvent,settings.drumKit,touch.delayFrames,settings.backingStyle);
+      }
+      return;
+    }
     if(settings.drumGroove==='bossa'||settings.drumGroove==='tumbao'){
       this.playLatinDrums(settings,sub,beat,bar,sample,step,onEvent);return;
     }
@@ -346,7 +350,7 @@ export class Rhythm {
     // In odd meters, an extra partial cell still starts from the groove's root.
     if(groove==='halftime'&&beat===Math.floor(settings.beats/2)&&sub===0)hit('snare',.72);
     if(varied&&filling){
-      const family=latin?'latin':jazzRide||groove==='fusionRide'?'jazz':groove==='shuffle'?'blues':groove==='motown'?'soul':groove==='ballad'?'soft':'rock';
+      const family=latin?'latin':jazzRide?'jazz':groove==='shuffle'?'blues':groove==='motown'?'soul':groove==='ballad'?'soft':'rock';
       const answer=Math.floor(bar/4)%4,fillCell=(beat-settings.beats+2)*4+sub;
       for(const [position,name,gain]of FILLS[family][answer])if(position===fillCell&&!GROOVES[groove][phrase].some(([offset,kind,velocity])=>offset===cell&&kind===name&&velocity>.5))hit(name,gain);
       this.lastFillBar=bar;
@@ -361,10 +365,7 @@ export class Rhythm {
     // straight back to the downbeat. It stays quieter than the main backbeat.
     if(!varied&&bar%8===7&&lastBeat&&sub===2&&!latin&&!jazzRide&&groove!=='ballad')hit('snare',.24);
     if(bar>0&&(varied?this.lastFillBar===bar-1&&bar%8===0:bar%8===0)&&beat===0&&sub===0&&['straight','shuffle','halftime','fusion','motown'].includes(groove))hit('crash',.2);
-    if(groove==='fusionRide'){
-      if(sub%2===0&&(!filling||sub===0))hit(bar%4===2&&beat%2===1&&sub===0?'rideBell':'ride',sub===0?(beat%2?.25:.23):.13);
-      if(sub===0&&beat%2===1)hit('hatPedal',.1);
-    }else if(jazzRide){
+    if(jazzRide){
       if(sub===0||sub===2&&beat%2===1&&(!varied||!filling)&&(!varied||bar%8!==5||beat!==1))hit(bar%8===6&&beat===2&&sub===0?'rideBell':varied&&bar%16>=8?'flatRide':'ride',sub===0?(beat%2?.31:.24):.16+(phrase===2?.025:0));
       if(sub===0&&beat%2===1)hit('hatPedal',.13);
     }else if(groove==='ballad'){

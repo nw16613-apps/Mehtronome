@@ -1,3 +1,4 @@
+import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
 // Coordinated written ensembles. The approved Legato Fusion/Blues parts are
@@ -91,7 +92,7 @@ export function ensembleBass(s,bar){const p=planFor(s);return p?p.bass[bar%p.bas
 const drumBeds={
  popRock:[[[0,'kick',.65],[8,'kick',.57],[4,'snare',.58],[12,'snare',.63]],[[0,'kick',.65],[6,'kick',.35],[8,'kick',.56],[4,'snare',.58],[12,'snare',.62]]],
  traditionalJazz:[[[0,'kick',.25],[6,'snare',.17],[12,'snare',.21]],[[0,'kick',.23],[10,'snare',.18],[14,'snare',.12]]],
- fusionJazz:[[[0,'kick',.46],[7,'kick',.3],[11,'kick',.32],[4,'snare',.36],[12,'snare',.42]],[[0,'kick',.46],[6,'kick',.3],[13,'kick',.29],[3,'snare',.14],[10,'snare',.35]]],
+
  motown:[[[0,'kick',.61],[4,'kick',.4],[8,'kick',.56],[12,'kick',.37],[4,'snare',.54],[12,'snare',.59]],[[0,'kick',.61],[6,'kick',.32],[8,'kick',.55],[12,'kick',.36],[4,'snare',.54],[12,'snare',.59]]],
  funk:[[[0,'kick',.61],[7,'kick',.38],[10,'kick',.43],[4,'snare',.56],[12,'snare',.61],[3,'snare',.09],[11,'snare',.1]],[[0,'kick',.61],[6,'kick',.39],[14,'kick',.33],[4,'snare',.56],[12,'snare',.61],[7,'snare',.1]]],
  neoSoul:[[[0,'kick',.53],[6,'kick',.31],[11,'kick',.33],[4,'snare',.44],[12,'snare',.49],[7,'snare',.075]],[[0,'kick',.53],[8,'kick',.38],[14,'kick',.27],[4,'snare',.44],[12,'snare',.49]]],
@@ -101,6 +102,7 @@ function append(cell,event){if(!cell.some(n=>n[0]===event[0]&&n[1]===event[1]))c
 function drumCell(id,bar){
  const p=plans[id],native=p.native,end=native*4,chapter=Math.floor(bar/4),last=bar===p.bars-1,answer=bar%4===3,rest=!p.melody[bar%p.melody.length].length;
  let cell;
+ if(id==='fusionJazz')return fusionJazzDrumCell(bar,answer||last);
  if(id==='legatoFusion'||id==='blues'){
   // Preserve the approved B rhythms in 4/4, with ride timekeeping for Blues.
   cell=[];if(id==='blues'){for(let i=0;i<16;i+=2)cell.push([i,'ride',i%4===0?.24:.12]);cell.push([0,'kick',.58],[8,'kick',.47],[4,'snare',.51],[12,'snare',.55]);if(bar%3===1)cell.push([6,'kick',.29]);}
@@ -115,7 +117,7 @@ function drumCell(id,bar){
  }
  if(ADDITIONAL_STYLES[id])cell=ADDITIONAL_STYLES[id].drums[(bar+chapter*2)%ADDITIONAL_STYLES[id].drums.length].map(n=>n.slice());
  else {
-  cell=drumBeds[id][bar%2].map(n=>n.slice());const jazz=id==='traditionalJazz',ride=jazz||id==='fusionJazz'||id==='ballad';
+  cell=drumBeds[id][bar%2].map(n=>n.slice());const jazz=id==='traditionalJazz',ride=jazz||id==='ballad';
   for(let beat=0;beat<native;beat++){
    append(cell,[beat*4,ride?'ride':'hat',ride?(id==='ballad'?.12:beat%2?.23:.2):beat%2?.19:.23]);
    if(id!=='ballad'&&(!jazz||beat%2===1))append(cell,[beat*4+2,ride?'ride':'hat',ride?.12:.1]);
