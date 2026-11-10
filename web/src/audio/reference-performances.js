@@ -178,7 +178,7 @@ export function referenceStatus(settings){
  if(steps.length!==def.harmony.length||steps.some((step,i)=>{const [pc,chord,mode,duration]=def.harmony[i];return step.root!==(pc-def.key+12)%12||step.chord!==chord||step.mode!==mode||(step.beats??step.bars*(def.beats||4))!==duration||step.bass!=null;}))return fail('Chart changed: standard backing is playing. Reload the study to restore its written parts.');
  return {active:true,id,adapted:false,reason:''};
 }
-export function referencePlanKey(s){return JSON.stringify([!!s.automaticBacking,s.key,s.mode,s.chord,s.minor,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);}
+export function referencePlanKey(s){return JSON.stringify([!!s.automaticBacking,s.key,s.mode,s.chord,s.minor,s.beats,s.progression,s.template,s.customProgression,s.backingStyle,['acousticPiano','softPiano'].includes(s.compingTone),s.extensionMorph,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);}
 export function referenceBasePlan(settings){
  if(settings.automaticBacking){const source=automaticBackingSettings(settings),def=REFERENCE_PERFORMANCES[settings.backingStyle];if(!source||arrangementSupport(source,def))return null;return {score:arrangeReference(referenceScore(def.id),def,source),transpose:0};}
  const status=referenceStatus(settings);if(!status.active)return null;

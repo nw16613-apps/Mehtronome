@@ -18,8 +18,8 @@ export function coordinateEnsemble(source){
   const stage=Math.min(3,Math.floor(grid/rate/source.developmentBeats)),inBeat=grid%12;
   score.comping[grid]=score.comping[grid].filter(event=>{
    const chordEntry=event.changeEntry||Math.abs(event.at-Math.round(event.at))<1e-7;
-   if(!profile.ostinato&&attacks[grid]&&!chordEntry&&event.duration<1.6){space++;return false;}
-   if(lead[grid]){event.velocity*=profile.ostinato?.86:.78;event.conversation='support';softened++;}
+   if(!score.pianoComping&&!profile.ostinato&&attacks[grid]&&!chordEntry&&event.duration<1.6){space++;return false;}
+   if(lead[grid]){event.velocity*=score.pianoComping?.92:profile.ostinato?.86:.78;event.conversation='support';softened++;}
    else event.conversation='answer-space';return true;
   });
   for(const event of score.comping[grid])for(let i=grid;i<Math.min(length,grid+Math.ceil(event.duration*rate));i++)chords[i]=1;
@@ -43,7 +43,7 @@ export function coordinateEnsemble(source){
   if(score.id==='blues'){let next=grid+9;while(next<Math.min(length,grid+beats*rate)&&!attacks[next])next++;event.duration=Math.min(event.duration,Math.max(.12,(next-grid)/rate-.15));event.articulation='damped';}
   // New style replies finish before the audible line re-enters. Long chord
   // beds can still support a melody; a labelled answer should leave it room.
-  if(score.performanceStudy?.version>=2){
+  if(score.performanceStudy?.version>=2&&!score.pianoComping){
    const end=Math.min(length,grid+Math.ceil(event.duration*rate)+3);
    for(let next=grid+1;next<end;next++)if(attacks[next]){event.duration=Math.min(event.duration,Math.max(.12,(next-grid)/rate-.15));break;}
   }

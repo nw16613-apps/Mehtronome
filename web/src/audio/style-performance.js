@@ -38,7 +38,7 @@ export function buildStylePerformance(score,targets,clip,add){
   // Native ostinatos keep their metric phase in every pass. Contrast reduces
   // their weight and voicing, rather than displacing clave, skank or riff accents.
   let strokes=profile.comp[profile.ostinato?bar%8:cell];
-  if(contrast&&!profile.ostinato)strokes=phase%(profile.sustain?4:2)===0?[[profile.sustain?0:.5,profile.sustain?beats*1.8:beats*.65,2]]:[];
+  if(contrast&&!profile.ostinato&&!score.pianoComping)strokes=phase%(profile.sustain?4:2)===0?[[profile.sustain?0:.5,profile.sustain?beats*1.8:beats*.65,2]]:[];
   for(const [offset,length,gesture]of strokes){
    const beat=Math.round((start+offset)*rate)/rate;if(offset>=beats||beat>=total)continue;
    const h=at(beat),duration=Math.min(length*(contrast?.88:pass===1?1.05:pass===3?.96:1),total-beat);
@@ -77,7 +77,11 @@ export function articulateStylePerformance(score,targets,clip){
   const h=at(beat),ints=CHORDS[h.chord].intervals,seventh=ints.find(n=>n>=9&&n<=11);
   const guides=new Set([third(h),...(seventh===undefined?[]:[pc(h.root+seventh)])]);
   const notes=[...e.notes];
-  if(profile.voicing==='jazz'&&e.voiceShape===2){
+  if(score.pianoComping){
+   // The pianist's full voice-led colour is already chosen upstream. Do not
+   // strip it back to the same guide-tone dyad after every selection.
+   e.notes=notes;
+  }else if(profile.voicing==='jazz'&&e.voiceShape===2){
    const shell=notes.filter(n=>guides.has(pc(n)));e.notes=shell.length>=2?shell.slice(0,3):notes.slice(-3);
   }else if(profile.voicing==='open'&&notes.length>=3){
    const index=notes.length-2;

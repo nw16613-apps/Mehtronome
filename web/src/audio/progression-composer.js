@@ -1,5 +1,6 @@
 import {buildStudyPerformance,articulateStudyPerformance} from './study-performance.js';
 import {prepareSessionPerformance} from './session-performance.js';
+import {pianoVoicings} from './piano-voicings.js';
 import {CHORDS,MODES} from './music.js';
 import {segmentAt,pitchForDegree} from './reference-catalogue.js';
 import {COMPOSITION_STYLES,CHORUS_ROLES} from './composition-vocabulary.js';
@@ -28,7 +29,8 @@ function planMelody(score,targets,pass,clip){
   (a,b,prev,next)=>{const interval=b-a,wanted=(next.event.desired??next.event.midi)-(prev.event.desired??prev.event.midi);return Math.abs(interval)*.35+Math.max(0,Math.abs(interval)-7)*2+(wanted&&Math.sign(wanted)!==Math.sign(interval)?1.5:0)+(a===b&&wanted?1:0);});
  rows.forEach((row,i)=>{row.event.midi=path[i];row.event.duration=clip(row.grid/12,row.event.duration,[path[i]]);row.event.composed=!!row.event.composed;});
 }
-function voicings(h,power){
+function voicings(h,power,piano=false){
+ if(piano)return pianoVoicings(h);
  const ints=CHORDS[h.chord].intervals,important=[ints[1],ints.find(n=>n>=9&&n<=11),...ints.filter(n=>n>=13),ints[2]].filter(n=>n!==undefined);
  let pcs=power?[h.root,degreePc(h,5)]:[...new Set(important.slice(0,5).map(i=>pc(h.root+i)))];if(pcs.length<3&&!power)pcs=[...new Set([h.root,...pcs])];
  const result=[];
@@ -40,7 +42,17 @@ function voicings(h,power){
 }
 function planChords(score,targets,profile,pass,clip){
  const rows=entries(score.comping),at=beat=>segmentAt(targets,beat),center=profile.power?52:profile.sustain?60:64;
- const path=route(rows,row=>voicings(at(row.grid/12),profile.power),(notes,row)=>notes.reduce((n,p)=>n+Math.abs(p-(center+(row.event.chorus===2?-3:row.event.chorus===3?1:0)))*.06,0),
+ const localCost=(notes,row)=>{
+  const register=center+(row.event.chorus===2?-3:row.event.chorus===3?1:0);
+  const cost=notes.reduce((n,p)=>n+Math.abs(p-register)*.06,0);
+  if(!score.pianoComping)return cost;
+  const gesture=row.event.voiceShape||0,bar=Math.floor(row.grid/(score.beats*12));
+  // An upper-voice contour balances smooth motion against the old tendency to
+  // repeat one minimum-distance inversion for an entire vamp.
+  const top=69+[0,3,-2,1][(bar+gesture)%4];
+  return cost+Math.abs(notes.at(-1)-top)*.9+Math.abs(notes.length-(gesture===1?3:4))*2;
+ };
+ const path=route(rows,row=>voicings(at(row.grid/12),profile.power,score.pianoComping),localCost,
   (a,b)=>b.reduce((sum,n,i)=>sum+Math.abs(n-a[Math.min(i,a.length-1)])*.55-(a.includes(n)?.7:0),0));
  rows.forEach((row,i)=>{row.event.notes=path[i];row.event.duration=clip(row.grid/12,row.event.duration,path[i]);});
  // Harmonically prepared answers can be selected later using the audible lead.
@@ -48,7 +60,7 @@ function planChords(score,targets,profile,pass,clip){
  for(let bar=0;bar<Math.ceil(score.bars);bar++)for(const offset of (profile.triplet?[1+1/3,2+1/3]:profile.sustain?[1.5,2.5]:[.5,2.5])){
   if(offset>=score.beats)continue;
   const atBeat=bar*score.beats+offset,grid=Math.round(atBeat*12);if(grid>=score.sequence.length)continue;
-  const h=at(atBeat),prior=rows.findLast(row=>row.grid<=grid),options=voicings(h,profile.power),previous=prior?.event.notes||[55,60,64];
+  const h=at(atBeat),prior=rows.findLast(row=>row.grid<=grid),options=voicings(h,profile.power,score.pianoComping),previous=prior?.event.notes||[55,60,64];
   const notes=options.sort((a,b)=>a.reduce((n,p,i)=>n+Math.abs(p-previous[Math.min(i,previous.length-1)]),0)-b.reduce((n,p,i)=>n+Math.abs(p-previous[Math.min(i,previous.length-1)]),0))[0];
   if(notes)score.answerOptions[grid].push({at:atBeat%score.beats,bar,notes:notes.slice(-3),duration:clip(atBeat,profile.sustain?2:1.1,notes.slice(-3)),velocity:.3,targetStep:h.step,answer:true,chorus:Math.floor(atBeat/score.developmentBeats)%4,chorusRole:CHORUS_ROLES[Math.floor(atBeat/score.developmentBeats)%4]});
  }
@@ -135,7 +147,7 @@ function generateParts(score,targets,profile,clip){
  }
 }
 export function composeProgression(base,settings,def,targets,clip){
- const profile=COMPOSITION_STYLES[def.id],score={...base,developmentBeats:base.developmentBeats};
+ const profile=COMPOSITION_STYLES[def.id],score={...base,pianoComping:['acousticPiano','softPiano'].includes(settings.compingTone),developmentBeats:base.developmentBeats};
  generateParts(score,targets,profile,clip);
  planMelody(score,targets,null,clip);planBass(score,targets,null,clip);planChords(score,targets,profile,null,clip);
  articulateStudyPerformance(score,targets,clip);

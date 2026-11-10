@@ -27,7 +27,7 @@ test('every style has varied eight-bar phrases, breathing space and developed ch
   const supporting=referencePlan({...s,sequenceActivity:'supporting'}).score;
   assert.ok(supporting.sequence.flat().length<phrases.length,id+' respects supporting activity');
   if(!STYLE_PERFORMANCES[id]?.ostinato)assert.ok(supporting.interaction.chordReplies>0,id+' audible lead gaps admit replies');
-  if(score.performanceStudy.version>=2)for(const e of rows(supporting,'comping').filter(e=>e.conversation==='reply')){
+  if(score.performanceStudy.version>=2&&!score.pianoComping)for(const e of rows(supporting,'comping').filter(e=>e.conversation==='reply')){
    for(let g=e.grid;g<Math.min(supporting.sequence.length,e.grid+e.duration*12);g++)assert.equal(supporting.sequence[g].length,0,id+' reply ends before melodic re-entry');
   }
   assert.equal(JSON.stringify(base.score),snapshot,id+' cached composition untouched');assert.equal(JSON.stringify(referenceScore(id)),source,id+' source untouched');
@@ -50,7 +50,7 @@ test('native groove identities survive phrase development: skank, son, samba, 6/
  assert.ok(rows(six,'comping').every(e=>Number.isInteger(e.at*2)));
  const soul=referencePlan(settings('slowSoul128')).score;
  for(const track of ['sequence','comping'])assert.ok(rows(soul,track).every(e=>Math.abs(e.at*3-Math.round(e.at*3))<1e-6),'triplet grid');
- const jazz=referencePlan(settings('traditionalJazz')).score;assert.ok(jazz.comping.flat().some(e=>e.notes.length===2),'guide-tone shells');
+ const jazz=referencePlan(settings('traditionalJazz')).score;assert.ok(jazz.comping.flat().every(e=>e.notes.length>=3),'full piano voicings');
  const rock=referencePlan(settings('hardRock')).score;
  assert.ok(rock.comping.flat().every(e=>new Set(e.notes.map(n=>n%12)).size===2),'power voicings retain root/fifth instead of added thirds');
  assert.ok(rock.comping.flat().some(e=>e.articulation==='ringing')&&rock.comping.flat().some(e=>e.articulation==='damped'));

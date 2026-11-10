@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {BACKING_STYLES,STYLE_CONTROLS,backingStyleId,backingStyleForControls} from '../src/practice/backing-styles.js';
+import {BACKING_STYLES,MELODIC_TONES,backingStyleInstruments,STYLE_CONTROLS,backingStyleId,backingStyleForControls} from '../src/practice/backing-styles.js';
 import {Engine,DEFAULTS} from '../src/audio/engine.js';
 import {CompingInstrument,COMPING_PATTERNS,COMPING_TONES} from '../src/audio/comping.js';
 import {DRUM_GROOVES,BASS_PATTERNS} from '../src/audio/rhythm.js';
@@ -44,4 +44,12 @@ test('each style produces its own repeatable band phrase and adapts over chord c
   if(beats===4)signatures.push(JSON.stringify(events.map(e=>[e.type,e.sample,e.midi,e.notes,e.duration])));
  }
  assert.equal(new Set(signatures).size,20);
+});
+
+test('melodic movement defaults use contrasting non-guitar instruments in every style',()=>{
+ for(const [id,tone]of Object.entries(MELODIC_TONES)){
+  assert.ok(!/Guitar$/.test(tone),id);assert.ok(COMPING_TONES[tone]);assert.notEqual(tone,BACKING_STYLES[id].settings.compingTone,id+' distinct from comping');
+  assert.equal(backingStyleInstruments(id).sequenceTone,tone);
+ }
+ assert.equal(MELODIC_TONES.legatoFusion,'fluteLead');
 });

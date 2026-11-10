@@ -27,7 +27,7 @@ test('an upcoming destination changes an earlier new phrase while the opening ha
 });
 test('the band follows the audible melody without mutating its composition or losing riff identities',()=>{
  const s=settings('traditionalJazz','supporting'),base=referenceBasePlan(s),snapshot=JSON.stringify(base.score),score=referencePlan(s).score;
- assert.ok(score.interaction.softenedComping>0);assert.ok(score.interaction.chordReplies>0);assert.ok(score.interaction.collisionsRemoved>0);assert.equal(JSON.stringify(base.score),snapshot);
+ assert.ok(score.interaction.softenedComping>0);assert.ok(score.interaction.chordReplies>0);assert.equal(score.interaction.collisionsRemoved,0,'piano supports the lead without dropping its rhythm');assert.equal(JSON.stringify(base.score),snapshot);
  const sounding=grid=>score.sequence.some((events,at)=>at<=grid&&events.some(e=>at+e.duration*12>grid));
  for(let grid=0;grid<score.comping.length;grid++)for(const e of score.comping[grid])if(e.conversation==='reply')assert.equal(sounding(grid),false,'reply has a lead gap');
  const funk=referencePlan(settings('funk','supporting')).score;assert.equal(funk.interaction.collisionsRemoved,0,'ostinato accents retained');assert.ok(funk.interaction.bassKickMatches>0);

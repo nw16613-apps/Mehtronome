@@ -106,7 +106,7 @@ export function prepareSessionPerformance(score,targets,clip){
    for(let grid=0;grid<score.sequence.length;grid++){
     const pass=Math.floor(grid/12/score.developmentBeats),bar=Math.floor(grid/12/score.beats);
     if(pass===2&&bar%2===1){
-     if(!score.composition.ostinato&&score.comping[grid].length&&score.comping[grid].every(e=>!e.changeEntry))tracks.comping[grid]=[];
+     if(!score.pianoComping&&!score.composition.ostinato&&score.comping[grid].length&&score.comping[grid].every(e=>!e.changeEntry))tracks.comping[grid]=[];
      if(score.sequence[grid].length&&score.sequence[grid].every(e=>!e.cadenceRole))tracks.sequence[grid]=[];
     }
    }
