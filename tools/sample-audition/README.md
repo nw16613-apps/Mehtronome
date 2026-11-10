@@ -168,3 +168,5 @@ Serve OUTPUT locally, then run `node browser-check-uprights.mjs URL` to play all
 12 files and verify the two-card mobile/desktop page. Publish the finished page
 under `/upright-audition/`. The user's listening preference determines whether a
 candidate should replace the existing instrument.
+
+The user selected VSCO; it is now installed for ordinary upright playback. The static audition keeps its original clips and identifies Sneakybass as Previous. Reproduce that historical comparison from app commit `374e2c7`, before the source replacement. Current source installation is `python3 web/scripts/install-vsco-upright.py CACHE`; it preserves the guitar/electric-bass banks and applies a fixed -3 dB runtime source calibration.

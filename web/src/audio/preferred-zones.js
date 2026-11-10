@@ -653,184 +653,364 @@ export const PREFERRED_SAMPLE_ZONES={
   ],
   "upright": [
     {
-      "id": "qSneakyBass36v0r1",
-      "nominalMidi": 36,
-      "rootMidi": 35.75,
-      "layer": 0,
+      "id": "qVscoBass34v1r1",
+      "nominalMidi": 34.0,
+      "rootMidi": 34.05372,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
     },
     {
-      "id": "qSneakyBass36v0r2",
-      "nominalMidi": 36,
-      "rootMidi": 35.75,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass39v0r1",
-      "nominalMidi": 39,
-      "rootMidi": 38.67,
-      "layer": 0,
+      "id": "qVscoBass45v1r1",
+      "nominalMidi": 45.0,
+      "rootMidi": 45.19658,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 1.0
     },
     {
-      "id": "qSneakyBass39v0r2",
-      "nominalMidi": 39,
-      "rootMidi": 38.67,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass42v0r1",
-      "nominalMidi": 42,
-      "rootMidi": 42.0,
-      "layer": 0,
+      "id": "qVscoBass59v1r1",
+      "nominalMidi": 59.0,
+      "rootMidi": 58.82756,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 1.0
     },
     {
-      "id": "qSneakyBass42v0r2",
-      "nominalMidi": 42,
-      "rootMidi": 42.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass45v0r1",
-      "nominalMidi": 45,
-      "rootMidi": 45.0,
-      "layer": 0,
+      "id": "qVscoBass49v1r1",
+      "nominalMidi": 49.0,
+      "rootMidi": 48.9611,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 1.0
     },
     {
-      "id": "qSneakyBass45v0r2",
-      "nominalMidi": 45,
-      "rootMidi": 45.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass48v0r1",
-      "nominalMidi": 48,
-      "rootMidi": 47.88,
-      "layer": 0,
+      "id": "qVscoBass36v1r1",
+      "nominalMidi": 36.0,
+      "rootMidi": 36.08311,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
     },
     {
-      "id": "qSneakyBass48v0r2",
-      "nominalMidi": 48,
-      "rootMidi": 47.88,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass51v0r1",
-      "nominalMidi": 51,
-      "rootMidi": 51.0,
-      "layer": 0,
+      "id": "qVscoBass38v1r1",
+      "nominalMidi": 38.0,
+      "rootMidi": 38.03291,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 1.0
     },
     {
-      "id": "qSneakyBass51v0r2",
-      "nominalMidi": 51,
-      "rootMidi": 51.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass54v0r1",
-      "nominalMidi": 54,
-      "rootMidi": 54.0,
-      "layer": 0,
+      "id": "qVscoBass28v1r1",
+      "nominalMidi": 28.0,
+      "rootMidi": 27.9737,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
     },
     {
-      "id": "qSneakyBass54v0r2",
-      "nominalMidi": 54,
-      "rootMidi": 54.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass57v0r1",
-      "nominalMidi": 57,
-      "rootMidi": 57.0,
-      "layer": 0,
+      "id": "qVscoBass40v1r1",
+      "nominalMidi": 40.0,
+      "rootMidi": 39.48561,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
     },
     {
-      "id": "qSneakyBass57v0r2",
-      "nominalMidi": 57,
-      "rootMidi": 57.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass63v0r1",
-      "nominalMidi": 63,
-      "rootMidi": 63.0,
-      "layer": 0,
+      "id": "qVscoBass52v1r1",
+      "nominalMidi": 52.0,
+      "rootMidi": 52.02074,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 1.0
     },
     {
-      "id": "qSneakyBass63v0r2",
-      "nominalMidi": 63,
-      "rootMidi": 63.0,
-      "layer": 0,
-      "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
-    },
-    {
-      "id": "qSneakyBass66v0r1",
-      "nominalMidi": 66,
-      "rootMidi": 66.0,
-      "layer": 0,
+      "id": "qVscoBass30v1r1",
+      "nominalMidi": 30.0,
+      "rootMidi": 29.85241,
+      "layer": 1,
       "take": 1,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
     },
     {
-      "id": "qSneakyBass66v0r2",
-      "nominalMidi": 66,
-      "rootMidi": 66.0,
-      "layer": 0,
+      "id": "qVscoBass42v1r1",
+      "nominalMidi": 42.0,
+      "rootMidi": 42.11876,
+      "layer": 1,
+      "take": 1,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass44v1r1",
+      "nominalMidi": 44.0,
+      "rootMidi": 44.17725,
+      "layer": 1,
+      "take": 1,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass56v1r1",
+      "nominalMidi": 56.0,
+      "rootMidi": 55.90855,
+      "layer": 1,
+      "take": 1,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass31v1r1",
+      "nominalMidi": 31.0,
+      "rootMidi": 30.81367,
+      "layer": 1,
+      "take": 1,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass34v3r1",
+      "nominalMidi": 34.0,
+      "rootMidi": 34.06132,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass36v3r1",
+      "nominalMidi": 36.0,
+      "rootMidi": 35.96817,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass28v3r1",
+      "nominalMidi": 28.0,
+      "rootMidi": 27.96633,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass40v3r1",
+      "nominalMidi": 40.0,
+      "rootMidi": 39.97622,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass30v3r1",
+      "nominalMidi": 30.0,
+      "rootMidi": 29.96433,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass31v3r1",
+      "nominalMidi": 31.0,
+      "rootMidi": 30.9927,
+      "layer": 3,
+      "take": 1,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass34v1r2",
+      "nominalMidi": 34.0,
+      "rootMidi": 34.04321,
+      "layer": 1,
       "take": 2,
-      "velLow": 0,
-      "velHigh": 1.01
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass45v1r2",
+      "nominalMidi": 45.0,
+      "rootMidi": 45.22496,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass59v1r2",
+      "nominalMidi": 59.0,
+      "rootMidi": 58.97022,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass49v1r2",
+      "nominalMidi": 49.0,
+      "rootMidi": 48.79751,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass36v1r2",
+      "nominalMidi": 36.0,
+      "rootMidi": 35.99086,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass38v1r2",
+      "nominalMidi": 38.0,
+      "rootMidi": 37.97037,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass28v1r2",
+      "nominalMidi": 28.0,
+      "rootMidi": 27.87939,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass40v1r2",
+      "nominalMidi": 40.0,
+      "rootMidi": 39.91691,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass52v1r2",
+      "nominalMidi": 52.0,
+      "rootMidi": 51.99832,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass30v1r2",
+      "nominalMidi": 30.0,
+      "rootMidi": 29.91574,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass42v1r2",
+      "nominalMidi": 42.0,
+      "rootMidi": 41.84476,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass44v1r2",
+      "nominalMidi": 44.0,
+      "rootMidi": 44.08366,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass56v1r2",
+      "nominalMidi": 56.0,
+      "rootMidi": 55.9661,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass31v1r2",
+      "nominalMidi": 31.0,
+      "rootMidi": 30.7866,
+      "layer": 1,
+      "take": 2,
+      "velLow": 0.0,
+      "velHigh": 0.4921875
+    },
+    {
+      "id": "qVscoBass34v3r2",
+      "nominalMidi": 34.0,
+      "rootMidi": 34.02733,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass36v3r2",
+      "nominalMidi": 36.0,
+      "rootMidi": 35.95947,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass28v3r2",
+      "nominalMidi": 28.0,
+      "rootMidi": 27.96879,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass40v3r2",
+      "nominalMidi": 40.0,
+      "rootMidi": 39.99241,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass30v3r2",
+      "nominalMidi": 30.0,
+      "rootMidi": 29.96246,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
+    },
+    {
+      "id": "qVscoBass31v3r2",
+      "nominalMidi": 31.0,
+      "rootMidi": 30.97993,
+      "layer": 3,
+      "take": 2,
+      "velLow": 0.4921875,
+      "velHigh": 1.0
     }
   ]
 };

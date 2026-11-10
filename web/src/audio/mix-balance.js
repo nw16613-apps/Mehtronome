@@ -7,6 +7,8 @@ const headroom=10**(-2/20);
 export const BUS_GAINS=Object.fromEntries(Object.entries({click:.3*10**(1/20),harmony:.37*10**(-5/20),drums:.5*10**(3/20),bass:.3,comping:.24,sequence:.15*10**(3/20)}).map(([channel,gain])=>[channel,gain*headroom]));
 export const COMPING_TRIM_DB={fluteLead:5,jazzGuitar:11,legatoGuitar:5,swelledGuitar:6,drawbarOrgan:6,drivenGuitar:4,cleanGuitar:11,bluesGuitar:8.5,acousticPiano:9.5,softPiano:9,nylonGuitar:13,brightKeys:5.5,brightTine:5.5,clav:6.5};
 export const COMPING_TRIMS=Object.fromEntries(Object.entries(COMPING_TRIM_DB).map(([tone,db])=>[tone,10**(db/20)]));
+// VSCO is about 3 dB louder than the previous upright in the matched auditions.
+export const VSCO_UPRIGHT_GAIN=10**(-3/20);
 export const BASS_TRIMS={electric:10**(2/20),upright:1};
 
 // Audited with repeating hits and recorded tails; hats already have source trims.

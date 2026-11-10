@@ -1,5 +1,5 @@
 import {EXPANDED_SAMPLE_ZONES,STUDIO_BANKS,recordedZone} from './sound-library.js';
-import {BASS_TRIMS} from './mix-balance.js';
+import {BASS_TRIMS,VSCO_UPRIGHT_GAIN} from './mix-balance.js';
 import {INSTRUMENT_SAMPLE_ZONES} from './instrument-samples.js';
 import { BASS_WAVE, readWave } from './waves.js';
 import { BASS_SAMPLE_ZONES } from './sample-map.js';
@@ -106,7 +106,7 @@ export class SampledBass {
     Object.assign(voice,{
       sample,position:0,phase:0,midi:pitch,rootMidi:zone?.rootMidi??null,sourceId:zone?.id??null,layer:zone?.layer??null,
       increment:sample?2**((pitch-zone.rootMidi)/12):440*2**((pitch-69)/12)/this.rate,
-      age:0,envelope:1,releasing:false,gain:level*(BASS_TRIMS[instrument]??1),
+      age:0,envelope:1,releasing:false,gain:level*(BASS_TRIMS[instrument]??1)*(zone?.id?.startsWith('qVscoBass')?VSCO_UPRIGHT_GAIN:1),
       gate:Math.max(1,Math.round(seconds*this.rate)),
       attackFrames:Math.max(1,Math.round(articulation.attack*(1.25-.45*Math.min(1,level))*this.rate)),
       releaseDecay:Math.exp(-1/(this.rate*Math.min(articulation.release,Math.max(.025,seconds*.3)))),

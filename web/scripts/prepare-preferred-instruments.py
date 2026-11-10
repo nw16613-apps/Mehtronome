@@ -10,7 +10,7 @@ for cache in ['/workspace/sample-candidates-round2','/workspace/sample-candidate
  p=pathlib.Path(cache)
  for z in json.loads((p/'sources.json').read_text())['files']:families.setdefault(z['family'],[]).append((p,z))
 out=[];zones={};seen=set()
-for family,bank in [('emily','electricGuitar'),('yr','electricBass'),('sneaky','upright')]:
+for family,bank in [('emily','electricGuitar'),('yr','electricBass')]:
  for cache,z in families[family]:
   if family=='emily' and (z['nominalMidi']<40 or z['layer'] not in [41/128,81/128]):continue
   identity=(family,z['path'],z['rootMidi'],z['velLow'],z['velHigh'])
@@ -37,3 +37,7 @@ parent=ROOT.parent.parent
 (parent/'preferred-zones.js').write_text('export const PREFERRED_SAMPLE_ZONES='+json.dumps(zones,indent=2)+';\n')
 (parent/'preferred-manifest.js').write_text('export const PREFERRED_SAMPLE_FILES={\n'+''.join(f' {f["id"]}:new URL("./samples/preferred/{f["id"]}.wav",import.meta.url),\n' for f in out)+'};\nexport const GUITAR_CABINET_URL=new URL("./samples/preferred/cabinet.wav",import.meta.url);\n')
 print(len(out),'recordings',round(sum(f['bytes'] for f in out)/1048576,2),'MiB encoded')
+
+# Current user-selected upright replaces the earlier Sneakybass audition bank.
+import subprocess,sys
+subprocess.run([sys.executable,str(pathlib.Path(__file__).with_name('install-vsco-upright.py')),'/workspace/upright-candidates'],check=True)

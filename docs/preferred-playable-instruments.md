@@ -8,20 +8,18 @@ No audition/source selector is added to the app.
 
 ## Actual recordings
 
-`preferred/sources.json` pins original and derivative hashes and licences for 92
-recordings: 60 Emilyguitar, 12 Yamaha RBX Finger and 20 distinct Sneakybass. Emily retains
+`preferred/sources.json` pins original and derivative hashes and licences for 112
+recordings: 60 Emilyguitar, 12 Yamaha RBX Finger and 40 VSCO solo contrabass pizzicato. Emily retains
 two takes per note and two useful dynamic layers across 15 source pitches. Its
 natural recorded decay is retained up to four seconds. This keeps the active
 guitar transfer below 16 MiB and decoded mobile bank around 30 MiB, similar to the
 previous guitar bank. The original four-layer audition contains more dynamics;
-this mobile subset preserves its commonly played middle/firm recordings. Bass
-tails are retained up to 3.5 seconds. Only audible families load, through the
+this mobile subset preserves its commonly played middle/firm recordings. Yamaha tails are retained up to 3.5 seconds; the auditioned VSCO tails up to four seconds. Only audible families load, through the
 existing bounded queues/cache. Superseded bass banks are not co-loaded.
 
 Yamaha has one recorded dynamic and no alternate takes: velocity affects gain
 and existing articulation, not an invented sample layer. Its sparse one-octave
-source map requires transposition for higher notes. Sneakybass uses source-map
-tuning and independent takes. Nylon guitar, piano, other keys, flute and drums
+source map requires transposition for higher notes. VSCO uses the original SFZ velocity regions, two independent takes per zone and measured pitch corrections across fourteen source notes (MIDI 28–59). Its level is calibrated down 3 dB to match the audition balance. Nylon guitar, piano, other keys, flute and drums
 retain their selected sources. All new note recordings are CC0.
 
 ## Playable guitar processing
@@ -58,3 +56,7 @@ Mobile browser workflows play the new Emily and Yamaha sources, switch the three
 chorus styles, verify muting, sample/cache reuse, arrangement development and
 exercise FX reconnections. Browser checks do not prove subjective preference or
 guarantee glitch-free performance on every physical phone.
+
+## Upright selection — 10 November 2026
+
+The user selected VSCO from `/upright-audition/`. `install-vsco-upright.py` installs the 40 verified audition recordings from the cache prepared by `tools/sample-audition/prepare-uprights.py`. The original preferred-bank preparation calls this installer too. The CC0 licence, pinned recording/SFZ revisions, source and derivative hashes, and measured pitch centres are retained. The active upright transfer is about 6.6 MiB PCM16. Superseded Sneakybass is no longer loaded in normal playback. Electric bass and other instrument banks are unchanged. Historical audition clips remain labelled as the previous Sneakybass comparison.
