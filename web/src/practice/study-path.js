@@ -3,6 +3,7 @@ import {orderedRoots,generatorRootLetter} from './progression-generator.js';
 import {harmonyAt,MODES,CHORDS,PROGRESSIONS} from '../audio/music.js';
 import {scaleChoicesForChord,chordChoicesForMode} from './scale-explorer.js';
 import {JAZZ_STANDARDS} from './jazz-standards.js';
+import {REFERENCE_PERFORMANCES,referenceChart} from '../audio/reference-performances.js';
 import {REPERTOIRE_STUDIES} from './repertoire.js';
 
 export const STUDY_PATH_KEY='mehtronome-dorian-study-path-v1';
@@ -46,6 +47,14 @@ function rhythmChanges(){
  return normalizeCustomProgression({name:'Rhythm changes · AABA study',sourceNotes:'Original practice form based on common rhythm changes. Chord-scale guides are editable suggestions.',steps:[...first,...second,...bridge,...last]});
 }
 export const STUDY_FORMS=[
+ ...Object.values(REFERENCE_PERFORMANCES).sort((a,b)=>a.name.localeCompare(b.name)).map(def=>{
+  const chart=referenceChart(def.id);
+  return {...chart,id:'reference:'+def.id,name:def.name,label:`${def.name} · ${def.bars} bars · ${def.bpm} BPM`,group:'Backing reference studies',progression:normalizeCustomProgression(chart.progression)};
+ }),
+ ...Object.entries(PROGRESSIONS).filter(([,p])=>p.kind==='modal').map(([id,p])=>{
+  const key=9,settings={key,beats:4,template:id,progression:true,mode:p.mode,chord:MODES[p.mode].chord};
+  return {id:'modal:'+id,name:p.name,key,beats:4,group:'Modal progressions',progression:normalizeCustomProgression({...cloneTemplate(p,settings.chord,settings.mode,settings),name:p.name})};
+ }),
  ...JAZZ_STANDARDS.map(s=>({...s,id:'standard:'+s.id,group:'Jazz standards'})),
  {id:'form:rhythm',name:'Rhythm changes · AABA',key:10,beats:4,group:'Complete forms',progression:rhythmChanges()},
  {id:'form:jazz-blues',name:'12-bar jazz blues',key:5,beats:4,group:'Complete forms',progression:cloneTemplate(PROGRESSIONS.jazzBlues,'dom7','mixolydian')},
@@ -85,7 +94,7 @@ function turnaround(id,bars){
 export function studyPathPlan(value,sources=STUDY_FORMS){
  const s=normalizeStudyPath(value),navigation=s.route==='manual'?'all':'path';let key=s.root,base,name,metadata={},beats=4;
  if(s.tier===4){
-  const source=sources.find(f=>f.id===s.form)||STUDY_FORMS[0];s.form=source.id;
+  const source=sources.find(f=>f.id===s.form)||STUDY_FORMS.find(f=>f.id==='standard:autumn-leaves');s.form=source.id;
   const clean=normalizeCustomProgression(source.progression);base=clean.steps;name=source.name;beats=source.beats||4;
   metadata={sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
  }else if(s.tier===3){

@@ -1,3 +1,5 @@
+import {REFERENCE_PERFORMANCES} from '../src/audio/reference-performances.js';
+import {MODAL_PROGRESSIONS} from '../src/audio/music.js';
 import {test,expect} from '@playwright/test';
 const tab=async(page:any,id:string)=>page.locator(`[data-workspace-target=${id}]`).click();
 const working=async(page:any)=>page.evaluate(()=>JSON.parse(localStorage.getItem('mehtronome-custom-progression-v1')!));
@@ -55,4 +57,21 @@ test('circle of fourths is available in both changing-key and progression studie
  await expect(page.locator('[data-study-step="5"]')).toContainText('Fmaj7');await expect(page.locator('[data-study-step="8"]')).toContainText('B♭maj7');await page.locator('#study-route').selectOption('manual');await page.locator('[data-study-position="3"]').selectOption('V');await page.locator('#study-load').click();
  expect((await working(page)).steps).toHaveLength(36);expect((await page.locator('#manual-position-route').inputValue()).split(':').at(-1)?.[3]).toBe('4');await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','false');
  await page.reload();await expect(page.locator('#study-key-cycle')).toHaveValue('fourths');await expect(page.locator('[data-study-step]')).toHaveCount(36);await page.locator('#study-key-cycle').selectOption('single');await expect(page.locator('[data-study-step]')).toHaveCount(3);expect((await working(page)).steps).toHaveLength(36);
+});
+
+test('Tier 4 groups backing references and modal charts, and references apply their own style and tempo',async({page})=>{
+ await page.goto('/');await page.locator('[data-study-tier="4"]').click();
+ const menu=page.locator('#study-form'),options=menu.locator('optgroup[label="Backing reference studies"] option');
+ await expect(options).toHaveCount(Object.keys(REFERENCE_PERFORMANCES).length);
+ const names=await options.allTextContents();expect(names).toEqual([...names].sort((a,b)=>a.localeCompare(b)));
+ await expect(menu.locator('optgroup[label="Modal progressions"] option')).toHaveCount(Object.keys(MODAL_PROGRESSIONS).length);
+ for(const id of ['blues','legatoFusion','jazzWaltz','afroCuban68']){
+  const def=REFERENCE_PERFORMANCES[id];await expect(menu.locator(`option[value="reference:${id}"]`)).toHaveText(`${def.name} · ${def.bars} bars · ${def.bpm} BPM`);
+  await menu.selectOption('reference:'+id);await page.locator('#study-load').click();
+  await expect(page.locator('#backing-style')).toHaveValue(def.style);await expect(page.locator('#mini-bpm')).toHaveValue(String(def.bpm));await expect(page.locator('#beats')).toHaveValue(String(def.beats||4));await expect(page.locator('#sequence-activity')).toHaveValue('supporting');await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','false');
+  expect((await working(page)).referencePerformance).toBe(id);
+  if(id==='jazzWaltz'){await tab(page,'sound-settings-title');await page.locator('#backing-style').selectOption('popRock');await expect(page.locator('#beats')).toHaveValue('4');}
+  await study(page);
+ }
+ await menu.selectOption('modal:modal_dorian');await page.locator('#study-load').click();await expect(page.locator('#backing-style')).toHaveValue('afroCuban68');await expect(page.locator('#mini-bpm')).toHaveValue('120');await expect(page.locator('#beats')).toHaveValue('4');expect((await working(page)).referencePerformance).toBeUndefined();
 });

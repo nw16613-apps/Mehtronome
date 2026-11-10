@@ -1,6 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {studyPathPlan,normalizeStudyPath,readStudyPath,studyPathId,studyPair,studyModeChoices,STUDY_FORMS,STUDY_TURNAROUNDS,STUDY_ROOT_ORDERS,STUDY_MATERIALS} from '../src/practice/study-path.js';
-import {MODES,CHORDS,progressionBeatDurations} from '../src/audio/music.js';
+import {REFERENCE_PERFORMANCES} from '../src/audio/reference-performances.js';
+import {MODES,CHORDS,PROGRESSIONS,harmonyAt,progressionBeatDurations} from '../src/audio/music.js';
 const length=p=>progressionBeatDurations({key:p.chart.key,beats:p.chart.beats,template:'custom',progression:true,customProgression:p.chart.progression}).reduce((a,b)=>a+b,0);
 test('single-quality studies support both harmony workflows across all roots and modes',()=>{
  for(const mode of Object.keys(MODES)){
@@ -98,4 +99,24 @@ test('circle of fourths cycles Tier 2 roots and complete Tier 3 phrases through 
  assert.deepEqual(circle.chords.slice(0,9),['Dm7','G7','Cmaj7','Gm7','C7','Fmaj7','Cm7','F7','B♭maj7']);
  assert.notEqual(base.editContext,circle.editContext);assert.notEqual(base.id,circle.id);
  assert.equal(readStudyPath(JSON.stringify({selection:{tier:3,keyCycle:'fourths'}})).selection.keyCycle,'fourths');
+});
+
+test('Tier 4 includes every backing reference and modal progression with its original harmony and timing',()=>{
+ const references=STUDY_FORMS.filter(f=>f.group==='Backing reference studies');
+ assert.deepEqual(references.map(f=>f.name),references.map(f=>f.name).toSorted((a,b)=>a.localeCompare(b)));
+ assert.equal(references.length,Object.keys(REFERENCE_PERFORMANCES).length);
+ for(const def of Object.values(REFERENCE_PERFORMANCES)){
+  const p=studyPathPlan({tier:4,form:'reference:'+def.id,root:def.key}),source=references.find(f=>f.id==='reference:'+def.id);
+  assert.equal(source.bpm,def.bpm);assert.ok(source.label.includes(def.bpm+' BPM'));assert.equal(p.chart.progression.referencePerformance,def.id);
+  assert.equal(length(p),def.bars*(def.beats||4));assert.deepEqual(p.harmonies.map(h=>h.chordPcs[0]),def.harmony.map(h=>h[0]));
+ }
+ const modals=Object.entries(PROGRESSIONS).filter(([,p])=>p.kind==='modal');
+ assert.equal(STUDY_FORMS.filter(f=>f.group==='Modal progressions').length,modals.length);
+ for(const [id,source]of modals){
+  const p=studyPathPlan({tier:4,form:'modal:'+id,root:9}),settings={key:9,beats:4,template:id,progression:true,mode:source.mode,chord:MODES[source.mode].chord};
+  for(let i=0;i<source.steps.length;i++){
+   const original=harmonyAt(settings,i);assert.deepEqual(p.harmonies[i].chordPcs,original.chordPcs);assert.deepEqual(p.harmonies[i].scalePcs.toSorted((a,b)=>a-b),original.scalePcs.toSorted((a,b)=>a-b));
+  }
+  assert.equal(length(p),source.steps.reduce((sum,step)=>sum+step.bars*4,0));assert.equal(p.chart.progression.referencePerformance,undefined);
+ }
 });

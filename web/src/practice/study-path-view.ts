@@ -27,7 +27,7 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
   if(!chords.some(([id])=>id===chordId))chords.unshift([chordId,CHORDS[chordId as keyof typeof CHORDS].name+' · stored chord']);
   const mode=`<label>Mode / scale<select id="study-mode">${options(modeChoices,pair.mode)}</select></label>`,chord=`<label>Chord quality<select id="study-chord">${options(chords,chordId)}</select></label>`;
   const materials=[...new Set(STUDY_MATERIALS.map(m=>m[2]))].map(group=>`<optgroup label="${esc(group)}">${options(STUDY_MATERIALS.filter(m=>m[2]===group),selection.material)}</optgroup>`).join('');
-  const forms=[...new Set(sources.map(f=>f.group))].map(group=>`<optgroup label="${esc(group)}">${options(sources.filter(f=>f.group===group).map(f=>[f.id,f.name]),selection.form)}</optgroup>`).join('');
+  const forms=[...new Set(sources.map(f=>f.group))].map(group=>`<optgroup label="${esc(group)}">${options(sources.filter(f=>f.group===group).map(f=>[f.id,f.label||f.name]),selection.form)}</optgroup>`).join('');
   panel.innerHTML=`<div class="section-heading"><div><p class="eyebrow">ACROSS THE FRETBOARD</p><h2 id="study-path-title">Study pathway</h2></div></div>
    <div class="study-tiers" role="group" aria-label="Study tier">${STUDY_TIERS.map(t=>`<button type="button" class="study-tier" data-study-tier="${t.id}" aria-pressed="${selection.tier===t.id}"><span class="study-tier-number">${t.id}</span><strong>${esc(t.name)}</strong><small>${esc(t.scope)}</small></button>`).join('')}</div>
    <div class="study-path-fields"><label>${plan.singleQuality?'Modal tonic':'Chart key'}<select id="study-root">${options(ROOT_NAMES.map((n,i)=>[i,n]),selection.root)}</select></label>

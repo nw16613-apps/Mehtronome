@@ -24,5 +24,7 @@ export function installBackingStyles(changed:()=>void){
  activity.addEventListener('input',()=>{sync();changed();});
  menu.addEventListener('input',()=>{const id=sync(),style=BACKING_STYLES[id as keyof typeof BACKING_STYLES] as any,beats=document.querySelector<HTMLSelectElement>('#beats')!;if(style.suggestedBeats)beats.value=String(style.suggestedBeats);else if(Number(beats.value)===3&&['jazzWaltz','afroCuban68'].includes(lastMeterStyle))beats.value='4';lastMeterStyle=id;changed();});
  const initial=(BACKING_STYLES[menu.value as keyof typeof BACKING_STYLES] as any).suggestedBeats;if(initial)document.querySelector<HTMLSelectElement>('#beats')!.value=String(initial);
- sync();return {sync};
+ // Chart loads use their own metre; keep subsequent manual style changes in sync.
+ const setStyle=(id:string)=>{menu.value=backingStyleId(id);lastMeterStyle=menu.value;sync();};
+ sync();return {sync,setStyle};
 }
