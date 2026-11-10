@@ -25,7 +25,7 @@ import {chordOptionGroups} from './practice/chord-options.js';
 import {normalizeExerciseOptions,exerciseMenuOptions,exerciseCollectionLabels} from './practice/exercise-options.js';
 import {organizeWorkspaces} from './practice/workspace-layout.js';
 import {installRepertoire} from './practice/repertoire-view.js';
-import {rehearsalSections} from './practice/repertoire.js';
+import {rehearsalSections,REPERTOIRE_KEY,normalizeRepertoire} from './practice/repertoire.js';
 import {manualPositionPath,manualPositionRoute} from './guitar/position-path.js';
 import {positionRouteCards} from './practice/position-route.js';
 import {progressionExerciseGroups} from './practice/progression-exercises.js';
@@ -2408,6 +2408,11 @@ studyPathUi=installStudyPath({
  locked:()=>playing||exercisePlaying||exercisePreparing||busy||stopping,
  fingerprint:()=>JSON.stringify([settings.key,settings.beats,settings.progression,progressionDefinition(settings),select('featured-position').value,select('position-region').value,input('manual-position-route').value,exerciseView.study,exerciseView.fingering]),
  navigate:showWorkspace,
+ sources:()=>{
+  let saved:any[]=[];try{saved=normalizeRepertoire(JSON.parse(localStorage.getItem(REPERTOIRE_KEY)||'null'));}catch{}
+  const current=settings.template==='custom'?normalizeCustomProgression(customProgression):cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
+  return [{id:'current',name:current.name,key:settings.key,beats:settings.beats,progression:structuredClone(current),group:'Your charts'},...saved.map(chart=>({...chart,id:'saved:'+chart.id,group:'Your saved charts'}))];
+ },
  load:async(plan:any)=>{
   if(playing||exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Stop playback before loading a study.');
   stopPreview();stopExercisePreview();
@@ -2415,16 +2420,16 @@ studyPathUi=installStudyPath({
   input('manual-position-route').value='';input('pattern-start-route').value='';
   try{localStorage.setItem('mehtronome-pattern-start-route','');}catch{}
   select('featured-position').value=plan.navigation;select('position-region').value=plan.selection.region;
-  overviewPosition=plan.selection.position;
+  overviewPosition=plan.positions?.[0]||plan.selection.position;
   if(plan.positions)restoreChartPracticeChoices({positions:plan.positions,starts:null});
-  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';gripOnly=false;
+  theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';gripOnly=plan.view==='guitar';if(gripOnly)input('show-grip').checked=true;
   select('fret-view').value=['positional','arpgroups3','arpgroups4'].includes(plan.study)?'arpeggio':'scale';
   select('exercise').value=select('fret-view').value;
   Object.assign(exerciseView,{study:plan.study,fingering:'caged',material:'seventh',stage:'full',startTone:'default',fretboard:true,backing:true,loop:true,autoTempo:false,tempoLinked:true});
   exerciseSelectionStart=null;exerciseSelectionEnd=null;step=0;
   input('loop-enabled').checked=false;fillLoopOptions(true);update();
   document.dispatchEvent(new Event('chart-context-restored'));
-  showWorkspace('exercises','caged-exercise');
+  showWorkspace(plan.view==='guitar'?'guitar':'exercises',plan.view==='guitar'?'guitar-title':'caged-exercise');
  }
 });
 installChartTools({view:chartView,render:renderCustomBeatGrid,getChart:()=>({progression:customProgression,sections:rehearsalSections(customProgression,settings.beats),locked:playing||exercisePlaying||exercisePreparing||stopping}),clearSelection:()=>{chartEditSteps=[];renderCustomBuilder();renderCustomBeatGrid();},sectionAction:editChartSection});

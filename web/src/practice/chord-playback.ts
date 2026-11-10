@@ -9,10 +9,12 @@ export function playbackChartKey(settings:any){
 export function highlightChordPlayback(settings:any,step:number,playing:boolean){
  const preview=document.querySelector<HTMLElement>('#generator-preview-chords');
  const previewMatches=!!preview?.dataset.playbackChart&&preview.dataset.playbackChart===playbackChartKey(settings);
- document.querySelectorAll<HTMLElement>('[data-route-step],[data-reference-step],[data-generator-step]').forEach(card=>{
-  const generated=card.dataset.generatorStep!==undefined;
-  const index=Number(card.dataset.routeStep??card.dataset.referenceStep??card.dataset.generatorStep);
-  const active=playing&&index===step&&(!generated||previewMatches);
+ const study=document.querySelector<HTMLElement>('.study-chart-preview');
+ const studyMatches=!!study?.dataset.playbackChart&&study.dataset.playbackChart===playbackChartKey(settings);
+ document.querySelectorAll<HTMLElement>('[data-route-step],[data-reference-step],[data-generator-step],[data-study-step]').forEach(card=>{
+  const generated=card.dataset.generatorStep!==undefined,studied=card.dataset.studyStep!==undefined;
+  const index=Number(card.dataset.routeStep??card.dataset.referenceStep??card.dataset.generatorStep??card.dataset.studyStep);
+  const active=playing&&index===step&&(!generated||previewMatches)&&(!studied||studyMatches);
   card.classList.toggle('chord-playing',active);
   if(active)card.dataset.playbackCurrent='true';else delete card.dataset.playbackCurrent;
  });
