@@ -1,4 +1,4 @@
-import {standardMelodyStatus} from './audio/standard-melodies.js';
+import {standardMelodyStatus,playbackLeadInBeats} from './audio/standard-melodies.js';
 import {REFERENCE_PERFORMANCES} from './audio/reference-performances.js';
 import {installStudyPath} from './practice/study-path-view';
 import {createReferencePreparation} from './audio/reference-plan-preparation.js';
@@ -1263,7 +1263,7 @@ async function initialiseAudio(requested:any=settings) {
       el('play-status').textContent = data.counting ? `${data.pickup?'Pickup':'Count-in'} · ${data.beat + 1} of ${data.countLength||settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
       el('pulse-large-status').textContent=el('play-status').textContent;
       if (step !== data.step) { step = data.step; renderMusic(); }
-      if(settings.progression&&!data.counting)highlightCustomBeat((data.bar-1)*settings.beats+data.beat);
+      if(settings.progression&&!data.counting)highlightCustomBeat(Number.isFinite(data.musicalBeat)?data.musicalBeat:(data.bar-1)*settings.beats+data.beat);
     };
     node.onprocessorerror = () => {
       stopPreview();
@@ -1750,12 +1750,12 @@ async function toggle() {
     await prepareAudio();
     currentBpm = settings.bpm;
     step = settings.progression ? progressionStep(settings,0) : 0;
-    playbackCounting=settings.countIn;playing = true;
+    playbackCounting=playbackLeadInBeats(settings)>0;playing = true;
     el('pulse-time').textContent=settings.sessionSeconds?`${formatTime(settings.sessionSeconds)} remaining`:'0:00 elapsed';
     postPreparedAudio(node!,{ type: 'start', settings, sampleNames:sampleNamesForSettings(settings) });installedSampleNames=new Set(sampleNamesForSettings(settings));
     renderMusic();
     reflectPlayback();
-    el('play-status').textContent = settings.countIn ? 'Counting you in…' : 'Playing…';
+    el('play-status').textContent = playbackCounting?(settings.countIn?'Counting you in…':'Pickup…'):'Playing…';
   } catch (error) {
     playing = false;
     reflectPlayback();

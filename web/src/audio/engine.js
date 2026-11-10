@@ -1,4 +1,4 @@
-import {prepareStandardMelody} from './standard-melodies.js';
+import {prepareStandardMelody,playbackLeadInBeats} from './standard-melodies.js';
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
 import {nativeGuitarChannel} from './guitar-policy.js';
 import {sessionCycle,SESSION_ROLES} from './session-performance.js';
@@ -238,9 +238,8 @@ export class Engine {
     this.currentBpm = this.settings.bpm;
     this.trainerNextBar = this.settings.trainerBars;
     this.beat = -1;
-    const melody=this.clockSettings?.standardMelody,pickup=this.settings.sequence&&!this.muted?.has('sequence')&&this.settings.sequenceVolume>0&&this.settings.standardMelodyPickup!==false?melody?.pickupBeats||0:0;
-    this.pickupLeadIn=!this.settings.countIn&&pickup>0;
-    this.remainingCount = this.settings.countIn ? this.settings.beats : pickup;
+    this.remainingCount=playbackLeadInBeats(this.settings,this.clockSettings?.standardMelody);
+    this.pickupLeadIn=!this.settings.countIn&&this.remainingCount>0;
     this.nextBeat = true;
     this.clickAge = this.rate;
     this.clickFrequency = 1500;
@@ -525,13 +524,14 @@ export class Engine {
         const nextBarBeat=(bar+1)*s.beats,formPosition=nextBarBeat%this.backingFormLength||this.backingFormLength;
         this.clockSettings.backingTurnaround=this.backingFormLength>=s.beats*4&&this.backingFormEnds.includes(formPosition);
         this.clickAge = 0;
-        const strength=this.pickupLeadIn&&counting?0:beatStrength(s,this.beat%s.beats,counting);
+        const beatInBar=(counting?this.beat:musicalBeat)%s.beats;
+        const strength=this.pickupLeadIn&&counting?0:beatStrength(s,beatInBar,counting);
         this.clickFrequency = strength===2 ? 1500 : 1000;
         this.clickStrength = strength===0?0:strength===2?1:.72;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
         const composition=this.clockSettings.referencePlan?.score,development=!counting&&composition?.composition?composition.choruses[Math.min(3,Math.floor((Math.max(0,musicalBeat)%(composition.developmentBeats*4))/composition.developmentBeats))]:null;
-        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1,...(composition.sessionPerformance?{arrangementCycle:Math.floor(Math.max(0,musicalBeat)/composition.sessionPerformance.cycleBeats)+1,sessionRole:SESSION_ROLES[sessionCycle(composition,musicalBeat)]}:{})}:{}), gap:this.gapMuted, counting, pickup:counting&&this.pickupLeadIn,countLength:this.remainingCount, beat: this.beat % s.beats, bar: bar + 1, step,
+        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1,...(composition.sessionPerformance?{arrangementCycle:Math.floor(Math.max(0,musicalBeat)/composition.sessionPerformance.cycleBeats)+1,sessionRole:SESSION_ROLES[sessionCycle(composition,musicalBeat)]}:{})}:{}), gap:this.gapMuted, counting, pickup:counting&&this.pickupLeadIn,countLength:this.remainingCount, musicalBeat:counting?null:musicalBeat, beat:beatInBar, bar: bar + 1, step,
           extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
@@ -540,7 +540,8 @@ export class Engine {
         this.lastSubdivision = subdivision;
         this.clickAge = 0;
         this.clickFrequency = 800;
-        this.clickStrength = this.pickupLeadIn&&this.beat<this.remainingCount||beatStrength(s,this.beat%s.beats,this.beat<this.remainingCount)===0?0:.45;
+        const counting=this.beat<this.remainingCount,beatInBar=(counting?this.beat:this.beat-this.remainingCount)%s.beats;
+        this.clickStrength = this.pickupLeadIn&&counting||beatStrength(s,beatInBar,counting)===0?0:.45;
       }
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;

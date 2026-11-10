@@ -38,3 +38,10 @@ export function prepareStandardMelody(settings){
  if(timeline[0]?.start===0)for(const event of written)if(event.at<0)add(pickup,event.at,{midi:event.midi,duration:event.end-event.at,pickup:true});
  return {id:status.id,name:status.name,rate,period,slots,pickup,pickupBeats:Object.keys(pickup).length?source.pickupBeats:0};
 }
+
+// Shared by the audio clock and the transport's initial display state.
+export function playbackLeadInBeats(settings,melody=prepareStandardMelody(settings)){
+ if(settings.countIn)return settings.beats;
+ if(!settings.sequence||settings.standardMelodyPickup===false||(settings.sequenceVolume??.25)<=0||String(settings.mutedChannels||'').split(',').includes('sequence'))return 0;
+ return melody?.pickupBeats||0;
+}

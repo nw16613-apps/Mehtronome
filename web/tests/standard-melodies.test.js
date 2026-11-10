@@ -81,3 +81,15 @@ test('an incompatible edited form pauses written melody instead of substituting 
  const engine=new Engine(2000);engine.configure(s);engine.reset();assert.equal(engine.clockSettings.standardMelodyUnavailable,true);const events=[];
  engine.render(new Float32Array(8000),undefined,null,null,e=>events.push(e));assert.equal(events.length,0);
 });
+
+test('song beat numbers and accents restart at the first downbeat after every pickup length',()=>{
+ for(const song of JAZZ_STANDARDS)for(const countIn of [false,true]){
+  const s=config(song.id,{countIn,accent:true}),engine=new Engine(2000),pulses=[],strengths=[];engine.configure(s);engine.reset();
+  engine.render(new Float32Array((engine.remainingCount+9)*1000),event=>{pulses.push(event);strengths.push(engine.clickStrength);});
+  const songPulses=pulses.filter(p=>!p.counting);
+  assert.deepEqual(songPulses.slice(0,8).map(p=>p.beat),[0,1,2,3,0,1,2,3],song.id+' beat numbers');
+  assert.deepEqual(songPulses.slice(0,8).map(p=>p.musicalBeat),[0,1,2,3,4,5,6,7],song.id+' song clock');
+  assert.deepEqual(songPulses.slice(0,8).map(p=>p.bar),[1,1,1,1,2,2,2,2]);
+  const body=pulses.findIndex(p=>!p.counting);assert.deepEqual(strengths.slice(body,body+8),[1,.72,.72,.72,1,.72,.72,.72],song.id+' accents');
+ }
+});

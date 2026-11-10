@@ -17,3 +17,28 @@ test('audible written melody has a pickup, and Tier 4 backed exercises retain it
  await tab(page,'study-path-title');await page.locator('[data-study-tier="4"]').click();await page.locator('#study-form').selectOption('standard:blue-bossa');await page.locator('#study-load').click();await expect(page.locator('body')).toHaveAttribute('data-workspace','exercises');await page.locator('#exercise-preview').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
  const sent=await page.evaluate(()=>(window as any).__melodySettings.filter((s:any)=>s.customProgression?.standardMelody==='blue-bossa').at(-1));expect(sent.standardMelodyOriginalBeats).toBe(64);expect(sent.standardMelodyTimeline.at(-1)).toEqual({start:64,duration:4});expect(sent.standardMelodyPickup).toBe(false);await page.locator('#exercise-preview').click();expect(errors).toEqual([]);
 });
+test('pickup and count-in clocks highlight the actual song beat from the first downbeat',async({page})=>{
+ test.setTimeout(60000);
+ await page.addInitScript(()=>{
+  const Original=window.AudioWorkletNode;(window as any).__songPulses=[];
+  window.AudioWorkletNode=class extends Original{
+   constructor(context:BaseAudioContext,name:string,options?:AudioWorkletNodeOptions){
+    super(context,name,options);this.port.addEventListener('message',({data}:MessageEvent)=>{
+     if(typeof data.counting!=='boolean')return;
+     setTimeout(()=>(window as any).__songPulses.push({counting:data.counting,beat:data.beat,musicalBeat:data.musicalBeat,highlighted:[...document.querySelectorAll<HTMLElement>('#custom-beat-grid [data-grid-beat].playing')].map(el=>Number(el.dataset.gridBeat))}),0);
+    });
+   }
+  };
+ });
+ await page.goto('/');
+ for(const [id,countIn]of [['autumn-leaves',false],['another-you',false],['blue-bossa',false],['all-the-things',false],['autumn-leaves',true]]as const){
+  await tab(page,'harmony-title');await page.locator('#progression-choice').selectOption('standard:'+id);
+  await page.locator('#mini-count-in').setChecked(countIn);await page.locator('#mini-bpm').fill('240');await page.locator('#mini-bpm').dispatchEvent('change');
+  await page.locator('#mini-mixer').click();const mute=page.locator('[data-mute-channel=sequence]:visible');if(await mute.getAttribute('aria-pressed')==='true')await mute.click();await page.locator('#floating-mixer-close').click();
+  await page.evaluate(()=>(window as any).__songPulses=[]);await page.locator('#mini-play').click();
+  await expect.poll(()=>page.evaluate(()=>(window as any).__songPulses.filter((p:any)=>!p.counting).length),{timeout:12000}).toBeGreaterThanOrEqual(8);
+  const pulses=await page.evaluate(()=>(window as any).__songPulses);await page.locator('#mini-play').click();
+  for(const p of pulses.filter((p:any)=>p.counting))expect(p.highlighted).toEqual([]);
+  for(const [i,p]of pulses.filter((p:any)=>!p.counting).slice(0,8).entries()){expect(p.beat).toBe(i%4);expect(p.musicalBeat).toBe(i);expect(p.highlighted).toEqual([i]);}
+ }
+});
