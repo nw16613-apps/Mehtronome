@@ -1,3 +1,4 @@
+import {modernJazzDrumCell} from './modern-jazz-drums.js';
 // Written ensemble vocabularies. Positions use four slots per quarter-note
 // metronome beat; soul128 uses slots 0,1,2 at equal triplet spacing.
 // Afro-Cuban 6/8 has six eighths over three quarter-note metronome beats.
@@ -46,8 +47,8 @@ export const ADDITIONAL_STYLES={
   part:'Bluesy organ riff',base:[[[0,'lowDyad',1.1,.4],[6,'upper',.6,.42],[10,'third',.6,.28],[14,'shell',.5,.38]],[[0,'root',1,.32],[4,'upper',.7,.4],[8,'fifth',.65,.29],[12,'upperColour',.7,.4]]],develop:[[[0,'lowDyad',1.2,.39],[6,'upperInversion',.75,.4],[12,'seventh',.7,.27]],[[0,'root',1.1,.31],[6,'upper',.75,.4],[10,'fifth',.6,.28],[14,'thirdDown',.5,.27]]],answer:[[[0,'lowDyad',1.6,.38],[8,'upper',1.5,.39]],[[4,'third',.7,.27],[10,'seventh',.6,.26],[14,'upper',.5,.38]]],turn:[[[0,'lowDyad',1.4,.39],[6,'upper',.9,.4]],[[0,'root',1,.31],[8,'seventh',.5,.27],[10,'fifth',.5,.27],[14,'root',.6,.31]]],
   line:'Straight-eighth organ responses',role:'chordResponse',density:.35},
  modernStraightJazz:{name:'Modern straight-eighth jazz',beats:4,groove:'modernStraightJazz',tone:'acousticPiano',kit:'jazz',bassInstrument:'upright',
-  description:'Interactive straight-eighth ride and snare, an asymmetric upright-bass ostinato and open piano voicings with wide spaces.',
-  drums:[[[0,'ride',.23],[2,'ride',.12],[4,'ride',.18],[6,'ride',.12],[8,'ride',.22],[10,'ride',.12],[12,'ride',.18],[14,'ride',.12],[0,'kick',.23],[7,'kick',.17],[5,'snare',.19],[11,'snare',.16]],[[0,'ride',.23],[2,'ride',.12],[4,'ride',.18],[6,'ride',.12],[8,'rideBell',.22],[10,'ride',.12],[12,'ride',.18],[14,'ride',.12],[0,'kick',.23],[10,'kick',.18],[3,'snare',.16],[9,'snare',.2],[14,'snare',.14]]],
+  description:'A spacious straight-eighth half-time pocket with broken ride phrases, snare on beat three, an asymmetric upright-bass ostinato and open piano voicings.',
+  drums:Array.from({length:4},(_,bar)=>modernJazzDrumCell(bar)),
   bass:[[[0,0,0,.85,.67],[6,-1,0,.65,.56],[10,1,0,.85,.58]],[[0,0,0,1.2,.67],[7,-2,0,.7,.54],[12,-1,0,.65,.57]]],
   part:'Open piano punctuations',base:[[[1,'chord',2,.38],[10,'top',1.2,.24]],[[6,'upperColour',2,.37]]],develop:[[[0,'shell',1.6,.34],[7,'upperInversion',1.4,.37]],[[3,'chord',2,.38],[13,'third',.7,.25]]],answer:[[[4,'chord',2.5,.37]],[[2,'seventh',.9,.25],[9,'upper',1.2,.35],[14,'thirdDown',.7,.25]]],turn:[[[1,'chord',2,.37],[10,'top',1,.24]],[[3,'shell',1.5,.34],[12,'thirdDown',.8,.26]]],
   line:'Developing guide-tone phrases',role:'counterline',density:.35},
@@ -67,6 +68,7 @@ export const ADDITIONAL_STYLES={
 // Phrase endings answer the groove without interrupting bell/clave anchors.
 export function additionalDrumCell(id,bar,varied=true,turnaround=false){
  const style=ADDITIONAL_STYLES[id];if(!style)return null;
+ if(id==='modernStraightJazz')return modernJazzDrumCell(bar,varied&&(turnaround||bar%8===7));
  const cell=style.drums[bar%style.drums.length];
  if(!varied||!(turnaround||bar%8===7))return cell;
  const end=style.beats*4;
@@ -76,6 +78,7 @@ export function additionalDrumCell(id,bar,varied=true,turnaround=false){
 // Two answering bars develop the written groove while keeping its main pulse.
 const drumAnswers={jazzWaltz:[[5,'snare',.12],[9,'kick',.16]],afroCuban68:[[8,'congaOpen',.18],[2,'congaMute',.12]],samba:[[12,'rim',.16],[5,'rim',.14]],secondLine:[[11,'snare',.17],[6,'snare',.15]],reggae:[[14,'rim',.13],[6,'rim',.11]],slowSoul128:[[10,'snare',.12],[14,'snare',.16]],boogaloo:[[11,'snare',.13],[6,'rim',.15]],modernStraightJazz:[[7,'snare',.14],[12,'kick',.17]],hardRock:[[11,'kick',.4],[7,'snare',.16]],legatoFusion:[[9,'snare',.13],[14,'tomHigh',.18]]};
 for(const [id,style]of Object.entries(ADDITIONAL_STYLES)){
+ if(id==='modernStraightJazz')continue;
  const answer=drumAnswers[id];
  style.drums.push([...style.drums[0].filter(n=>!(n[0]===answer[0][0]&&n[1]===answer[0][1])),answer[0]],[...style.drums[1].filter(n=>!(n[0]===answer[1][0]&&n[1]===answer[1][1])),answer[1]]);
 }

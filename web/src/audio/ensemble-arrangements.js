@@ -1,3 +1,4 @@
+import {modernJazzDrumCell} from './modern-jazz-drums.js';
 import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
@@ -102,6 +103,7 @@ function append(cell,event){if(!cell.some(n=>n[0]===event[0]&&n[1]===event[1]))c
 function drumCell(id,bar){
  const p=plans[id],native=p.native,end=native*4,chapter=Math.floor(bar/4),last=bar===p.bars-1,answer=bar%4===3,rest=!p.melody[bar%p.melody.length].length;
  let cell;
+ if(id==='modernStraightJazz')return modernJazzDrumCell(bar,answer||last);
  if(id==='fusionJazz')return fusionJazzDrumCell(bar,answer||last);
  if(id==='legatoFusion'||id==='blues'){
   // Preserve the approved B rhythms in 4/4, with ride timekeeping for Blues.

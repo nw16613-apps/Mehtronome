@@ -71,7 +71,10 @@ export class SampledBass {
 
   noteOn(midi, lengthSeconds, gain=1, style='roots',instrument='electric',soundLibrary='original') {
     if (!Number.isFinite(midi) || !Number.isFinite(lengthSeconds) || lengthSeconds<=0) return null;
-    const articulation=ARTICULATIONS[style] || ARTICULATIONS.roots;
+    const baseArticulation=ARTICULATIONS[style] || ARTICULATIONS.roots;
+    // Upright samples already contain the woody body. Preserve their pluck
+    // rather than applying the dark electric-bass/root envelope on top.
+    const articulation=instrument==='upright'?{...baseArticulation,attack:Math.min(baseArticulation.attack,.0025),cutoff:Math.max(baseArticulation.cutoff,5200),dry:.78}:baseArticulation;
     const pitch=Math.max(24,Math.min(72,midi));
     const level=Number.isFinite(gain)?Math.max(0,Math.min(1.2,gain)):0;
     // Every new pluck releases the previous one smoothly. Three slots preserve
@@ -112,6 +115,7 @@ export class SampledBass {
       decay:sample?1:Math.exp(-1/(this.rate*seconds*articulation.decay)),
       coefficient:1-Math.exp(-2*Math.PI*Math.min(articulation.cutoff,this.rate*.38)/this.rate),
       filter:0,dry:articulation.dry,
+      upright:instrument==='upright',body:0,bodyCoefficient:1-Math.exp(-2*Math.PI*220/this.rate),
     });
     return voice;
   }
@@ -143,7 +147,8 @@ export class SampledBass {
         voice.phase-=Math.floor(voice.phase);
       }
       voice.filter+=voice.coefficient*(value-voice.filter);
-      const tone=value*voice.dry+voice.filter*(1-voice.dry);
+      let tone=value*voice.dry+voice.filter*(1-voice.dry);
+      if(voice.upright){voice.body+=voice.bodyCoefficient*(tone-voice.body);tone-=voice.body*.16;}
       const attack=Math.min(1,voice.age/voice.attackFrames);
       output+=tone*attack*voice.envelope*voice.gain;
       if (voice.age>=voice.gate) voice.releasing=true;

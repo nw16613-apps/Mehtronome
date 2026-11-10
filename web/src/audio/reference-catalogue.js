@@ -1,3 +1,4 @@
+import {modernJazzDrumCell} from './modern-jazz-drums.js';
 import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {CHORDS} from './music.js';
 import {ADDITIONAL_STYLES} from './additional-styles.js';
@@ -90,7 +91,7 @@ export const STYLE_REFERENCES={
  '.5:68:.4 1.5:72:.9 3:75:.7|1:72:.7 2.5:68:1.2|.5:68:.4 1.5:72:.9 3:79:.7|1:77:.7 2.5:75:1.2|.5:74:.4 1.5:77:.9 3:79:.7|1:77:.7 2.5:74:1.2|.5:74:.4 1.5:77:.9 3:80:.7|1:79:.7 2.5:77:1.2|1:77:.9 2.5:80:1.2|.5:79:.4 1.5:77:.9 3:73:.7|1:76:.9 2.5:75:1.2|.5:73:.4 1.5:70:.9 3:68:.7|.5:68:.4 1.5:72:.9 3:75:.7|1:77:.7 2.5:75:1.2|.5:74:.4 1.5:72:.9 3:68:.7|1:65:2.6',
  '0:1:.7 .75:5:.3 1.5:7:.4 2:1:.7 3:5:.7|0:1:.7 .75:5:.3 1.5:3:.4 2:7:.7 3.5:9:.4|0:1:.7 .75:5:.3 1.5:7:.4 2:1:.7 3:3:.7|0:1:.7 .75:5:.3 1.5:3:.4 2:7:.7 3.5:>1:.4|0:1:.7 .75:5:.3 1.5:7:.4 2:1:.7 3:5:.7|0:1:.7 .75:5:.3 1.5:9:.4 2:7:.7 3.5:3:.4|0:1:.7 .75:5:.3 1.5:7:.4 2:1:.7 3:3:.7|0:1:.7 .75:5:.3 1.5:3:.4 2:7:.7 3.5:>1:.4|0:1:1.5 2:5:.7 3:7:.7|.5:3:.7 1.5:5:.7 3:>1:.7|0:1:1.5 2:7:.7 3:5:.7|.5:3:.7 1.5:7:.7 3:>1:.7|0:1:.7 .75:5:.3 1.5:7:.4 2:1:.7 3:3:.7|0:1:.7 .75:5:.3 1.5:3:.4 2:7:.7 3.5:>1:.4|0:1:.7 1.5:5:.4 2:7:.7 3.5:>1:.4|0:1:3.7',
  '0:.8 1.5:.6 2.5:.6 3.5:.4|0:.8 1:.7 2:.6 3:.6|0:.8 1.5:.6 2.5:.6 3.5:.4|.5:.7 2:.8 3.5:.4|0:.8 1.5:.6 2.5:.6 3.5:.4|0:.8 1:.7 2:.6 3:.6|0:.8 1.5:.6 2.5:.6 3.5:.4|.5:.7 2:.8 3.5:.4|0:1.5 2.5:.8|1:.8 3:.6|0:1.5 2.5:.8|1:.8 3:.6|0:.8 1.5:.6 2.5:.6 3.5:.4|0:1.2 2.5:.8|.5:.7 2:.8 3.5:.4|0:3.7'),
- modernStraightJazz:study('modernStraightJazz','Modern jazz · Oblique lines',0,122,4,'Asymmetric upright-bass figures, open piano punctuations and a developing guitar line through shifting modal centres.',
+ modernStraightJazz:study('modernStraightJazz','Modern jazz · Oblique lines',0,122,4,'Asymmetric upright-bass figures, open piano punctuations and a developing flute line through shifting modal centres, with a spacious half-time ride groove.',
  'C:min11:2 Ab:maj9sharp11:2 F:min9:2 D:dom7alt:2 Db:maj9sharp11:2 Eb:min9:2 G:dom7alt:2 C:min9:2',
  '.25:67:.65 1:70:.4 1.75:74:1.1 3:77:1.4|1:75:.65 2:74:.4 2.75:70:1.1|.25:72:.65 1:75:.4 1.75:79:1.1 3:82:1.4|1:80:.65 2:79:.4 2.75:75:1.1|.25:72:.65 1:75:.4 1.75:79:1.1 3:80:1.4|1:79:.65 2:77:.4 2.75:75:1.1|.25:77:.65 1:76:.4 1.75:72:1.1 3:70:.8|1:68:.65 2:66:.4 2.75:65:1.1|.75:77:1.1 2:79:.4 2.75:80:1.1|1:79:.65 2:77:.4 2.75:73:1.1|.25:78:.65 1:82:.4 1.75:85:1.1 3:84:1.4|1:82:.65 2:80:.4 2.75:78:1.1|.25:80:.65 1:78:.4 1.75:77:1.1 3:75:1.4|1:73:.65 2:71:.4 2.75:68:1.1|.25:67:.65 1:70:.4 1.75:74:1.1|1:72:2.7',
  '0:1:1.1 1.5:5:.7 2.75:3:.9|.5:7:1.1 2.25:9:1.3|0:1:1.3 1.75:5:.6 3:7:.7|.75:3:.8 2.5:>1:1.1|0:1:1.1 1.5:5:.7 2.75:3:.9|.5:7:1.1 2.25:9:1.3|0:1:1.3 1.75:5:.6 3:7:.7|.75:3:.8 2.5:>1:1.1|0:1:2.6 3:5:.7|.75:3:.8 2.5:9:1.1|0:1:2.6 3:5:.7|.75:7:.8 2.5:>1:1.1|0:1:1.1 1.5:5:.7 2.75:3:.9|.5:7:1.1 2.25:>1:1.3|0:1:2.5 3:5:.7|0:1:3.7',
@@ -150,7 +151,8 @@ function drumBar(def,bar){
  else if(id==='slowSoul128'){
   cell=[[0,'kick',.5],[2,'kick',.43],[1,'snare',.47],[3,'snare',.51]];
   for(let beat=0;beat<4;beat++)for(let third=0;third<3;third++)cell.push([beat+third/3,'hat',third===0?.15:third===1?.07:.095]);
- }else if(ADDITIONAL_STYLES[id])cell=ADDITIONAL_STYLES[id].drums[bar%2].map(([slot,name,v])=>[slot/4,name,v]);
+ }else if(id==='modernStraightJazz')cell=modernJazzDrumCell(bar).map(([slot,name,v])=>[slot/4,name,v]);
+ else if(ADDITIONAL_STYLES[id])cell=ADDITIONAL_STYLES[id].drums[bar%2].map(([slot,name,v])=>[slot/4,name,v]);
  else cell=cores[id][bar%cores[id].length].map(e=>[...e]);
  if(['popRock','motown','funk','neoSoul'].includes(id))for(let eighth=0;eighth<8;eighth++)cell.push([eighth/2,'hat',eighth%2?.12:.19]);
  if(id==='motown')for(let eighth=0;eighth<8;eighth++)cell.push([eighth/2,'tambourine',eighth%2?.09:bar>=8?.18:.14]);
