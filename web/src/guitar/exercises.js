@@ -1,3 +1,4 @@
+import {ENCLOSURE_PATTERNS,isEnclosureStudy} from './enclosures.js';
 import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
@@ -89,9 +90,9 @@ function noteAtMidi(board,midi,harmony) {
   return candidates.toSorted((a,b)=>Math.abs(a.string-2.5)-Math.abs(b.string-2.5))[0]||null;
 }
 
-function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
+function chromaticEnclosures(board,harmony,motion,variant='abovebelow',context={}) {
   const descending=motion==='descending'||motion==='down-up';
-  const targets=[...new Map(board.notes.filter(note=>harmony.chordPcs.includes(note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
+  const targets=[...new Map(board.notes.filter(note=>harmony.chordPcs.includes(note.pc)&&(context.enclosureTarget==='all'||context.enclosureTarget===undefined||harmony.chordPcs[Number(context.enclosureTarget)]===note.pc)).map(note=>[note.midi,note])).values()].sort((a,b)=>descending?b.midi-a.midi:a.midi-b.midi);
   const patterns={
     abovebelow:{ascending:[2,-1,0],descending:[-2,1,0],annotation:'diatonic above · chromatic below · target'},
     belowabove:{ascending:[-1,2,0],descending:[1,-2,0],annotation:'chromatic below · diatonic above · target'},
@@ -102,7 +103,8 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
     fivethree:{ascending:[-2,1,-2,-1,0],descending:[-2,1,-2,-1,0],spellings:['scale','flat','scale','sharp','scale'],annotation:'2 below · half-step above · 2 below · leading tone · target'},
     fivefour:{ascending:[2,-1,2,1,0],descending:[2,-1,2,1,0],spellings:['scale','flat','scale','flat','scale'],annotation:'2 above · ♭ target · 2 above · half-step above · target'},
   };
-  const pattern=patterns[variant]||patterns.abovebelow;
+  const catalogue=ENCLOSURE_PATTERNS[variant],chosen=catalogue&&(catalogue[context.enclosurePattern]||Object.values(catalogue)[0]);
+  const pattern=chosen?{ascending:chosen,descending:chosen}:patterns[variant]||patterns.abovebelow;
   const groups=[];
   for(const target of targets){
     const offsets=[...(descending?pattern.descending:pattern.ascending)];
@@ -116,7 +118,7 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow') {
     const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
     if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:offsets.map(offset=>offset===0?'target':`${Math.abs(offset)} semitone${Math.abs(offset)>1?'s':''} ${offset>0?'above':'below'}`).join(' · '),targetIndex:notes.length-1,sequenceAnchor:target.midi,sequenceDirection:descending?-1:1});
   }
-  return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant)]:groups;
+  return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant,context)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant,context)]:groups;
 }
 
 export function approachNoteFor(board,harmony,fromMidi,targetMidi){
@@ -400,7 +402,7 @@ function inversionExercise(board,harmony,material,motion) {
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
   if(study==='upperstructure')study='harmonized';
-  if(ARPEGGIO_STUDIES.has(study))harmony=arpeggioHarmony(harmony);
+  if(ARPEGGIO_STUDIES.has(study)||study.startsWith('enclosures'))harmony=arpeggioHarmony(harmony);
   const size=MATERIAL_SIZES[material] || 4;
   if(study==='positionalscale')return scalePatternExercise(board,harmony,motion,[0],'scale');
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
@@ -429,14 +431,15 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='chordtones3turnsdown')return alternatingChordToneStacks(board,harmony,3,true);
   if(study==='chordtones3combined')return combinedAlternatingChordTones(board,harmony,3);
   if(study==='inversions')return inversionExercise(board,harmony,material,motion);
-  if(study==='enclosures')return chromaticEnclosures(board,harmony,motion);
-  if(study==='enclosuresbelowabove')return chromaticEnclosures(board,harmony,motion,'belowabove');
-  if(study==='enclosureschromatic')return chromaticEnclosures(board,harmony,motion,'chromatic');
-  if(study==='enclosuresdouble')return chromaticEnclosures(board,harmony,motion,'double');
-  if(study==='enclosuresfiveone')return chromaticEnclosures(board,harmony,motion,'fiveone');
-  if(study==='enclosuresfivetwo')return chromaticEnclosures(board,harmony,motion,'fivetwo');
-  if(study==='enclosuresfivethree')return chromaticEnclosures(board,harmony,motion,'fivethree');
-  if(study==='enclosuresfivefour')return chromaticEnclosures(board,harmony,motion,'fivefour');
+  if(isEnclosureStudy(study))return chromaticEnclosures(board,harmony,motion,study,context);
+  if(study==='enclosures')return chromaticEnclosures(board,harmony,motion,'abovebelow',context);
+  if(study==='enclosuresbelowabove')return chromaticEnclosures(board,harmony,motion,'belowabove',context);
+  if(study==='enclosureschromatic')return chromaticEnclosures(board,harmony,motion,'chromatic',context);
+  if(study==='enclosuresdouble')return chromaticEnclosures(board,harmony,motion,'double',context);
+  if(study==='enclosuresfiveone')return chromaticEnclosures(board,harmony,motion,'fiveone',context);
+  if(study==='enclosuresfivetwo')return chromaticEnclosures(board,harmony,motion,'fivetwo',context);
+  if(study==='enclosuresfivethree')return chromaticEnclosures(board,harmony,motion,'fivethree',context);
+  if(study==='enclosuresfivefour')return chromaticEnclosures(board,harmony,motion,'fivefour',context);
   if(study==='approach')return approachArpeggios(board,harmony,material,motion);
   if(study==='doubleapproach')return chromaticTargetCells(board,harmony,motion,'doubleapproach');
   if(study==='chromaticneighbors')return chromaticTargetCells(board,harmony,motion,'chromaticneighbors');

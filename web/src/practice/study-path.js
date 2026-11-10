@@ -19,6 +19,7 @@ export const STUDY_MATERIALS=[
  ['thirds','Scale in thirds','Scale sequences'],['fourths','Scale in fourths','Scale sequences'],['sixths','Scale in sixths','Scale sequences'],
  ['groups3','Scale groups of three','Scale sequences'],['groups4','Scale groups of four','Scale sequences'],
  ['digital1324','1–3–2–4','Scale sequences'],['cells','1–2–3–5','Scale sequences'],
+ ['enclosures4','4-note enclosures','Arpeggio sequences'],['enclosures5','5-note enclosures','Arpeggio sequences'],
  ['arpgroups3','Arpeggio groups of three','Arpeggio sequences'],['arpgroups4','Arpeggio groups of four','Arpeggio sequences'],
  ['harmonized','Diatonic seventh arpeggios','Arpeggio sequences'],['alternating','Alternating diatonic arpeggios','Arpeggio sequences'],
 ];

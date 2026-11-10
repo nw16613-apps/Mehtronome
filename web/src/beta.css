@@ -91,3 +91,6 @@ html:root[data-palette][data-theme] :is(.guitar-progression-panel,.exercise-navi
 #exercise-clear-range[hidden]{display:none!important}.exercise-playback-panel .exercise-range-controls{margin-top:10px;font-size:11px}
 
 .exercise-viewbar label:has(#exercise-chord-diagrams){display:flex;align-items:center;gap:6px;min-height:36px;flex:0 1 auto}.notation-chord-diagram{pointer-events:none}
+/* Keep the complete enclosure formula visible beside its target choice. */
+.exercise-definition label:has(#exercise-enclosure-pattern){grid-column:span 2}
+@media(max-width:650px){.exercise-definition label:has(#exercise-enclosure-pattern){grid-column:1/-1}}

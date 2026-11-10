@@ -1,3 +1,4 @@
+import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {scaleStartingState} from './scale-start.js';
 import {positionalProgressionGroups} from './positional-phrases.js';
 import {cagedStudy,approachNoteFor} from '../guitar/exercises.js';
@@ -33,7 +34,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -89,7 +90,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    const cell=cells[cellIndex];
    // Other families keep their existing complete-cell slot policy.
-   if(!flowingCells&&notes.length+cell.notes.length>capacity){
+   if(!flowingCells&&(isEnclosureStudy(study)?enclosureNoteStarts([...cellLengths,cell.notes.length],division).at(-1)>=durations[slot]:notes.length+cell.notes.length>capacity)){
     if(travel!==previousTravel){travel=previousTravel;cells=makeCells();cellIndex=previousIndex;}
     break;
    }
@@ -120,7 +121,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   }
   if(study==='positionalscale'){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
-  const group={...(study==='positionalscale'?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,sequenceAnchors,sequenceDirections,globalStart,warning,
+  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,sequenceAnchors,sequenceDirections,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });

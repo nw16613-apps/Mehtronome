@@ -1,7 +1,10 @@
+import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
-const fixedMaterial=new Set(['arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
+const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  view.stage='full';
+ view.enclosureTarget=['all','0','1','2','3'].includes(view.enclosureTarget)?view.enclosureTarget:'all';
+ view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
  view.fingering=['three','oneTwo','twoOne','drop2','drop3'].includes(view.fingering)?view.fingering:'caged';
  view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
@@ -33,6 +36,7 @@ export function exerciseCollectionLabels(study,nonDiatonic=false){
 
 /** One short explanation; chord, position, note and playback data live beside their controls. */
 export function exerciseGuidance(study){
+ if(study==='enclosures4'||study==='enclosures5')return 'Note count includes the target. Pattern offsets are semitones from the target; targets land on quarter-note beats.';
  if(study.startsWith('enclosures'))return 'Surround each target chord tone with the written approach notes, then resolve to it.';
  const descriptions={
   positional:'Ascend and descend through the chord’s core tones without repeating the turning notes. Pattern start chooses the entry note; the line flows across bar lines.',

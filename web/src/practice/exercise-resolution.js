@@ -1,3 +1,4 @@
+import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {progressionPositionPath} from '../guitar/position-path.js';
 import {progressionStudyPlan} from './progression-timing.js';
@@ -47,6 +48,7 @@ export function singleChordExercisePlan(groups,harmony,board,position,study,rhyt
  const notes=groups.flatMap(g=>g.notes),division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  let offset=0;const targetIndices=[];
  for(const group of groups){targetIndices.push(...(group.targetIndices||(group.targetIndex===undefined?[]:[group.targetIndex])).map(i=>i+offset));offset+=group.notes.length;}
- const group={...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
- return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil(notes.length/division/beats))],beats,study,rhythm)};
+ const noteStarts=isEnclosureStudy(study)?enclosureNoteStarts(groups.map(g=>g.notes.length),division):null;
+ const group={...(noteStarts?{noteStarts}:{}),...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
+ return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil((noteStarts?.length?noteStarts.at(-1)+1/division:notes.length/division)/beats))],beats,study,rhythm)};
 }
