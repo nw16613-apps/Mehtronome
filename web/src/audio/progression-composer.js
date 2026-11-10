@@ -40,6 +40,23 @@ function voicings(h,power,piano=false){
  }
  return result;
 }
+// A static vamp has no future chord to pull the shortest-path solver away
+// from one minimum-cost grip. Give it a two-bar voicing conversation instead.
+function vampChordPath(rows,h,profile,piano,beats,center){
+ const options=voicings(h,profile.power,piano||!profile.power),path=[];
+ let previous=null,phrase=-1,current=null;
+ for(const row of rows){
+  const next=Math.floor(row.grid/(beats*24))+(row.event.chorus||0)*3;
+  if(next!==phrase){
+   phrase=next;const top=center+(profile.power?12:8)+(profile.power?[0,5,-7,7,0,-5,3,-2]:[0,3,-4,5,1,-2,4,-1])[next%8];
+   const candidates=options.filter(notes=>!previous||notes.join(',')!==previous.join(','));
+   const cost=notes=>Math.abs(notes.at(-1)-top)*1.5+notes.reduce((sum,n,i)=>sum+Math.abs(n-(previous?.[Math.min(i,previous.length-1)]??center))*.12,0)+Math.abs(notes.length-(next%3===2?3:4))*.4;
+   current=(candidates.length?candidates:options).slice().sort((a,b)=>cost(a)-cost(b))[0];previous=current;
+  }
+  path.push([...current]);
+ }
+ return path;
+}
 function planChords(score,targets,profile,pass,clip){
  const rows=entries(score.comping),at=beat=>segmentAt(targets,beat),center=profile.power?52:profile.sustain?60:64;
  const localCost=(notes,row)=>{
@@ -52,7 +69,8 @@ function planChords(score,targets,profile,pass,clip){
   const top=69+[0,3,-2,1][(bar+gesture)%4];
   return cost+Math.abs(notes.at(-1)-top)*.9+Math.abs(notes.length-(gesture===1?3:4))*2;
  };
- const path=route(rows,row=>voicings(at(row.grid/12),profile.power,score.pianoComping),localCost,
+ const vamp=targets.every(h=>h.root===targets[0].root&&h.chord===targets[0].chord&&h.mode===targets[0].mode);
+ const path=vamp?vampChordPath(rows,targets[0],profile,score.pianoComping,score.beats,center):route(rows,row=>voicings(at(row.grid/12),profile.power,score.pianoComping),localCost,
   (a,b)=>b.reduce((sum,n,i)=>sum+Math.abs(n-a[Math.min(i,a.length-1)])*.55-(a.includes(n)?.7:0),0));
  rows.forEach((row,i)=>{row.event.notes=path[i];row.event.duration=clip(row.grid/12,row.event.duration,path[i]);});
  // Harmonically prepared answers can be selected later using the audible lead.

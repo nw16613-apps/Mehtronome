@@ -225,6 +225,7 @@ const select = (id: string) => el<HTMLSelectElement>(id);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pulse-large" aria-labelledby="pulse-large-title"><div class="pulse-large-toolbar"><h2 id="pulse-large-title">The pulse</h2><button id="pulse-large-close" type="button" class="practice-button">Close</button></div><div id="pulse-large-number" class="pulse-large-number">Ready</div><p id="pulse-large-status">Ready to practice</p><button id="pulse-large-play" type="button" class="practice-button">Start practicing</button></dialog>`);
 let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
 let studyPathUi:ReturnType<typeof installStudyPath>|undefined;
+let studyAdvancing=false,studyAdvanceToken=0;
 let settings = { ...DEFAULTS, automaticBacking:true, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
 let master: GainNode | undefined;
 let masterOutput:ReturnType<typeof createMasterOutput>|undefined;
@@ -543,21 +544,23 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
   const phraseDuration=exercisePlan?exercisePlan.duration*60/exerciseView.tempo:sequence.length*noteLength;
   const duration=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseDuration,60/exerciseView.tempo,settings.beats):phraseDuration;
   const nextStart=start+duration;exerciseNextStart=nextStart;
-  const lookahead=exerciseView.autoTempo?0:Math.min(1,Math.max(.2,duration*.25));
+  const lookahead=exerciseView.autoTempo||studyPathUi?.repeatEnabled()?0:Math.min(1,Math.max(.2,duration*.25));
   // A backed, timed one-shot ends on the engine's sample-counted completion
   // message. A wall timer can outrun the audio thread under CPU load.
   if(!exerciseView.loop&&exerciseView.backing&&exercisePlan)return;
   const complete=()=>{
     if(!exercisePlaying||!context)return;
     const remaining=nextStart-context.currentTime;
-    if(!exerciseView.loop&&remaining>0){exerciseTimer=setTimeout(complete,Math.max(10,remaining*1000+60));return;}
+    if((!exerciseView.loop||studyPathUi?.repeatEnabled())&&remaining>0){exerciseTimer=setTimeout(complete,Math.max(10,remaining*1000+60));return;}
 
+    if(exerciseView.loop&&studyPathUi?.repeatDue()){void advanceRandomStudy('exercise');return;}
     if(exerciseView.loop&&exercisePlaying){exerciseRepetitions++;if(exerciseView.autoTempo&&exerciseRepetitions%exerciseView.autoEvery===0){exerciseView.tempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement);exerciseTimelineStart=nextStart-(settings.countIn?settings.beats*60/exerciseView.tempo:0);syncMiniTransport();queueAudioSettings({...exerciseBackingConfig(),bpm:exerciseView.tempo});}scheduleExercise(nextStart);}else stopExercisePreview();
   };
   exerciseTimer=setTimeout(complete,Math.max(0,(nextStart-context.currentTime-(exerciseView.loop?lookahead:-.06))*1000));
 }
 
 async function toggleExercisePreview() {
+  if(studyAdvancing){studyAdvanceToken++;return;}
 
   if(exercisePlaying||exercisePreparing){stopExercisePreview();return;}
   if(playing||busy||stopping||!currentExercise.length)return;
@@ -1193,7 +1196,7 @@ const referencePreparation=createReferencePreparation();let deliveredReferenceKe
 function postPreparedAudio(target:AudioWorkletNode,message:any){
  const referencePlan=referencePreparation.message(message.settings,deliveredReferenceKey);
  compingGuitar?.set(message.settings,'comping',guitarCabinet);sequenceGuitar?.set(message.settings,'sequence',guitarCabinet);
- target.port.postMessage({...message,settings:{...message.settings,nativeGuitarProcessing:true},referencePlan});deliveredReferenceKey=referencePlan.key;
+ target.port.postMessage({...message,settings:{...message.settings,nativeGuitarProcessing:true,studyRepeatBeats:!exercisePlaying&&!exercisePreparing?(studyPathUi?.repeatBeats()||0):0},referencePlan});deliveredReferenceKey=referencePlan.key;
 }
 async function prepareAudio(requested:any=exercisePreparing?exerciseAudioSettings():settings){
   audioPreparation??=initialiseAudio(requested).finally(()=>{audioPreparation=undefined;});
@@ -1236,6 +1239,7 @@ async function initialiseAudio(requested:any=settings) {
     harmonyFxSource=context.createGain();
     node.connect(harmonyFxSource,8);
     node.port.onmessage = ({ data }) => {
+      if(data.type==='study-repeat'&&playing){void advanceRandomStudy('transport');return;}
       if(data.type==='meters'){receiveConsoleMeters(data.peaks);return;}
       if((playing||exercisePlaying)&&typeof data.counting==='boolean'&&playbackCounting!==data.counting){playbackCounting=data.counting;syncMiniTransport();}
       if(Number.isFinite(data.bpm))fxBuses?.setTempo(data.bpm);
@@ -1737,6 +1741,7 @@ document.addEventListener('click',event=>{
   if(button&&!button.disabled&&!playing&&!exercisePlaying){step=chordIndex(button);renderMusic();}
 });
 async function toggle() {
+  if(studyAdvancing){studyAdvanceToken++;return;}
   if(exercisePlaying||exercisePreparing){stopExercisePreview();return;}
   if (busy || stopping || previewPreparation) return;
   if (playing) { await stop(); return; }
@@ -2007,7 +2012,7 @@ function syncMiniTransport() {
   if (document.activeElement !== input('mini-bpm')) input('mini-bpm').value = String(exercisePlaying?exerciseView.tempo:playing ? currentBpm : settings.bpm);
   el('mini-tempo-label').textContent = exercisePlaying?'STUDY BPM':playing && settings.trainerEnabled ? 'LIVE BPM' : 'BPM';
   input('mini-bpm').readOnly=exercisePlaying;input('mini-bpm').setAttribute('aria-label',exercisePlaying?'Exercise tempo (change in exercise settings)':'Practice tempo');
-  el('mini-play').textContent = playing||exercisePlaying||exercisePreparing ? 'Stop' : 'Play';
+  el('mini-play').textContent = studyAdvancing?'Cancel new study':playing||exercisePlaying||exercisePreparing ? 'Stop' : 'Play';
   el('mini-play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
   el('play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
   el('play-label').textContent=exercisePlaying||exercisePreparing?'Stop exercise':playing?'Stop session':'Play session';
@@ -2071,7 +2076,7 @@ el('mini-mixer').addEventListener('click',()=>setFloatingMixer(el('floating-mixe
 el('floating-mixer-close').addEventListener('click',()=>setFloatingMixer(false,true));
 el('mixer-return').addEventListener('click',()=>{setFloatingMixer(false);setMixerCollapsed(false);el('mix-collapse').focus();});
 el('floating-mixer').addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();setFloatingMixer(false,true);}});
-el('mini-play').addEventListener('click',()=>{if(exercisePlaying||exercisePreparing)stopExercisePreview();else void toggle();});
+el('mini-play').addEventListener('click',()=>{if(studyAdvancing){studyAdvanceToken++;return;}if(exercisePlaying||exercisePreparing)stopExercisePreview();else void toggle();});
 el('mini-more').addEventListener('click',()=>{
   if(!el('floating-mixer').hidden)setFloatingMixer(false);
   const expanded=el('mini-transport').classList.toggle('mobile-expanded');
@@ -2407,7 +2412,27 @@ installRepertoire({
 });
 
 organizeWorkspaces(showWorkspace);
+async function advanceRandomStudy(kind:'exercise'|'transport'){
+ if(studyAdvancing)return;
+ if(!studyPathUi?.repeatEnabled()){if(kind==='transport')await stop();return;}
+ const bpm=kind==='exercise'?exerciseView.tempo:currentBpm,exerciseOptions=structuredClone(exerciseView),workspace=document.body.dataset.workspace;
+ const token=++studyAdvanceToken;studyAdvancing=true;
+ try{
+  if(kind==='exercise')stopExercisePreview();else await stop();
+  if(token!==studyAdvanceToken)return;
+  el('play-status').textContent='Preparing the next random study…';syncMiniTransport();
+  const loaded=await studyPathUi.nextRepetition();if(token!==studyAdvanceToken)return;
+  if(!loaded){el('play-status').textContent='Random study stopped. Check the Study settings.';showWorkspace('study','study-path-title');return;}
+  tempo(bpm);
+  if(kind==='exercise'){Object.assign(exerciseView,exerciseOptions,{tempo:bpm});renderGuitar();}
+  if(workspace)showWorkspace(workspace);
+  studyAdvancing=false;
+  if(kind==='exercise')await toggleExercisePreview();else await toggle();
+ }catch(error){el('error').textContent=error instanceof Error?error.message:'Could not prepare the next study.';el('error').hidden=false;}
+ finally{studyAdvancing=false;syncMiniTransport();studyPathUi.sync();}
+}
 studyPathUi=installStudyPath({
+ randomizerChanged:()=>{if(node)queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);},
  locked:()=>playing||exercisePlaying||exercisePreparing||busy||stopping,
  fingerprint:()=>JSON.stringify([settings.key,settings.beats,settings.progression,progressionDefinition(settings),select('featured-position').value,select('position-region').value,input('manual-position-route').value,exerciseView.study,exerciseView.fingering]),
  navigate:showWorkspace,

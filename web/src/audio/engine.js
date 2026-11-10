@@ -18,7 +18,7 @@ const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.01
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
   backingStyle:'popRock',soundLibrary:'original',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
-  clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, gapProgressive:false, gapMaxBars:8,
+  clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, studyRepeatBeats:0, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
   loopEnabled:false, loopStart:0, loopEnd:3, loopUnit:'chords',loopBeatStart:0,loopBeatEnd:0,
   bpm: 90, beats: 4, key: 0, minor: false, progression: false,
@@ -290,6 +290,7 @@ export class Engine {
     s.clickSwing=Math.max(0,Math.min(1,Number(s.clickSwing)||0));
     s.polyBeats=[0,2,3,4,5,7].includes(Number(s.polyBeats))?Number(s.polyBeats):0;
     s.polyBase=[2,3,4].includes(Number(s.polyBase))?Number(s.polyBase):2;
+    s.studyRepeatBeats=Math.max(0,Math.min(65536,Math.floor(Number(s.studyRepeatBeats)||0)));
     s.sessionSeconds=Math.max(0,Math.min(10800,Number(s.sessionSeconds)||0));
     s.bpm = Math.max(30, Math.min(240, Number(s.bpm) || 90));
     s.trainerBars = Math.max(1,Math.min(32,Math.floor(Number(s.trainerBars)||4)));
@@ -503,6 +504,10 @@ export class Engine {
       if(sessionActive&&s.sessionSeconds>0&&this.sessionFrames>=Math.round(s.sessionSeconds*this.rate)
         &&(!s.sessionFinishBar||(this.nextBeat&&(this.beat+1-this.remainingCount)%s.beats===0))){
         this.running=false;this.sessionFinished=true;onPulse({type:'session-complete',elapsed:this.sessionFrames/this.rate});
+      }
+      // End at the actual musical boundary before another old-chart note starts.
+      if(this.running&&sessionActive&&this.nextBeat&&s.studyRepeatBeats>0&&(this.beat+1-this.remainingCount)>0&&(this.beat+1-this.remainingCount)%s.studyRepeatBeats===0){
+        this.running=false;onPulse({type:'study-repeat'});
       }
       if (this.running && this.nextBeat && !this.auditioning) {
         this.nextBeat = false;

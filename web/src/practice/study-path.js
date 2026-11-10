@@ -1,3 +1,4 @@
+import {normalizeStudyRandomizer,normalizeRandomStudyChart} from './study-randomizer.js';
 import {normalizeCustomProgression,cloneTemplate,MAX_CHART_STEPS,customPitchName} from './custom-progression.js';
 import {orderedRoots,generatorRootLetter} from './progression-generator.js';
 import {harmonyAt,MODES,CHORDS,PROGRESSIONS} from '../audio/music.js';
@@ -60,11 +61,12 @@ export const STUDY_FORMS=[
  {id:'form:jazz-blues',name:'12-bar jazz blues',key:5,beats:4,group:'Complete forms',progression:cloneTemplate(PROGRESSIONS.jazzBlues,'dom7','mixolydian')},
  ...REPERTOIRE_STUDIES.map(s=>({...s,id:'form:'+s.id,key:9,beats:4,group:'Original studies'})),
 ];
-const patterns=s=>s.tier===1?'vamp':s.tier===2?'keys':s.tier===3?'turnaround:'+s.turnaround+(s.keyCycle==='fourths'?':fourths':''):s.form;
+const patterns=s=>s.randomChart?'random:'+s.randomizer.seed:s.tier===1?'vamp':s.tier===2?'keys':s.tier===3?'turnaround:'+s.turnaround+(s.keyCycle==='fourths'?':fourths':''):s.form;
 export function normalizeStudyPath(value={}){
  value=value&&typeof value==='object'?value:{};const root=Number(value.root),pair=studyPair(value.mode,value.chord,value.workflow||'mode');
  const harmonyEdits={};for(const [i,e]of Object.entries(value.harmonyEdits||{}).slice(0,128))if(/^\d+$/.test(i)&&Number(i)<128&&e&&typeof e==='object')harmonyEdits[i]=studyPair(e.mode,e.chord,'mode');
- return {tier:[1,2,3,4].includes(Number(value.tier))?Number(value.tier):1,root:Number.isInteger(root)&&root>=0&&root<12?root:9,...pair,
+ const tier=[1,2,3,4].includes(Number(value.tier))?Number(value.tier):1;
+ return {randomizer:normalizeStudyRandomizer(value.randomizer),randomChart:normalizeRandomStudyChart(value.randomChart,tier),tier,root:Number.isInteger(root)&&root>=0&&root<12?root:9,...pair,
   workflow:value.workflow==='chord'?'chord':'mode',material:STUDY_MATERIALS.some(([id])=>id===value.material)?value.material:'positionalscale',
   position:positions.includes(value.position)?value.position:'I',region:regions.includes(value.region)?value.region:'middle',
   route:['manual','framework'].includes(value.route)?'manual':'region',order:Object.hasOwn(STUDY_ROOT_ORDERS,value.order)?value.order:'fourths',
@@ -93,7 +95,10 @@ function turnaround(id,bars){
 }
 export function studyPathPlan(value,sources=STUDY_FORMS){
  const s=normalizeStudyPath(value),navigation=s.route==='manual'?'all':'path';let key=s.root,base,name,metadata={},beats=4;
- if(s.tier===4){
+ if(s.randomChart){
+  const clean=s.randomChart.progression;base=clean.steps;name=clean.name;beats=s.randomChart.beats;metadata={standardMelody:clean.standardMelody,sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
+  if(s.tier<=3)base=base.map(({beats:oldBeats,bars:oldBars,...step})=>({...step,bars:s.bars,...(s.tier<=2?{chord:s.chord,mode:s.mode}:{})}));
+ }else if(s.tier===4){
   const source=sources.find(f=>f.id===s.form)||STUDY_FORMS.find(f=>f.id==='standard:autumn-leaves');s.form=source.id;
   const clean=normalizeCustomProgression(source.progression);base=clean.steps;name=source.name;beats=source.beats||4;
   metadata={standardMelody:clean.standardMelody,sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
