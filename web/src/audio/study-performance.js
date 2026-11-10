@@ -52,9 +52,10 @@ export function articulateStudyPerformance(score,targets,clip){
  const shape=(e,beat)=>{
   const h=at(beat),ints=CHORDS[h.chord].intervals,third=pc(h.root+(ints.includes(3)?3:ints.includes(4)?4:ints[1]||0)),seventh=ints.find(n=>n>=9&&n<=11),guide=new Set([third,...(seventh===undefined?[]:[pc(h.root+seventh)])]);
   if(score.id==='blues'){
+   if(['pentatonic','shell'].includes(e.compingTechnique)){e.duration=clip(beat,e.duration,e.notes);e.articulation=e.articulation||'damped';return;}
    let notes=e.notes.filter(n=>guide.has(pc(n)));if(notes.length<2)notes=[...new Set([...notes,...e.notes])].slice(0,2);if(e.voiceShape===1&&e.notes.length>2)notes=[...new Set([...notes,e.notes.at(-1)])].slice(0,3);e.notes=notes.sort((a,b)=>a-b);
    e.duration=clip(beat,e.duration,e.notes);e.articulation=e.articulation||'damped';
-  }else if(e.notes.length>=3){const notes=[...e.notes],index=notes.length-2;if(notes[index]-12>=40){notes[index]-=12;notes.sort((a,b)=>a-b);if(notes.at(-1)-notes[0]<=22)e.notes=notes;}e.duration=clip(beat,e.duration,e.notes);e.articulation='swell';}
+  }else if(['quartal','pentatonic','triadPair'].includes(e.compingTechnique)){e.duration=clip(beat,e.duration,e.notes);e.articulation='swell';}else if(e.notes.length>=3){const notes=[...e.notes],index=notes.length-2;if(notes[index]-12>=40){notes[index]-=12;notes.sort((a,b)=>a-b);if(notes.at(-1)-notes[0]<=22)e.notes=notes;}e.duration=clip(beat,e.duration,e.notes);e.articulation='swell';}
  };
  for(let grid=0;grid<score.comping.length;grid++)for(const e of score.comping[grid])shape(e,grid/rate);
  for(let grid=0;grid<(score.answerOptions?.length||0);grid++)for(const e of score.answerOptions[grid]){e.voiceShape=1;e.articulation=score.id==='blues'?'damped':'swell';shape(e,grid/rate);}

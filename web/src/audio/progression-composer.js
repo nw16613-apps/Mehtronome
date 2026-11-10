@@ -1,3 +1,4 @@
+import {compingVocabulary,compingGesture,playableCompingGrip} from './comping-vocabulary.js';
 import {buildStudyPerformance,articulateStudyPerformance} from './study-performance.js';
 import {prepareSessionPerformance} from './session-performance.js';
 import {pianoVoicings} from './piano-voicings.js';
@@ -69,10 +70,39 @@ function planChords(score,targets,profile,pass,clip){
   const top=69+[0,3,-2,1][(bar+gesture)%4];
   return cost+Math.abs(notes.at(-1)-top)*.9+Math.abs(notes.length-(gesture===1?3:4))*2;
  };
+ const vocabulary=new Map(),strokeAt=new Map(),pairStrokes=new Map(),candidates=new Map();
+ for(const row of rows){
+  const beat=row.grid/12,h=at(beat),bar=Math.floor(beat/score.beats),stroke=strokeAt.get(bar)||0;strokeAt.set(bar,stroke+1);
+  const gesture=compingGesture(score.id,bar,stroke),key=JSON.stringify([h.root,h.chord,h.scalePcs,score.guitarComping]);
+  if(!vocabulary.has(key))vocabulary.set(key,compingVocabulary(h,{guitar:score.guitarComping}));
+  let advanced=profile.power?[]:vocabulary.get(key).filter(v=>v.technique===gesture.family);
+  if(score.id==='blues')advanced=advanced.filter(v=>v.notes.length===3);
+  if(advanced.length){
+   const sources=[...new Set(advanced.map(v=>v.source))];
+   const source=sources[Math.floor(bar/8)%sources.length];
+   const pairKey=key+source,side=pairStrokes.get(pairKey)||0;
+   advanced=advanced.filter(v=>v.source===source&&(gesture.family!=='triadPair'||v.side===side%2));
+   if(gesture.family==='triadPair'&&advanced.length)pairStrokes.set(pairKey,side+1);
+  }
+  let options=advanced.map(v=>Object.assign([...v.notes],{technique:v.technique,source:v.source,pairSide:v.side}));
+  if(!options.length){
+   options=voicings(h,profile.power,score.pianoComping||!profile.power);
+   if(score.guitarComping&&!profile.power){const playable=options.filter(playableCompingGrip);if(playable.length)options=playable;}
+   if(gesture.family==='rootless'&&!profile.power){const rootless=options.filter(n=>!n.some(p=>pc(p)===h.root));if(rootless.length)options=rootless;}
+   if(gesture.family==='shell'&&!profile.power){const shells=options.filter(n=>n.length===3);if(shells.length)options=shells;}
+   options=options.map(notes=>Object.assign([...notes],{technique:gesture.family==='shell'&&notes.length===3?'shell':'rootless',source:'chord'}));
+  }
+  if(score.id==='legatoFusion'){const open=options.filter(n=>n.at(-1)-n[0]>=12);if(open.length)options=open;}
+  const wanted=center+7+gesture.contour+(stroke%3===1?2:stroke%3===2?-1:0);
+  options.sort((a,b)=>Math.abs(a.at(-1)-wanted)-Math.abs(b.at(-1)-wanted));
+  candidates.set(row,options.slice(0,24));row.event.compingPhrase=Math.floor(bar/4);row.event.compingPhraseBar=bar%4;
+  row.event.topVoiceGoal=wanted;
+ }
  const vamp=targets.every(h=>h.root===targets[0].root&&h.chord===targets[0].chord&&h.mode===targets[0].mode);
- const path=vamp?vampChordPath(rows,targets[0],profile,score.pianoComping,score.beats,center):route(rows,row=>voicings(at(row.grid/12),profile.power,score.pianoComping),localCost,
-  (a,b)=>b.reduce((sum,n,i)=>sum+Math.abs(n-a[Math.min(i,a.length-1)])*.55-(a.includes(n)?.7:0),0));
- rows.forEach((row,i)=>{row.event.notes=path[i];row.event.duration=clip(row.grid/12,row.event.duration,path[i]);});
+ const path=profile.power&&vamp?vampChordPath(rows,targets[0],profile,score.pianoComping,score.beats,center):route(rows,row=>candidates.get(row),
+  (notes,row)=>localCost(notes,row)+Math.abs(notes.at(-1)-row.event.topVoiceGoal)*1.6,
+  (a,b)=>b.reduce((sum,n,i)=>sum+Math.abs(n-a[Math.min(i,a.length-1)])*.32-(a.includes(n)?.25:0),0)+(a.join(',')===b.join(',')?2.5:0));
+ rows.forEach((row,i)=>{const selected=path[i];row.event.notes=[...selected];row.event.compingTechnique=profile.power?'power':selected.technique;row.event.harmonicSource=selected.source;if(selected.technique==='triadPair')row.event.triadPairSide=selected.pairSide;row.event.duration=clip(row.grid/12,row.event.duration,selected);});
  // Harmonically prepared answers can be selected later using the audible lead.
  score.answerOptions=Array.from({length:score.sequence.length},()=>[]);
  for(let bar=0;bar<Math.ceil(score.bars);bar++)for(const offset of (profile.triplet?[1+1/3,2+1/3]:profile.sustain?[1.5,2.5]:[.5,2.5])){
@@ -164,9 +194,22 @@ function generateParts(score,targets,profile,clip){
   for(const [row,kind,h]of [[lead,'lead-in',c.from],[arrival,'arrival',c.to]])if(row){row.event.cadenceRole=kind;row.event.cadence=c.kind;const ints=CHORDS[h.chord].intervals,pcs=kind==='arrival'?[h.root,degreePc(h,3)]:ints.includes(4)&&ints.includes(10)?[pc(h.root+4),pc(h.root+10)]:h.chordPcs;row.event.desired=closest(row.event.desired??row.event.midi,pcs,55,86,1)[0];}
  }
 }
+function developCompingRhythm(score,targets,profile){
+ if(profile.ostinato||profile.power||profile.sustain)return;
+ const result=score.comping.map(()=>[]),rows=entries(score.comping),strokeAt=new Map();
+ for(const {grid,event}of rows){
+  const bar=Math.floor(grid/(score.beats*12)),stroke=strokeAt.get(bar)||0;strokeAt.set(bar,stroke+1);
+  const phase=bar%4,shift=event.changeEntry||bar===0?0:phase===1&&stroke===1?-6:phase===2&&stroke===0?3:phase===3&&stroke===1?-3:0;
+  const proposed=grid+shift,from=segmentAt(targets,grid/12),to=segmentAt(targets,proposed/12);
+  const destination=proposed>=0&&proposed<result.length&&Math.floor(proposed/(score.beats*12))===bar&&from.step===to.step&&!result[proposed].length?proposed:grid;
+  result[destination].push({...event,at:destination/12%score.beats,bar,compingRhythmRole:['statement','displacement','development','answer'][phase],velocity:event.velocity*(phase===2?1.04:phase===3?.96:1)});
+ }
+ score.comping=result;
+}
 export function composeProgression(base,settings,def,targets,clip){
- const profile=COMPOSITION_STYLES[def.id],score={...base,pianoComping:['acousticPiano','softPiano'].includes(settings.compingTone),developmentBeats:base.developmentBeats};
+ const profile=COMPOSITION_STYLES[def.id],score={...base,guitarComping:/Guitar/.test(settings.compingTone),pianoComping:['acousticPiano','softPiano'].includes(settings.compingTone),developmentBeats:base.developmentBeats};
  generateParts(score,targets,profile,clip);
+ developCompingRhythm(score,targets,profile);
  planMelody(score,targets,null,clip);planBass(score,targets,null,clip);planChords(score,targets,profile,null,clip);
  articulateStudyPerformance(score,targets,clip);
  const energy=[.87,1,.8,.94];
