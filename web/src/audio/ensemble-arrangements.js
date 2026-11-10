@@ -1,7 +1,7 @@
 import {ADDITIONAL_STYLES} from './additional-styles.js';
 import {latinDrumCell,SON_BELL} from './latin-grooves.js';
 // Coordinated written ensembles. The approved Legato Fusion/Blues parts are
-// retained verbatim; every other style has its own rhythmic/harmonic vocabulary.
+// retained rhythmically; Blues timekeeping uses ride. Other styles have their own vocabulary.
 // Comping: [sixteenth slot, harmonic role, duration in beats, velocity].
 const legatoComp=[
  [[0,'chord',3.7,.35]],[],[[6,'chord',2.4,.34]],[[2,'upperColour',2.7,.32]],
@@ -102,8 +102,8 @@ function drumCell(id,bar){
  const p=plans[id],native=p.native,end=native*4,chapter=Math.floor(bar/4),last=bar===p.bars-1,answer=bar%4===3,rest=!p.melody[bar%p.melody.length].length;
  let cell;
  if(id==='legatoFusion'||id==='blues'){
-  // Preserve the approved B drum parts exactly in 4/4.
-  cell=[];if(id==='blues'){for(let i=0;i<16;i+=2)cell.push([i,'hat',i%4===0?.24:.12]);cell.push([0,'kick',.58],[8,'kick',.47],[4,'snare',.51],[12,'snare',.55]);if(bar%3===1)cell.push([6,'kick',.29]);}
+  // Preserve the approved B rhythms in 4/4, with ride timekeeping for Blues.
+  cell=[];if(id==='blues'){for(let i=0;i<16;i+=2)cell.push([i,'ride',i%4===0?.24:.12]);cell.push([0,'kick',.58],[8,'kick',.47],[4,'snare',.51],[12,'snare',.55]);if(bar%3===1)cell.push([6,'kick',.29]);}
   else {for(let i=0;i<16;i+=2)cell.push([i,i===8&&bar%4===2?'rideBell':'ride',i%4===0?.22:.11]);cell.push([0,'kick',.35],[bar%2?10:7,'kick',.23],[bar%2?6:5,'snare',.21],[12,'snare',.28]);}
   if(answer||last)cell.push(...(last?[[10,'snare',.16],[13,'tomHigh',.21],[14,'tomLow',.24]]:[[14,'snare',.15]]));return cell;
  }

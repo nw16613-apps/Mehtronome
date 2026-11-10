@@ -1,6 +1,7 @@
+import {ensembleDrums} from '../src/audio/ensemble-arrangements.js';
 import {createReferencePreparation} from '../src/audio/reference-plan-preparation.js';
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {Engine,DEFAULTS} from '../src/audio/engine.js';import {automaticBackingSettings,referencePlan,referenceBasePlan} from '../src/audio/reference-performances.js';
+import {Engine,DEFAULTS} from '../src/audio/engine.js';import {automaticBackingSettings,referencePlan,referenceBasePlan,referenceScore} from '../src/audio/reference-performances.js';
 import {BACKING_STYLES,backingStyleInstruments} from '../src/practice/backing-styles.js';import {harmonyAt,progressionBeatDurations,progressionPositionAtBeat} from '../src/audio/music.js';import {normalizeCustomProgression} from '../src/practice/custom-progression.js';
 function settings(id,extra={}){return {...DEFAULTS,...BACKING_STYLES[id].settings,...backingStyleInstruments(id),automaticBacking:true,backingStyle:id,key:9,beats:BACKING_STYLES[id].suggestedBeats||4,mode:'dorian',chord:'min9',progression:true,template:'single',sequenceActivity:'supporting',...extra};}
 test('the automatic path enables the developed composer for every style without chart markers',()=>{
@@ -28,4 +29,15 @@ test('automatic cached plans refresh when the single chord or scale guide change
  const prepare=createReferencePreparation(),s=settings('legatoFusion',{template:'single'}),a=prepare.get(s),b=prepare.get({...s,chord:'maj7',mode:'lydian'});
  assert.notEqual(a.key,b.key);assert.notDeepEqual(a.plan.score.comping,b.plan.score.comping);
  assert.equal(prepare.get({...s,chord:'maj7',mode:'lydian',sequenceActivity:'featured',comping:.5}),b);
+});
+
+test('Blues timekeeping uses ride in reference, automatic and fallback arrangements',()=>{
+ const written=referenceScore('blues').drums.flat();assert.ok(written.some(e=>e.name==='ride'));assert.ok(written.some(e=>e.name==='tomLow'));assert.ok(!written.some(e=>['hat','hatOpen'].includes(e.name)));
+ for(const template of ['single','major1625']){
+  const drums=referencePlan(settings('blues',{template})).score.drums.flat();assert.ok(drums.some(e=>e.name==='ride'));assert.ok(!drums.some(e=>['hat','hatOpen'].includes(e.name)));
+  assert.ok(drums.some(e=>e.name==='snare'));assert.ok(drums.some(e=>e.name==='kick'));
+ }
+ for(const beats of [3,4,5])for(let bar=0;bar<16;bar++){
+  const drums=ensembleDrums(settings('blues',{beats}),bar);assert.ok(drums.some(([,piece])=>piece==='ride'));assert.ok(!drums.some(([,piece])=>['hat','hatOpen'].includes(piece)));
+ }
 });

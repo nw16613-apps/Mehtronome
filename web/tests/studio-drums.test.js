@@ -11,7 +11,7 @@ test('archival DRS recordings are verified while the fusion profile uses the rep
 });
 test('new grooves state genre-specific pulse, backbeat and orchestration instead of sharing the funk beat',()=>{
  const rock=play('popRock',2,{backingVariation:0});assert.deepEqual(rock.filter(e=>e.type==='kick').map(e=>e.sample),[0,8000]);assert.deepEqual(rock.filter(e=>e.type==='snare').map(e=>e.sample),[4000,12000]);
- const blues=play('blues',2,{backingVariation:0});assert.deepEqual(blues.filter(e=>e.type==='kick').map(e=>e.sample),[0,4000,8000,12000]);assert.deepEqual(blues.filter(e=>e.type==='hat').map(e=>e.sample),[0,2667,4000,6667,8000,10667,12000,14667]);
+ const blues=play('blues',2,{backingVariation:0});assert.deepEqual(blues.filter(e=>e.type==='kick').map(e=>e.sample),[0,4000,8000,12000]);assert.deepEqual(blues.filter(e=>e.type==='ride').map(e=>e.sample),[0,2667,4000,6667,8000,10667,12000,14667]);assert.ok(!blues.some(e=>['hat','hatOpen'].includes(e.type)));
  const soul=play('motown',2,{backingVariation:0});assert.equal(soul.filter(e=>e.type==='tambourine').length,8);assert.equal(soul.filter(e=>e.type==='hatOpen').length,0);assert.deepEqual(soul.filter(e=>e.type==='kick').map(e=>e.sample),[0,4000,8000,12000]);
  const fusion=play('fusionJazz');assert.ok(fusion.some(e=>e.type==='ride'));assert.ok(fusion.some(e=>e.type==='rideBell'));assert.ok(!fusion.some(e=>e.type==='hat'));assert.equal(BACKING_STYLES.funk.settings.drumGroove,'fusion');assert.equal(BACKING_STYLES.fusionJazz.settings.drumGroove,'fusionRide');
 });

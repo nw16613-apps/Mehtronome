@@ -370,6 +370,8 @@ export class Rhythm {
     }else if(groove==='ballad'){
       if(sub===0)hit(varied?'flatRide':'ride',beat===0?.18:.11);
       if(sub===2&&beat===settings.beats-1&&bar%2===1)hit('hatPedal',.08);
+    }else if(groove==='shuffle'){
+      if(sub%2===0&&(!varied||!filling||sub===0))hit('ride',sub===0?(beat%2?.22:.24):.14);
     }else if(sub%2===0&&(!varied||!filling||sub===0)){
       const opening=lastBeat&&sub===2&&bar%2===1&&!latin&&!['shuffle','motown'].includes(groove)&&!turn;
       hit(opening?'hatOpen':'hat',sub===0?(beat%2?.22:.28):opening?.17:.15);
