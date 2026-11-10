@@ -1,0 +1,340 @@
+[
+  {
+    "id": "walking",
+    "style": "traditionalJazz",
+    "title": "Walking jazz bass",
+    "bpm": 144,
+    "bars": 8,
+    "seconds": 13.33334375,
+    "events": 152,
+    "eventParity": true,
+    "unchangedStemsIdentical": true,
+    "soloTargetLufs": -23,
+    "sourceMetrics": {
+      "current": {
+        "input_i": "-47.66",
+        "input_tp": "-32.11",
+        "input_lra": "4.40",
+        "input_thresh": "-57.66",
+        "output_i": "-24.17",
+        "output_tp": "-7.62",
+        "output_lra": "3.90",
+        "output_thresh": "-34.17",
+        "normalization_type": "dynamic",
+        "target_offset": "0.17"
+      },
+      "vsco": {
+        "input_i": "-45.18",
+        "input_tp": "-32.10",
+        "input_lra": "2.00",
+        "input_thresh": "-55.18",
+        "output_i": "-24.14",
+        "output_tp": "-10.77",
+        "output_lra": "2.30",
+        "output_thresh": "-34.14",
+        "normalization_type": "dynamic",
+        "target_offset": "0.14"
+      },
+      "smolken": {
+        "input_i": "-46.66",
+        "input_tp": "-31.83",
+        "input_lra": "1.40",
+        "input_thresh": "-56.66",
+        "output_i": "-24.09",
+        "output_tp": "-9.45",
+        "output_lra": "0.60",
+        "output_thresh": "-34.09",
+        "normalization_type": "dynamic",
+        "target_offset": "0.09"
+      }
+    },
+    "ensembleMetrics": {
+      "current": {
+        "input_i": "-38.58",
+        "input_tp": "-24.42",
+        "input_lra": "1.30",
+        "input_thresh": "-48.60",
+        "output_i": "-23.94",
+        "output_tp": "-9.85",
+        "output_lra": "1.30",
+        "output_thresh": "-33.97",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.06"
+      },
+      "vsco": {
+        "input_i": "-38.62",
+        "input_tp": "-24.92",
+        "input_lra": "2.00",
+        "input_thresh": "-48.62",
+        "output_i": "-23.98",
+        "output_tp": "-10.52",
+        "output_lra": "1.70",
+        "output_thresh": "-33.98",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.02"
+      },
+      "smolken": {
+        "input_i": "-38.66",
+        "input_tp": "-24.85",
+        "input_lra": "1.70",
+        "input_thresh": "-48.66",
+        "output_i": "-23.93",
+        "output_tp": "-10.49",
+        "output_lra": "1.60",
+        "output_thresh": "-33.93",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.07"
+      }
+    },
+    "commonMixGainDb": 18.58,
+    "decoded": {
+      "current": {
+        "solo": {
+          "input_i": "-23.44",
+          "input_tp": "-7.90",
+          "input_lra": "4.50",
+          "input_thresh": "-33.44",
+          "output_i": "-24.18",
+          "output_tp": "-7.62",
+          "output_lra": "4.00",
+          "output_thresh": "-34.18",
+          "normalization_type": "dynamic",
+          "target_offset": "0.18"
+        },
+        "mix": {
+          "input_i": "-20.44",
+          "input_tp": "-6.29",
+          "input_lra": "1.30",
+          "input_thresh": "-30.47",
+          "output_i": "-23.94",
+          "output_tp": "-9.86",
+          "output_lra": "1.30",
+          "output_thresh": "-33.97",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.06"
+        }
+      },
+      "vsco": {
+        "solo": {
+          "input_i": "-23.44",
+          "input_tp": "-10.36",
+          "input_lra": "2.10",
+          "input_thresh": "-33.44",
+          "output_i": "-24.15",
+          "output_tp": "-10.79",
+          "output_lra": "2.30",
+          "output_thresh": "-34.15",
+          "normalization_type": "dynamic",
+          "target_offset": "0.15"
+        },
+        "mix": {
+          "input_i": "-20.49",
+          "input_tp": "-6.80",
+          "input_lra": "2.00",
+          "input_thresh": "-30.49",
+          "output_i": "-23.98",
+          "output_tp": "-10.54",
+          "output_lra": "1.70",
+          "output_thresh": "-33.98",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.02"
+        }
+      },
+      "smolken": {
+        "solo": {
+          "input_i": "-23.45",
+          "input_tp": "-8.61",
+          "input_lra": "1.40",
+          "input_thresh": "-33.45",
+          "output_i": "-24.09",
+          "output_tp": "-9.45",
+          "output_lra": "0.60",
+          "output_thresh": "-34.09",
+          "normalization_type": "dynamic",
+          "target_offset": "0.09"
+        },
+        "mix": {
+          "input_i": "-20.53",
+          "input_tp": "-6.71",
+          "input_lra": "1.80",
+          "input_thresh": "-30.53",
+          "output_i": "-23.93",
+          "output_tp": "-10.47",
+          "output_lra": "1.60",
+          "output_thresh": "-33.93",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.07"
+        }
+      }
+    }
+  },
+  {
+    "id": "modern",
+    "style": "modernStraightJazz",
+    "title": "Modern jazz · sustained notes and pickups",
+    "bpm": 122,
+    "bars": 8,
+    "seconds": 15.73771875,
+    "events": 177,
+    "eventParity": true,
+    "unchangedStemsIdentical": true,
+    "soloTargetLufs": -23,
+    "sourceMetrics": {
+      "current": {
+        "input_i": "-49.52",
+        "input_tp": "-32.26",
+        "input_lra": "3.00",
+        "input_thresh": "-60.20",
+        "output_i": "-23.80",
+        "output_tp": "-5.96",
+        "output_lra": "2.20",
+        "output_thresh": "-34.57",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.20"
+      },
+      "vsco": {
+        "input_i": "-46.15",
+        "input_tp": "-32.20",
+        "input_lra": "2.50",
+        "input_thresh": "-56.72",
+        "output_i": "-23.41",
+        "output_tp": "-7.81",
+        "output_lra": "2.70",
+        "output_thresh": "-34.02",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.59"
+      },
+      "smolken": {
+        "input_i": "-48.30",
+        "input_tp": "-31.32",
+        "input_lra": "2.00",
+        "input_thresh": "-58.58",
+        "output_i": "-24.01",
+        "output_tp": "-7.04",
+        "output_lra": "1.80",
+        "output_thresh": "-34.26",
+        "normalization_type": "dynamic",
+        "target_offset": "0.01"
+      }
+    },
+    "ensembleMetrics": {
+      "current": {
+        "input_i": "-39.89",
+        "input_tp": "-23.19",
+        "input_lra": "1.20",
+        "input_thresh": "-49.89",
+        "output_i": "-24.03",
+        "output_tp": "-7.38",
+        "output_lra": "1.30",
+        "output_thresh": "-34.03",
+        "normalization_type": "dynamic",
+        "target_offset": "0.03"
+      },
+      "vsco": {
+        "input_i": "-39.83",
+        "input_tp": "-22.81",
+        "input_lra": "1.30",
+        "input_thresh": "-49.85",
+        "output_i": "-23.96",
+        "output_tp": "-7.13",
+        "output_lra": "1.30",
+        "output_thresh": "-33.99",
+        "normalization_type": "dynamic",
+        "target_offset": "-0.04"
+      },
+      "smolken": {
+        "input_i": "-39.86",
+        "input_tp": "-23.53",
+        "input_lra": "1.30",
+        "input_thresh": "-49.88",
+        "output_i": "-24.09",
+        "output_tp": "-7.90",
+        "output_lra": "1.20",
+        "output_thresh": "-34.12",
+        "normalization_type": "dynamic",
+        "target_offset": "0.09"
+      }
+    },
+    "commonMixGainDb": 19.89,
+    "decoded": {
+      "current": {
+        "solo": {
+          "input_i": "-23.45",
+          "input_tp": "-6.19",
+          "input_lra": "3.00",
+          "input_thresh": "-34.20",
+          "output_i": "-23.76",
+          "output_tp": "-5.95",
+          "output_lra": "2.20",
+          "output_thresh": "-34.54",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.24"
+        },
+        "mix": {
+          "input_i": "-20.44",
+          "input_tp": "-3.76",
+          "input_lra": "1.30",
+          "input_thresh": "-30.44",
+          "output_i": "-24.04",
+          "output_tp": "-7.40",
+          "output_lra": "1.30",
+          "output_thresh": "-34.04",
+          "normalization_type": "dynamic",
+          "target_offset": "0.04"
+        }
+      },
+      "vsco": {
+        "solo": {
+          "input_i": "-23.50",
+          "input_tp": "-9.50",
+          "input_lra": "2.50",
+          "input_thresh": "-34.16",
+          "output_i": "-23.40",
+          "output_tp": "-7.81",
+          "output_lra": "2.70",
+          "output_thresh": "-34.02",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.60"
+        },
+        "mix": {
+          "input_i": "-20.38",
+          "input_tp": "-3.39",
+          "input_lra": "1.30",
+          "input_thresh": "-30.40",
+          "output_i": "-23.97",
+          "output_tp": "-7.16",
+          "output_lra": "1.30",
+          "output_thresh": "-34.00",
+          "normalization_type": "dynamic",
+          "target_offset": "-0.03"
+        }
+      },
+      "smolken": {
+        "solo": {
+          "input_i": "-23.44",
+          "input_tp": "-6.47",
+          "input_lra": "2.00",
+          "input_thresh": "-33.72",
+          "output_i": "-24.01",
+          "output_tp": "-7.04",
+          "output_lra": "1.80",
+          "output_thresh": "-34.26",
+          "normalization_type": "dynamic",
+          "target_offset": "0.01"
+        },
+        "mix": {
+          "input_i": "-20.40",
+          "input_tp": "-4.07",
+          "input_lra": "1.30",
+          "input_thresh": "-30.43",
+          "output_i": "-24.10",
+          "output_tp": "-7.90",
+          "output_lra": "1.20",
+          "output_thresh": "-34.13",
+          "normalization_type": "dynamic",
+          "target_offset": "0.10"
+        }
+      }
+    }
+  }
+]

@@ -147,3 +147,24 @@ through the new source assignments. Historical complete round-two renders should
 use the pre-integration source revision (`e512bf9`) in an isolated checkout.
 The update tool adds audio content revisions to avoid replaying cached older
 chorus files. No new sources need to be downloaded for chorus-only updates.
+
+## Upright source comparison — 10 November 2026
+
+`prepare-uprights.py CACHE` fetches pinned CC0 VSCO 2 CE solo contrabass pizzicato
+and D. Smolken Double Bass, using original SFZ pitch/velocity maps and two takes.
+The former's sample-name octave convention is resolved by its actual SFZ map.
+Three-window autocorrelation measures pitch centres before sampler transposition.
+Source/derivative hashes and tuning corrections are recorded. No added slap,
+noise or release-trigger samples are used. This is not a complete SFZ engine.
+
+`node render-uprights.mjs CACHE OUTPUT` compares these libraries with the current
+Sneakybass through identical production sampler/envelopes and current arrangements:
+eight bars of Traditional Jazz walking and Modern Straight-Eighth Jazz longer
+notes/pickups. Musical events and every unaffected stem must match exactly.
+Only constant gains are used for loudness matching; decoded MP3 solo loudness and
+headroom are checked. Current runtime bass, style assignments and UI stay unchanged.
+
+Serve OUTPUT locally, then run `node browser-check-uprights.mjs URL` to play all
+12 files and verify the two-card mobile/desktop page. Publish the finished page
+under `/upright-audition/`. The user's listening preference determines whether a
+candidate should replace the existing instrument.
