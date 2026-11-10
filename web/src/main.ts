@@ -1,3 +1,4 @@
+import {standardMelodyStatus} from './audio/standard-melodies.js';
 import {REFERENCE_PERFORMANCES} from './audio/reference-performances.js';
 import {installStudyPath} from './practice/study-path-view';
 import {createReferencePreparation} from './audio/reference-plan-preparation.js';
@@ -1118,6 +1119,8 @@ function update() {
 
 
   renderMusic();
+  const melody=standardMelodyStatus(settings);
+  backingStyleUi?.setMelody(melody?.name||'',!melody&&settings.progression&&settings.template==='custom'&&settings.customProgression?.standardMelody?'Written melody paused: the chart’s length or metre has changed.':'');
   if (!playing) renderBeats();
 }
 function tempo(value: number) {
@@ -1257,7 +1260,7 @@ async function initialiseAudio(requested:any=settings) {
       if(settings.extensionMorph&&Array.isArray(data.extensions))el('extension-status').textContent=`Blending: ${data.extensions.length?data.extensions.join(' · '):'between colours'}`;
       el('mini-beat').textContent = `${data.beat + 1} / ${settings.beats}`;
       renderBeats(data.beat);
-      el('play-status').textContent = data.counting ? `Count-in · ${data.beat + 1} of ${settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
+      el('play-status').textContent = data.counting ? `${data.pickup?'Pickup':'Count-in'} · ${data.beat + 1} of ${data.countLength||settings.beats}` : `${data.gap ? 'Gap' : 'Playing'} · Bar ${data.bar} · Beat ${data.beat + 1}`;
       el('pulse-large-status').textContent=el('play-status').textContent;
       if (step !== data.step) { step = data.step; renderMusic(); }
       if(settings.progression&&!data.counting)highlightCustomBeat((data.bar-1)*settings.beats+data.beat);

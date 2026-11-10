@@ -157,6 +157,7 @@ export class Sequence {
     this.voices=Array.from({length:8},()=>({phase:0,frequency:0,age:Infinity,pan:0,envelope:0,increment:0,table:SEQUENCE_WAVE}));
   }
   gridAt(settings, beat, phase) {
+    if(settings.standardMelody)return beat*12+Math.min(11,Math.floor(phase*12+1e-9));
     if(settings.referencePlan?.score.gridRate)return referenceGrid(settings.referencePlan,'sequence',beat,phase,settings);
     const rate=settings.referencePlan?.score.rate||Number(settings.sequenceRate)||2;let offset=0;
     if(rate===2&&(settings.sequenceStyle==='traditionalJazz'||settings.sequenceStyle==='blues'||settings.sequenceStyle==='jazzWaltz'||settings.sequenceStyle==='secondLine')){
@@ -172,7 +173,16 @@ export class Sequence {
   tick(settings, beat, phase, notes, sample, step, onNote, nextNotes=notes,context=null,audible=true) {
     const grid=this.gridAt(settings,beat,phase);
     if(grid===this.lastGrid) return;
-    this.lastGrid=grid;if(!audible)return;
+    this.lastGrid=grid;if(!audible||settings.standardMelodyUnavailable)return;
+    if(settings.standardMelody){
+      const plan=settings.standardMelody,events=beat<0?(plan.pickup[grid]||[]):plan.slots[(grid%plan.slots.length+plan.slots.length)%plan.slots.length];
+      for(const event of events){
+        const tone=settings.sequenceTone;this.instrument.soundLibrary=sourceFor(settings,'sequence');
+        this.instrument.strike([event.midi],event.duration,event.velocity*.65,settings.bpm,sample,step,undefined,'sequence',tone,0,null,'sustain');
+        this.lastMidi=event.midi;onNote({sample,grid,midi:event.midi,step,tone,durationBeats:event.duration,standardMelody:plan.id,pickup:!!event.pickup,resumed:!!event.resumed});
+      }
+      return;
+    }
     if(settings.referencePlan){
       const plan=settings.referencePlan;
       // A reference uses its written rate, not activity-based phrase selection.

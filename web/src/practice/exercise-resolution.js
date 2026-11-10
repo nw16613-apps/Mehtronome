@@ -3,7 +3,7 @@ import {progressionPositionPath} from '../guitar/position-path.js';
 import {progressionStudyPlan} from './progression-timing.js';
 import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {cloneTemplate} from './custom-progression.js';
-import {progressionDefinition} from '../audio/music.js';
+import {progressionDefinition,progressionTimeline,progressionBeatDurations} from '../audio/music.js';
 
 /** Add an ending to the displayed/playable study, never to the user's chart or
  * to the sequence generators. The closest different core tone of the opening chord uses a CAGED
@@ -37,7 +37,9 @@ export function resolutionBackingSettings(settings,plan){
  if(!settings.progression||!plan?.resolution)return settings;
  const base=cloneTemplate(progressionDefinition(settings),settings.chord,settings.mode,settings);
  const steps=plan.slots.map(slot=>({...base.steps[slot.step],beats:slot.duration}));
- return {...settings,template:'custom',loopEnabled:false,customProgression:{...base,steps,roman:plan.slots.map(slot=>base.roman[slot.step])}};
+ const originalBeats=progressionBeatDurations(settings).reduce((a,b)=>a+b,0);
+ const melodyTimeline=settings.customProgression?.standardMelody?{standardMelodyOriginalBeats:originalBeats,standardMelodyTimeline:[...progressionTimeline(settings),{start:originalBeats,duration:plan.resolution.duration}]}:{};
+ return {...settings,...melodyTimeline,standardMelodyPickup:false,standardMelodyEnding:plan.resolution.duration,template:'custom',loopEnabled:false,customProgression:{...base,...(settings.customProgression?.standardMelody?{standardMelody:settings.customProgression.standardMelody}:{}),steps,roman:plan.slots.map(slot=>base.roman[slot.step])}};
 }
 
 /** Route a held-chord study through the same duration-aware score/playback path. */

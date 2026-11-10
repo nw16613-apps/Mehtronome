@@ -1,3 +1,4 @@
+import {prepareStandardMelody} from './standard-melodies.js';
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
 import {nativeGuitarChannel} from './guitar-policy.js';
 import {sessionCycle,SESSION_ROLES} from './session-performance.js';
@@ -237,7 +238,9 @@ export class Engine {
     this.currentBpm = this.settings.bpm;
     this.trainerNextBar = this.settings.trainerBars;
     this.beat = -1;
-    this.remainingCount = this.settings.countIn ? this.settings.beats : 0;
+    const melody=this.clockSettings?.standardMelody,pickup=this.settings.sequence&&!this.muted?.has('sequence')&&this.settings.sequenceVolume>0&&this.settings.standardMelodyPickup!==false?melody?.pickupBeats||0:0;
+    this.pickupLeadIn=!this.settings.countIn&&pickup>0;
+    this.remainingCount = this.settings.countIn ? this.settings.beats : pickup;
     this.nextBeat = true;
     this.clickAge = this.rate;
     this.clickFrequency = 1500;
@@ -309,7 +312,9 @@ export class Engine {
     const referenceChanged=referenceKey!==this.referenceCacheKey;
     if(referenceChanged){this.referenceCacheKey=referenceKey;this.cachedReferenceBasePlan=preparedReference?.key===referenceKey&&Object.hasOwn(preparedReference,'plan')?preparedReference.plan:referenceBasePlan(s);}
     if(referenceChanged||this.referenceActivity!==s.sequenceActivity){this.referenceActivity=s.sequenceActivity;this.cachedReferencePlan=referenceActivityPlan(this.cachedReferenceBasePlan,s.sequenceActivity);}
-    Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:this.cachedReferencePlan});
+    const melodyKey=referenceKey+':'+JSON.stringify([s.standardMelodyEnding,s.standardMelodyOriginalBeats,s.standardMelodyTimeline]);
+    if(melodyKey!==this.standardMelodyKey){this.standardMelodyKey=melodyKey;this.cachedStandardMelody=prepareStandardMelody(s);}
+    Object.assign(this.clockSettings,s,{bpm:this.currentBpm,referencePlan:this.cachedReferencePlan,standardMelody:this.cachedStandardMelody,standardMelodyUnavailable:!this.cachedStandardMelody&&s.template==='custom'&&s.progression&&!!s.customProgression?.standardMelody});
     const timeline=s.progression?progressionTimeline(s):[];
     const harmonyKey=JSON.stringify([s.key,s.mode,s.minor,s.chord,s.progression,s.template,s.customProgression,s.compingMovement,s.compingHookLength,s.sequenceStyle,s.accompanimentStyle,s.loopEnabled,s.loopUnit,s.loopStart,s.loopEnd,s.loopBeatStart,s.loopBeatEnd]);
     if(harmonyKey!==this.harmonyCacheKey){
@@ -520,13 +525,13 @@ export class Engine {
         const nextBarBeat=(bar+1)*s.beats,formPosition=nextBarBeat%this.backingFormLength||this.backingFormLength;
         this.clockSettings.backingTurnaround=this.backingFormLength>=s.beats*4&&this.backingFormEnds.includes(formPosition);
         this.clickAge = 0;
-        const strength=beatStrength(s,this.beat%s.beats,counting);
+        const strength=this.pickupLeadIn&&counting?0:beatStrength(s,this.beat%s.beats,counting);
         this.clickFrequency = strength===2 ? 1500 : 1000;
         this.clickStrength = strength===0?0:strength===2?1:.72;
         this.lastSubdivision = 0;
         this.gapMuted = !counting && gapAt(s, bar);
         const composition=this.clockSettings.referencePlan?.score,development=!counting&&composition?.composition?composition.choruses[Math.min(3,Math.floor((Math.max(0,musicalBeat)%(composition.developmentBeats*4))/composition.developmentBeats))]:null;
-        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1,...(composition.sessionPerformance?{arrangementCycle:Math.floor(Math.max(0,musicalBeat)/composition.sessionPerformance.cycleBeats)+1,sessionRole:SESSION_ROLES[sessionCycle(composition,musicalBeat)]}:{})}:{}), gap:this.gapMuted, counting, beat: this.beat % s.beats, bar: bar + 1, step,
+        onBeat({ ...(development?{arrangementRole:development.role,arrangementPass:development.index+1,...(composition.sessionPerformance?{arrangementCycle:Math.floor(Math.max(0,musicalBeat)/composition.sessionPerformance.cycleBeats)+1,sessionRole:SESSION_ROLES[sessionCycle(composition,musicalBeat)]}:{})}:{}), gap:this.gapMuted, counting, pickup:counting&&this.pickupLeadIn,countLength:this.remainingCount, beat: this.beat % s.beats, bar: bar + 1, step,
           extensions:s.extensionMorph?this.extensionCandidates.filter((_,index)=>extensionBlend(index,this.extensionCandidates.length,musicalBeat,s.beats,s.extensionBars)>.65).map(choice=>choice.label):[],
           bpm:this.currentBpm, trainerTargetReached:!!s.trainerEnabled && !counting && this.currentBpm >= Math.max(s.bpm,s.trainerTarget) });
       }
@@ -535,7 +540,7 @@ export class Engine {
         this.lastSubdivision = subdivision;
         this.clickAge = 0;
         this.clickFrequency = 800;
-        this.clickStrength = beatStrength(s,this.beat%s.beats,this.beat<this.remainingCount)===0?0:.45;
+        this.clickStrength = this.pickupLeadIn&&this.beat<this.remainingCount||beatStrength(s,this.beat%s.beats,this.beat<this.remainingCount)===0?0:.45;
       }
       const playing = this.running ? 1 : 0;
       this.level += (playing - this.level) * smoothing;
@@ -563,12 +568,13 @@ export class Engine {
       const polyTime=this.polyAge++/this.rate;
       const polyClick=s.polyBeats&&polyTime<.05?Math.sin(2*Math.PI*2200*polyTime)*Math.exp(-140*polyTime):0;
       const backingActive=this.auditioning || this.beat>=this.remainingCount;
-      if(s.sequence && backingActive && !this.auditioning){
-        this.sequence.tick(this.clockSettings,Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext,sequenceVolume>0);
+      const melodyPickup=this.beat<this.remainingCount&&!!this.clockSettings.standardMelody;
+      if(s.sequence && (backingActive||melodyPickup) && !this.auditioning){
+        this.sequence.tick(this.clockSettings,melodyPickup?this.beat-this.remainingCount:Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext,sequenceVolume>0);
       }
       if (s.sequence || this.sequenceLevel > .000001) this.sequence.render(sequenceVolume>0||this.sequenceLevel>.000001);
       else { this.sequence.left = 0; this.sequence.right = 0; }
-      this.sequenceLevel+=((s.sequence && !this.auditioning && backingActive?sequenceVolume:0)-this.sequenceLevel)*smoothing;
+      this.sequenceLevel+=((s.sequence && !this.auditioning && (backingActive||melodyPickup)?sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
       const musicalBeat=Math.max(0,this.beat-this.remainingCount),musicalPhase=this.phase/(60*this.rate);
       if ((s.drums || s.bass) && rhythmActive) this.rhythm.tick(this.clockSettings,musicalBeat,musicalPhase,this.rhythmChordMidi||this.chordMidi,this.age,this.step,onRhythm,this.nextRhythmChordMidi||this.nextChordMidi,drumsVolume>0,bassVolume>0);

@@ -96,7 +96,7 @@ export function studyPathPlan(value,sources=STUDY_FORMS){
  if(s.tier===4){
   const source=sources.find(f=>f.id===s.form)||STUDY_FORMS.find(f=>f.id==='standard:autumn-leaves');s.form=source.id;
   const clean=normalizeCustomProgression(source.progression);base=clean.steps;name=source.name;beats=source.beats||4;
-  metadata={sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
+  metadata={standardMelody:clean.standardMelody,sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
  }else if(s.tier===3){
   base=turnaround(s.turnaround,s.bars);name=STUDY_TURNAROUNDS[s.turnaround];
   if(s.keyCycle==='fourths'){

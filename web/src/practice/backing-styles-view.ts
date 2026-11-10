@@ -10,11 +10,12 @@ export function installBackingStyles(changed:()=>void){
  const menu=section.querySelector<HTMLSelectElement>('#backing-style')!,activity=section.querySelector<HTMLSelectElement>('#sequence-activity')!;
  try{menu.value=backingStyleId(localStorage.getItem('mehtronome-backing-style'));const migrated=localStorage.getItem('mehtronome-developed-backing-v1')==='1',a=localStorage.getItem('mehtronome-sequence-activity');if(migrated&&['supporting','countermelody','featured'].includes(a||''))activity.value=a!;else activity.value='supporting';localStorage.setItem('mehtronome-developed-backing-v1','1');}catch{}
  const persist=()=>{try{localStorage.setItem('mehtronome-sequence-activity',activity.value);localStorage.setItem('mehtronome-backing-style',menu.value);}catch{}};
- let reflected='',lastMeterStyle=menu.value;
+ let reflected='',lastMeterStyle=menu.value,melodyName='',melodyIssue='';
  const sync=()=>{
   const id=backingStyleId(menu.value),style=BACKING_STYLES[id as keyof typeof BACKING_STYLES];menu.value=id;
   const drumKit=resolveDrumKit({...style.settings,backingStyle:id,soundLibrary:'expanded'}),key=id;
-  section.querySelector('#sequence-activity-help')!.textContent=({supporting:'Short phrases with longer rests.',countermelody:'Developed phrases with room for your playing.',featured:'Longer lines and more frequent answers.'} as Record<string,string>)[activity.value]+' Unmute Melodic movement in the mixer to hear it.';
+  activity.disabled=!!melodyName||!!melodyIssue;
+  section.querySelector('#sequence-activity-help')!.textContent=melodyIssue?melodyIssue:melodyName?`Written melody · ${melodyName}. Unmute Melodic movement in the mixer to hear it.`:({supporting:'Short phrases with longer rests.',countermelody:'Developed phrases with room for your playing.',featured:'Longer lines and more frequent answers.'} as Record<string,string>)[activity.value]+' Unmute Melodic movement in the mixer to hear it.';
   if(reflected!==key){
    section.querySelector('#backing-style-description')!.textContent=style.description.replace('a modeled legato voice','an acoustic flute');
    section.querySelector('dl')!.innerHTML=Object.entries(style.parts).map(([name,part])=>{const channel=Object.entries(CHANNELS).find(([,label])=>label===name)![0],tone=channel==='comping'?style.settings.compingTone:channel==='sequence'?style.settings.sequenceTone:null,label=channel==='drums'?DRUM_KITS[drumKit as keyof typeof DRUM_KITS].name:({fluteLead:'Recorded acoustic flute',legatoGuitar:'Recorded electric-guitar lead',drawbarOrgan:'Sampled tonewheel organ',brightTine:'Recorded Wurlitzer electric piano',clav:'Recorded clav-style synth'} as Record<string,string>)[tone||''];return `<div><dt>${name}<span class="sound-channel-state" data-sound-state="${channel}"></span></dt><dd>${label?label+' · '+String(part).split(' · ').slice(1).join(' · '):part}</dd></div>`;}).join('');reflected=key;
@@ -26,5 +27,6 @@ export function installBackingStyles(changed:()=>void){
  const initial=(BACKING_STYLES[menu.value as keyof typeof BACKING_STYLES] as any).suggestedBeats;if(initial)document.querySelector<HTMLSelectElement>('#beats')!.value=String(initial);
  // Chart loads use their own metre; keep subsequent manual style changes in sync.
  const setStyle=(id:string)=>{menu.value=backingStyleId(id);lastMeterStyle=menu.value;sync();};
- sync();return {sync,setStyle};
+ const setMelody=(name:string,issue='')=>{if(name!==melodyName||issue!==melodyIssue){melodyName=name;melodyIssue=issue;sync();}};
+ sync();return {sync,setStyle,setMelody};
 }

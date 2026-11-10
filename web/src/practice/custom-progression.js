@@ -1,3 +1,4 @@
+import {STANDARD_MELODIES} from '../audio/standard-melodies-data.js';
 import {STYLE_REFERENCES} from '../audio/reference-catalogue.js';
 import {CHORDS,MODES,harmonyAt,ROOT_NAMES,spellPitch} from '../audio/music.js';
 
@@ -95,7 +96,7 @@ export function normalizeCustomProgression(value){
   }
   const sourceNotes=typeof value?.sourceNotes==='string'?value.sourceNotes.slice(0,1600):'';
   const sources=Array.isArray(value?.sources)?value.sources.filter(s=>typeof s?.url==='string'&&/^https?:\/\//.test(s.url)).slice(0,6).map(s=>({label:String(s.label||'Source').slice(0,100),url:s.url.slice(0,2048)})):[];
-  return {...((['blues','legatoFusion'].includes(value?.referencePerformance)||Object.hasOwn(STYLE_REFERENCES,value?.referencePerformance))?{referencePerformance:value.referencePerformance}:{}),...(sourceNotes?{sourceNotes}:{}),...(sources.length?{sources}:{}),...((['blues','legatoFusion'].includes(value?.arrangedPerformance)||Object.hasOwn(STYLE_REFERENCES,value?.arrangedPerformance))?{arrangedPerformance:value.arrangedPerformance}:{}),version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
+  return {...(Object.hasOwn(STANDARD_MELODIES,value?.standardMelody)?{standardMelody:value.standardMelody}:{}),...((['blues','legatoFusion'].includes(value?.referencePerformance)||Object.hasOwn(STYLE_REFERENCES,value?.referencePerformance))?{referencePerformance:value.referencePerformance}:{}),...(sourceNotes?{sourceNotes}:{}),...(sources.length?{sources}:{}),...((['blues','legatoFusion'].includes(value?.arrangedPerformance)||Object.hasOwn(STYLE_REFERENCES,value?.arrangedPerformance))?{arrangedPerformance:value.arrangedPerformance}:{}),version:2,name:String(value?.name||'My progression').slice(0,60),kind:'custom',bars:1,steps,roman:steps.map(romanForStep)};
 }
 
 export function progressionText(progression,chordSymbol=id=>id){
