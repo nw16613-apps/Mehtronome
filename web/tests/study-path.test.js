@@ -80,3 +80,22 @@ test('marks track actual loaded material and route; malformed storage migrates s
  assert.equal(normalizeStudyPath({tier:90,root:60,material:'removed'}).tier,1);
  for(const [material]of STUDY_MATERIALS){const p=studyPathPlan({material});assert.equal(p.study,material==='voicings'?'positional':material);assert.equal(p.view,material==='voicings'?'guitar':'exercises');}
 });
+
+test('circle of fourths cycles Tier 2 roots and complete Tier 3 phrases through all twelve keys',()=>{
+ const tonics=[0,5,10,3,8,1,6,11,4,9,2,7];
+ assert.deepEqual(studyPathPlan({tier:2,root:0,order:'fourths'}).harmonies.map(h=>h.chordPcs[0]),tonics);
+ for(let root=0;root<12;root++)for(const turnaround of Object.keys(STUDY_TURNAROUNDS)){
+  const single=studyPathPlan({tier:3,root,turnaround,bars:8}),circle=studyPathPlan({tier:3,root,turnaround,bars:8,keyCycle:'fourths',route:'manual'});
+  const n=single.baseCount;assert.equal(circle.baseCount,n*12);assert.equal(length(circle),length(single)*12);assert.equal(circle.positions.length,n*12);
+  assert.ok(circle.baseCount<=128);
+  for(let k=0;k<12;k++)for(let i=0;i<n;i++){
+   const h=circle.harmonies[k*n+i],original=single.harmonies[i];
+   assert.equal(h.chordPcs[0],(original.chordPcs[0]+5*k)%12);assert.equal(h.chordId,original.chordId);assert.equal(h.mode,original.mode);
+  }
+  assert.equal(circle.chart.progression.steps.filter(s=>s.section).length,12);
+ }
+ const base=studyPathPlan({tier:3,root:0}),circle=studyPathPlan({tier:3,root:0,keyCycle:'fourths'});
+ assert.deepEqual(circle.chords.slice(0,9),['Dm7','G7','Cmaj7','Gm7','C7','Fmaj7','Cm7','F7','B♭maj7']);
+ assert.notEqual(base.editContext,circle.editContext);assert.notEqual(base.id,circle.id);
+ assert.equal(readStudyPath(JSON.stringify({selection:{tier:3,keyCycle:'fourths'}})).selection.keyCycle,'fourths');
+});

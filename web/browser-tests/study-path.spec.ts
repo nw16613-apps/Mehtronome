@@ -47,3 +47,12 @@ test('Study opens first and Progress retains saved setups',async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('mehtronome-workspace','progress'));await page.goto('/');await expect(page.locator('body')).toHaveAttribute('data-workspace','study');await expect(page.locator('.workspace-tab').first()).toContainText('Study');
  await tab(page,'progress-title');await expect(page.locator('.presets')).toBeVisible();await expect(page.locator('#study-path')).toBeHidden();await page.reload();await expect(page.locator('#study-path')).toBeVisible();await expect(page.locator('.workspace-tab>.studio-icon')).toHaveCount(7);
 });
+
+test('circle of fourths is available in both changing-key and progression studies',async({page})=>{
+ await page.goto('/');await page.locator('[data-study-tier="2"]').click();
+ await expect(page.locator('#study-order option[value=fourths]')).toHaveText('Circle of fourths');await page.locator('#study-root').selectOption('0');await page.locator('#study-order').selectOption('fourths');await expect(page.locator('[data-study-step]')).toHaveCount(12);
+ await page.locator('[data-study-tier="3"]').click();await page.locator('#study-turnaround').selectOption('three');await page.locator('#study-key-cycle').selectOption('fourths');await expect(page.locator('[data-study-step]')).toHaveCount(36);
+ await expect(page.locator('[data-study-step="5"]')).toContainText('Fmaj7');await expect(page.locator('[data-study-step="8"]')).toContainText('B♭maj7');await page.locator('#study-route').selectOption('manual');await page.locator('[data-study-position="3"]').selectOption('V');await page.locator('#study-load').click();
+ expect((await working(page)).steps).toHaveLength(36);expect((await page.locator('#manual-position-route').inputValue()).split(':').at(-1)?.[3]).toBe('4');await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','false');
+ await page.reload();await expect(page.locator('#study-key-cycle')).toHaveValue('fourths');await expect(page.locator('[data-study-step]')).toHaveCount(36);await page.locator('#study-key-cycle').selectOption('single');await expect(page.locator('[data-study-step]')).toHaveCount(3);expect((await working(page)).steps).toHaveLength(36);
+});

@@ -1,4 +1,4 @@
-import {normalizeCustomProgression,cloneTemplate,MAX_CHART_STEPS} from './custom-progression.js';
+import {normalizeCustomProgression,cloneTemplate,MAX_CHART_STEPS,customPitchName} from './custom-progression.js';
 import {orderedRoots,generatorRootLetter} from './progression-generator.js';
 import {harmonyAt,MODES,CHORDS,PROGRESSIONS} from '../audio/music.js';
 import {scaleChoicesForChord,chordChoicesForMode} from './scale-explorer.js';
@@ -20,7 +20,7 @@ export const STUDY_MATERIALS=[
  ['arpgroups3','Arpeggio groups of three','Arpeggio sequences'],['arpgroups4','Arpeggio groups of four','Arpeggio sequences'],
  ['harmonized','Diatonic seventh arpeggios','Arpeggio sequences'],['alternating','Alternating diatonic arpeggios','Arpeggio sequences'],
 ];
-export const STUDY_ROOT_ORDERS={fourths:'Perfect fourths',fifths:'Perfect fifths',minorThird:'Minor thirds · ♭3',majorThird:'Major thirds',whole:'Whole steps',chromatic:'Semitones',tritone:'Tritones',random:'Random · all roots'};
+export const STUDY_ROOT_ORDERS={fourths:'Circle of fourths',fifths:'Perfect fifths',minorThird:'Minor thirds · ♭3',majorThird:'Major thirds',whole:'Whole steps',chromatic:'Semitones',tritone:'Tritones',random:'Random · all roots'};
 export const STUDY_TURNAROUNDS={two:'ii–V',three:'ii–V–I',four:'vi–ii–V–I',...Object.fromEntries(Object.entries(PROGRESSIONS).filter(([id,p])=>p.kind==='jazz'&&id!=='jazzBlues'&&id!=='major251').map(([id,p])=>[id,p.name]))};
 const positions=['I','II','III','IV','V'],regions=['low','lowerMiddle','middle','upperMiddle','high'];
 export const studyModeChoices=chord=>scaleChoicesForChord(chord).filter(c=>c.strict);
@@ -51,7 +51,7 @@ export const STUDY_FORMS=[
  {id:'form:jazz-blues',name:'12-bar jazz blues',key:5,beats:4,group:'Complete forms',progression:cloneTemplate(PROGRESSIONS.jazzBlues,'dom7','mixolydian')},
  ...REPERTOIRE_STUDIES.map(s=>({...s,id:'form:'+s.id,key:9,beats:4,group:'Original studies'})),
 ];
-const patterns=s=>s.tier===1?'vamp':s.tier===2?'keys':s.tier===3?'turnaround:'+s.turnaround:s.form;
+const patterns=s=>s.tier===1?'vamp':s.tier===2?'keys':s.tier===3?'turnaround:'+s.turnaround+(s.keyCycle==='fourths'?':fourths':''):s.form;
 export function normalizeStudyPath(value={}){
  value=value&&typeof value==='object'?value:{};const root=Number(value.root),pair=studyPair(value.mode,value.chord,value.workflow||'mode');
  const harmonyEdits={};for(const [i,e]of Object.entries(value.harmonyEdits||{}).slice(0,128))if(/^\d+$/.test(i)&&Number(i)<128&&e&&typeof e==='object')harmonyEdits[i]=studyPair(e.mode,e.chord,'mode');
@@ -59,7 +59,7 @@ export function normalizeStudyPath(value={}){
   workflow:value.workflow==='chord'?'chord':'mode',material:STUDY_MATERIALS.some(([id])=>id===value.material)?value.material:'positionalscale',
   position:positions.includes(value.position)?value.position:'I',region:regions.includes(value.region)?value.region:'middle',
   route:['manual','framework'].includes(value.route)?'manual':'region',order:Object.hasOwn(STUDY_ROOT_ORDERS,value.order)?value.order:'fourths',
-  coverage:value.coverage===true,turnaround:Object.hasOwn(STUDY_TURNAROUNDS,value.turnaround)?value.turnaround:'three',
+  coverage:value.coverage===true,keyCycle:value.keyCycle==='fourths'?'fourths':'single',turnaround:Object.hasOwn(STUDY_TURNAROUNDS,value.turnaround)?value.turnaround:'three',
   form:typeof value.form==='string'&&value.form.length<100?value.form:'standard:autumn-leaves',
   bars:[1,2,4,8].includes(Number(value.bars))?Number(value.bars):2,passes:Math.max(1,Math.min(8,Math.floor(Number(value.passes)||1))),
   manualPositions:Array.isArray(value.manualPositions)?value.manualPositions.slice(0,128).map(p=>positions.includes(p)?p:null):[],
@@ -88,7 +88,19 @@ export function studyPathPlan(value,sources=STUDY_FORMS){
   const source=sources.find(f=>f.id===s.form)||STUDY_FORMS[0];s.form=source.id;
   const clean=normalizeCustomProgression(source.progression);base=clean.steps;name=source.name;beats=source.beats||4;
   metadata={sourceNotes:clean.sourceNotes,sources:clean.sources,referencePerformance:clean.referencePerformance,arrangedPerformance:clean.arrangedPerformance};
- }else if(s.tier===3){base=turnaround(s.turnaround,s.bars);name=STUDY_TURNAROUNDS[s.turnaround];}
+ }else if(s.tier===3){
+  base=turnaround(s.turnaround,s.bars);name=STUDY_TURNAROUNDS[s.turnaround];
+  if(s.keyCycle==='fourths'){
+   const phrase=base,keys=orderedRoots({start:key,order:'fourths',count:12});
+   base=keys.flatMap(tonic=>{
+    const offset=(tonic-key+12)%12,letter=generatorRootLetter(key,tonic,true),keyName=customPitchName(key,offset,letter);
+    return phrase.map((step,i)=>({...step,root:(offset+step.root)%12,letter:(letter+step.letter)%7,
+     ...(step.bass!==null&&step.bass!==undefined?{bass:(offset+step.bass)%12,bassLetter:(letter+step.bassLetter)%7}:{}),
+     ...(!i?{section:keyName+(step.section?' · '+step.section:'')}:{})}));
+   });
+   name+=' · Circle of fourths';
+  }
+ }
  else{
   const cycle={fourths:12,fifths:12,minorThird:4,majorThird:3,whole:6,chromatic:12,tritone:2,random:12};
   const roots=s.tier===1?[s.root]:orderedRoots({start:s.root,order:s.order,coverage:s.order==='random'||s.coverage,count:s.coverage?12:cycle[s.order]});

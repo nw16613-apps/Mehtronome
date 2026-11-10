@@ -34,7 +34,7 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
    <label>Material<select id="study-material">${materials}</select></label>
    ${selection.tier<4?`<label>${selection.tier===1?'Bars per pass':plan.singleQuality?'Bars per chord':'Chord duration multiplier'}<select id="study-bars">${options([1,2,4,8].map(n=>[n,selection.tier<3&&plan.singleQuality?n+' bar'+(n===1?'':'s'):n+'×']),selection.bars)}</select></label>`:''}
    ${selection.tier===2?`<label>Root order<select id="study-order">${options(Object.entries(STUDY_ROOT_ORDERS),selection.order)}</select></label><label>Root coverage<select id="study-coverage">${options([['cycle','One interval cycle'],['all','All 12 roots']],selection.coverage?'all':'cycle')}</select></label>`:''}
-   ${selection.tier===3?`<label>Progression<select id="study-turnaround">${options(Object.entries(STUDY_TURNAROUNDS),selection.turnaround)}</select></label>`:''}
+   ${selection.tier===3?`<label>Progression<select id="study-turnaround">${options(Object.entries(STUDY_TURNAROUNDS),selection.turnaround)}</select></label><label>Key movement<select id="study-key-cycle">${options([['single','Single key'],['fourths','Circle of fourths · all 12 keys']],selection.keyCycle)}</select></label>`:''}
    ${selection.tier===4?`<label class="study-form-choice">Song / form<select id="study-form">${forms}</select></label><button type="button" class="practice-button" id="study-current-chart">Use current chart</button>`:''}
    <label>Position approach<select id="study-route">${options([['region','Fixed region'],['manual','Manual positions']],selection.route)}</select></label>
    ${manual?`<label>Set every position to<select id="study-position"><option value="">Choose a shape</option>${options(POSITIONS.map(p=>[p.numeral,p.numeral+' · '+p.shape+' shape']),'')}</select></label>`:`<label>Fretboard region<select id="study-region">${options(Object.entries(FRET_REGIONS).map(([id,r])=>[id,r.name]),selection.region)}</select></label>`}
@@ -72,9 +72,9 @@ export function installStudyPath(context:{locked:()=>boolean;fingerprint:()=>str
    const pair=studyPair(input.id==='study-mode'?input.value:current.mode,input.id==='study-chord'?input.value:current.chord,input.id==='study-mode'?'mode':'chord');
    if(plan.singleQuality)selection={...selection,...pair};else{selection.editContext=plan.editContext;(selection.harmonyEdits as Record<number,any>)[selection.card]=pair;}
   }else{
-   const fields:Record<string,string>={'study-root':'root','study-material':'material','study-bars':'bars','study-order':'order','study-route':'route','study-region':'region','study-turnaround':'turnaround','study-passes':'passes','study-card':'card','study-form':'form'};
+   const fields:Record<string,string>={'study-root':'root','study-material':'material','study-bars':'bars','study-order':'order','study-route':'route','study-region':'region','study-turnaround':'turnaround','study-key-cycle':'keyCycle','study-passes':'passes','study-card':'card','study-form':'form'};
    const field=fields[input.id];if(field){
-    if(['order','turnaround','form'].includes(field)){selection.harmonyEdits={};selection.manualPositions=[];selection.card=0;}
+    if(['order','turnaround','keyCycle','form'].includes(field)){selection.harmonyEdits={};selection.manualPositions=[];selection.card=0;}
     selection=normalizeStudyPath({...selection,[field]:input.value});
    }
    if(input.id==='study-coverage')selection={...selection,coverage:input.value==='all',manualPositions:[],harmonyEdits:{},card:0};
