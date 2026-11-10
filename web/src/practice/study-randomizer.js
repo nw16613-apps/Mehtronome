@@ -45,6 +45,6 @@ export function randomizeStudy(selection,plan,seed){
  }
  const previous=plan.positions||selection.manualPositions;
  const count=progression.steps.length*Math.min(selection.passes,Math.max(1,Math.floor(128/progression.steps.length)));
- return {...selection,root:key,randomizer:{...config,seed:Number(seed)>>>0},randomChart:{tier:selection.tier,beats,progression},harmonyEdits:{},editContext:'',card:0,
+ return {...selection,root:key,randomizer:{...config,seed:Number(seed)>>>0},randomChart:{tier:selection.tier,beats,progression},harmonyEdits:selection.tier===4?structuredClone(selection.harmonyEdits):{},editContext:selection.tier===4?'random:'+(Number(seed)>>>0):'',card:0,
   manualPositions:selection.route==='manual'&&previous?.length?Array.from({length:count},(_,i)=>previous[i%previous.length]):selection.manualPositions};
 }

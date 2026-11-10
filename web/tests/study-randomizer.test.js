@@ -40,3 +40,9 @@ test('automatic study boundaries stop before the next old-chart beat, independen
   assert.equal(events.filter(e=>e.type==='study-repeat').length,1);assert.deepEqual(beats.filter(b=>!b.counting).map(b=>b.musicalBeat),[0,1,2,3,4,5,6,7]);assert.equal(e.running,false);
  }
 });
+
+test('random-key changes retain user chord edits, including different edits in later passes',()=>{
+ const before=studyPathPlan({tier:4,form:'standard:all-the-things',passes:2,editContext:'standard:all-the-things',harmonyEdits:{0:{chord:'min7',mode:'dorian'},40:{chord:'dom7alt',mode:'altered'}}});
+ const after=studyPathPlan(randomizeStudy(before.selection,before,771));assert.notEqual(before.chart.key,after.chart.key);assert.deepEqual(after.chart.progression.steps,before.chart.progression.steps);assert.equal(after.chart.progression.standardMelody,'all-the-things');
+ const again=studyPathPlan(randomizeStudy(after.selection,after,882));assert.deepEqual(again.chart.progression.steps,before.chart.progression.steps);
+});
