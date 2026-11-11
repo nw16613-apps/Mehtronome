@@ -21,7 +21,8 @@ export const STUDY_MATERIALS=[
  ['digital1324','1–3–2–4','Scale sequences'],['cells','1–2–3–5','Scale sequences'],
  ['enclosures4','4-note enclosures','Arpeggio sequences'],['enclosures5','5-note enclosures','Arpeggio sequences'],
  ['arpgroups3','Arpeggio groups of three','Arpeggio sequences'],['arpgroups4','Arpeggio groups of four','Arpeggio sequences'],
- ['harmonized','Diatonic seventh arpeggios','Arpeggio sequences'],['alternating','Alternating diatonic arpeggios','Arpeggio sequences'],
+ ['chordtones','Arpeggios from chord tones','Arpeggio sequences'],['chordtonesalternating','Alternating arpeggios from chord tones','Arpeggio sequences'],
+ ['harmonized','Diatonic arpeggios','Arpeggio sequences'],['alternating','Alternating diatonic arpeggios','Arpeggio sequences'],
 ];
 export const STUDY_ROOT_ORDERS={fourths:'Circle of fourths',fifths:'Perfect fifths',minorThird:'Minor thirds · ♭3',majorThird:'Major thirds',whole:'Whole steps',chromatic:'Semitones',tritone:'Tritones',random:'Random · all roots'};
 export const STUDY_TURNAROUNDS={two:'ii–V',three:'ii–V–I',four:'vi–ii–V–I',...Object.fromEntries(Object.entries(PROGRESSIONS).filter(([id,p])=>p.kind==='jazz'&&id!=='jazzBlues'&&id!=='major251').map(([id,p])=>[id,p.name]))};

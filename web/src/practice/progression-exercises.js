@@ -1,3 +1,4 @@
+import {ARPEGGIO_PATTERN_STUDIES} from '../guitar/arpeggio-patterns.js';
 import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {scaleStartingState} from './scale-start.js';
 import {positionalProgressionGroups} from './positional-phrases.js';
@@ -15,14 +16,15 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const division=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
- const flowingCells=['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)&&stage!=='cell';
+ const patterned=ARPEGGIO_PATTERN_STUDIES.has(study)&&options.arpeggioPattern&&options.arpeggioPattern!=='straight';
+ const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned)&&(!patterned||options.arpeggioPattern!=='approachEach')&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
- const alternating=study==='alternating'||study==='chordtonesalternating'||study==='pentatonic'&&pattern.startsWith('alternating');
+ const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&pattern.startsWith('alternating');
  const approachEnds=[];let emittedCells=0,triadReference=60;
  const groups=harmonies.map((harmony,slot)=>{
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
@@ -34,7 +36,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -113,7 +115,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    lastRangeEdge=travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
    lastMidi=played.at(-1).midi;
    if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
-   if(cell.targetIndex!==undefined)targetIndices.push(start+cell.targetIndex);
+   for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
    if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=cell;}
    else{cellOffset=0;pendingCell=null;cellIndex++;emittedCells++;}

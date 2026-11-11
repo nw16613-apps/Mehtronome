@@ -1,8 +1,14 @@
+import {normalizeArpeggioPattern} from '../guitar/arpeggio-patterns.js';
 import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  view.stage='full';
+ view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
+ view.arpeggioClose=view.arpeggioClose!==false;
+ view.arpeggioRegister=['up','down','alternating'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
+ const oldEnclosures={enclosuresdouble:['enclosures4',['descending','down-up'].includes(view.motion)?[-2,-1,1,0]:[2,1,-1,0]],enclosuresfiveone:['enclosures5',[-1,2,1,-1,0]],enclosuresfivetwo:['enclosures5',[1,-2,-1,1,0]],enclosuresfivethree:['enclosures5',[-2,1,-2,-1,0]],enclosuresfivefour:['enclosures5',[2,-1,2,1,0]]};
+ if(oldEnclosures[view.study]){const [study,offsets]=oldEnclosures[view.study];view.study=study;view.enclosurePattern=Object.entries(ENCLOSURE_PATTERNS[study]).find(([,p])=>p.join(',')===offsets.join(','))?.[0]||'upper';}
  view.enclosureTarget=['all','0','1','2','3'].includes(view.enclosureTarget)?view.enclosureTarget:'all';
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';

@@ -11,7 +11,7 @@ import {progressionStudyPlan} from '../src/practice/progression-timing.js';
 import {singleChordExercisePlan} from '../src/practice/exercise-resolution.js';
 import {STUDY_MATERIALS} from '../src/practice/study-path.js';
 
-test('all eight patterns resolve to selected core tones with playable chromatic notes in every key',()=>{
+test('all bounded enclosure patterns resolve to selected core tones with playable chromatic notes in every key',()=>{
  for(let key=0;key<12;key++)for(const chord of ['min7','maj7','dom7','halfDim']){
   const harmony=harmonyAt({...DEFAULTS,key,chord,progression:false}),core=arpeggioHarmony(harmony),board=fretboardFor(harmony,'E');
   for(const [study,patterns]of Object.entries(ENCLOSURE_PATTERNS))for(const [enclosurePattern,offsets]of Object.entries(patterns))for(const motion of ['ascending','descending']){
@@ -63,4 +63,11 @@ test('extended backing chords target only structural tones; unavailable target l
  const triad=harmonyAt({...DEFAULTS,key:9,chord:'minor',mode:'dorian',progression:false});
  const groups=progressionExerciseGroups([triad],[4],fretboardFor(triad,'E'),{study:'enclosures5',enclosureTarget:'3'});
  assert.equal(groups[0].notes.length,0);assert.ok(groups[0].warning);
+});
+test('enclosure families exhaust the declared chromatic approach rules without duplicates',()=>{
+ for(const [study,total,repeated]of [['enclosures4',16,4],['enclosures5',52,40]]){
+  const patterns=Object.values(ENCLOSURE_PATTERNS[study]);assert.equal(patterns.length,total);assert.equal(new Set(patterns.map(p=>p.join(','))).size,total);
+  assert.equal(patterns.filter(p=>new Set(p.slice(0,-1)).size<p.length-1).length,repeated);
+  for(const p of patterns){const approaches=p.slice(0,-1);assert.equal(p.at(-1),0);assert.equal(Math.abs(p.at(-2)),1);assert.ok(approaches.some(n=>n<0)&&approaches.some(n=>n>0));assert.ok(approaches.every((n,i)=>[1,2,-1,-2].includes(n)&&(!i||n!==approaches[i-1])));}
+ }
 });

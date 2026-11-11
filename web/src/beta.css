@@ -94,3 +94,8 @@ html:root[data-palette][data-theme] :is(.guitar-progression-panel,.exercise-navi
 /* Keep the complete enclosure formula visible beside its target choice. */
 .exercise-definition label:has(#exercise-enclosure-pattern){grid-column:span 2}
 @media(max-width:650px){.exercise-definition label:has(#exercise-enclosure-pattern){grid-column:1/-1}}
+.exercise-definition label:has(#exercise-arpeggio-family){grid-column:1/-1}
+.exercise-definition label:has(#exercise-arpeggio-pattern){grid-column:span 2}
+@media(max-width:650px){.exercise-definition label:has(#exercise-arpeggio-pattern){grid-column:1/-1}}
+.exercise-definition label:has(#exercise-enclosure-family){grid-column:span 2}
+@media(max-width:650px){.exercise-definition label:has(#exercise-enclosure-family),.exercise-definition label:has(#exercise-enclosure-target){grid-column:1/-1}}

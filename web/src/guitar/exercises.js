@@ -1,3 +1,4 @@
+import {ARPEGGIO_PATTERN_STUDIES,patternedArpeggios} from './arpeggio-patterns.js';
 import {notationRest} from '../practice/notation-rest.js';
 import {ENCLOSURE_PATTERNS,isEnclosureStudy} from './enclosures.js';
 import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
@@ -405,6 +406,10 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='upperstructure')study='harmonized';
   if(ARPEGGIO_STUDIES.has(study)||study.startsWith('enclosures'))harmony=arpeggioHarmony(harmony);
   const size=MATERIAL_SIZES[material] || 4;
+  if(ARPEGGIO_PATTERN_STUDIES.has(study)&&context.arpeggioPattern&&context.arpeggioPattern!=='straight'){
+    const base=study.startsWith('chordtones')?chordToneStacks(board,harmony,size,'ascending'):cagedProgressionExercise(board,harmony,material,'ascending');
+    return patternedArpeggios(board,base,context.arpeggioPattern,{motion,register:context.arpeggioRegister,alternate:study==='alternating'||study==='chordtonesalternating',anchorMidi:context.anchorMidi,closeTriad:context.arpeggioClose});
+  }
   if(study==='positionalscale')return scalePatternExercise(board,harmony,motion,[0],'scale');
   if(study==='cells')return scalePatternExercise(board,harmony,motion,[0,1,2,4],'1–2–3–5');
   if(study==='thirds')return scalePatternExercise(board,harmony,motion,[0,2],'3rds');

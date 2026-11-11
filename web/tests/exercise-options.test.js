@@ -1,3 +1,4 @@
+import {ENCLOSURE_PATTERNS} from '../src/guitar/enclosures.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeExerciseOptions,exerciseMenuOptions,exerciseCollectionLabels} from '../src/practice/exercise-options.js';
@@ -37,4 +38,9 @@ test('saved triplet phrase formulas retire without changing explicit Pattern sta
 
 test('retired musical phrasing favourites restore to positional arpeggios',()=>{
  for(const study of ['motifspace','changetargets','questionanswer']){const view=normalizeExerciseOptions({study,motion:'descending',rhythm:'triplets'});assert.equal(view.study,'positional');assert.equal(view.motion,'descending');assert.equal(view.rhythm,'triplets');}
+});
+test('saved four- and five-note enclosure exercises migrate to the same exact order in grouped menus',()=>{
+ for(const [study,motion,expected]of [['enclosuresdouble','ascending',[2,1,-1,0]],['enclosuresdouble','descending',[-2,-1,1,0]],['enclosuresfiveone','ascending',[-1,2,1,-1,0]],['enclosuresfivetwo','ascending',[1,-2,-1,1,0]],['enclosuresfivethree','ascending',[-2,1,-2,-1,0]],['enclosuresfivefour','ascending',[2,-1,2,1,0]]]){
+  const view=normalizeExerciseOptions({study,motion});assert.ok(['enclosures4','enclosures5'].includes(view.study));assert.deepEqual(ENCLOSURE_PATTERNS[view.study][view.enclosurePattern],expected);
+ }
 });
