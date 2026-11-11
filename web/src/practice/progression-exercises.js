@@ -19,6 +19,9 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const patterned=ARPEGGIO_PATTERN_STUDIES.has(study)&&options.arpeggioPattern&&options.arpeggioPattern!=='straight';
  const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned)&&(!patterned||options.arpeggioPattern!=='approachEach')&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
+ // Fixed-order cells travel by their root/target. Their last/highest pitch
+ // belongs to the pattern, not to the cursor used to select the next cell.
+ const anchoredTraversal=patterned||isEnclosureStudy(study);
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
@@ -112,7 +115,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    // Opposite legs anchor different ends of a cell. At a turn, compare
    // against the outgoing extent, not the previous leg's starting anchor.
    // Use the structural extent so an alternating stroke cannot move the turn.
-   lastRangeEdge=travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
+   lastRangeEdge=anchoredTraversal?lastAnchor:travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
    lastMidi=played.at(-1).midi;
    if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
    for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
