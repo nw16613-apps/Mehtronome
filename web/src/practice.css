@@ -286,7 +286,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-notation .note-head { fill:#17201d; }
 .exercise-notation .note-beam { stroke:#17201d; stroke-width:5.5; stroke-linecap:square; }
 .exercise-notation .note-beam.secondary { stroke-width:4; }
-.exercise-notation .notation-rest { fill:#17201d; font-family:"Bravura","Noto Music",serif; font-size:22px; text-anchor:middle; }
+.exercise-notation .notation-rest { fill:#17201d; stroke:none; }
 .exercise-notation .tuplet-number { fill:#17201d; font:700 9px Georgia,serif; text-anchor:middle; }
 .exercise-notation .treble-clef { fill:#17201d; font:54px Georgia,serif; }
 .exercise-notation .time-signature { fill:#17201d; font:700 17px Georgia,serif; }

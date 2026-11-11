@@ -1,3 +1,4 @@
+import {notationRest} from './notation-rest.js';
 import {staffY,notationAccidental} from './notation-pitch.js';
 import {chordSvg} from './chord-symbol.js';
 import {notationChordDiagram,notationDiagramKey} from './notation-chord-diagram.js';
@@ -47,8 +48,7 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
     const available=Math.min(end,event?event.start+event.duration:next?.start??end)-at;
     const duration=durationPart(available,at,plan.division),x=left+18+(at-start)*unit;
     if(!event){
-     const rest=duration>=4?'𝄻':duration>=2?'𝄼':duration>=1?'𝄽':duration>=.3?'𝄾':'𝄿';
-     svg+=`<text class="notation-rest" data-rest-beats="${duration}" x="${x}" y="83">${rest}</text>`;
+     svg+=notationRest(x,duration);
      if(duration===3)svg+=`<circle class="duration-dot" cx="${x+12}" cy="78" r="2"/>`;
     }else{
      const note=event.note,y=staffY(note),tabY=150+(5-note.string)*18;

@@ -1,3 +1,4 @@
+import {embellishComping} from './comping-embellishments.js';
 import {compingVocabulary,compingGesture,playableCompingGrip} from './comping-vocabulary.js';
 import {buildStudyPerformance,articulateStudyPerformance} from './study-performance.js';
 import {prepareSessionPerformance} from './session-performance.js';
@@ -212,6 +213,7 @@ export function composeProgression(base,settings,def,targets,clip){
  developCompingRhythm(score,targets,profile);
  planMelody(score,targets,null,clip);planBass(score,targets,null,clip);planChords(score,targets,profile,null,clip);
  articulateStudyPerformance(score,targets,clip);
+ embellishComping(score,targets,{protectMelody:Boolean(settings.standardMelody||settings.customProgression?.standardMelody)});
  const energy=[.87,1,.8,.94];
  for(const track of ['sequence','bass','comping','drums'])for(const events of score[track])for(const event of events)event.velocity*=energy[event.chorus];
  score.choruses=CHORUS_ROLES.map((role,index)=>({index,role,start:index*score.developmentBeats,end:(index+1)*score.developmentBeats}));

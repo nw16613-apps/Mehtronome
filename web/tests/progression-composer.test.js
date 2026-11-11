@@ -1,3 +1,4 @@
+import {validCompingDeparture} from '../src/audio/comping-embellishments.js';
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {Engine,DEFAULTS} from '../src/audio/engine.js';import {referencePlan,referenceBasePlan,referenceChart,referencePlanKey} from '../src/audio/reference-performances.js';
 import {createReferencePreparation} from '../src/audio/reference-plan-preparation.js';import {normalizeCustomProgression} from '../src/practice/custom-progression.js';
@@ -15,6 +16,7 @@ test('all twenty styles develop pitched parts over four distinct passes, includi
   for(const track of ['sequence','comping','bass'])for(let grid=0;grid<score[track].length;grid++)for(const e of score[track][grid]){
    assert.ok(e.duration>0&&e.velocity>0&&e.velocity<1,id+' duration/dynamics');const h=harmonyAt(s,progressionPositionAtBeat(s,grid/12).step),allowed=[...h.chordPcs,...h.scalePcs];
    if(track==='bass'&&(e.approach||e.anticipation))continue;
+   if(track==='comping'&&e.harmonicTransition){assert.ok(validCompingDeparture(score,e,grid),id+' resolves temporary harmony');continue;}
    for(const midi of e.notes||[e.midi])assert.ok(Number.isFinite(midi)&&allowed.includes(midi%12),id+' '+track+' pitch '+midi+' at '+grid/12);
   }
  }

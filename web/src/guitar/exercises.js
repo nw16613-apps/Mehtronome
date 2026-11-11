@@ -1,3 +1,4 @@
+import {notationRest} from '../practice/notation-rest.js';
 import {ENCLOSURE_PATTERNS,isEnclosureStudy} from './enclosures.js';
 import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
@@ -523,7 +524,7 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
   if(finalRests){
     for(let rest=0;rest<finalRests;rest++){
       const x=xFor(notes.length+rest);
-      svg+=`<text class="notation-rest" x="${x}" y="87">𝄾</text>`;
+      svg+=notationRest(x,1/perBeat);
     }
     const x=xFor(notes.length+finalRests-1)+step/2;
     svg+=`<line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="61" y2="101"/><line class="bar-line final" data-bar-end="${totalNoteCount+finalRests}" x1="${x}" x2="${x}" y1="150" y2="240"/>`;

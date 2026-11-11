@@ -22,7 +22,8 @@ export function compingGesture(style,bar,stroke=0){
   jazz.has(style)?['rootless','shell','quartal','rootless','pentatonic','pentatonic','triadPair','triadPair']:
   style==='blues'?['rootless','shell','pentatonic','rootless','shell','pentatonic','rootless','shell']:
   ['rootless','rootless','shell','rootless','rootless','pentatonic','rootless','shell'];
- const family=style==='legatoFusion'?['rootless','quartal','quartal','pentatonic','pentatonic','rootless','triadPair','triadPair'][phase]:families[phase];
+ const later=((bar%16)+16)%16>=8;
+ const family=later&&[0,3,6].includes(phase)&&(modern.has(style)||jazz.has(style))?'upperStructure':style==='legatoFusion'?['rootless','quartal','quartal','pentatonic','pentatonic','rootless','triadPair','triadPair'][phase]:families[phase];
  return {family,phase,side:stroke%2,contour:[0,2,5,2,-4,-1,4,0][phase]};
 }
 // Bounded harmonic vocabulary: every colour comes from the actual scale and
@@ -68,6 +69,7 @@ export function compingVocabulary(h,{guitar=false}={}){
  for(let root=0;root<12;root++)for(const [quality,formula]of [['major',[0,4,7]],['minor',[0,3,7]]]){
   const tones=formula.map(n=>pc(root+n));if(tones.every(n=>allowed.includes(n)))triads.push({root,quality,tones});
  }
+ for(const triad of triads)anchored(triad.tones,'upperStructure',`${triad.root}:${triad.quality}`);
  for(let a=0;a<triads.length;a++)for(let b=a+1;b<triads.length;b++){
   const x=triads[a],y=triads[b];if(x.tones.some(n=>y.tones.includes(n)))continue;
   const source=`${x.root}:${x.quality}/${y.root}:${y.quality}`,before=result.length;

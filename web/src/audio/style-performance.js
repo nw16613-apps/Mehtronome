@@ -77,7 +77,7 @@ export function articulateStylePerformance(score,targets,clip){
   const h=at(beat),ints=CHORDS[h.chord].intervals,seventh=ints.find(n=>n>=9&&n<=11);
   const guides=new Set([third(h),...(seventh===undefined?[]:[pc(h.root+seventh)])]);
   const notes=[...e.notes];
-  if(score.pianoComping||['quartal','pentatonic','triadPair','shell'].includes(e.compingTechnique)){
+  if(score.pianoComping||['upperStructure','quartal','pentatonic','triadPair','shell'].includes(e.compingTechnique)){
    // The pianist's full voice-led colour is already chosen upstream. Do not
    // strip it back to the same guide-tone dyad after every selection.
    e.notes=notes;

@@ -11,8 +11,18 @@ Normal automatic backing now draws on a chord/mode-aware vocabulary in addition 
 
 Jazz/fusion and neo-soul use the wider vocabulary more frequently; traditional jazz mixes it with shells and conventional rootless chords. Blues favours compact shells and pentatonic colour. Other styles use lighter colour, while hard-rock power riffs bypass superimposition. A technique need not occur in every chart: short forms, rests, chord quality, scale and instrument range can rule it out.
 
-All candidates stay in the chart's chord/scale collection, avoid the major-third/natural-eleventh clash, and preserve structural altered fifths. Triad-only charts fall back to their existing identity. Unsupported techniques fall back to ordinary chord voicings. Advanced guitar candidates must fit distinct standard-tuning strings with frets 1–20 and a maximum four-fret stretch. Articulation preserves the selected advanced structure rather than stripping it into a dyad or respreading it into an unplayable grip.
+The base vocabulary stays in the chart's chord/scale collection, avoid the major-third/natural-eleventh clash, and preserve structural altered fifths. Triad-only charts fall back to their existing identity. Unsupported techniques fall back to ordinary chord voicings. Advanced guitar candidates must fit distinct standard-tuning strings with frets 1–20 and a maximum four-fret stretch. Articulation preserves the selected advanced structure rather than stripping it into a dyad or respreading it into an unplayable grip.
 
 Verification includes all-key harmonic/physical checks, intact quartal/pentatonic/triad-pair structures after articulation and ensemble coordination, actual reference progressions, static vamps, deterministic development, recorded mixes for all 20 styles, and browser verification through the normal style/Play controls.
 
 Validation result: 27 targeted model/audio checks and three browser workflows passed, including recorded mix headroom for all 20 styles. The three older tests in `sparse-comping.test.js` fail identically on the unchanged pre-update commit (checked from an isolated archive of `4138e29`); they assert earlier fallback-pattern behaviour and are not introduced by this change.
+
+## Additional harmonic development
+
+Upper-structure candidates retain a complete major/minor triad over a guide-tone anchor within the existing four-voice limit. Inner-voice gestures move one internal colour by one or two semitones, retaining both outer voices and structural defining tones. These build on the existing quartal/pentatonic/triad-pair phrases rather than replacing them.
+
+Suspensions replace a chord's third with a scale-compatible fourth and resolve into an existing written voicing. Chromatic approach chords shift the destination grip by one semitone. Secondary dominants prepare real upcoming chords a fifth below; tritone substitutions replace a brief final portion of an existing V7 preparation with the dominant a semitone above the destination. They do not change the user's chart, bass line or scale guide.
+
+Preparations last half a beat, have an explicit audible resolution, and do not extend past it. Chromatic/dominant gestures are spaced at least four bars apart, and never invent harmonic destinations for a static vamp. Existing attacks are retained; a gesture is skipped if there is no clear attack window or playable grip. Sustains finish at a preparation deliberately, avoiding overlapping incompatible harmony. Fixed written standard melodies suppress chromatic approaches and substitute dominants. Groove/power styles retain their identity.
+
+Current verification: 62 focused tests pass, including actual resolution links, all-key upper structures, preserved guitar grips/outer voices, all 20 recorded mixes and rest rendering.
