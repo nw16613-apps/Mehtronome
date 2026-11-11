@@ -88,3 +88,9 @@ Cell advance selects every first, second or third valid anchor in each travel le
 **Arpeggio patterns → Root sequence** applies the same catalogue to whole arpeggios. Root steps refer to the selected source: all scale roots, chord-tone roots, or octaves of the selected chord. Every root in a motif must have a complete realization of the chosen note order/register/preparation. Otherwise the motif is unavailable in that position, rather than compressed or reharmonized. Existing empty-material warnings remain visible. Chromatically prepared motifs retain the complete-cell slot policy.
 
 Legacy core arpeggio groups of three/four restore into Arpeggio sequences. Favourites retain sequence, order, advance and root-sequence settings; unchanged straight defaults remain compatible. Tests cover catalogue completeness, physical pitches and theoretical steps across modes/keys/positions, cell phase, root motifs, preparation targets, legacy saves, actual browser playback and mobile menus.
+
+## Cell brackets in the duration-aware score
+
+The current notation/TAB renderer retains the generator's cell lengths, sizes and carried offsets. Brackets mark each logical cell independently of beat beams and bar lines. A cell crossing a bar has one bracket; one crossing a score-system boundary has open continuation ends and keeps its identifier. Single-chord flattening preserves the original cell metadata. Resolution notes and one-note traversal steps do not receive misleading cell brackets. Cell details are available in bracket accessibility labels/titles; diagnostic count captions remain omitted.
+
+Checks cover scale/core-arpeggio/whole-arpeggio cells, enclosure rests, single-chord flattening, repeated short harmonic cycles, line continuations and browser display/playback.

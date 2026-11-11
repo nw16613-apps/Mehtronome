@@ -1,3 +1,4 @@
+import {notationCellBrackets} from './notation-cells.js';
 import {notationRest} from './notation-rest.js';
 import {staffY,notationAccidental} from './notation-pitch.js';
 import {chordSvg} from './chord-symbol.js';
@@ -92,6 +93,8 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
    }
    const right=left+barWidth-8;svg+=`<line class="bar-line" data-bar="${bar+1}" x1="${right}" x2="${right}" y1="61" y2="101"/><line class="bar-line" x1="${right}" x2="${right}" y1="150" y2="240"/>`;
   }
+  const bracketX=beat=>{const bar=Math.floor((beat+1e-7)/plan.beats),within=beat-bar*plan.beats;return 108+(bar-first)*barWidth+within*((barWidth-35)/plan.beats);};
+  svg+=notationCellBrackets(plan.events,first*plan.beats,(first+count)*plan.beats,bracketX,250,Math.min(7,(barWidth-35)/plan.beats/plan.division*.32));
   systems.push(svg+'</g><g class="notation-chord-band">'+diagramBand+'</g></svg>');
  }
  return systems.join('');
