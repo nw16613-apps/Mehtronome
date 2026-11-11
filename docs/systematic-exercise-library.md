@@ -1,42 +1,64 @@
 # Systematic exercise library
 
-The exercise library uses **source → material → pattern family → note order**, with register and fretboard travel handled separately. The same families apply to diatonic arpeggios and the diatonic arpeggios rooted on the backing chord's core tones, including their alternating variants. Chord-root filtering and material size remain independent.
+The library separates **material/source**, **note order**, **routine**, **register**, **travel** and **rhythm**. A familiar name may identify an order; it does not create a second copy of that order. Existing generators and saved identifiers remain readable for compatibility.
 
-## Arpeggio families
+## Library entries
 
-- Straight (existing behaviour is the default).
-- Permutations: each tone once. Triads have **6**, seventh arpeggios **24**, grouped by starting tone. Triad cells optionally close on their starting tone an octave away, producing the requested four-note cells without changing the permutation count.
-- Repeat one tone: every tone appears, one appears twice, and no consecutive tones are identical. There are **18** four-note triad cells and **144** five-note seventh-arpeggio cells, grouped by repeated tone. Closed triad cells overlap with this family; family counts are not disjoint totals.
-- Inversion cycle.
-- Broken pairs: 1–3–5–3 / 1–3–7–5.
-- Wide skips: 1–5–3 / 1–5–3–7.
-- Outside–inside: 1–5–3 / 1–7–3–5.
-- Return to starting tone: 1–3–1–5–1 / 1–3–1–5–1–7–1.
-- Up and back: 1–3–5–3 / 1–3–5–7–5–3.
-- Chromatic approach to each tone: semitone below, then target.
-- Connected arpeggios: nearest available entry into the next arpeggio.
+- **Continuous traversal**: choose scale notes or core chord tones. These retain their established positional traversal engines and pattern-start controls.
+- **Scale sequences**: interval pairs, overlapping groups or digital patterns, then the particular order. The underlying IDs remain in saved options and progress tracking.
+- **Arpeggio patterns**: choose every scale-degree root, backing chord-tone roots, or the selected chord alone; then triads/seventh chords, family and order.
+- **Core chord tones · groups of three** remains distinct. A three-note window through four core tones is not necessarily a triad, so it is not merged into the triad permutation catalogue.
+- **Enclosures**: choose three/four/five notes, then the applicable neighbour/approach family and order.
+- Other chromatic and superimposition studies retain their different musical rules.
 
-The shared process naturally produces some identical short triad orders in differently defined families. All numbers describe each individual arpeggio's own tones; actual thirds/fifths/sevenths retain the selected collection's alterations. Notes are never replaced to force a pattern into the position.
+Study templates still load the relevant recipe in this unified editor. Selecting a template resets its recipe defaults before applying its source/routine.
 
-**Cell register** places remaining tones within the octave above or below the entry, or alternates that placement. **Travel through position** orders the arpeggio roots from low to high or high to low. Changing travel never reverses a selected permutation. Closed triad permutations end an octave from the entry; other repeated tones retain their window pitch. Existing alternating exercise variants alternate cell placement.
+## Canonical arpeggio orders
 
-Patterns adapt to the incoming harmony and use the existing fixed-region/manual position path. Longer cells can flow across slots in the existing progression sequencer; chromatic-approach cells retain complete approach/target pairs within a harmony. Cells with unavailable pitches are omitted, and the existing no-fit warning/rest policy applies. Pattern, register and triad closure persist in saved exercises and journal entries. Older snapshots default to Straight.
+- Each tone once: **6 triad permutations**, **24 seventh permutations**, grouped by starting tone. Triads can optionally close an octave away on their starting tone.
+- Repeat one tone: every tone appears, one appears twice, no adjacent repeated tones. **18** four-note triad orders and **144** five-note seventh orders, grouped by repeated tone.
+- Starting-tone pedal: 1–3–1–5–1 / 1–3–1–5–1–7–1.
+- Up and back for sevenths: 1–3–5–7–5–3.
 
-## Enclosure families
+Named duplicates migrate to the numeric order. Triad Broken pairs and Up/back become 1–3–5–3; triad Wide skips and Outside–inside become the open 1–5–3 permutation. Seventh Broken pairs, Wide skips and Outside–inside become 1–3–7–5, 1–5–3–7 and 1–7–3–5. Straight becomes the corresponding ascending/descending permutation, without adding a triad closure. Familiar names remain labels on those orders.
 
-The generated chromatic family is deliberately bounded: approaches are ±1 or ±2 semitones, must use both sides, cannot repeat immediately, and must finish a semitone from the target. Counts include the target:
+## Independent routines and preparation
 
-| Cell size | Unique approaches | Repeated approaches | Total |
+**Order routine** repeats the selected order, reverses alternate cells, cycles entry tones, or chooses the nearest available entry into the next arpeggio. Inversion/nearest-entry routines rotate the chosen order rather than introducing new note-order vocabulary. The nearest-entry choice uses the last audible note, including across bars and turns.
+
+**Chromatic preparation** is separate: none, semitone below, semitone above, or following cell direction. It works on the chosen order and preserves complete approach/target pairs. The older separate Approach every arpeggio tone entry migrates to this configuration.
+
+**Cell register** places the other tones within the octave above/below the entry or alternates that placement. **Travel through position** orders the roots. A fixed permutation is not silently reversed when root travel turns. Optional triad closures and other repeated notes required by the selected cell remain written.
+
+The selected-chord source with entry-tone cycling replaces the overlapping Selected-chord inversions / Arpeggio groups of four entries. Old alternating exercise entries migrate into an order routine or alternating register, according to their previous behaviour.
+
+## Boundary rules
+
+Continuous scale/core traversals retain their unrepeated turning endpoints. New fixed cells use their structural root or enclosure target to select the next cell, rather than using an unrelated high/low note within the pattern. Multi-variation routines also track the entry-tone variant, so a turn neither replays the completed boundary cell nor skips the remaining variations of that root.
+
+Repeated unchanged bars continue their cursor. Changed harmony/position follows the existing family-specific entry policy; Shape default for continuous chord-tone traversal re-enters at the directional boundary. Missing pitches never cause substitutions or compressed patterns. Chromatic approach pairs and enclosure cells remain complete within their harmony slots.
+
+## Enclosures
+
+The bounded chromatic family uses ±1/±2-semitone approaches, both sides of the target, no adjacent duplicates, and a final semitone approach. Counts include the target:
+
+| Size | Unique approaches | Repeated approaches | Total |
 | --- | ---: | ---: | ---: |
 | 4 notes | 12 | 4 | 16 |
 | 5 notes | 12 | 40 | 52 |
 
-Menus separate unique/repeated families, then group orders by final approach above/below. Printed offsets are semitones relative to the target. These counts exhaust this rule set, not every possible enclosure pitch/rhythm/register combination. Diatonic-neighbour three-note enclosures remain separate exercises. Earlier four/five-note saved variants migrate to the exact same pitch order in the new menus, including descending double enclosures.
+These counts exhaust the stated family, not all pitches, rhythms or registers. Three-note diatonic/chromatic-neighbour rules remain available under the same Enclosures entry. Legacy four/five-note recipes migrate to the same exact approach order.
 
-## Future vocabulary
+## Favourites
 
-Licks and transcriptions are a future, separate category for concrete musical vocabulary, organised by source, harmonic setting and musical device. They are not generated or imported by this update.
+The explicit **☆ Favourite / ★ Favourited** toggle uses the existing `mehtronome-exercise-favourites` store. The Favourites selector recalls choices on the current chart. Clicking an active star removes it. Reloads preserve the list. Existing saved-options records migrate and aliases deduplicate by canonical recipe.
+
+Musical differences such as source, order, closure, register, routine, preparation, direction and rhythm remain separate favourites. Page zoom/display and tempo do not create duplicate bookmarks. Unused fingering values are ignored for CAGED traversals. No existing saves are deleted by a read; a toggle writes the migrated list.
 
 ## Verification
 
-73 focused checks cover catalogue counts/uniqueness, every triad/seventh order in every key and both source families, altered tones and actual string/fret pitches, register/travel, all shared general families, targets, progression timing, snapshots/journal and legacy enclosure migration. Four browser workflows cover the grouped menus, material changes, saved choices, playback and mobile presentation. Production build passes.
+100 focused checks cover catalogues, physical pitch validity, source/routine/preparation combinations, upper/lower turns across CAGED regions, inversion cursors, nearest-entry decisions, old-save migration, deduplication and favourites. Seven browser workflows cover the unified menus, actual exercise playback, stars, reloads, old saves, mobile layout and vector rests. Production build passes.
+
+A stale nine-note phase assertion was updated to the already established contract: unchanged bars continue phase, while a changed harmony with Shape default re-enters its directional boundary. The positional traversal implementation itself was not changed.
+
+Licks/transcriptions and other tailored musical vocabulary remain a future category, separate from this rule-based library.

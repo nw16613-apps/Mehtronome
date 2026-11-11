@@ -1,6 +1,6 @@
 # Enclosure studies
 
-Study → Arpeggio sequences offers **4-note enclosures** and **5-note enclosures** in every tier, using the existing fixed-region or manual position route. They also appear under Exercises → Chromatic language. Counts include the final target. Pattern offsets are semitones relative to that target, with `0` displayed as “target”.
+Study → Arpeggio sequences offers **4-note enclosures** and **5-note enclosures** in every tier, using the existing fixed-region or manual position route. They also appear under Exercises → Enclosures; Cell size chooses three, four or five notes. Counts include the final target. Pattern offsets are semitones relative to that target, with `0` displayed as “target”.
 
 **Pattern family → Approach order** separates unique and repeated approaches and groups variants by their final approach above/below. The explicit rule set uses ±1/±2 semitones, both sides of the target, no adjacent duplicates, and a final semitone approach. It contains 16 four-note cells (12 unique + 4 repeated) and 52 five-note cells (12 unique + 40 repeated). Every permitted order under this rule is included. Other pitch sets, diatonic neighbours, repetitions and rhythms define other families, so there is no universal enclosure count.
 

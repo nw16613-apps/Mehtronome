@@ -99,3 +99,8 @@ html:root[data-palette][data-theme] :is(.guitar-progression-panel,.exercise-navi
 @media(max-width:650px){.exercise-definition label:has(#exercise-arpeggio-pattern){grid-column:1/-1}}
 .exercise-definition label:has(#exercise-enclosure-family){grid-column:span 2}
 @media(max-width:650px){.exercise-definition label:has(#exercise-enclosure-family),.exercise-definition label:has(#exercise-enclosure-target){grid-column:1/-1}}
+.exercise-definition label:has(#exercise-arpeggio-routine),.exercise-definition label:has(#exercise-arpeggio-approach),.exercise-definition label:has(#exercise-arpeggio-register),.exercise-definition label:has(#exercise-enclosure-neighbours){grid-column:span 2}
+.exercise-saved-controls #exercise-favourite[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+@media(max-width:650px){.exercise-definition label:has(#exercise-arpeggio-routine),.exercise-definition label:has(#exercise-arpeggio-approach),.exercise-definition label:has(#exercise-arpeggio-register),.exercise-definition label:has(#exercise-enclosure-neighbours){grid-column:1/-1}}
+.exercise-definition .exercise-controls label.check{display:flex;align-items:center;gap:8px;grid-column:1/-1}
+.exercise-definition .exercise-controls label.check input{flex:none;margin:0;width:auto}

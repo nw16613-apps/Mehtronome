@@ -66,11 +66,11 @@ test('alternating strokes retain their phase when the nearest new-scale cell has
  }
 });
 
-test('positional arpeggios preserve nine-note phrase phase through changing chord roots',()=>{
- const hs=[9,11,2,4].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
+test('positional arpeggios continue through unchanged bars and re-enter the directional boundary on changed harmony',()=>{
+ const hs=[9,9,11,11].map(key=>harmonyAt({key,mode:'dorian',chord:'min7'}));
  for(const motion of ['ascending','descending']){
   const gs=progressionExerciseGroups(hs,hs.map(()=>2),fretboardFor(hs[0],'C'),{study:'positional',motion,positionPath:pathFor(hs,['C'])});
-  assert.deepEqual(gs.map(g=>g.phrasePhase),[0,4,8,12]);
+  assert.deepEqual(gs.map(g=>g.phrasePhase),[0,4,0,4]);
   for(const g of gs){const span=g.positionalSpan.map(n=>n.midi);assert.equal(span.length,9);for(let i=0;i<g.notes.length;i++){const phase=(g.phrasePhase+i)%16,index=phase<9?phase:16-phase;assert.equal(g.notes[i].midi,span[motion==='ascending'?index:8-index]);}}
  }
 });

@@ -5,7 +5,7 @@ import {normalizeExerciseOptions,exerciseMenuOptions,exerciseCollectionLabels} f
 test('legacy favourites retain their starting direction and map removed studies to available exercises',()=>{
  for(const study of ['grip','guidetones','connections','harmonized','alternating'])for(const motion of ['ascending','descending','up-down','down-up']){
   const v=normalizeExerciseOptions({study,motion,material:'triad'});
-  assert.equal(v.study,study==='grip'?'positional':['guidetones','connections'].includes(study)?'harmonized':study);
+  assert.equal(v.study,study==='grip'?'positional':['guidetones','connections','alternating'].includes(study)?'harmonized':study);
   assert.equal(v.motion,['descending','down-up'].includes(motion)?'descending':'ascending');
   assert.equal(v.material,'triad');
  }

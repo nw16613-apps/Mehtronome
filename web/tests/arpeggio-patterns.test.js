@@ -32,7 +32,7 @@ test('triad closure is optional; material changes preserve family and default op
  const h=harmonyAt({...DEFAULTS,key:9,chord:'min7',mode:'dorian',progression:false}),board=fretboardFor(h,'E');
  for(const close of [true,false]){const cells=cagedStudy(board,h,'harmonized','triad','descending',{arpeggioPattern:'perm3_513',arpeggioClose:close,arpeggioRegister:'down'});assert.ok(cells.length);assert.ok(cells.every(g=>g.notes.length===(close?4:3)));if(close)assert.ok(cells.every(g=>g.notes.at(-1).midi-g.notes[0].midi===-12));}
  assert.equal(normalizeArpeggioPattern('perm3_513','seventh'),'perm4_1357');assert.equal(normalizeArpeggioPattern('cell4_13571','triad'),'cell3_1315');
- assert.equal(normalizeExerciseOptions({study:'harmonized',material:'seventh'}).arpeggioPattern,'straight');
+ assert.equal(normalizeExerciseOptions({study:'harmonized',material:'seventh'}).arpeggioPattern,'perm4_1357');
 });
 test('progression patterns remain duration-aligned and complete chromatic pairs do not cross harmonic boundaries',()=>{
  const harmonies=[0,1,2].map(step=>harmonyAt({...DEFAULTS,progression:true,template:'major251essential'},step)),anchor=fretboardFor(harmonies[0],'E');

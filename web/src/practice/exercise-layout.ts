@@ -26,8 +26,8 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  material.after(playback);playback.after(reference);
  const footer=find('.exercise-footer');footer.querySelector('p')?.remove();footer.prepend(Object.assign(document.createElement('h4'),{textContent:'Export notation'}));reference.after(footer);
  const notice=find('.exercise-notice');if(notice)definition.append(notice);
- const saved=document.createElement('div');saved.className='exercise-saved-controls';label('exercise-favourites').firstChild!.textContent='Saved exercise options ';saved.append(label('exercise-favourites'),find('#exercise-favourite'));definition.querySelector('h4')!.after(saved);
- const savedHelp=document.createElement('p');savedHelp.className='practice-help';savedHelp.textContent='Options apply to the current chart and positions.';saved.after(savedHelp);
+ const saved=document.createElement('div');saved.className='exercise-saved-controls';label('exercise-favourites').firstChild!.textContent='Favourites ';saved.append(label('exercise-favourites'),find('#exercise-favourite'));definition.querySelector('h4')!.after(saved);
+ const savedHelp=document.createElement('p');savedHelp.className='practice-help';savedHelp.textContent='Favourites use the current chart and positions.';saved.after(savedHelp);
  const key=document.createElement('p');key.className='exercise-active-key';key.textContent='Ring: chord voicing · dashed ring: resolution target · square: current note';diagram.querySelector('#exercise-map-body')!.append(key);
  // Back/forward browse the same exercise menu, so keep them beside its choices.
  const browse=document.createElement('div');browse.className='exercise-browse';browse.append(find('#exercise-history-back'),find('#exercise-history-forward'));definition.append(browse);

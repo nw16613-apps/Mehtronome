@@ -18,7 +18,7 @@ const pc=n=>(n%12+12)%12;
  * register places the other tones within the octave above the entry note;
  * a downward register places them below. Only closed triad permutations
  * repeat their entry tone, an octave away. Missing pitches invalidate a cell. */
-export function patternedArpeggios(board,groups,pattern,{motion='ascending',register='up',alternate=false,anchorMidi=60,closeTriad=true}={}){
+export function patternedArpeggios(board,groups,pattern,{motion='ascending',register='up',alternate=false,anchorMidi=60,closeTriad=true,routine='repeat',approach='none',requireAlternate=false,deferConnection=false}={}){
  const down=motion==='descending'||motion==='down-up',ordered=down?groups.toReversed():groups;
  const byMidi=new Map(board.notes.map(n=>[n.midi,n])),result=[];let previous=anchorMidi;
  const atMidi=(midi,name,chromatic=false)=>{
@@ -31,12 +31,13 @@ export function patternedArpeggios(board,groups,pattern,{motion='ascending',regi
   const base=group.notes,size=base.length;if(![3,4].includes(size))continue;
   const permutation=pattern.match(/^(?:perm|cell)([34])_([1357]+)$/);
   if(permutation&&Number(permutation[1])!==size)continue;
-  const initial=register==='down'?-1:1,leg=(register==='alternating'||alternate)?initial*(groupIndex%2?-1:1):initial;
+  const initial=['down','alternatingDown'].includes(register)?-1:1,leg=(register==='alternating'||register==='alternatingDown'||alternate)?initial*(groupIndex%2?-1:1):initial;
   const orders=pattern==='inversionCycle'||pattern==='connected'?Array.from({length:size},(_,i)=>Array.from({length:size},(_,j)=>(i+j)%size)):
    permutation?[[...permutation[2]].map(n=>[1,3,5,7].indexOf(Number(n)))]:
    [({straight:Array.from({length:size},(_,i)=>i),brokenPairs:size===3?[0,1,2,1]:[0,1,3,2],wideSkips:size===3?[0,2,1]:[0,2,1,3],outsideInside:size===3?[0,2,1]:[0,3,1,2],returnStart:size===3?[0,1,0,2,0]:[0,1,0,2,0,3,0],upBack:size===3?[0,1,2,1]:[0,1,2,3,2,1],approachEach:Array.from({length:size},(_,i)=>i)})[pattern]||Array.from({length:size},(_,i)=>i)];
+  const rootOrder=orders[0],actualOrders=['inversions','connected'].includes(routine)?Array.from({length:size},(_,i)=>rootOrder.map(n=>(n+i)%size)):orders;
   const cells=[];
-  for(const order of orders){
+  for(const [variant,order]of actualOrders.entries()){
    const closed=Boolean(permutation&&size===3&&pattern.startsWith('perm3_')&&closeTriad),first=base[order[0]].midi,slots=closed?[...order,order[0]]:order;
    let notes=slots.map((index,i)=>{
     let midi=base[index].midi;
@@ -46,29 +47,38 @@ export function patternedArpeggios(board,groups,pattern,{motion='ascending',regi
     return atMidi(midi,base[index].name);
    });
    if(notes.some(n=>!n))continue;
-   let targetIndices;
-   if(pattern==='approachEach'){
-    const approached=[];targetIndices=[];
-    for(const note of notes){const midi=note.midi-1,name=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'][pc(midi)],approach=atMidi(midi,name,true);if(!approach){approached.length=0;break;}approached.push(approach,note);targetIndices.push(approached.length-1);}
-    if(!approached.length)continue;notes=approached;
-   }
-   cells.push({...group,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),...(targetIndices?{targetIndices}:{}),sequenceAnchor:base[0].midi,sequenceDirection:down?-1:1,arpeggioPattern:pattern,patternOrder:slots.map(n=>[1,3,5,7][n]),annotation:arpeggioPatternLabel(pattern,closeTriad)});
+   const preparation=pattern==='approachEach'?'below':approach;
+   const prepare=targets=>{
+    if(preparation==='none')return {notes:targets};
+    const output=[],targetIndices=[];
+    for(const [i,note]of targets.entries()){
+     const descending=i?note.midi<targets[i-1].midi:targets[1]?.midi<note.midi,offset=preparation==='above'||preparation==='directional'&&descending?1:-1,midi=note.midi+offset;
+     const name=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'][pc(midi)],before=atMidi(midi,name,true);if(!before)return null;
+     output.push(before,note);targetIndices.push(output.length-1);
+    }
+    return {notes:output,targetIndices};
+   };
+   const normal=prepare(notes),reversed=prepare(notes.toReversed());if(!normal||requireAlternate&&!reversed)continue;
+   let targetIndices=normal.targetIndices;notes=normal.notes;
+   cells.push({...group,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),...(targetIndices?{targetIndices}:{}),...(requireAlternate&&reversed?{alternateNotes:reversed.notes,alternateTargetIndices:reversed.targetIndices}:{}),sequenceAnchor:base[0].midi,...(routine==='inversions'||pattern==='inversionCycle'?{sequenceCursor:base[0].midi*8+variant}:{}),sequenceDirection:down?-1:1,arpeggioPattern:pattern,patternOrder:slots.map(n=>[1,3,5,7][n]),annotation:arpeggioPatternLabel(pattern,closeTriad)});
   }
-  if(pattern==='connected'&&cells.length){cells.sort((a,b)=>Math.abs(a.notes[0].midi-previous)-Math.abs(b.notes[0].midi-previous));result.push(cells[0]);previous=cells[0].notes.at(-1).midi;}
+  if((pattern==='connected'||routine==='connected')&&!deferConnection&&cells.length){cells.sort((a,b)=>Math.abs(a.notes[0].midi-previous)-Math.abs(b.notes[0].midi-previous));result.push(cells[0]);previous=cells[0].notes.at(-1).midi;}
   else result.push(...cells);
+  if(routine==='alternate')for(let index=result.length-cells.length;index<result.length;index++)if(index>=0&&index%2){const cell=result[index];if(cell?.alternateNotes)result[index]={...cell,notes:cell.alternateNotes,names:cell.alternateNotes.map(n=>n.name),pcs:cell.alternateNotes.map(n=>n.pc),targetIndices:cell.alternateTargetIndices,patternOrder:cell.patternOrder.toReversed()};}
  }
+ if(routine==='inversions'||pattern==='inversionCycle')result.sort((a,b)=>(a.sequenceCursor-b.sequenceCursor)*(down?-1:1));
  return result;
 }
 
 export function arpeggioPatternFamily(pattern){return pattern.startsWith('perm')?'permutations':pattern.startsWith('cell')?'repeatTone':Object.hasOwn(ARPEGGIO_PATTERNS,pattern)?pattern:'straight';}
 export function arpeggioFamilies(material='seventh'){
  const triad=material==='triad';
- return [['straight','Straight'],['permutations',`Permutations · each tone once · ${triad?6:24}`],['repeatTone',`Repeat one tone · no adjacent repeats · ${triad?18:144}`],...Object.entries(ARPEGGIO_PATTERNS).filter(([id])=>!id.startsWith('perm')&&!id.startsWith('cell')&&id!=='straight')];
+ return [['permutations',`Permutations · each tone once · ${triad?6:24}`],['repeatTone',`Repeat one tone · no adjacent repeats · ${triad?18:144}`],['returnStart','Starting-tone pedal'],...(!triad?[['upBack','Up and back · 1–3–5–7–5–3']]:[])];
 }
 export function arpeggioPatternGroups(material='seventh',family='permutations'){
  const tones=material==='triad'?[1,3,5]:[1,3,5,7],permutations=material==='triad'?TRIAD_PERMUTATIONS:SEVENTH_PERMUTATIONS,cells=material==='triad'?TRIAD_CELLS:SEVENTH_CELLS,size=tones.length;
- if(family==='permutations')return tones.map(tone=>({label:`Starting tone ${tone}`,items:permutations.filter(p=>p[0]===tone).map(p=>{const id=`perm${size}_`+p.join('');return [id,ARPEGGIO_PATTERNS[id]];})}));
- if(family==='repeatTone')return tones.map(tone=>({label:`Repeat tone ${tone}`,items:cells.filter(p=>p.filter(n=>n===tone).length===2).map(p=>{const id=`cell${size}_`+p.join('');return [id,ARPEGGIO_PATTERNS[id]];})}));
+ if(family==='permutations')return tones.map(tone=>({label:`Starting tone ${tone}`,items:permutations.filter(p=>p[0]===tone).map(p=>{const id=`perm${size}_`+p.join('');return [id,arpeggioOrderLabel(id)];})}));
+ if(family==='repeatTone')return tones.map(tone=>({label:`Repeat tone ${tone}`,items:cells.filter(p=>p.filter(n=>n===tone).length===2).map(p=>{const id=`cell${size}_`+p.join('');return [id,arpeggioOrderLabel(id)];})}));
  return [];
 }
 export function normalizeArpeggioPattern(pattern,material){
@@ -80,4 +90,37 @@ export function normalizeArpeggioPattern(pattern,material){
 export function arpeggioPatternLabel(pattern,close=true){
  const label=ARPEGGIO_PATTERNS[pattern]||'Straight';
  return pattern.startsWith('perm3_')&&close?label+'–'+pattern.split('_')[1][0]:label;
+}
+
+// Canonical musical recipes. Names such as “wide skips” are aliases for an
+// order, not independent catalogue entries. Routines/preparations are axes.
+export function canonicalArpeggioRecipe(view){
+ let pattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material),close=view.arpeggioClose!==false;
+ let routine=['repeat','alternate','inversions','connected'].includes(view.arpeggioRoutine)?view.arpeggioRoutine:'repeat';
+ let approach=['none','below','above','directional'].includes(view.arpeggioApproach)?view.arpeggioApproach:'none';
+ let register=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
+ const triad=view.material==='triad',down=['descending','down-up'].includes(view.motion);
+ if(pattern==='straight'){pattern=triad?(down?'perm3_531':'perm3_135'):(down?'perm4_7531':'perm4_1357');register=down?'down':'up';if(triad)close=false;}
+ else if(pattern==='brokenPairs'){pattern=triad?'cell3_1353':'perm4_1375';}
+ else if(pattern==='wideSkips'||pattern==='outsideInside'){pattern=triad?'perm3_153':pattern==='wideSkips'?'perm4_1537':'perm4_1735';if(triad)close=false;}
+ else if(pattern==='upBack'&&triad)pattern='cell3_1353';
+ else if(['inversionCycle','connected','approachEach'].includes(pattern)){
+  if(pattern==='approachEach')approach='below';else routine=pattern==='inversionCycle'?'inversions':'connected';
+  pattern=triad?'perm3_135':'perm4_1357';close=false;
+ }
+ return {...view,arpeggioPattern:pattern,arpeggioClose:close,arpeggioRegister:register,arpeggioRoutine:routine,arpeggioApproach:approach};
+}
+export function selectedChordSeeds(board,harmony,material='seventh'){
+ const size=material==='triad'?3:4,pcs=harmony.chordPcs.slice(0,size);if(pcs.length<size)return [];
+ const names=harmony.tones.slice(0,size),low=Math.min(...board.notes.map(n=>n.midi)),high=Math.max(...board.notes.map(n=>n.midi)),groups=[];
+ for(let root=low-12;root<=high;root++)if(pc(root)===pcs[0]){
+  const notes=pcs.map((tone,i)=>({midi:root+pc(tone-pcs[0]),pc:tone,name:names[i]}));
+  groups.push({rootName:names[0],chord:harmony.name+harmony.suffix,notes,pcs,names});
+ }
+ return groups;
+}
+
+export function arpeggioOrderLabel(pattern){
+ const names={perm3_135:'straight',perm3_153:'wide skips / outside–inside',cell3_1353:'up and back / broken pairs',perm4_1357:'straight',perm4_1375:'broken pairs',perm4_1537:'wide skips',perm4_1735:'outside–inside'};
+ return ARPEGGIO_PATTERNS[pattern]+(names[pattern]?' · '+names[pattern]:'');
 }

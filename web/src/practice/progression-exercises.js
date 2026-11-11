@@ -17,7 +17,9 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
  const patterned=ARPEGGIO_PATTERN_STUDIES.has(study)&&options.arpeggioPattern&&options.arpeggioPattern!=='straight';
- const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned)&&(!patterned||options.arpeggioPattern!=='approachEach')&&stage!=='cell';
+ const routineConnected=patterned&&options.arpeggioRoutine==='connected';
+ const routineAlternating=patterned&&options.arpeggioRoutine==='alternate';
+ const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  // Fixed-order cells travel by their root/target. Their last/highest pitch
  // belongs to the pattern, not to the cursor used to select the next cell.
@@ -25,9 +27,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
- let lastAnchor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
+ let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&pattern.startsWith('alternating');
+ const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
  const approachEnds=[];let emittedCells=0,triadReference=60;
  const groups=harmonies.map((harmony,slot)=>{
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
@@ -39,7 +42,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -58,15 +61,15 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     // A change inside a group adapts its unplayed tones at the same ordinal.
     // Compare the next structural tone, not a fresh cell's starting note.
     const target=pendingCell.notes[cellOffset].midi;
-    cellIndex=cells.map((cell,index)=>({index,distance:Math.abs(cell.notes[cellOffset].midi-target)}))
+    cellIndex=cells.map((cell,index)=>({index,distance:Math.abs((routineAlternating&&emittedCells%2?cell.alternateNotes:cell.notes)[cellOffset].midi-target)}))
      .sort((a,b)=>a.distance-b.distance||a.index-b.index)[0].index;
    }else if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
     // Preserve the next structural scale endpoint, even when its pitch
     // changes with the incoming mode/shape. Do not insert a tiny extra
     // traversal by choosing a new intermediary pitch before that turn.
-    let next=study==='positionalscale'&&pendingScaleBoundary?{index:cells.length-1,direction:travel,reset:false}:continuationCell(cells,lastAnchor,travel,false,directional&&!alternating?lastMidi:null);
+    let next=study==='positionalscale'&&pendingScaleBoundary?{index:cells.length-1,direction:travel,reset:false}:continueCell(cells,lastCursor??lastAnchor,travel,false,directional&&!alternating?lastMidi:null);
     const rangeTurn=next.reset&&directional;
-    if(rangeTurn){travel=-travel;cells=makeCells();next=continuationCell(cells,lastRangeEdge??lastAnchor,travel);}
+    if(rangeTurn){travel=-travel;cells=makeCells();next=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel);}
     cellIndex=next.index;
     if(scaleTraversal&&(pendingScaleTurn||rangeTurn))scaleRemaining=Math.max(1,cells.length-1-cellIndex);
    }
@@ -76,7 +79,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(scaleTraversal&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
-  const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],sequenceAnchors=[],sequenceDirections=[];
+  const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];
   while(cells.length&&notes.length<capacity){
    const previousTravel=travel,previousIndex=cellIndex;
    if(scaleTraversal&&scaleRemaining===0){
@@ -90,10 +93,12 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     travel=-travel;cells=makeCells();
     if(!cells.length)break;
     cellIndex=0;
-    if(lastAnchor!==null)cellIndex=continuationCell(cells,lastRangeEdge??lastAnchor,travel).index;
+    if(lastAnchor!==null)cellIndex=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel).index;
     if(scaleTraversal)scaleRemaining=Math.max(1,cells.length-1-cellIndex);
    }
-   const cell=cells[cellIndex];
+   if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
+   const nextIndex=routineConnected?cells.findLastIndex(c=>c.sequenceAnchor===cells[cellIndex].sequenceAnchor)+1:cellIndex+1;
+   const originalCell=cells[cellIndex],cell=routineAlternating&&emittedCells%2?{...originalCell,notes:originalCell.alternateNotes,targetIndices:originalCell.alternateTargetIndices}:originalCell;
    // Other families keep their existing complete-cell slot policy.
    if(!flowingCells&&(isEnclosureStudy(study)?enclosureNoteStarts([...cellLengths,cell.notes.length],division).at(-1)>=durations[slot]:notes.length+cell.notes.length>capacity)){
     if(travel!==previousTravel){travel=previousTravel;cells=makeCells();cellIndex=previousIndex;}
@@ -111,22 +116,22 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    const take=flowingCells?Math.min(remaining,capacity-notes.length):remaining;
    const played=cellNotes.slice(offset,offset+take);
    const start=notes.length;notes.push(...played);used.push(cell.chord);cellLengths.push(played.length);cellOffsets.push(offset);cellSizes.push(cellNotes.length);
-   if(Number.isFinite(cell.sequenceAnchor)){lastAnchor=cell.sequenceAnchor;sequenceAnchors.push(lastAnchor);sequenceDirections.push(travel);}
+   if(Number.isFinite(cell.sequenceAnchor)){lastAnchor=cell.sequenceAnchor;lastCursor=cell.sequenceCursor??lastAnchor;sequenceAnchors.push(lastAnchor);sequenceCursors.push(lastCursor);sequenceDirections.push(travel);}
    // Opposite legs anchor different ends of a cell. At a turn, compare
    // against the outgoing extent, not the previous leg's starting anchor.
    // Use the structural extent so an alternating stroke cannot move the turn.
-   lastRangeEdge=anchoredTraversal?lastAnchor:travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
+   lastRangeEdge=anchoredTraversal?lastCursor:travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
    lastMidi=played.at(-1).midi;
    if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
    for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
    if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=cell;}
-   else{cellOffset=0;pendingCell=null;cellIndex++;emittedCells++;}
+   else{cellOffset=0;pendingCell=null;cellIndex=nextIndex;emittedCells++;}
    if(stage==='cell'&&study!=='positionalscale')break;
   }
   if(study==='positionalscale'){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
   const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
-  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,sequenceAnchors,sequenceDirections,globalStart,warning,
+  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,sequenceAnchors,sequenceCursors,sequenceDirections,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });
