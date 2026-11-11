@@ -1,3 +1,5 @@
+import {isEnclosureStudy} from '../src/guitar/enclosures.js';
+import {SCALE_SEQUENCES} from '../src/guitar/scale-sequences.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {continuationCell,continuationNote} from '../src/practice/sequence-continuity.js';
@@ -47,7 +49,7 @@ test('every directional family selects the nearest forward cell through jazz, mo
      const next=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
      assert.equal(g.sequenceAnchors[0],next[0]??source[0]?.sequenceAnchor,`${template} ${key} ${motion} ${study} ${g.slot}`);
     }
-    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);const ns=g.notes.slice(-g.cellLengths.at(-1));edge=direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));}
+    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);const last=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).find(c=>c.sequenceAnchor===previous),ns=last?.notes||g.notes.slice(-g.cellLengths.at(-1));edge=(SCALE_SEQUENCES[study]&&!['groups3','groups4'].includes(study)||isEnclosureStudy(study))?previous:direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));}
    }
   }
  }

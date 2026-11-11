@@ -68,3 +68,23 @@ Licks/transcriptions and other tailored musical vocabulary remain a future categ
 Cell/segment counts are omitted from the score. Position captions appear on entry and when the position changes, without repeating under unchanged bars or on continued systems.
 
 The ending prefers the nearest different core tone of the opening harmony in the final structural traversal direction. This direction comes from cell/root travel, not a permutation's final internal interval; continuous and per-string traversals use their next travel leg. If no such tone remains inside the position, the existing nearest-tone fallback stays within that position. Regressions include descending G on A-string fret 10 resolving to E on A-string fret 7, and its upward counterpart.
+
+## Extended scale and arpeggio sequences
+
+The Exercise menu separates **Scale sequences**, **Arpeggio sequences** (overlapping patterns through the selected chord's core tones, with triad/seventh material), and **Arpeggio patterns** (whole triads/sevenths built from chosen roots).
+
+Scale and core-arpeggio sequences share these finite families:
+
+- Pairs at ordinal distances 1–2 through 1–8. Interval names apply to seven-note scales; other collections and arpeggios use note-step labels.
+- Overlapping groups of 3–8 consecutive notes.
+- All six three-note and 24 four-note permutations, grouped separately. Straight orders reuse the equivalent group recipe when bookmarked; the existing 1–3–2–4 entry belongs to the four-note permutations.
+- Return patterns across spans 3–8, with or without the final starting note.
+- Expanding, contracting, and combined intervals across spans 3–8.
+- Three skip/step pairs using skip distances 2–6 scale/arpeggio steps.
+- Fixed lower/upper pedals against a moving note.
+
+Cell advance selects every first, second or third valid anchor in each travel leg. Cell order is written, reversed, alternating in either phase, rotated, or a cycle of all orders for three/four-note groups. Rhythm remains independent. Permutations and internal-order phase continue across bar lines; an incoming harmony/position adapts the outstanding ordinal to a complete fitting cell. No unavailable interior pitch is substituted. Longer cells can span bars. Final resolutions retain structural travel direction. Existing groups of three/four keep their established range-turn policy; straight permutation aliases use the same policy.
+
+**Arpeggio patterns → Root sequence** applies the same catalogue to whole arpeggios. Root steps refer to the selected source: all scale roots, chord-tone roots, or octaves of the selected chord. Every root in a motif must have a complete realization of the chosen note order/register/preparation. Otherwise the motif is unavailable in that position, rather than compressed or reharmonized. Existing empty-material warnings remain visible. Chromatically prepared motifs retain the complete-cell slot policy.
+
+Legacy core arpeggio groups of three/four restore into Arpeggio sequences. Favourites retain sequence, order, advance and root-sequence settings; unchanged straight defaults remain compatible. Tests cover catalogue completeness, physical pitches and theoretical steps across modes/keys/positions, cell phase, root motifs, preparation targets, legacy saves, actual browser playback and mobile menus.

@@ -1,9 +1,17 @@
+import {SCALE_SEQUENCES,SCALE_CELL_ORDERS} from '../guitar/scale-sequences.js';
+import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
 import {normalizeArpeggioPattern,canonicalArpeggioRecipe} from '../guitar/arpeggio-patterns.js';
 import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  view.stage='full';
+ if(/^arpgroups[34]$/.test(view.study)){view.study='arpseq_groups'+view.study.at(-1);view.material='seventh';}
+ if(view.study.startsWith('arpseq_'))view.material=view.material==='triad'?'triad':'seventh';
+ view.sequenceAdvance=[1,2,3].includes(Number(view.sequenceAdvance))?Number(view.sequenceAdvance):1;
+ view.sequenceOrder=SCALE_CELL_ORDERS.some(([id])=>id===view.sequenceOrder)?view.sequenceOrder:'normal';
+ if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]&&view.sequenceOrder==='cycle'&&![3,4].includes(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')].offsets.length))view.sequenceOrder='normal';
+ view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
  view.arpeggioClose=view.arpeggioClose!==false;
  view.arpeggioRegister=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
@@ -39,7 +47,7 @@ export function normalizeExerciseOptions(view){
  return view;
 }
 export function exerciseMenuOptions(study){
- return {material:!fixedMaterial.has(study),directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
+ return {material:study.startsWith('arpseq_')||!fixedMaterial.has(study)&&!SCALE_SEQUENCES[study.replace(/^arpseq_/, '')],directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
  [['ascending','Ascending'],['descending','Descending'],['up-down','Ascending and descending'],['down-up','Descending and ascending']]:
  [['ascending','Upward first'],['descending','Downward first']]};
 }

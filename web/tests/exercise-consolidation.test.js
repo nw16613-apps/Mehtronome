@@ -11,7 +11,8 @@ test('aliases have one canonical order and cannot create duplicate favourites',(
 });
 test('legacy exercise entry points migrate to sources, routines and preparation without losing the recipe',()=>{
  const chord=normalizeExerciseOptions({...base,study:'chordtones',arpeggioPattern:'wideSkips'});assert.equal(chord.study,'harmonized');assert.equal(chord.arpeggioSource,'chordRoots');assert.equal(chord.arpeggioPattern,'perm4_1537');
- for(const study of ['inversions','arpgroups4']){const v=normalizeExerciseOptions({...base,study});assert.equal(v.study,'harmonized');assert.equal(v.arpeggioSource,'selectedChord');assert.equal(v.arpeggioRoutine,'inversions');}
+ for(const study of ['inversions']){const v=normalizeExerciseOptions({...base,study});assert.equal(v.study,'harmonized');assert.equal(v.arpeggioSource,'selectedChord');assert.equal(v.arpeggioRoutine,'inversions');}
+ for(const n of [3,4])assert.equal(normalizeExerciseOptions({...base,study:'arpgroups'+n}).study,'arpseq_groups'+n);
  const approach=normalizeExerciseOptions({...base,study:'approacheverytone',motion:'descending'});assert.equal(approach.arpeggioPattern,'perm4_7531');assert.equal(approach.arpeggioRegister,'down');assert.equal(approach.arpeggioApproach,'directional');
  assert.equal(normalizeExerciseOptions({...base,study:'alternating'}).arpeggioRoutine,'alternate');
  assert.equal(normalizeExerciseOptions({...base,study:'alternating',arpeggioPattern:'perm4_1537'}).arpeggioRegister,'alternating');

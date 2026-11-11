@@ -31,7 +31,7 @@ test('all pattern families preserve their ordered cells through non-static chord
       const actual=group.notes.slice(offset,offset+length);offset+=length;
       const matches=Number.isFinite(group.sequenceAnchors[i])?expected.filter(c=>c.sequenceAnchor===group.sequenceAnchors[i]&&c.sequenceDirection===group.sequenceDirections[i]):expected;
       const check=study==='approach'&&i===group.cellLengths.length-1?actual.slice(0,-1):actual;
-      assert.ok(matches.some(c=>(['alternating','chordtonesalternating'].includes(study)?[c.notes,[...c.notes].reverse()]:[c.notes]).some(notes=>JSON.stringify(stamp(notes.slice(0,check.length)))===JSON.stringify(stamp(check)))),label);
+      assert.ok(matches.some(c=>(['alternating','chordtonesalternating'].includes(study)?[c.notes,[...c.notes].reverse()]:[c.notes]).some(notes=>JSON.stringify(stamp(notes.slice(group.cellOffsets?.[i]||0,(group.cellOffsets?.[i]||0)+check.length)))===JSON.stringify(stamp(check)))),label);
      });
     }
     assert.ok(group.notes.length<=durations[group.slot]*2,label);
