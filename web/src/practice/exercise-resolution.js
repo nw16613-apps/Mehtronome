@@ -6,8 +6,17 @@ import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {cloneTemplate} from './custom-progression.js';
 import {progressionDefinition,progressionTimeline,progressionBeatDurations} from '../audio/music.js';
 
+/** Prefer structural traversal direction over a permutation's final interval. */
+export function exerciseEndingDirection(groups,plan){
+ const last=plan?.events?.at(-1),group=groups.find(g=>g.slot===last?.slot)||groups.at(-1);
+ const explicit=group?.endingDirection??group?.sequenceDirections?.at(-1)??group?.sequenceDirection;
+ if(explicit===1||explicit===-1)return explicit;
+ if(last)for(let i=plan.events.length-2;i>=0;i--){const delta=last.note.midi-plan.events[i].note.midi;if(delta)return Math.sign(delta);}
+ return 0;
+}
+
 /** Add an ending to the displayed/playable study, never to the user's chart or
- * to the sequence generators. The closest different core tone of the opening chord uses a CAGED
+ * to the sequence generators. The closest different core tone in the final traversal direction uses a CAGED
  * position near the final fret region; a unison on another string is still the same pitch. */
 export function withExerciseResolution(groups,plan){
  if(!plan?.events.length||plan.resolution)return {groups,plan};
@@ -19,7 +28,11 @@ export function withExerciseResolution(groups,plan){
  const position=perString?firstSlot.position:sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
  const board=perString?firstSlot.board:sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
  const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
- const ranked=candidates.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
+ const direction=exerciseEndingDirection(groups,plan),forward=candidates.filter(n=>(n.midi-last.note.midi)*direction>0);
+ // At an actual position boundary no further tone may fit in this direction.
+ // Stay in the selected region rather than inventing a fretboard jump.
+ const preferred=forward.length?forward:candidates;
+ const ranked=preferred.map(n=>({...n,name:core.tones[core.chordPcs.indexOf(n.pc)],chromaticDegree:core.intervals[core.chordPcs.indexOf(n.pc)]})).sort((a,b)=>
   Math.abs(a.midi-last.note.midi)-Math.abs(b.midi-last.note.midi)||
   Number(a.pc!==core.chordPcs[0])-Number(b.pc!==core.chordPcs[0])||
   Number(a.string!==last.note.string)-Number(b.string!==last.note.string)||a.midi-b.midi||a.string-b.string);
@@ -29,7 +42,7 @@ export function withExerciseResolution(groups,plan){
   globalStart:index,targetIndices:[0],cellLengths:[1],materialCells:['Resolution'],annotation:'Resolution',warning:'',resolution:true};
  const ending={...finalSlot,step:firstSlot.step,chord:firstSlot.chord,harmony,board,position,slot,start,duration,annotation:'Resolution',resolution:true};
  return {groups:[...groups,group],plan:{...plan,events:[...plan.events,{index,note,step:ending.step,slot,start,duration,target:true,resolution:true}],
-  slots:[...plan.slots,ending],duration:start+duration,resolution:{start,duration,slot,index}}};
+  slots:[...plan.slots,ending],duration:start+duration,resolution:{start,duration,slot,index,direction}}};
 }
 
 /** A private playback copy returns to the opening chord for the ending bar and
@@ -49,6 +62,7 @@ export function singleChordExercisePlan(groups,harmony,board,position,study,rhyt
  let offset=0;const targetIndices=[];
  for(const group of groups){targetIndices.push(...(group.targetIndices||(group.targetIndex===undefined?[]:[group.targetIndex])).map(i=>i+offset));offset+=group.notes.length;}
  const noteStarts=isEnclosureStudy(study)?enclosureNoteStarts(groups.map(g=>g.notes.length),division):null;
- const group={...(noteStarts?{noteStarts}:{}),...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
+ const lastDirection=groups.at(-1)?.endingDirection??groups.at(-1)?.sequenceDirection;
+ const group={...(lastDirection?{endingDirection:lastDirection}:{}),...(noteStarts?{noteStarts}:{}),...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
  return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil((noteStarts?.length?noteStarts.at(-1)+1/division:notes.length/division)/beats))],beats,study,rhythm)};
 }

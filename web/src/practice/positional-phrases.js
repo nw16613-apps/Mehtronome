@@ -53,7 +53,8 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   if(cycle.length)nextUp=sectionAt((phaseStart+notes.length)%cycle.length)?.up??nextUp;
   cursor+=notes.length;
   const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+(patternStart.warning?' '+patternStart.warning:'');
-  const group={slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseLegLength:Math.max(1,size-1),phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:spanSize,phraseStyle:'continuous',phraseStartIndex:patternStart.index,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
+  const endingDirection=notes.length&&cycle.length>1?Math.sign(cycle[(phaseStart+notes.length)%cycle.length].midi-notes.at(-1).midi):descending?-1:1;
+  const group={endingDirection,slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseLegLength:Math.max(1,size-1),phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:spanSize,phraseStyle:'continuous',phraseStartIndex:patternStart.index,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
   globalStart+=notes.length;return group;
  });
 }

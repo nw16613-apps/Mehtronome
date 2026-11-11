@@ -62,3 +62,9 @@ Musical differences such as source, order, closure, register, routine, preparati
 A stale nine-note phase assertion was updated to the already established contract: unchanged bars continue phase, while a changed harmony with Shape default re-enters its directional boundary. The positional traversal implementation itself was not changed.
 
 Licks/transcriptions and other tailored musical vocabulary remain a future category, separate from this rule-based library.
+
+## Notation captions and ending direction
+
+Cell/segment counts are omitted from the score. Position captions appear on entry and when the position changes, without repeating under unchanged bars or on continued systems.
+
+The ending prefers the nearest different core tone of the opening harmony in the final structural traversal direction. This direction comes from cell/root travel, not a permutation's final internal interval; continuous and per-string traversals use their next travel leg. If no such tone remains inside the position, the existing nearest-tone fallback stays within that position. Regressions include descending G on A-string fret 10 resolving to E on A-string fret 7, and its upward counterpart.
