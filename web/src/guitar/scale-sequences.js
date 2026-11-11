@@ -29,7 +29,7 @@ export function scaleSequenceCells(board,harmony,study,motion,options={}){
   let notes=definition.offsets.map(offset=>{const step=degree+direction*offset,index=(step%count+count)%count,midi=anchor.midi+intervals[index]+12*Math.floor(step/count)-intervals[degree],note=byMidi.get(midi);return note?{...note,name:harmony.scaleNames[index]}:null;});
   if(notes.some(n=>!n))continue;
   if(definition.pedal){const pedal=definition.pedal==='lower'?sorted[0]:sorted.at(-1);if(anchor.midi===pedal.midi)continue;notes=[pedal,anchor].map(n=>({...n,name:harmony.scaleNames[harmony.scalePcs.indexOf(n.pc)]}));}
-  cells.push({chord:`${harmony.scaleNames[degree]} · ${definition.label}`,rootName:harmony.scaleNames[degree],notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),sequenceAnchor:anchor.midi,sequenceDirection:direction,scaleSequence:true});
+  cells.push({chord:`${harmony.scaleNames[degree]} · ${definition.label}`,rootName:harmony.scaleNames[degree],notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),orderSteps:definition.pedal?null:definition.offsets.map(i=>i+1),sequenceAnchor:anchor.midi,sequenceDirection:direction,scaleSequence:true});
  }
  const advance=[1,2,3].includes(Number(options.sequenceAdvance))?Number(options.sequenceAdvance):1;
  return cells.filter((_,i)=>i%advance===0).map((c,i)=>({...c,degree:i+1}));
@@ -38,5 +38,5 @@ export function orderedScaleCell(cell,order='normal',ordinal=0){
  const reverse=order==='reverse'||order==='alternate'&&ordinal%2===1||order==='alternateReverse'&&ordinal%2===0;
  const cycle=order==='cycle'&&[3,4].includes(cell.notes.length)?permutations(run(cell.notes.length))[ordinal%(cell.notes.length===3?6:24)].map(i=>cell.notes[i]):null;
  const notes=cycle|| (reverse?cell.notes.toReversed():order==='rotate'?[...cell.notes.slice(ordinal%cell.notes.length),...cell.notes.slice(0,ordinal%cell.notes.length)]:cell.notes);
- return {...cell,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc)};
+ return {...cell,orderSteps:cell.orderSteps?notes.map(n=>cell.orderSteps[cell.notes.indexOf(n)]):null,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc)};
 }

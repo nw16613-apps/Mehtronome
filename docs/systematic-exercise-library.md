@@ -94,3 +94,13 @@ Legacy core arpeggio groups of three/four restore into Arpeggio sequences. Favou
 The current notation/TAB renderer retains the generator's cell lengths, sizes and carried offsets. Brackets mark each logical cell independently of beat beams and bar lines. A cell crossing a bar has one bracket; one crossing a score-system boundary has open continuation ends and keeps its identifier. Single-chord flattening preserves the original cell metadata. Resolution notes and one-note traversal steps do not receive misleading cell brackets. Cell details are available in bracket accessibility labels/titles; diagnostic count captions remain omitted.
 
 Checks cover scale/core-arpeggio/whole-arpeggio cells, enclosure rests, single-chord flattening, repeated short harmonic cycles, line continuations and browser display/playback.
+
+## Interactive cell tools
+
+Root-sequence motifs have nested brackets: the outer level selects the full motif, and inner brackets select its constituent arpeggios. Both retain identity and complete available note ranges across bars and score systems. Playback highlights the active outer cell and inner arpeggio, clearing during rests and after stopping.
+
+The View menu's **Cell labels** setting defaults to Off. Note order, starting degree/note, and cell length are available independently of the exercise recipe. A label appears only when its value changes; line continuations do not repeat it. Hover/accessibility details include the order, start and continuation/partial status. The display preference persists without creating extra musical favourites.
+
+Click/tap or Enter/Space selects the bracket's notes and enables Loop; Play starts the selected passage. Clear selection restores the full exercise. Solo playback starts on the first selected note and repeats at the passage duration. Accompanied playback preserves the enclosing bars and their original harmonies, with rests around the selected notes where needed. This uses a private playback chart and retains the original score indices for cursor alignment. Cells in repeated short harmonic cycles are selected by occurrence, not just reused note indices.
+
+49 focused checks and five browser workflows pass, including backed/solo looping, nested selection, live highlighting, persistent labels, keyboard interaction and mobile layout. Production build passes.

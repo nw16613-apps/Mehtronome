@@ -1,3 +1,4 @@
+import {cellDetails} from './notation-cells.js';
 import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {progressionPositionPath} from '../guitar/position-path.js';
@@ -63,7 +64,8 @@ export function singleChordExercisePlan(groups,harmony,board,position,study,rhyt
  for(const group of groups){targetIndices.push(...(group.targetIndices||(group.targetIndex===undefined?[]:[group.targetIndex])).map(i=>i+offset));offset+=group.notes.length;}
  const noteStarts=isEnclosureStudy(study)?enclosureNoteStarts(groups.map(g=>g.notes.length),division):null;
  const cellLengths=groups.flatMap(g=>g.cellLengths||[g.notes.length]),cellOffsets=groups.flatMap(g=>(g.cellLengths||[g.notes.length]).map((_,i)=>g.cellOffsets?.[i]||0)),cellSizes=groups.flatMap(g=>(g.cellLengths||[g.notes.length]).map((length,i)=>g.cellSizes?.[i]||length));
+ const details=groups.flatMap(g=>g.cellDetails||[cellDetails(g,harmony)]);
  const lastDirection=groups.at(-1)?.endingDirection??groups.at(-1)?.sequenceDirection;
- const group={cellLengths,cellOffsets,cellSizes,...(lastDirection?{endingDirection:lastDirection}:{}),...(noteStarts?{noteStarts}:{}),...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
+ const group={cellLengths,cellOffsets,cellSizes,cellDetails:details,...(lastDirection?{endingDirection:lastDirection}:{}),...(noteStarts?{noteStarts}:{}),...(groups[0]?.perString?{perString:true,fingeringLabel:groups[0].fingeringLabel,applicationLabel:groups[0].applicationLabel}:{}),slot:0,chord:harmony.name+harmony.suffix,harmony,board,position,notes,annotation:groups[0]?.annotation||'Study',globalStart:0,targetIndices};
  return {groups:[group],plan:progressionStudyPlan([group],[0],[Math.max(1,Math.ceil((noteStarts?.length?noteStarts.at(-1)+1/division:notes.length/division)/beats))],beats,study,rhythm)};
 }

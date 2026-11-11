@@ -13,7 +13,7 @@ test('five-note cells cross bars intact and split with open brackets only at sys
  // Notes 15..19 cross the first bar; 45..49 cross the three-bar system.
  assert.equal(plan.events[15].cellId,plan.events[16].cellId);assert.equal(plan.events[45].cellId,plan.events[48].cellId);
  const svg=progressionNotationSvg(plan,'Five-note groups'),parts=svg.split('</svg>');assert.match(parts[0],/data-cell-index="9"[^>]*data-continued-left="false" data-continued-right="true"/);assert.match(parts[1],/data-cell-index="9"[^>]*data-cell-start-offset="3"[^>]*data-continued-left="true" data-continued-right="false"/);
- assert.equal((parts[0].match(/data-cell-index="3"/g)||[]).length,1,'a bar line must not split the bracket');
+ assert.equal((parts[0].match(/data-cell-key="3"/g)||[]).length,1,'a bar line must not split the bracket');
 });
 test('enclosure bracket follows its sounding notes and excludes the following rest',()=>{
  const groups=progressionExerciseGroups([h],[4],board,{study:'enclosures5',rhythm:'eighths',positionPath:[position]}),plan=progressionStudyPlan(groups,[0],[1],4,'enclosures5','eighths');

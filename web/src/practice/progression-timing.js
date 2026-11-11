@@ -15,7 +15,7 @@ export function progressionStudyPlan(groups,steps,bars,beats,study,rhythm='eight
       if(at>=duration)break;
       const cell=cellLayout[local],eventStart=offset+at,eventDuration=study==='guidetones'?duration:Math.min(1/division,duration-at);
       if(cell&&segment!==cell.segment){activeCell=cell.offset>0&&lastCell?.nextOffset===cell.offset&&lastCell.size===cell.size&&Math.abs(lastCell.end-eventStart)<1e-6?lastCell.id:++cellId;segment=cell.segment;}
-      const cellData=cell?{cellId:activeCell,cellOffset:cell.offset,cellSize:cell.size}:{};
+      const cellData=cell?{cellId:activeCell,cellOffset:cell.offset,cellSize:cell.size,cellInfo:cell.details,...(cell.subIndex!==undefined?{subcellIndex:cell.subIndex,subcellOffset:cell.subOffset,subcellSize:cell.subSize}:{})}:{};
       if(cell)lastCell={id:activeCell,nextOffset:cell.offset+1,size:cell.size,end:eventStart+eventDuration};
       events.push({...cellData,index:index+local,note,step,slot,target:group?.targetIndices?.includes(local)||group?.targetIndex===local,start:offset+at,duration:study==='guidetones'?duration:Math.min(1/division,duration-at)});
     }

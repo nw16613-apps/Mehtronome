@@ -21,7 +21,7 @@ export function sequenceArpeggioCells(cells,board,harmony,sequence='stepwise',so
   for(const part of parts){targetIndices.push(...(part.targetIndices||[]).map(i=>i+offset));offset+=part.notes.length;}
   const alternateNotes=parts.every(p=>p.alternateNotes)?parts.flatMap(p=>p.alternateNotes):undefined,alternateTargetIndices=[];offset=0;
   for(const part of parts){alternateTargetIndices.push(...(part.alternateTargetIndices||[]).map(i=>i+offset));offset+=part.notes.length;}
-  output.push({...cell,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),targetIndices,alternateNotes,alternateTargetIndices,rootSequence:motif,annotation:definition.label});
+  output.push({...cell,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),targetIndices,alternateNotes,alternateTargetIndices,subcells:parts.map(p=>({notes:p.notes,patternOrder:p.patternOrder,label:p.chord})),sequenceLabel:definition.label,orderSteps:definition.offsets.map(i=>i+1),rootSequence:motif,annotation:definition.label});
  }
  const anchors=[...new Set(output.map(c=>c.sequenceAnchor))];
  return output.filter(c=>anchors.indexOf(c.sequenceAnchor)%([1,2,3].includes(Number(advance))?Number(advance):1)===0);
