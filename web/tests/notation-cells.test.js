@@ -10,9 +10,9 @@ test('single-chord scores retain each scale, core-arpeggio and whole-arpeggio ce
 });
 test('five-note cells cross bars intact and split with open brackets only at system boundaries',()=>{
  const groups=progressionExerciseGroups(Array(4).fill(h),Array(4).fill(4),board,{study:'groups5',rhythm:'sixteenths',positionPath:Array(4).fill(position)}),plan=progressionStudyPlan(groups,[0,1,2,3],[1,1,1,1],4,'groups5','sixteenths');
- // Notes 15..19 cross the first bar; 45..49 cross the three-bar system.
- assert.equal(plan.events[15].cellId,plan.events[16].cellId);assert.equal(plan.events[45].cellId,plan.events[48].cellId);
- const svg=progressionNotationSvg(plan,'Five-note groups'),parts=svg.split('</svg>');assert.match(parts[0],/data-cell-index="9"[^>]*data-continued-left="false" data-continued-right="true"/);assert.match(parts[1],/data-cell-index="9"[^>]*data-cell-start-offset="3"[^>]*data-continued-left="true" data-continued-right="false"/);
+ // Notes 15..19 cross the first bar; 30..34 cross the two-bar system.
+ assert.equal(plan.events[15].cellId,plan.events[16].cellId);assert.equal(plan.events[30].cellId,plan.events[32].cellId);
+ const svg=progressionNotationSvg(plan,'Five-note groups'),parts=svg.split('</svg>');assert.match(parts[0],/data-cell-index="6"[^>]*data-continued-left="false" data-continued-right="true"/);assert.match(parts[1],/data-cell-index="6"[^>]*data-cell-start-offset="2"[^>]*data-continued-left="true" data-continued-right="false"/);
  assert.equal((parts[0].match(/data-cell-key="3"/g)||[]).length,1,'a bar line must not split the bracket');
 });
 test('enclosure bracket follows its sounding notes and excludes the following rest',()=>{

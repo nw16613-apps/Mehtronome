@@ -274,8 +274,8 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .exercise-controls label:not(.check) { min-width:0; color:var(--muted,var(--practice-muted,#64735f)); font-size:10px; }
 .exercise-controls select { display:block; width:100%; min-width:0; margin-top:5px; padding:8px; border:1px solid var(--line,#b5c0af); border-radius:5px; background:var(--field,var(--practice-field,#f6f7ef)); color:var(--ink,var(--practice-ink,#243535)); font-size:11px; }
 .exercise-loop { min-height:36px; padding-inline:5px; font-size:11px; }
-.notation-scroll { display:grid; gap:12px; overflow:visible; border:1px solid #d4cdbc; border-radius:10px; background:#fdfbf5; padding:10px; box-shadow:inset 0 1px #fff,0 8px 24px rgb(34 30 24 / .08); }
-.exercise-notation { display:block; width:100%; height:auto; min-width:0; color:#17201d; }
+.notation-scroll { display:grid; grid-template-columns:minmax(0,1fr); min-width:0; gap:12px; overflow-x:auto; border:1px solid #d4cdbc; border-radius:10px; background:#fdfbf5; padding:10px; box-shadow:inset 0 1px #fff,0 8px 24px rgb(34 30 24 / .08); }
+.exercise-notation { display:block; width:100%; height:auto; min-width:var(--notation-min-width,0px); color:#17201d; }
 .exercise-notation .notation-paper,.exercise-notation .tab-fret-bg { fill:#fffefa; }
 .exercise-notation :is(.notation-line,.ledger-line,.bar-line,.note-stem,.beat-guide,.note-beam,.pattern-bracket,.treble-clef,.time-signature,.tab-clef,.exercise-source,.exercise-degree,.tab-fret,.tab-fret-bg,.accidental,.notation-rest,.tuplet-number) { pointer-events:none; }
 .exercise-note { touch-action:manipulation; }
@@ -312,7 +312,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
 .display-tab .treble-clef,.display-tab .time-signature,.display-tab .note-head,.display-tab .note-stem,.display-tab .note-beam,.display-tab .ledger-line,.display-tab .accidental,.display-tab .notation-rest,.display-tab .tuplet-number,.display-tab .notation-line:not(.tab-line) { display:none; }
 .display-notation .tab-clef,.display-notation .tab-line,.display-notation .tab-fret,.display-notation .tab-fret-bg { display:none; }
 .display-degrees .exercise-degree { font-size:11px; fill:#6f4f7c; }
-.zoom-fit .exercise-notation { width:90%; margin-inline:auto; }
+.zoom-fit .exercise-notation { min-width:0; width:90%; margin-inline:auto; }
 .zoom-comfortable .exercise-notation { width:100%; }
 .zoom-large .exercise-notation { width:135%; max-width:none; }
 .notation-scroll.zoom-large { overflow-x:auto; }
@@ -380,7 +380,7 @@ html[data-theme=dark] { --theory-a:#68b7ff; --theory-a-ink:#10243a; --theory-a-r
   #caged-exercise { position:absolute!important; inset:0!important; max-width:none!important; border:0!important; box-shadow:none!important; background:#fff!important; }
   .exercise-controls,.exercise-practice-bar,.exercise-status-row,.exercise-range-controls,.exercise-footer { display:none!important; }
   .notation-scroll { border:0; box-shadow:none; overflow:visible!important; }
-  .exercise-notation { width:100%!important; break-inside:avoid; }
+  .exercise-notation { width:100%!important; min-width:0!important; break-inside:avoid; }
 }
 
 .exercise-backing { min-height:36px; padding-inline:5px; font-size:11px; }

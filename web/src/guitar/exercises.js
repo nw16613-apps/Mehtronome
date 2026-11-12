@@ -3,6 +3,7 @@ import {SCALE_SEQUENCES,scaleSequenceCells,orderedScaleCell} from './scale-seque
 import {sequenceArpeggioCells} from './arpeggio-sequences.js';
 import {ARPEGGIO_PATTERN_STUDIES,patternedArpeggios,selectedChordSeeds} from './arpeggio-patterns.js';
 import {notationRest} from '../practice/notation-rest.js';
+import {notationColumnWidth,tabFretWidth,accidentalOffset} from '../practice/notation-spacing.js';
 import {ENCLOSURE_PATTERNS,isEnclosureStudy} from './enclosures.js';
 import {arpeggioHarmony,exerciseArpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
@@ -469,9 +470,9 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
   const perBeat=rhythm==='sixteenths'?4:rhythm==='triplets'?3:2;
   const notesPerBar=perBeat*(options.beats||4);
   const finalRests=isLastSystem?(notesPerBar-totalNoteCount%notesPerBar)%notesPerBar:0;
-  const step=30,left=90,right=24,width=Math.max(760,left+(notes.length+finalRests)*step+right),height=304;
+  const step=notationColumnWidth(notes),left=90,right=24,width=Math.max(760,left+(notes.length+finalRests)*step+right),height=304;
   const xFor=index=>left+index*step+step/2;
-  let svg=`<svg class="exercise-notation" data-system-index="${systemIndex}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
+  let svg=`<svg class="exercise-notation" style="--notation-min-width:${Math.round(width*.9)}px" data-system-index="${systemIndex}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title>`;
   svg+=`<rect width="${width}" height="${height}" rx="8" class="notation-paper"/>`;
   if(systemIndex===0)svg+=`<text class="exercise-title" x="90" y="20">${esc(title)}</text>`;
   if(options.backingChord)svg+=`<text class="notation-backing" x="${width-16}" y="20" text-anchor="end">Reference: ${esc(options.backingChord)}</text>`;
@@ -499,8 +500,8 @@ function notationSystemSvg(groups,rhythm='eighths',title='CAGED exercise',system
       for(let ledger=51;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-9}" x2="${x+9}" y1="${ledger}" y2="${ledger}"/>`;
       if(globalIndex%notesPerBar===0)accidentals.clear();
       const acc=notationAccidental(note,accidentals);
-      if(acc)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(acc)}</text>`;
-      svg+=`<g class="exercise-note${target?' target-note':''}" data-note-index="${globalIndex}" data-group-index="${group._groupIndex??groupIndex}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="6.5" ry="4.5" transform="rotate(-18 ${x} ${y})"/><rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
+      if(acc)svg+=`<text class="accidental" x="${x-accidentalOffset(acc)}" y="${y+4}">${esc(acc)}</text>`;
+      svg+=`<g class="exercise-note${target?' target-note':''}" data-note-index="${globalIndex}" data-group-index="${group._groupIndex??groupIndex}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="6.5" ry="4.5" transform="rotate(-18 ${x} ${y})"/><rect class="tab-fret-bg" x="${x-tabFretWidth(note.fret)/2}" y="${tabY-8}" width="${tabFretWidth(note.fret)}" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
       if(noteIndex%perBeat===0)svg+=`<line class="beat-guide" x1="${x-step/2}" x2="${x-step/2}" y1="140" y2="245"/>`;
       noteIndex++;
     });

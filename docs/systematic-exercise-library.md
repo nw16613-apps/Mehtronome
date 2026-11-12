@@ -2,6 +2,8 @@
 
 The library separates **material/source**, **note order**, **routine**, **register**, **travel** and **rhythm**. A familiar name may identify an order; it does not create a second copy of that order. Existing generators and saved identifiers remain readable for compatibility.
 
+Both notation renderers share minimum note-column spacing, accidental clearance and fret-number mask sizing. Chord-aligned systems allocate width from the actual event density and use fewer bars per line for dense subdivisions. Comfortable/large views retain a readable minimum size and scroll inside the score on narrow screens; Fit width and print still scale to the available width. Cell boundaries, rhythm and playback indices are independent of engraving width.
+
 ## Internal order and travelling direction
 
 Generated scale and chord-tone cells keep their written offsets on both legs: groups, permutations, digital patterns, returns, expanding/contracting intervals, skips and pedals. Written/reversed/alternating/rotating orders act independently of the anchors moving up or down. Both legs share the same structural anchors, so turns select the adjacent available cell without skipping or repeating a whole cell. Cells and variation phase continue across bars and adapt remaining notes when harmony changes.

@@ -3,6 +3,7 @@ import {notationRest} from './notation-rest.js';
 import {staffY,notationAccidental} from './notation-pitch.js';
 import {chordSvg} from './chord-symbol.js';
 import {notationChordDiagram,notationDiagramKey} from './notation-chord-diagram.js';
+import {notationBeatWidth,tabFretWidth,accidentalOffset} from './notation-spacing.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const durationPart=(remaining,at,division)=>{
  const fraction=at-Math.floor(at);if(division!==3&&fraction>1e-6)return [.5,.25].find(n=>n<=remaining+1e-6&&n<=1-fraction+1e-6)||Math.min(remaining,1-fraction);
@@ -17,13 +18,13 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
  const fingeringChanges=new Set(plan.slots.filter((slot,index)=>index===0||fingeringKey(slot)!==fingeringKey(plan.slots[index-1])));
  const diagramChanges=options.chordDiagrams?positionChanges:new Set();
  const chordChanges=new Set(plan.slots.filter((slot,index)=>index===0||slot.chord!==plan.slots[index-1].chord));
- const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats),perSystem=dense?2:guide?4:3;
- const unit=Math.max(guide?30:48,...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
- const barWidth=Math.max(guide?155:230,plan.beats*unit+35),systems=[];
+ const barCount=Math.round(plan.duration/plan.beats),guide=plan.study==='guidetones',dense=plan.slots.some(s=>s.duration<plan.beats);
+ const unit=Math.max(guide?30:48,notationBeatWidth(plan),...plan.slots.map(s=>(s.chord.length*7+22)/Math.min(s.duration,plan.beats)));
+ const barWidth=Math.max(guide?155:230,plan.beats*unit+35),perSystem=Math.min(dense?2:guide?4:3,Math.max(1,Math.floor(1100/barWidth))),systems=[];
  for(let first=0;first<barCount;first+=perSystem){
   const systemEvents=plan.events.filter(e=>e.start<(first+perSystem)*plan.beats&&e.start+e.duration>first*plan.beats),musicOffset=plan.division===3&&systemEvents.length?Math.max(0,100-Math.min(...systemEvents.map(e=>staffY(e.note)))):0;
   const count=Math.min(perSystem,barCount-first),width=100+Math.min(perSystem,barCount)*barWidth,height=290+musicOffset,staffEnd=90+count*barWidth-8;
-  let svg=`<svg class="exercise-notation aligned-notation" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)} · chord-aligned rhythm</title><rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text class="exercise-title" x="90" y="20">${esc(title)}${first?' · continued':''}</text><g transform="translate(0,${musicOffset})"><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">${plan.beats}</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
+  let svg=`<svg class="exercise-notation aligned-notation" style="--notation-min-width:${Math.round(width*.9)}px" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)} · chord-aligned rhythm</title><rect width="${width}" height="${height}" rx="8" class="notation-paper"/><text class="exercise-title" x="90" y="20">${esc(title)}${first?' · continued':''}</text><g transform="translate(0,${musicOffset})"><text x="15" y="94" class="treble-clef">𝄞</text><text x="62" y="74" class="time-signature">${plan.beats}</text><text x="62" y="94" class="time-signature">4</text><text x="18" y="193" class="tab-clef">T<tspan x="18" dy="13">A</tspan><tspan x="18" dy="13">B</tspan></text>`;
   for(let line=0;line<5;line++)svg+=`<line class="notation-line" x1="44" x2="${staffEnd}" y1="${61+line*10}" y2="${61+line*10}"/>`;
   for(let string=0;string<6;string++)svg+=`<line class="notation-line tab-line" x1="44" x2="${staffEnd}" y1="${150+string*18}" y2="${150+string*18}"/>`;
   let diagramBand='';
@@ -59,8 +60,8 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
      for(let ledger=111;ledger<=y+1;ledger+=10)svg+=`<line class="ledger-line" x1="${x-10}" x2="${x+10}" y1="${ledger}" y2="${ledger}"/>`;
      for(let ledger=51;ledger>=y-1;ledger-=10)svg+=`<line class="ledger-line" x1="${x-10}" x2="${x+10}" y1="${ledger}" y2="${ledger}"/>`;
      const acc=notationAccidental(note,accidentals);
-     if(acc&&Math.abs(at-event.start)<1e-6)svg+=`<text class="accidental" x="${x-14}" y="${y+4}">${esc(acc)}</text>`;
-     svg+=`<g class="exercise-note${event.resolution?' resolution-note':''}${event.target?' target-note':''}" data-resolution="${Boolean(event.resolution)}" data-note-index="${event.index}" data-cell-index="${event.cellId??''}" data-subcell-index="${event.subcellIndex??''}" data-group-index="${event.slot}" data-start-beat="${at}" data-duration-beats="${duration}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}, ${duration} beats`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="${duration>=4?8:6.5}" ry="4.5" transform="rotate(-18 ${x} ${y})"/>${duration>=2?`<ellipse class="note-hole" cx="${x}" cy="${y}" rx="4" ry="2" transform="rotate(-18 ${x} ${y})"/>`:''}<rect class="tab-fret-bg" x="${x-8}" y="${tabY-8}" width="16" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
+     if(acc&&Math.abs(at-event.start)<1e-6)svg+=`<text class="accidental" x="${x-accidentalOffset(acc)}" y="${y+4}">${esc(acc)}</text>`;
+     svg+=`<g class="exercise-note${event.resolution?' resolution-note':''}${event.target?' target-note':''}" data-resolution="${Boolean(event.resolution)}" data-note-index="${event.index}" data-cell-index="${event.cellId??''}" data-subcell-index="${event.subcellIndex??''}" data-group-index="${event.slot}" data-start-beat="${at}" data-duration-beats="${duration}" tabindex="0" role="button" aria-label="${esc(`${note.name}, string ${6-note.string}, fret ${note.fret}, ${duration} beats`)}"><ellipse class="note-head" cx="${x}" cy="${y}" rx="${duration>=4?8:6.5}" ry="4.5" transform="rotate(-18 ${x} ${y})"/>${duration>=2?`<ellipse class="note-hole" cx="${x}" cy="${y}" rx="4" ry="2" transform="rotate(-18 ${x} ${y})"/>`:''}<rect class="tab-fret-bg" x="${x-tabFretWidth(note.fret)/2}" y="${tabY-8}" width="${tabFretWidth(note.fret)}" height="16"/><text class="tab-fret" x="${x}" y="${tabY+4}">${note.fret}</text><text class="note-name-label" x="${x}" y="${y+16}">${esc(note.name)}</text><text class="degree-note-label" x="${x}" y="${y+16}">${esc(note.chromaticDegree||note.name)}</text></g>`;
      if(duration<1)beamNotes.push({x,y,at,duration,slot:event.slot,accent:event.accent&&Math.abs(at-event.start)<1e-6});
      else if(duration<4)svg+=`<line class="note-stem" x1="${x+6}" x2="${x+6}" y1="${y}" y2="${y-28}"/>`;
      if(bar===first&&at>event.start+1e-6&&Math.abs(at-start)<1e-6)svg+=`<path class="note-tie" d="M ${left-6} ${y+9} q 12 10 ${x-left} 0"/>`;
