@@ -246,7 +246,7 @@ export class CompingInstrument{
     voice.glideRemaining=Math.max(1,Math.round(this.rate*.015));voice.glideStep=(voice.targetIncrement-voice.increment)/voice.glideRemaining;
     voice.hold=voice.age+Math.max(.08,note.duration)*60/Math.max(30,note.bpm)*this.rate;voice.releaseAt=Math.floor(voice.hold)+1;voice.firstRelease=1;voice.release=1;
   }
-  render(audible=true){
+  render(audible=true,pitchRatio=1){
     let output=0;
     for(const voice of this.voices){
       if(!voice.active)continue;
@@ -254,7 +254,7 @@ export class CompingInstrument{
       if(voice.pendingLegato&&voice.pendingLegato.delay--<=0){this.connectLegato(voice,voice.pendingLegato);voice.pendingLegato=null;}
       if(voice.glideRemaining>0){voice.increment+=voice.glideStep;if(--voice.glideRemaining===0)voice.increment=voice.targetIncrement;}
       if(voice.bendRemaining>0){if(voice.pcm)voice.sampleIncrement+=voice.bendStep;else voice.increment+=voice.bendStep;if(--voice.bendRemaining===0){if(voice.pcm)voice.sampleIncrement=voice.bendTarget;else voice.increment=voice.bendTarget;}}
-      const increment=voice.increment,shape=voice.shape;
+      const increment=voice.increment*pitchRatio,shape=voice.shape;
       voice.phase=(voice.phase+increment)%1;voice.modPhase=(voice.modPhase+increment*2.01)%1;voice.age++;
       voice.body*=shape.bodyFactor;voice.bell*=shape.bellFactor;
       if(voice.age===voice.releaseAt)voice.release=voice.firstRelease;else if(voice.age>voice.releaseAt)voice.release*=voice.releaseFactor;
@@ -262,12 +262,12 @@ export class CompingInstrument{
       if(voice.pcm){
         if(voice.loopEnd>voice.loopStart&&voice.samplePosition>=voice.loopEnd)voice.samplePosition=voice.loopStart+(voice.samplePosition-voice.loopEnd)%(voice.loopEnd-voice.loopStart);
         const position=voice.samplePosition,index=Math.floor(position),pcm=voice.pcm;
-        voice.samplePosition+=voice.sampleIncrement;
+        voice.samplePosition+=voice.sampleIncrement*pitchRatio;
         if(index>=pcm.length-1){voice.active=false;continue;}
         if(!audible)continue;
         const value=pcm[index]+(pcm[index+1]-pcm[index])*(position-index);
         voice.filtered+=voice.filterAlpha*(value-voice.filtered);
-        const remaining=(pcm.length-1-position)/Math.max(.0001,voice.sampleIncrement),endFade=Math.min(1,Math.max(0,remaining/64));
+        const remaining=(pcm.length-1-position)/Math.max(.0001,voice.sampleIncrement*pitchRatio),endFade=Math.min(1,Math.max(0,remaining/64));
         const wave=(shape.drive?Math.tanh(voice.filtered*shape.drive)/Math.tanh(shape.drive):voice.filtered)*endFade;
         output+=wave*voice.gain*voice.sourceGain*Math.min(1,voice.age/shape.attackFrames)*release;
         continue;

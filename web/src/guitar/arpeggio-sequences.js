@@ -1,7 +1,7 @@
 import {SCALE_SEQUENCES,SCALE_SEQUENCE_FAMILY_LABELS,orderedScaleCell} from './scale-sequences.js';
 export function orderedArpeggioRootCell(cell,order='normal',ordinal=0){
  if(!cell.rootParts)return cell;
- const ordered=orderedScaleCell({notes:cell.rootParts,orderSteps:cell.orderSteps},order,ordinal),parts=ordered.notes;
+ const ordered=orderedScaleCell({notes:cell.rootParts,orderSteps:cell.orderSteps,sequenceDirection:cell.sequenceDirection},order,ordinal),parts=ordered.notes;
  const combine=(notesKey,targetKey)=>{let offset=0;const notes=[],targets=[];for(const part of parts){const ns=part[notesKey]||part.notes;notes.push(...ns);targets.push(...(part[targetKey]||[]).map(i=>i+offset));offset+=ns.length;}return {notes,targets};};
  const normal=combine('notes','targetIndices'),alternate=parts.every(p=>p.alternateNotes)?combine('alternateNotes','alternateTargetIndices'):null;
  return {...cell,notes:normal.notes,names:normal.notes.map(n=>n.name),pcs:normal.notes.map(n=>n.pc),targetIndices:normal.targets,...(alternate?{alternateNotes:alternate.notes,alternateTargetIndices:alternate.targets}:{}),rootSequence:parts.map(p=>p.sequenceAnchor),rootParts:parts,subcells:parts.map(p=>({notes:p.notes,patternOrder:p.patternOrder,label:p.chord})),orderSteps:ordered.orderSteps};

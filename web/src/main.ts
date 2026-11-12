@@ -1,3 +1,4 @@
+import {GUITAR_TUNINGS,GUITAR_TUNING_KEY,normalizeGuitarTuning,guitarTuningRatio} from './audio/guitar-tuning.js';
 import {linkExerciseFingering} from './practice/linked-fingering.js';
 import {musicalSettingsKey,liveSettingsPatch} from './audio/live-settings.js';
 import {organizeExerciseCatalogue} from './practice/exercise-catalogue-view';
@@ -208,7 +209,7 @@ app.innerHTML = `
       <details class="practice-library"><summary>Mode library progress</summary><p class="guitar-help">Highest checklist completion for each mode at this root.</p><div id="practice-mode-library" class="practice-mode-library"></div></details>
     </section>
     <section class="guitar panel workspace-page workspace-guitar" aria-labelledby="guitar-title">
-      <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Fretboard explorer</h2></div><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD TUNING · E A D G B E</span></div>
+      <div class="section-heading"><div><p class="eyebrow">TAKE IT TO THE FRETBOARD</p><h2 id="guitar-title">Fretboard explorer</h2></div><button class="practice-button" data-learning-focus>Focus on this position</button><span class="small-label">STANDARD-TUNING VIEW · E A D G B E</span></div>
       <section class="progression-reference compact-reference" aria-label="Fretboard progression reference"></section>
       <div class="guitar-guide guitar-overview">
         <p id="guitar-scale"></p><p id="guitar-parent" class="guitar-help"></p><p id="guitar-scale-check" class="context-check" hidden></p>
@@ -241,6 +242,9 @@ let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
 let studyPathUi:ReturnType<typeof installStudyPath>|undefined;
 let studyAdvancing=false,studyAdvanceToken=0;
 let settings = { ...DEFAULTS, liveChartRevision:0, automaticBacking:true, key:9, mode: 'dorian', chord: 'min7', countIn:false, customProgression };
+try{settings.guitarTuning=normalizeGuitarTuning(localStorage.getItem(GUITAR_TUNING_KEY));}catch{}
+el('sound-settings-title').closest('.section-heading')!.insertAdjacentHTML('afterend',`<section class="workspace-group sound-instrument-card" aria-labelledby="guitar-tuning-title"><div class="sound-section-heading"><h3 id="guitar-tuning-title">Guitar tuning</h3></div><label>Instrument tuning<select id="guitar-tuning" aria-describedby="guitar-tuning-description">${GUITAR_TUNINGS.map(([value,name])=>`<option value="${value}">${name}</option>`).join('')}</select></label><p id="guitar-tuning-description" class="practice-help">Notation, note names and TAB stay in standard tuning. E♭ tuning lowers pitched playback by one semitone.</p></section>`);
+select('guitar-tuning').value=String(settings.guitarTuning);
 let livePlaybackSettings:any=null,livePlaybackStep=0;
 const liveChangeStatus=document.createElement('p');liveChangeStatus.id='live-change-status';liveChangeStatus.className='practice-help mini-live-change';liveChangeStatus.setAttribute('role','status');liveChangeStatus.hidden=true;el('mini-transport').append(liveChangeStatus);
 // The editor owns requested settings; musical displays follow the snapshot
@@ -303,6 +307,7 @@ let currentExerciseGroups:any[]=[];
 let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
 let exerciseSources:AudioScheduledSourceNode[]=[];
+const guitarNoteSources=new Set<AudioBufferSourceNode>();
 const exerciseSourceTimes=new WeakMap<AudioScheduledSourceNode,{at:number,end:number,gain:GainNode,level:number}>();
 let exerciseGuitarVolume=100;
 try{const saved=localStorage.getItem('mehtronome-exercise-guitar-volume');if(saved!==null&&Number.isFinite(Number(saved)))exerciseGuitarVolume=Math.max(0,Math.min(100,Number(saved)));}catch{}
@@ -619,12 +624,12 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number,resumeAf
     if(!exercisePlaying||!context)return;
     const duration=exerciseNoteDuration(length,sustain),release=Math.min(.045,duration*.3),key=exerciseBufferCache.key(context,note.midi,duration);
     const buffer=exerciseBuffers.get(key)||exerciseBufferCache.get(context,note.midi,duration);
-    const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;
+    const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;source.playbackRate.value=guitarTuningRatio(settings.guitarTuning);guitarNoteSources.add(source);
     const offset=Math.max(0,context.currentTime+.005-at),begin=at+offset,end=at+duration;
     if(begin>=end)return;
     gain.gain.setValueAtTime(accent ? .42 : .3,begin);gain.gain.setValueAtTime(accent ? .42 : .3,Math.max(begin,end-release));gain.gain.exponentialRampToValueAtTime(.0001,end);
     source.connect(gain).connect(exerciseGuitarInstrumentOutput());source.start(begin,offset);source.stop(end);exerciseSources.push(source);exerciseSourceTimes.set(source,{at:begin,end,gain,level:accent ? .42 : .3});
-    source.onended=()=>{source.disconnect();gain.disconnect();const index=exerciseSources.indexOf(source);if(index>=0)exerciseSources.splice(index,1);};
+    source.onended=()=>{guitarNoteSources.delete(source);source.disconnect();gain.disconnect();const index=exerciseSources.indexOf(source);if(index>=0)exerciseSources.splice(index,1);};
   });
   exerciseNoteQueue.enqueue(resumeAfter===undefined?events:events.filter((event:any)=>event.at>=resumeAfter));
   if(exerciseView.loop&&exerciseView.autoTempo&&(exerciseRepetitions+1)%exerciseView.autoEvery===0){
@@ -1291,6 +1296,7 @@ function stopPreview() {
 }
 const referencePreparation=createReferencePreparation();let deliveredReferenceKey='';
 function postPreparedAudio(target:AudioWorkletNode,message:any){
+ message={...message,settings:{...message.settings,guitarTuning:settings.guitarTuning}};
  const referencePlan=referencePreparation.message(message.settings,deliveredReferenceKey);
  if(message.type==='settings'&&playing&&!liveChangeStatus.hidden)liveChangeStatus.textContent='Change queued · next bar';
  if(!playing||message.type!=='settings'){compingGuitar?.set(message.settings,'comping',guitarCabinet);sequenceGuitar?.set(message.settings,'sequence',guitarCabinet);}
@@ -1692,7 +1698,7 @@ function setNotationFocus(value:boolean) {
   if(button){button.textContent=value?'Exit notation focus':'Focus notation';button.setAttribute('aria-pressed',String(value));applyStudioIcons(el('caged-exercise'));}
 }
 async function auditionExerciseNote(index:number){
-  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,buffer=exerciseBufferCache.get(context!,note.midi,duration);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;gain.gain.value=.26;source.connect(gain).connect(exerciseGuitarOutput());source.start();source.stop(context!.currentTime+duration);source.onended=()=>{source.disconnect();gain.disconnect();};
+  if(playing||exercisePlaying||exercisePreparing||!currentExercise[index])return;const note={...currentExercise[index]},generation=++noteAuditionGeneration;await prepareAudio();if(generation!==noteAuditionGeneration||playing||exercisePlaying||exercisePreparing)return;const duration=.9,buffer=exerciseBufferCache.get(context!,note.midi,duration);const source=context!.createBufferSource(),gain=context!.createGain();source.buffer=buffer;source.playbackRate.value=guitarTuningRatio(settings.guitarTuning);guitarNoteSources.add(source);gain.gain.value=.26;source.connect(gain).connect(exerciseGuitarOutput());source.start();source.stop(context!.currentTime+duration);source.onended=()=>{guitarNoteSources.delete(source);source.disconnect();gain.disconnect();};
 }
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;
@@ -2176,7 +2182,7 @@ function syncMiniTransportDisplay() {
   const sessionChord=document.getElementById('session-chord'),sessionMode=document.getElementById('session-mode');
   if(sessionChord)sessionChord.textContent=info.name+info.suffix;
   if(sessionMode)sessionMode.textContent=active.scale;
-  el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}`;
+  el('mini-mode').textContent = `${exercisePlaying?'Study · ':''}${info.scaleNames[0]} ${MODES[info.mode as keyof typeof MODES].name}${settings.guitarTuning===-1?' · E♭ guitar':''}`;
   el('mini-root-purpose').textContent=settings.progression?'Chord root':'Root';
   const rootMenu=select('mini-key');rootMenu.querySelector('option[value="mixed"]')?.remove();
   const mixedRoots=settings.progression&&settings.template==='custom'&&!playing&&!exercisePlaying&&step===customStepIndex&&new Set(chartEditSteps.map(i=>customProgression.steps[i]?.root)).size>1;
@@ -2264,6 +2270,13 @@ function setFocusView(value:boolean) {
 el('focus-view').addEventListener('click',()=>setFocusView(!focusView));
 el('exit-focus').addEventListener('click',()=>setFocusView(false));
 
+select('guitar-tuning').addEventListener('input',()=>{
+ const tuning=normalizeGuitarTuning(select('guitar-tuning').value);settings.guitarTuning=tuning;if(livePlaybackSettings)livePlaybackSettings.guitarTuning=tuning;
+ try{localStorage.setItem(GUITAR_TUNING_KEY,String(tuning));}catch{}
+ for(const source of guitarNoteSources)source.playbackRate.setValueAtTime(guitarTuningRatio(tuning),source.context.currentTime);
+ if(previewing&&!playing&&!exercisePlaying)stopPreview();
+ node?.port.postMessage({type:'live-controls',settings:{guitarTuning:tuning}});syncMiniTransport();
+});
 el('open-sound-settings').addEventListener('click',()=>{setFloatingMixer(false);if(focusView)setFocusView(false);showWorkspace('settings','sound-settings-title');});
 const workspaceTabs=Array.from(document.querySelectorAll<HTMLButtonElement>('.workspace-tab'));
 const workspaceNames:Record<string,string>={'study-path-title':'study','pulse-title':'practice','harmony-title':'harmony','guitar-title':'guitar','caged-exercise':'exercises','progress-title':'progress','sound-settings-title':'settings'};

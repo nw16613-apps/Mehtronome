@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test';
+async function observe(page:any){await page.addInitScript(()=>{
+ (window as any).tuningMessages=[];(window as any).noteRates=[];
+ const post=MessagePort.prototype.postMessage;MessagePort.prototype.postMessage=function(message:any,...args:any[]){if(['start','stop','audition','live-controls'].includes(message?.type))(window as any).tuningMessages.push({type:message.type,tuning:message.settings?.guitarTuning,key:message.settings?.key,notes:message.notes});return (post as any).call(this,message,...args);};
+ const start=AudioBufferSourceNode.prototype.start;AudioBufferSourceNode.prototype.start=function(...args:any[]){(window as any).noteRates.push(this.playbackRate.value);return (start as any).apply(this,args);};
+});}
+async function tune(page:any,value:string){await page.locator('[data-workspace-target=sound-settings-title]').click();await page.locator('#guitar-tuning').selectOption(value);}
+async function exercise(page:any){await page.locator('[data-workspace-target=study-path-title]').click();await page.locator('#study-material').selectOption('harmonized');await page.locator('#study-bars').selectOption('4');await page.locator('#study-load').click();await page.locator('#exercise-loop').check();}
+test('global E-flat compensation persists without changing the score, TAB, chart key or selected shape',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await exercise(page);const before=await page.locator('.notation-scroll').innerHTML(),key=await page.locator('#key').inputValue();
+ await tune(page,'-1');await expect(page.locator('#mini-mode')).toContainText('E♭ guitar');await page.locator('[data-workspace-target=caged-exercise]').click();expect(await page.locator('.notation-scroll').innerHTML()).toBe(before);await expect(page.locator('#key')).toHaveValue(key);await expect(page.locator('#mini-chord')).toHaveText('Am7');
+ await page.reload();await page.locator('[data-workspace-target=sound-settings-title]').click();await expect(page.locator('#guitar-tuning')).toHaveValue('-1');expect(await page.evaluate(()=>localStorage.getItem('mehtronome-guitar-tuning'))).toBe('-1');expect(errors).toEqual([]);
+});
+for(const backing of [false,true])test(`tuned exercise playback shifts guitar notes once and can return live to standard tuning, backing=${backing}`,async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await observe(page);await page.goto('/');await tune(page,'-1');await exercise(page);await page.locator('#exercise-backing').setChecked(backing);const frets=await page.locator('.tab-fret').allTextContents();
+ await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing').first()).toBeVisible({timeout:10000});const rates=await page.evaluate(()=>(window as any).noteRates);expect(rates.length).toBeGreaterThan(0);for(const value of rates)expect(value).toBeCloseTo(2**(-1/12),6);
+ if(backing){const starts=await page.evaluate(()=>(window as any).tuningMessages.filter((m:any)=>m.type==='start'));expect(starts).toHaveLength(1);expect(starts[0].tuning).toBe(-1);expect(starts[0].key).toBe(9);}
+ await tune(page,'0');await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await page.locator('[data-workspace-target=caged-exercise]').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');expect(await page.locator('.tab-fret').allTextContents()).toEqual(frets);await expect.poll(()=>page.evaluate(()=>(window as any).noteRates.includes(1))).toBe(true);
+ const messages=await page.evaluate(()=>(window as any).tuningMessages);expect(messages.filter((m:any)=>m.type==='stop')).toHaveLength(0);await expect(page.locator('#mini-mode')).not.toContainText('E♭ guitar');await page.locator('#mini-play').click();expect(errors).toEqual([]);
+});
+test('main backing changes tuning live without transposing the chart or restarting its transport',async({page})=>{
+ await observe(page);await page.goto('/');await tune(page,'-1');const key=await page.locator('#key').inputValue();await page.locator('#mini-play').click();await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await expect.poll(()=>page.evaluate(()=>(window as any).tuningMessages.filter((m:any)=>m.type==='start').length)).toBe(1);
+ await tune(page,'0');await expect(page.locator('#mini-play')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#key')).toHaveValue(key);const messages=await page.evaluate(()=>(window as any).tuningMessages);expect(messages.filter((m:any)=>m.type==='start')).toHaveLength(1);expect(messages.find((m:any)=>m.type==='start').tuning).toBe(-1);expect(messages.some((m:any)=>m.type==='live-controls'&&m.tuning===0)).toBe(true);expect(messages.filter((m:any)=>m.type==='stop')).toHaveLength(0);await page.locator('#mini-play').click();
+});

@@ -12,14 +12,14 @@ function expectedPairs(line,allowed,span,direction,count,order='normal'){
  let cells=pairs(direction),index=0;const result=[];
  if(!cells.length)return result;
  while(result.length<count){
-  const cell=cells[index++],ordinal=result.length/2,reverse=order==='reverse'||order==='alternate'&&ordinal%2===1||order==='alternateReverse'&&ordinal%2===0;result.push(...(reverse?cell.toReversed():cell));
+  const cell=cells[index++],ordinal=result.length/2,reverse=order==='reverse'||order==='alternate'&&ordinal%2===1||order==='alternateReverse'&&ordinal%2===0||order==='directional'&&direction<0||order==='directionalReverse'&&direction>0;result.push(...(reverse?cell.toReversed():cell));
   if(index===cells.length){const edge=cell[0];direction=-direction;cells=pairs(direction);index=cells.findIndex(p=>(p[0]-edge)*direction>0);if(index<0)index=0;}
  }
  return result.slice(0,count);
 }
 test('every interval pair retains its internal order and visits adjacent cells at both boundaries',()=>{
  const intervals=['seconds','thirds','fourths','fifths','sixths','sevenths','octaves'];
- for(const mode of ['dorian','major','harmonic_minor','minor_pentatonic'])for(const key of [0,4,9])for(const shape of ['E','D','C','A','G'])for(const prefix of ['','arpseq_'])for(const [i,id]of intervals.entries())for(const direction of [1,-1])for(const order of ['normal','reverse','alternate','alternateReverse']){
+ for(const mode of ['dorian','major','harmonic_minor','minor_pentatonic'])for(const key of [0,4,9])for(const shape of ['E','D','C','A','G'])for(const prefix of ['','arpseq_'])for(const [i,id]of intervals.entries())for(const direction of [1,-1])for(const order of ['normal','reverse','alternate','alternateReverse','directional','directionalReverse']){
   const h=harmonyAt({key,mode,chord:mode==='major'?'maj7':'min7'}),board=fretboardFor(h,shape),pcs=prefix?arpeggioHarmony(h).chordPcs:h.scalePcs;
   const line=Array.from({length:128},(_,i)=>i).filter(m=>pcs.includes(m%12)),allowed=new Set(board.notes.filter(n=>pcs.includes(n.pc)).map(n=>n.midi));
   const expected=expectedPairs(line,allowed,i+1,direction,192,order);if(!expected.length)continue;

@@ -245,17 +245,17 @@ export class Sequence {
     Object.assign(voice,{phase:0,frequency,increment:frequency/this.rate,age:0,envelope:note.velocity,pan:grid%2?.35:-.35,table:frequency*3<this.rate*.45?SEQUENCE_WAVE:SINE});
     onNote({sample,grid,midi,step,role:settings.sequenceRole,phraseBar:note.phraseBar});
   }
-  render(audible=true) {
+  render(audible=true,pitchRatio=1) {
     let left=0,right=0;
     for(const voice of this.voices){
       if(voice.age>this.maxAge) continue;
       const envelope=Math.min(1,voice.age/this.attackFrames)*voice.envelope;
       const signal=audible?readWave(voice.table,voice.phase)*envelope:0;
       left+=signal*(1-voice.pan);right+=signal*(1+voice.pan);
-      voice.phase+=voice.increment;if(voice.phase>=1) voice.phase-=1;
+      voice.phase+=voice.increment*pitchRatio;if(voice.phase>=1) voice.phase-=1;
       voice.envelope*=this.decay;voice.age++;
     }
-    const styled=this.instrument.render(audible);
+    const styled=this.instrument.render(audible,pitchRatio);
     this.left=left+styled;this.right=right+styled;
   }
 }

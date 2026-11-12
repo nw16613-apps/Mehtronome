@@ -1,4 +1,5 @@
 import {musicalSettingsKey,chartLayoutKey,liveSettingsPatch} from './live-settings.js';
+import {normalizeGuitarTuning,guitarTuningRatio} from './guitar-tuning.js';
 import {prepareStandardMelody,playbackLeadInBeats} from './standard-melodies.js';
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
 import {nativeGuitarChannel} from './guitar-policy.js';
@@ -18,6 +19,7 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
+  guitarTuning:0,
   backingStyle:'popRock',soundLibrary:'original',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, studyRepeatBeats:0, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
@@ -299,6 +301,7 @@ export class Engine {
     const previousPoly = `${this.settings.polyBeats}/${this.settings.polyBase}`;
     Object.assign(this.settings, settings);
     const s = this.settings;
+    s.guitarTuning=normalizeGuitarTuning(s.guitarTuning);this.pitchRatio=guitarTuningRatio(s.guitarTuning);
     if(previousSound!==s.sound){
       this.wavePrevious = this.waveCurrent;
       this.layerPrevious = this.layerCurrent;
@@ -388,7 +391,7 @@ export class Engine {
       this.motionNotes=padMotionNotes(notes);
       this.motionCell=-1;
       this.assignPadVoices();
-      if (acoustic) this.guitar = new GuitarStrum(this.rate, notes);
+      if (acoustic) this.guitar = new GuitarStrum(this.rate, notes.map(note=>note+normalizeGuitarTuning(this.settings.guitarTuning)));
     }
   }
 
@@ -620,7 +623,7 @@ export class Engine {
       if(s.sequence && (backingActive||melodyPickup) && !this.auditioning){
         this.sequence.tick(this.clockSettings,melodyPickup?this.beat-this.remainingCount:Math.max(0,this.beat-this.remainingCount),this.phase/(60*this.rate),this.sequenceNotes,this.age,this.step,onSequence,this.nextSequenceNotes,this.sequenceRoleContext,sequenceVolume>0);
       }
-      if (s.sequence || this.sequenceLevel > .000001) this.sequence.render(sequenceVolume>0||this.sequenceLevel>.000001);
+      if (s.sequence || this.sequenceLevel > .000001) this.sequence.render(sequenceVolume>0||this.sequenceLevel>.000001,this.pitchRatio);
       else { this.sequence.left = 0; this.sequence.right = 0; }
       this.sequenceLevel+=((s.sequence && !this.auditioning && (backingActive||melodyPickup)?sequenceVolume:0)-this.sequenceLevel)*smoothing;
       const rhythmActive=backingActive && !this.auditioning;
@@ -633,8 +636,8 @@ export class Engine {
       this.drumsLevel+=((s.drums && rhythmActive?drumsVolume:0)-this.drumsLevel)*smoothing;
       this.bassLevel+=((s.bass && rhythmActive?bassVolume:0)-this.bassLevel)*smoothing;
       this.compingLevel+=((s.comping && rhythmActive?compingVolume:0)-this.compingLevel)*smoothing;
-      this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001);
-      const comping=this.comping.render(compingVolume>0||this.compingLevel>.000001);
+      this.rhythm.render(this.drumsLevel>.000001,this.bassLevel>.000001,this.pitchRatio);
+      const comping=this.comping.render(compingVolume>0||this.compingLevel>.000001,this.pitchRatio);
       // The sampled rhythm section needs enough headroom to sit in front of the
       // wide, sustained pad. These trims keep the mixer controls perceptually
       // useful without forcing users to turn the harmony almost all the way down.
@@ -689,7 +692,7 @@ export class Engine {
       for (const voice of this.voices) {
         voice.level+=(voice.targetLevel-voice.level)*(voice.targetLevel>voice.level?attack:release);
         if (!voice.targetLevel && voice.level<.000001) { voice.level=0; continue; }
-        const increment=voice.frequency*inverseRate;
+        const increment=voice.frequency*inverseRate*this.pitchRatio;
         if(padAudible){
         voice.coefficient+=voice.coefficientDelta;
         voice.pan+=voice.panDelta;
@@ -740,7 +743,7 @@ export class Engine {
           const midi=this.motionNotes[(cell+this.step)%this.motionNotes.length];
           this.motionFrequency=440*2**((midi-69)/12);
         }
-        this.motionPhase+=this.motionFrequency*inverseRate;
+        this.motionPhase+=this.motionFrequency*inverseRate*this.pitchRatio;
         if(this.motionPhase>=1)this.motionPhase-=Math.floor(this.motionPhase);
         const swell=Math.sin(Math.PI*fraction)**2;
         const motionGain=PAD_MOTION_GAIN[s.padMovement]||.04;

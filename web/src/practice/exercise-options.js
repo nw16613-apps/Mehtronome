@@ -16,6 +16,7 @@ export function normalizeExerciseOptions(view){
  if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]?.family==='intervals'&&view.sequenceOrder==='rotate')view.sequenceOrder='alternate';
  if(hasChromaticSide(view.study)&&!['normal','reverse'].includes(view.sequenceOrder))view.sequenceOrder='normal';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
+ if(view.sequenceOrder.startsWith('directional')&&SCALE_SEQUENCES[(view.study==='harmonized'?view.arpeggioSequence:view.study).replace(/^arpseq_/, '')]?.family!=='intervals')view.sequenceOrder='normal';
  if(view.study==='harmonized'&&view.sequenceOrder==='cycle'&&![3,4].includes(ARPEGGIO_ROOT_SEQUENCES[view.arpeggioSequence].offsets.length))view.sequenceOrder='normal';
  if(view.study==='harmonized'&&SCALE_SEQUENCES[view.arpeggioSequence]?.family==='intervals'&&view.sequenceOrder==='rotate')view.sequenceOrder='alternate';
  if(view.study==='pentatonic'&&view.sequenceOrder==='cycle'&&!['groups3','groups4','digital1324','rolling','alternating3','alternating4'].includes(view.pattern))view.sequenceOrder='normal';

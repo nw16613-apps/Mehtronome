@@ -452,7 +452,7 @@ export class Rhythm {
     this.bassCursor=this.bassInstrument.cursor;
     onEvent({type:'bass',sample,step,beat,sub,midi,root,offbeat:sub!==0,gain,approaching,durationBeats:length});
   }
-  render(drumsActive, bassActive) {
+  render(drumsActive, bassActive, pitchRatio=1) {
     let drums=0;
     if(this.activeDrums)for(const voice of this.drumVoices){
       if(!voice.sample)continue;
@@ -470,7 +470,7 @@ export class Rhythm {
     this.drums=drumsActive?drums:0;
     // Muted voices still age, so restoring a mixer fader never replays a pile
     // of frozen attacks or an old bass note.
-    const bass=this.bassInstrument.render(bassActive);
+    const bass=this.bassInstrument.render(bassActive,pitchRatio);
     this.bass=bassActive?bass:0;
   }
 }

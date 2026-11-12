@@ -120,13 +120,13 @@ export class SampledBass {
     return voice;
   }
 
-  render(audible=true) {
+  render(audible=true,pitchRatio=1) {
     let output=0;
     for (const voice of this.voices) {
       if (!Number.isFinite(voice.age) || voice.envelope<SILENCE) continue;
       if(!audible){
-        if(voice.sample){voice.position+=voice.increment;if(voice.position>=voice.sample.length-1){voice.age=Infinity;voice.envelope=0;voice.sample=null;continue;}}
-        else{voice.phase+=voice.increment;voice.phase-=Math.floor(voice.phase);}
+        if(voice.sample){voice.position+=voice.increment*pitchRatio;if(voice.position>=voice.sample.length-1){voice.age=Infinity;voice.envelope=0;voice.sample=null;continue;}}
+        else{voice.phase+=voice.increment*pitchRatio;voice.phase-=Math.floor(voice.phase);}
         if(voice.age>=voice.gate)voice.releasing=true;voice.envelope*=voice.releasing?voice.releaseDecay:voice.decay;voice.age++;continue;
       }
       let value;
@@ -138,12 +138,12 @@ export class SampledBass {
         const fraction=voice.position-index;
         value=voice.sample[index]+(voice.sample[index+1]-voice.sample[index])*fraction;
         // Even a recording with an imperfect trim reaches zero before EOF.
-        const remaining=(voice.sample.length-1-voice.position)/voice.increment;
+        const remaining=(voice.sample.length-1-voice.position)/(voice.increment*pitchRatio);
         if (remaining<64) value*=Math.max(0,remaining/64);
-        voice.position+=voice.increment;
+        voice.position+=voice.increment*pitchRatio;
       } else {
         value=readWave(BASS_WAVE,voice.phase);
-        voice.phase+=voice.increment;
+        voice.phase+=voice.increment*pitchRatio;
         voice.phase-=Math.floor(voice.phase);
       }
       voice.filter+=voice.coefficient*(value-voice.filter);

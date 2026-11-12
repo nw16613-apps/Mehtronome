@@ -4,6 +4,8 @@ The library separates **material/source**, **note order**, **routine**, **regist
 
 Both notation renderers share minimum note-column spacing, accidental clearance and fret-number mask sizing. Chord-aligned systems allocate width from the actual event density and use fewer bars per line for dense subdivisions. Comfortable/large views retain a readable minimum size and scroll inside the score on narrow screens; Fit width and print still scale to the available width. Cell boundaries, rhythm and playback indices are independent of engraving width.
 
+Interval Pair order also offers both direction-dependent contours: 1–n ascending / n–1 descending, and n–1 ascending / 1–n descending. These coexist with fixed and alternating pair orders, retain the shared structural anchor library at turns, and are restored by favourites. They also apply to interval-based whole-arpeggio root motifs without reversing the notes inside each arpeggio.
+
 ## Internal order and travelling direction
 
 Generated scale and chord-tone cells keep their written offsets on both legs: groups, permutations, digital patterns, returns, expanding/contracting intervals, skips and pedals. Written/reversed/alternating/rotating orders act independently of the anchors moving up or down. Both legs share the same structural anchors, so turns select the adjacent available cell without skipping or repeating a whole cell. Cells and variation phase continue across bars and adapt remaining notes when harmony changes.
