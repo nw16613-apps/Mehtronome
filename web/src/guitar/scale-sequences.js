@@ -19,6 +19,12 @@ for(let skip=2;skip<=6;skip++){const offsets=run(3).flatMap(i=>[i,i+skip]);add('
 add('pedalLower','pedals','Fixed lower pedal',[0],{pedal:'lower'});add('pedalUpper','pedals','Fixed upper pedal',[0],{pedal:'upper'});
 export const SCALE_SEQUENCE_FAMILY_LABELS={intervals:'Interval pairs',groups:'Consecutive-note groups',permutations3:'3-note permutations · 6',permutations4:'4-note permutations · 24',digital:'Digital patterns',returns:'Return patterns',expanding:'Expanding / contracting intervals',skips:'Skips and steps',pedals:'Fixed pedals'};
 export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse every cell'],['alternate','Reverse alternate cells · written first'],['alternateReverse','Reverse alternate cells · reversed first'],['rotate','Rotate entry each cell'],['cycle','Cycle all orders · 3/4-note cells']];
+export function scaleCellOrders(study){
+ const definition=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')];
+ if(definition?.family!=='intervals')return SCALE_CELL_ORDERS;
+ const n=definition.offsets[1]+1;
+ return [['normal',`1–${n}`],['reverse',`${n}–1`],['alternate',`Alternate 1–${n} / ${n}–1`],['alternateReverse',`Alternate ${n}–1 / 1–${n}`]];
+}
 export function scaleSequenceCells(board,harmony,study,motion,options={}){
  const definition=SCALE_SEQUENCES[study];if(!definition)return [];
  const direction=['descending','down-up'].includes(motion)?-1:1,count=harmony.scalePcs.length;
@@ -26,7 +32,8 @@ export function scaleSequenceCells(board,harmony,study,motion,options={}){
  const sorted=[...byMidi.values()].sort((a,b)=>a.midi-b.midi),anchors=direction>0?sorted:sorted.toReversed(),intervals=harmony.scalePcs.map(pc=>(pc-harmony.scalePcs[0]+12)%12),cells=[];
  for(const anchor of anchors){
   const degree=harmony.scalePcs.indexOf(anchor.pc);
-  let notes=definition.offsets.map(offset=>{const step=degree+direction*offset,index=(step%count+count)%count,midi=anchor.midi+intervals[index]+12*Math.floor(step/count)-intervals[degree],note=byMidi.get(midi);return note?{...note,name:harmony.scaleNames[index]}:null;});
+  const cellDirection=definition.family==='intervals'?1:direction;
+  let notes=definition.offsets.map(offset=>{const step=degree+cellDirection*offset,index=(step%count+count)%count,midi=anchor.midi+intervals[index]+12*Math.floor(step/count)-intervals[degree],note=byMidi.get(midi);return note?{...note,name:harmony.scaleNames[index]}:null;});
   if(notes.some(n=>!n))continue;
   if(definition.pedal){const pedal=definition.pedal==='lower'?sorted[0]:sorted.at(-1);if(anchor.midi===pedal.midi)continue;notes=[pedal,anchor].map(n=>({...n,name:harmony.scaleNames[harmony.scalePcs.indexOf(n.pc)]}));}
   cells.push({chord:`${harmony.scaleNames[degree]} · ${definition.label}`,rootName:harmony.scaleNames[degree],notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),orderSteps:definition.pedal?null:definition.offsets.map(i=>i+1),sequenceAnchor:anchor.midi,sequenceDirection:direction,scaleSequence:true});

@@ -13,6 +13,7 @@ export function normalizeExerciseOptions(view){
  view.sequenceAdvance=[1,2,3].includes(Number(view.sequenceAdvance))?Number(view.sequenceAdvance):1;
  view.sequenceOrder=SCALE_CELL_ORDERS.some(([id])=>id===view.sequenceOrder)?view.sequenceOrder:'normal';
  if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]&&view.sequenceOrder==='cycle'&&![3,4].includes(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')].offsets.length))view.sequenceOrder='normal';
+ if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]?.family==='intervals'&&view.sequenceOrder==='rotate')view.sequenceOrder='alternate';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
  view.entryTone=/^(?:scale:[0-7]|chord:[1-7]|offset:(?:[0-9]|1[01]))$/.test(view.entryTone)?view.entryTone:'default';
