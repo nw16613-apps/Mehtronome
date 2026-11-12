@@ -14,6 +14,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     this.meterFrames = 0;
     this.onBeat = event => this.port.postMessage(event);
     this.port.onmessage = ({ data }) => {
+      if(data.type==='live-controls'){this.engine.updateLiveSettings(data.settings,data.cancelPending);return;}
       if(data.type==='fx-sends'){this.fxChannels=new Set(data.channels||[]);this.stemsEnabled=STEM_CHANNELS.some(([, , ,id])=>this.fxChannels.has(id));return;}
       if (data.type === 'drum-kit') {
         if(data.merge)this.engine.mergeDrumKit(data.kit);else this.engine.installDrumKit(data.kit);
@@ -29,11 +30,11 @@ class HarmonyProcessor extends AudioWorkletProcessor {
         this.engine.audition(data.step, data.notes, data.acoustic);
         this.active = true;
       } else if (data.type === 'stop') {
-        this.engine.running = false;
+        this.engine.running = false;this.engine.pendingSettings=null;
       } else if (data.type === 'settings') {
-        this.engine.configure(data.settings,data.referencePlan);
-        if(data.sampleNames)this.engine.mergeDrumKit({},data.sampleNames);
-        this.port.postMessage({ type: 'harmony', step: this.engine.step });
+        const queued=data.live?this.engine.requestSettings(data.settings,data.referencePlan,data.id,data.sampleNames):(this.engine.configure(data.settings,data.referencePlan),false);
+        if(!data.live&&data.sampleNames)this.engine.mergeDrumKit({},data.sampleNames);
+        if(!queued)this.port.postMessage({type:data.live?'settings-applied':'harmony',id:data.id,settings:data.settings,step:this.engine.step});
       }
     };
   }

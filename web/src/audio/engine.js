@@ -1,3 +1,4 @@
+import {musicalSettingsKey,chartLayoutKey,liveSettingsPatch} from './live-settings.js';
 import {prepareStandardMelody,playbackLeadInBeats} from './standard-melodies.js';
 import {referenceBasePlan,referenceActivityPlan,referencePlanKey} from './reference-performances.js';
 import {nativeGuitarChannel} from './guitar-policy.js';
@@ -191,6 +192,7 @@ export class Engine {
   }
 
   reset() {
+    this.pendingSettings=null;
     this.auditioning = false;
     this.guitar = null;
     this.gapGain = 1;
@@ -257,6 +259,26 @@ export class Engine {
     this.age = 0;
     this.step = 0;
     this.configure({});
+  }
+
+  updateLiveSettings(settings,cancelPending=false){
+    const patch=liveSettingsPatch(settings);
+    if(cancelPending)this.pendingSettings=null;
+    else if(this.pendingSettings)Object.assign(this.pendingSettings.settings,patch);
+    this.configure(patch);
+  }
+
+  requestSettings(settings,referencePlan=null,id=0,sampleNames=null){
+    const requested={...this.settings,...settings};
+    if(!this.running||this.auditioning||musicalSettingsKey(requested)===musicalSettingsKey(this.settings)){
+      this.pendingSettings=null;this.configure(requested,referencePlan);
+      if(sampleNames)this.mergeDrumKit({},sampleNames);
+      return false;
+    }
+    const previous=this.pendingSettings;
+    this.pendingSettings={settings:requested,id,sampleNames,referencePlan:referencePlan?.plan!==undefined?referencePlan:previous?.referencePlan&&previous.referencePlan.key===referencePlan?.key?previous.referencePlan:referencePlan,resetChart:chartLayoutKey(requested)!==chartLayoutKey(this.settings)};
+    this.configure(liveSettingsPatch(requested));
+    return true;
   }
 
   configure(settings,preparedReference=null) {
@@ -500,6 +522,20 @@ export class Engine {
     const release = 1-Math.exp(-1/(this.rate*sound.release));
     const inverseRate = this.inverseRate;
     for (let i = 0; i < output.length; i++) {
+      // Apply on the exact sample of the next downbeat, before old-chart hits.
+      if(this.pendingSettings&&this.running&&this.nextBeat&&!this.auditioning&&(this.beat+1-this.remainingCount)>=0&&(this.beat+1-this.remainingCount)%s.beats===0){
+        const pending=this.pendingSettings;this.pendingSettings=null;
+        const next=pending.resetChart?0:this.beat+1;
+        if(pending.resetChart)this.remainingCount=0;
+        this.beat=next;this.configure(pending.settings,pending.referencePlan);this.beat=next-1;
+        if(pending.sampleNames)this.mergeDrumKit({},pending.sampleNames);
+        if(pending.resetChart){this.rhythm.lastGrid=-1;this.rhythm.lastBassGrid=-1;this.comping.lastGrid=-1;this.sequence.lastGrid=-1;this.lastPoly=-1;}
+        onPulse({type:'settings-applied',id:pending.id,settings:pending.settings,step:this.step});
+        // Re-enter with refreshed tempo, gains and instrument references. Views
+        // are allocated only for an actual edit, never in steady-state audio.
+        const tail=data=>data?.subarray(i);
+        return this.render(tail(output),onBeat,tail(harmonyOutput),tail(harmonyRight),onSequence,tail(rhythmOutput),onRhythm,tail(gapOutput),onPulse,stems?Object.fromEntries(Object.entries(stems).map(([key,data])=>[key,tail(data)])):null);
+      }
       const sessionActive=this.running&&!this.auditioning&&this.beat>=this.remainingCount;
       if(sessionActive&&s.sessionSeconds>0&&this.sessionFrames>=Math.round(s.sessionSeconds*this.rate)
         &&(!s.sessionFinishBar||(this.nextBeat&&(this.beat+1-this.remainingCount)%s.beats===0))){
