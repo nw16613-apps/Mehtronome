@@ -1,16 +1,16 @@
-import {spreadTriadCatalogue} from '../guitar/spread-triads.js';
+import {spreadTriadCatalogue,playableSpreadStringSets} from '../guitar/spread-triads.js';
 import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {perStringCatalogue} from '../guitar/per-string.js';
 import {dropVoicingCatalogue} from '../guitar/drop-voicings.js';
 import {MODES} from '../audio/music.js';
 export const PER_STRING_STUDIES=new Set(['positional','positionalscale','arpgroups3','arpgroups4']);
-export const exerciseFingeringCatalogue=(h,o)=>o.fingering==='spread'?spreadTriadCatalogue(h,o.fingeringStringSet||0):o.fingering.startsWith('drop')?dropVoicingCatalogue(h,o.fingering,o.fingeringStringSet||0):perStringCatalogue(o.fingering==='three'||o.exactFingering||o.material===undefined?h:exerciseArpeggioHarmony(h,o.material),o.fingering);
+export const exerciseFingeringCatalogue=(h,o)=>o.fingering==='spread'?spreadTriadCatalogue(h,playableSpreadStringSets(h,o.spreadSource).find(s=>s.index===o.fingeringStringSet)?.index??playableSpreadStringSets(h,o.spreadSource)[0]?.index??0,o.spreadSource):o.fingering.startsWith('drop')?dropVoicingCatalogue(h,o.fingering,o.fingeringStringSet||0):perStringCatalogue(o.fingering==='three'||o.exactFingering||o.material===undefined?h:exerciseArpeggioHarmony(h,o.material),o.fingering);
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function perStringExerciseChoice(harmony,options){
- const catalogue=exerciseFingeringCatalogue(harmony,options),entry=catalogue[options.inversion]||catalogue[0];
+ const catalogue=exerciseFingeringCatalogue(harmony,options),entry=catalogue[options.inversion]?.choices.length?catalogue[options.inversion]:catalogue.find(e=>e.choices.length);
  if(!entry||!entry.choices.length)return {board:{start:1,end:5,notes:[],muted:[]},entry:{choices:[]},index:0,label:options.fingering==='spread'?'Spread triad':options.fingering==='drop2'?'Drop 2':'Drop 3',warning:`${harmony.name}${harmony.suffix}: no playable chord voicing on this string set; rest for this chord.`};
  const board=entry.choices.reduce((best,b)=>!best||Math.abs(b.firstFret-options.fingeringFret)<Math.abs(best.firstFret-options.fingeringFret)?b:best,null);
- const index=catalogue.indexOf(entry),label=`${options.fingering==='three'?'3 notes per string':options.fingering==='spread'?'Spread triad':options.fingering==='drop2'?'Drop 2':options.fingering==='drop3'?'Drop 3':options.fingering==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'} · ${options.fingering==='three'?'Starting degree '+MODES[harmony.mode].degrees[entry.degree]:inversionNames[index]}`;
+ const index=catalogue.indexOf(entry),label=entry.label?'Spread triad · '+entry.label:`${options.fingering==='three'?'3 notes per string':options.fingering==='spread'?'Spread triad':options.fingering==='drop2'?'Drop 2':options.fingering==='drop3'?'Drop 3':options.fingering==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'} · ${options.fingering==='three'?'Starting degree '+MODES[harmony.mode].degrees[entry.degree]:inversionNames[index]}`;
  return {board,entry,index,label,warning:catalogue[options.inversion]?'':`The selected inversion is absent from ${harmony.name}${harmony.suffix}; using root position.`};
 }
 /** Reuse the precise fretboard fingering. Cycles preserve string/fret identity

@@ -12,7 +12,7 @@ export function exerciseFavouriteKey(snapshot){
  const fields=v.study==='harmonized'?['arpeggioSequence','sequenceAdvance','arpeggioSource','arpeggioPattern','arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
  SCALE_SEQUENCES[v.study.replace(/^arpseq_/, '')]?['sequenceAdvance','sequenceOrder']:
  v.study.startsWith('enclosures')?['enclosureTarget','enclosurePattern']:
- ['positional','positionalscale'].includes(v.study)?['fingering',...(v.fingering!=='caged'?['inversion','fingeringFret','fingeringStringSet']:[]),'startTone','patternStartRoute']:
+ ['positional','positionalscale'].includes(v.study)?['fingering',...(v.fingering!=='caged'?['inversion','fingeringFret','fingeringStringSet',...(v.fingering==='spread'?['spreadSource']:[])]:[]),'startTone','patternStartRoute']:
  v.study==='pentatonic'?['source','pattern']:v.study==='triadpairs'?['source']:[];
  for(const field of fields)if(v[field]!==undefined)result[field]=v[field];
  return JSON.stringify(result);
