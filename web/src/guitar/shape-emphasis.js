@@ -44,8 +44,9 @@ export function perStringMapRegions(container,shapes,selected){
   const first=shape.board.notes[0],desired=62+(first.fret-.5)*1240/17;
   // Compact numbered labels occupy distinct slots above the string diagram.
   let x=Math.min(1260,Math.max(68,desired));
-  const free=(at)=>usedLabels.every(other=>Math.abs(other-at)>=40);
-  if(!free(x)){const candidates=Array.from({length:30},(_,i)=>68+i*40).filter(free);x=candidates.sort((a,b)=>Math.abs(a-x)-Math.abs(b-x))[0]??x;}usedLabels.push(x);
+  const spacing=shapes.length>30?35:40;
+  const free=(at)=>usedLabels.every(other=>Math.abs(other-at)>=spacing);
+  if(!free(x)){const candidates=Array.from({length:Math.floor(1190/spacing)+1},(_,i)=>68+i*spacing).filter(free);x=candidates.sort((a,b)=>Math.abs(a-x)-Math.abs(b-x))[0]??x;}usedLabels.push(x);
   const tag=document.createElementNS(ns,'rect'),text=document.createElementNS(ns,'text');
   const title=document.createElementNS(ns,'title');title.textContent=shape.label;label.append(title);tag.setAttribute('x',String(x));tag.setAttribute('y','22');tag.setAttribute('width','34');tag.setAttribute('height','23');tag.setAttribute('rx','4');text.setAttribute('x',String(x+17));text.setAttribute('y','38');text.setAttribute('text-anchor','middle');text.textContent=shape.tag||String(index+1);label.append(tag,text);labels.append(label);
  });

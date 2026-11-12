@@ -1,3 +1,4 @@
+import {modeChordHarmonies} from './mode-chords.js';
 import {MODES} from '../audio/music.js';
 import {TUNING} from './fretboard.js';
 import {exerciseArpeggioHarmony} from './arpeggio-harmony.js';
@@ -32,14 +33,8 @@ function chordCatalogue(harmony,setIndex=0){
 
 const inversionNames=['Root position','First inversion','Second inversion'];
 export function spreadTriadCatalogue(harmony,setIndex=0,source='chord'){
- const sources=source==='mode'?harmony.scalePcs.map((_,degree)=>{
-  const indices=[0,2,4].map(i=>(degree+i)%harmony.scalePcs.length),pcs=indices.map(i=>harmony.scalePcs[i]),intervals=pcs.map(pc=>(pc-pcs[0]+12)%12);
-  const symbols={'0,4,7':'','0,3,7':'m','0,3,6':'dim','0,4,8':'aug'};
-  const suffix=symbols[intervals.join(',')]??' stack';
-  const labels=['1',...intervals.slice(1).map((n,i)=>i===0?({2:'♭♭3',3:'♭3',4:'3',5:'♯3'}[n]||String(n)+' st'):({5:'♭♭5',6:'♭5',7:'5',8:'♯5',9:'♯♯5'}[n]||String(n)+' st'))];
-  return {...harmony,name:harmony.scaleNames[degree],suffix,chordPcs:pcs,tones:indices.map(i=>harmony.scaleNames[i]),intervals:labels,modeDegree:degree};
- }):[exerciseArpeggioHarmony(harmony,'triad')];
- return sources.flatMap((h,degree)=>chordCatalogue(h,setIndex).map((entry,inversion)=>({...entry,degree:source==='mode'?degree*3+inversion:entry.degree,harmony:h,label:(source==='mode'?'Degree '+MODES[harmony.mode].degrees[degree]+' · '+h.name+h.suffix+' · ':'')+inversionNames[inversion]+' · '+h.tones[inversion]+' ('+h.intervals[inversion]+')',tag:(source==='mode'?MODES[harmony.mode].degrees[degree]+' · ':'')+['R','1st','2nd'][inversion]})));
+ const sources=source==='mode'?modeChordHarmonies(harmony,3):[exerciseArpeggioHarmony(harmony,'triad')];
+ return sources.flatMap((h,degree)=>chordCatalogue(h,setIndex).map((entry,inversion)=>({...entry,degree:source==='mode'?degree*3+inversion:entry.degree,harmony:h,label:(source==='mode'?'Degree '+MODES[harmony.mode].degrees[degree]+' · '+h.name+h.suffix+' · ':'')+inversionNames[inversion]+' · '+h.tones[inversion]+' ('+h.intervals[inversion]+')',tag:source==='mode'?MODES[harmony.mode].degrees[degree]+['R','¹','²'][inversion]:['R','1st','2nd'][inversion]})));
 }
 // Retain stable set indices for saved exercises; menus expose only sets with
 // at least one fully fretted inversion spanning at most five fret positions.

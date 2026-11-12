@@ -15,7 +15,7 @@ export function dropVoicingCatalogue(harmony,kind='drop2',setIndex=0){
   const voiced=[...close];voiced[dropIndex]-=12;voiced.sort((a,b)=>a-b);
   const notes=voiced.map((midi,i)=>{const string=strings[i],pc=midi%12,index=harmony.chordPcs.indexOf(pc);return {string,fret:midi-TUNING[string],midi,pc,root:pc===harmony.chordPcs[0],chord:true,scale:harmony.scalePcs.includes(pc),scaleIndex:-1,characteristic:false,name:harmony.tones[index],chromaticDegree:harmony.intervals[index]};});
   if(notes.some(n=>n.fret<1||n.fret>24))continue;
-  const fretted=notes.filter(n=>n.fret>0).map(n=>n.fret);if(fretted.length&&Math.max(...fretted)-Math.min(...fretted)>5)continue;
+  const fretted=notes.filter(n=>n.fret>0).map(n=>n.fret);if(fretted.length&&Math.max(...fretted)-Math.min(...fretted)>4)continue;
   const key=notes.map(n=>n.string+':'+n.fret).join('|');if(seen.has(key))continue;seen.add(key);
   const frets=notes.map(n=>n.fret),entry=entries[core.chordPcs.indexOf(notes[0].pc)];
   entry.choices.push({kind,firstFret:notes[0].fret,start:Math.min(...frets),end:Math.max(...frets),notes,rootPc:harmony.chordPcs[0],muted:TUNING.map((_,i)=>i).filter(i=>!strings.includes(i))});

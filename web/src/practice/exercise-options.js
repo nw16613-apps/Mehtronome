@@ -30,8 +30,9 @@ export function normalizeExerciseOptions(view){
  if(view.fingering==='spread'){view.material='triad';view.exactFingering=false;}
  view.exactFingering=Boolean((view.exactFingering??(view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
  view.spreadSource=view.spreadSource==='mode'?'mode':'chord';
+ if(view.spreadSource==='mode')view.exactFingering=false;
  view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='spread'?19:view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
- view.inversion=Math.max(0,Math.min(view.fingering==='spread'?23:6,Math.floor(Number(view.inversion)||0)));
+ view.inversion=Math.max(0,Math.min(view.spreadSource==='mode'?31:7,Math.floor(Number(view.inversion)||0)));
  view.fingeringFret=Number.isFinite(Number(view.fingeringFret))?Math.max(0,Math.min(36,Number(view.fingeringFret))):5;
  view.startTone=/^(?:scale:[0-7]|degree:[1-7])$/.test(view.startTone)?view.startTone:/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
  // Retire saved triplet phrase formulas; preserve explicit degree starts.

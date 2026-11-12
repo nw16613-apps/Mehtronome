@@ -1,9 +1,7 @@
-import {playableSpreadStringSets,spreadTriadCatalogue} from './spread-triads.js';
-import {DROP_STRING_SETS,dropVoicingCatalogue} from './drop-voicings.js';
+import {fingeringCatalogue,playableFingeringStringSets} from './fingering-catalogue.js';
 import {shapeColor} from './shape-emphasis.js';
 import {MODES} from '../audio/music.js';
 import {diagramSvg} from './fretboard.js';
-import {perStringCatalogue} from './per-string.js';
 const esc=(v:any)=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function installPerStringView(getContext:()=>any,practise?:((choice:any)=>void),updateMap?:((context:any)=>void)){
@@ -12,7 +10,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  guitar.querySelector('.guitar-progression-panel')!.before(controls);
  const panel=document.createElement('section');panel.id='per-string-diagram';panel.className='per-string-diagram';panel.hidden=true;guitar.querySelector('#position-overview')!.before(panel);
  const field=(id:string)=>controls.querySelector<HTMLSelectElement>('#'+id)!;
- const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,lastDropKind='',selectedDegree:number|undefined;
+ const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,selectedDegree:number|undefined;
  panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div><div class="per-string-navigation"><button type="button" class="practice-button" data-shape-move="-1">← Previous</button><span></span><button type="button" class="practice-button" data-shape-move="1">Next →</button></div><div class="per-string-featured"></div>';
  function refresh(){
   const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three',drop=kind==='drop2'||kind==='drop3'||kind==='spread';
@@ -20,9 +18,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   guitar.querySelector('.guitar-progression-panel>h3')!.textContent=active?'Chord progression':'Chord & position';
   controls.querySelectorAll<HTMLElement>('[data-per-string-control]').forEach(e=>e.hidden=!active);
   controls.querySelectorAll<HTMLElement>('[data-drop-control]').forEach(e=>e.hidden=!drop);
-  controls.querySelectorAll<HTMLElement>('[data-spread-control]').forEach(e=>e.hidden=kind!=='spread');
-  if(kind==='spread'){const menu=field('drop-string-set'),previous=menu.value;menu.innerHTML=playableSpreadStringSets(h,field('spread-triad-source').value).map(({strings,index}:any)=>`<option value="${index}">Strings ${strings.map((s:number)=>6-s).join('–')}</option>`).join('');if(Array.from(menu.options).some(o=>o.value===previous))menu.value=previous;lastDropKind=kind;}
-  else if(drop&&lastDropKind!==kind){field('drop-string-set').innerHTML=(DROP_STRING_SETS as any)[kind].map((strings:number[],i:number)=>`<option value="${i}">Strings ${strings.map(s=>6-s).join('–')}</option>`).join('');lastDropKind=kind;}
+  controls.querySelectorAll<HTMLElement>('[data-spread-control]').forEach(e=>e.hidden=!active||!arp);
+  if(drop){const menu=field('drop-string-set'),previous=menu.value;menu.innerHTML=playableFingeringStringSets(h,kind,field('spread-triad-source').value).map(({strings,index}:any)=>`<option value="${index}">Strings ${strings.map((s:number)=>6-s).join('–')}</option>`).join('');if(Array.from(menu.options).some(o=>o.value===previous))menu.value=previous;}
   controls.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked);
   panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked||e.options.length===1);
   panel.querySelectorAll<HTMLButtonElement>('[data-practise-per-string]').forEach(e=>e.disabled=locked);
@@ -30,27 +27,27 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   const renderKey=JSON.stringify([kind,field('spread-triad-source').value,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
   if(renderKey===lastRender){updateMap?.(lastMap);return;}lastRender=renderKey;
   const names=arp?h.tones:h.scaleNames,degrees=arp?h.intervals:(MODES as any)[h.mode].degrees;
-  const material=kind==='spread'&&field('spread-triad-source').value==='mode'?h.scaleNames[0]+' '+(MODES as any)[h.mode].name:arp?h.name+h.suffix:h.scaleNames[0]+' '+(MODES as any)[h.mode].name,title=material+' · '+(drop?(kind==='spread'?'Spread triads':kind==='drop2'?'Drop 2':'Drop 3'):arp?(kind==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'):'3 notes per string');
-  const catalogue=kind==='spread'?spreadTriadCatalogue(h,Number(field('drop-string-set').value),field('spread-triad-source').value):drop?dropVoicingCatalogue(h,kind,Number(field('drop-string-set').value)):perStringCatalogue(h,kind),mapShapes:any[]=[];
+  const material=arp&&field('spread-triad-source').value==='mode'?h.scaleNames[0]+' '+(MODES as any)[h.mode].name:arp?h.name+h.suffix:h.scaleNames[0]+' '+(MODES as any)[h.mode].name,title=material+' · '+(drop?(kind==='spread'?'Spread triads':kind==='drop2'?'Drop 2':'Drop 3'):arp?(kind==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'):'3 notes per string');
+  const catalogue=fingeringCatalogue(h,kind,Number(field('drop-string-set').value),field('spread-triad-source').value),mapShapes:any[]=[];
   panel.querySelector('h4')!.textContent=title;
-  panel.querySelector('.practice-help')!.textContent=kind==='spread'?'Playable open voicings · frets 1–24 · maximum five-fret span. × marks muted strings.':drop?(catalogue.length?'All inversions · four core chord tones. × marks muted strings.'+(h.chordPcs.length>4?' Extensions remain in the backing chord.':''):'Choose a seventh or sixth chord with four core tones to study drop voicings.'):`${arp?'All inversions':'All starting degrees'} · low E → high E · consecutive ascending ${arp?'chord':'scale'} tones.`;
+  panel.querySelector('.practice-help')!.textContent=kind==='spread'?'Playable open voicings · frets 1–24 · maximum five-fret span. × marks muted strings.':drop?(catalogue.length?'Playable inversions · four core chord tones. × marks muted strings.'+(h.chordPcs.length>4?' Extensions remain in the backing chord.':''):'Choose a seventh or sixth chord with four core tones to study drop voicings.'):`${arp?'Playable inversions':'All starting degrees'} · low E → high E · consecutive ascending ${arp?'chord':'scale'} tones.`;
   panel.querySelector('.per-string-gallery')!.innerHTML=catalogue.map((entry:any,i:number)=>{
    const shapeHarmony=entry.harmony||h;
    const degree=entry.degree,preferred=registers.get(kind+':'+degree)??5;
    const board=entry.choices.reduce((best:any,b:any)=>!best||Math.abs(b.firstFret-preferred)<Math.abs(best.firstFret-preferred)?b:best,null);
    const label=arp?(inversionNames[i]||'Starting tone '+(i+1)):'Starting degree '+degrees[degree];
    const heading=entry.label||label+' · '+names[degree]+(arp?' ('+degrees[degree]+')':'');
-   if(!board&&kind==='spread')return '';
+   if(!board&&arp)return '';
    if(!board)return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><h5>${esc(heading)}</h5><p>${drop?'No playable voicing fits this string set within frets 1–24.':'No complete pattern fits within frets 0–36.'}</p></article>`;
    mapShapes.push({degree,board,harmony:shapeHarmony,label:heading,tag:entry.tag|| (arp?(i===0?'R':['','1st','2nd','3rd','4th','5th','6th'][i]):degrees[degree])});
-   const svg=diagramSvg(board,field('per-string-labels').value==='degrees',kind==='spread'?shapeHarmony.intervals:degrees,title+', '+heading,true,drop?{notes:board.notes,muted:board.muted}:null);
+   const svg=diagramSvg(board,field('per-string-labels').value==='degrees',arp?shapeHarmony.intervals:degrees,title+', '+heading,true,drop?{notes:board.notes,muted:board.muted}:null);
    Object.assign(mapShapes[mapShapes.length-1],{index:i,entry,heading,svg,drop});
    return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-scroll" tabindex="0" role="button" aria-pressed="false" aria-label="Highlight ${esc(heading)} on full-neck map">${svg}</div></article>`;
   }).join('');
   mapShapes.sort((a:any,b:any)=>a.board.start-b.board.start||a.board.end-b.board.end||a.index-b.index);
   const gallery=panel.querySelector('.per-string-gallery')!;
   mapShapes.forEach((shape:any)=>gallery.append(gallery.querySelector(`[data-start-degree="${shape.degree}"]`)!));
-  lastMap={harmony:kind==='spread'&&field('spread-triad-source').value==='mode'?{...h,chordPcs:h.scalePcs,tones:h.scaleNames,intervals:(MODES as any)[h.mode].degrees}:h,arp,degrees,labels:field('per-string-labels').value==='degrees',title,shapes:mapShapes,selectShape};selectShape(selectedDegree);updateMap?.(lastMap);
+  lastMap={harmony:arp&&field('spread-triad-source').value==='mode'?{...h,chordPcs:h.scalePcs,tones:h.scaleNames,intervals:(MODES as any)[h.mode].degrees}:h,arp,degrees,labels:field('per-string-labels').value==='degrees',title,shapes:mapShapes,selectShape};selectShape(selectedDegree);updateMap?.(lastMap);
  }
  function selectShape(degree:number|undefined){
   const shapes=lastMap?.shapes||[],shape=shapes.find((s:any)=>s.degree===degree)||shapes.find((s:any)=>s.degree===selectedDegree)||shapes[0];
