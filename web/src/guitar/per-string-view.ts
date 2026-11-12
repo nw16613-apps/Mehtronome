@@ -1,3 +1,4 @@
+import {SPREAD_STRING_SETS,spreadTriadCatalogue} from './spread-triads.js';
 import {DROP_STRING_SETS,dropVoicingCatalogue} from './drop-voicings.js';
 import {shapeColor} from './shape-emphasis.js';
 import {MODES} from '../audio/music.js';
@@ -7,19 +8,19 @@ const esc=(v:any)=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function installPerStringView(getContext:()=>any,practise?:((choice:any)=>void),updateMap?:((context:any)=>void)){
  const guitar=document.querySelector<HTMLElement>('.guitar')!,controls=document.createElement('div');controls.className='per-string-controls';
- controls.innerHTML=`<label>Fingering<select id="fretboard-fingering"><option value="caged">CAGED</option><option value="three">Scales · 3 notes per string</option><option value="oneTwo">Arpeggios · 1–2–1–2–1–2</option><option value="twoOne">Arpeggios · 2–1–2–1–2–1</option><option value="drop2">Chords · Drop 2</option><option value="drop3">Chords · Drop 3</option></select></label><label data-drop-control hidden>String set<select id="drop-string-set"></select></label><label data-per-string-control hidden>Labels<select id="per-string-labels"><option value="degrees">Degrees</option><option value="notes">Note names</option></select></label>`;
+ controls.innerHTML=`<label>Fingering<select id="fretboard-fingering"><option value="caged">CAGED</option><option value="three">Scales · 3 notes per string</option><option value="oneTwo">Arpeggios · 1–2–1–2–1–2</option><option value="twoOne">Arpeggios · 2–1–2–1–2–1</option><option value="spread">Chords · Spread triads</option><option value="drop2">Chords · Drop 2</option><option value="drop3">Chords · Drop 3</option></select></label><label data-drop-control hidden>String set<select id="drop-string-set"></select></label><label data-per-string-control hidden>Labels<select id="per-string-labels"><option value="degrees">Degrees</option><option value="notes">Note names</option></select></label>`;
  guitar.querySelector('.guitar-progression-panel')!.before(controls);
  const panel=document.createElement('section');panel.id='per-string-diagram';panel.className='per-string-diagram';panel.hidden=true;guitar.querySelector('#position-overview')!.before(panel);
  const field=(id:string)=>controls.querySelector<HTMLSelectElement>('#'+id)!;
  const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,lastDropKind='',selectedDegree:number|undefined;
  panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div><div class="per-string-navigation"><button type="button" class="practice-button" data-shape-move="-1">← Previous</button><span></span><button type="button" class="practice-button" data-shape-move="1">Next →</button></div><div class="per-string-featured"></div>';
  function refresh(){
-  const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three',drop=kind==='drop2'||kind==='drop3';
+  const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three',drop=kind==='drop2'||kind==='drop3'||kind==='spread';
   guitar.classList.toggle('per-string-active',active);panel.hidden=!active;
   guitar.querySelector('.guitar-progression-panel>h3')!.textContent=active?'Chord progression':'Chord & position';
   controls.querySelectorAll<HTMLElement>('[data-per-string-control]').forEach(e=>e.hidden=!active);
   controls.querySelectorAll<HTMLElement>('[data-drop-control]').forEach(e=>e.hidden=!drop);
-  if(drop&&lastDropKind!==kind){field('drop-string-set').innerHTML=(DROP_STRING_SETS as any)[kind].map((strings:number[],i:number)=>`<option value="${i}">Strings ${strings.map(s=>6-s).join('–')}</option>`).join('');lastDropKind=kind;}
+  if(drop&&lastDropKind!==kind){field('drop-string-set').innerHTML=(kind==='spread'?SPREAD_STRING_SETS:(DROP_STRING_SETS as any)[kind]).map((strings:number[],i:number)=>`<option value="${i}">Strings ${strings.map(s=>6-s).join('–')}</option>`).join('');lastDropKind=kind;}
   controls.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked);
   panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked||e.options.length===1);
   panel.querySelectorAll<HTMLButtonElement>('[data-practise-per-string]').forEach(e=>e.disabled=locked);
@@ -27,10 +28,10 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   const renderKey=JSON.stringify([kind,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
   if(renderKey===lastRender){updateMap?.(lastMap);return;}lastRender=renderKey;
   const names=arp?h.tones:h.scaleNames,degrees=arp?h.intervals:(MODES as any)[h.mode].degrees;
-  const material=arp?h.name+h.suffix:h.scaleNames[0]+' '+(MODES as any)[h.mode].name,title=material+' · '+(drop?(kind==='drop2'?'Drop 2':'Drop 3'):arp?(kind==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'):'3 notes per string');
-  const catalogue=drop?dropVoicingCatalogue(h,kind,Number(field('drop-string-set').value)):perStringCatalogue(h,kind),mapShapes:any[]=[];
+  const material=arp?h.name+h.suffix:h.scaleNames[0]+' '+(MODES as any)[h.mode].name,title=material+' · '+(drop?(kind==='spread'?'Spread triads':kind==='drop2'?'Drop 2':'Drop 3'):arp?(kind==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'):'3 notes per string');
+  const catalogue=kind==='spread'?spreadTriadCatalogue(h,Number(field('drop-string-set').value)):drop?dropVoicingCatalogue(h,kind,Number(field('drop-string-set').value)):perStringCatalogue(h,kind),mapShapes:any[]=[];
   panel.querySelector('h4')!.textContent=title;
-  panel.querySelector('.practice-help')!.textContent=drop?(catalogue.length?'All inversions · four core chord tones. × marks muted strings.'+(h.chordPcs.length>4?' Extensions remain in the backing chord.':''):'Choose a seventh or sixth chord with four core tones to study drop voicings.'):`${arp?'All inversions':'All starting degrees'} · low E → high E · consecutive ascending ${arp?'chord':'scale'} tones.`;
+  panel.querySelector('.practice-help')!.textContent=kind==='spread'?'All inversions · three core chord tones in open voicing. All three-string combinations. × marks muted strings.':drop?(catalogue.length?'All inversions · four core chord tones. × marks muted strings.'+(h.chordPcs.length>4?' Extensions remain in the backing chord.':''):'Choose a seventh or sixth chord with four core tones to study drop voicings.'):`${arp?'All inversions':'All starting degrees'} · low E → high E · consecutive ascending ${arp?'chord':'scale'} tones.`;
   panel.querySelector('.per-string-gallery')!.innerHTML=catalogue.map((entry:any,i:number)=>{
    const degree=entry.degree,preferred=registers.get(kind+':'+degree)??5;
    const board=entry.choices.reduce((best:any,b:any)=>!best||Math.abs(b.firstFret-preferred)<Math.abs(best.firstFret-preferred)?b:best,null);

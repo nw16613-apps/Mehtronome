@@ -416,7 +416,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   const oldReference=el('caged-exercise').querySelector<HTMLDetailsElement>('.progression-reference details');if(oldReference)exerciseReferenceExpanded=oldReference.open;
   normalizeExerciseOptions(exerciseView);
   if(!['cell','full'].includes(exerciseView.stage))exerciseView.stage='full';
-  const perString=PER_STRING_STUDIES.has(exerciseView.study)&&['three','oneTwo','twoOne','drop2','drop3'].includes(exerciseView.fingering);
+  const perString=PER_STRING_STUDIES.has(exerciseView.study)&&['three','oneTwo','twoOne','drop2','drop3','spread'].includes(exerciseView.fingering);
   if(perString){board=perStringExerciseChoice(info,exerciseView).board;position={...position,perString:true};}
   studyHarmony=info;studyBoard=board;studyPosition=position;
   if(exerciseView.tempoLinked)exerciseView.tempo=settings.bpm;
@@ -2557,7 +2557,7 @@ installProgressionGenerator({
   input('loop-enabled').checked=false;fillLoopOptions(true);update();document.dispatchEvent(new Event('chart-context-restored'));
  }
 });
-perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',material:chordInfo(step).chordPcs.length<=3?'triad':'seventh',exactFingering:kind!=='three'&&chordInfo(step).chordPcs.length>4,fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseCellSelection=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
+perStringView=installPerStringView(()=>({harmony:chordInfo(step),locked:playing||exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet}:any)=>{if(playing||exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();Object.assign(exerciseView,{study:kind==='three'?'positionalscale':'positional',material:kind==='spread'||chordInfo(step).chordPcs.length<=3?'triad':'seventh',exactFingering:kind!=='spread'&&kind!=='three'&&chordInfo(step).chordPcs.length>4,fingering:kind,inversion,fingeringFret:fret,fingeringStringSet:stringSet||0,motion:'ascending',fretboard:true});exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseCellSelection=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap);
 backingStyleUi=installBackingStyles(update);
 update();
 applyStudioIcons();

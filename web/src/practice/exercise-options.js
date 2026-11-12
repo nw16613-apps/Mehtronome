@@ -23,12 +23,13 @@ export function normalizeExerciseOptions(view){
  view.enclosureTarget=['all','0','1','2','3'].includes(view.enclosureTarget)?view.enclosureTarget:'all';
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
- view.fingering=['three','oneTwo','twoOne','drop2','drop3'].includes(view.fingering)?view.fingering:'caged';
+ view.fingering=['three','oneTwo','twoOne','drop2','drop3','spread'].includes(view.fingering)?view.fingering:'caged';
  if(view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
  if(view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
  if(view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
+ if(view.fingering==='spread'){view.material='triad';view.exactFingering=false;}
  view.exactFingering=Boolean((view.exactFingering??(view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
- view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
+ view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='spread'?19:view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
  view.inversion=Math.max(0,Math.min(6,Math.floor(Number(view.inversion)||0)));
  view.fingeringFret=Number.isFinite(Number(view.fingeringFret))?Math.max(0,Math.min(36,Number(view.fingeringFret))):5;
  view.startTone=/^(?:scale:[0-7]|degree:[1-7])$/.test(view.startTone)?view.startTone:/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
