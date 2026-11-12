@@ -53,3 +53,12 @@ for(const kind of ['spread','oneTwo','twoOne','drop2','drop3'])test(`${kind}: mo
  await page.locator('#fretboard-mode-inversion').selectOption('all');expect(await page.locator('.per-string-gallery .per-string-shape').count()).toBeGreaterThan(7);
  await page.locator('#fretboard-mode-inversion').selectOption(String(size-1));await page.locator(`.per-string-shape[data-start-degree="${id}"]`).click();await page.locator('[data-practise-per-string]').click();await expect(page.locator('#exercise-inversion')).toHaveValue(id!);await expect(page.locator('#exercise-spread-source')).toHaveValue('mode');expect(errors).toEqual([]);
 });
+for(const kind of ['spread','oneTwo','twoOne','drop2','drop3'])test(`${kind}: mode degree and inversion menus combine without changing shape identity`,async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.locator('[data-workspace-target=guitar-title]').click();await page.locator('#fretboard-fingering').selectOption(kind);await expect(page.locator('#fretboard-mode-degree')).toBeHidden();await page.locator('#spread-triad-source').selectOption('mode');await expect(page.locator('#fretboard-mode-degree option')).toHaveCount(8);
+ const size=kind==='spread'?3:4;
+ for(let degree=0;degree<7;degree++){
+  await page.locator('#fretboard-mode-degree').selectOption(String(degree));const ids=await page.locator('.per-string-gallery .per-string-shape').evaluateAll(nodes=>nodes.map(n=>Number((n as HTMLElement).dataset.startDegree)));expect(ids.length).toBeGreaterThan(0);expect(ids.every(id=>Math.floor(id/size)===degree)).toBe(true);
+ }
+ await page.locator('#fretboard-mode-inversion').selectOption('1');await expect(page.locator('.per-string-gallery .per-string-shape')).toHaveCount(1);const id=6*size+1;await page.locator(`.per-string-shape[data-start-degree="${id}"]`).click();await expect(page.locator('#per-string-neck-shape')).toHaveValue(String(id));await expect(page.locator('.per-string-selected h4')).toContainText('Degree ♭7');await expect(page.locator('.per-string-selected h4')).toContainText('First inversion');
+ await page.locator('#fretboard-mode-degree').selectOption('all');expect(await page.locator('.per-string-gallery .per-string-shape').count()).toBeGreaterThan(1);await page.locator('#fretboard-mode-degree').selectOption('6');await page.locator('[data-practise-per-string]').click();await expect(page.locator('#exercise-inversion')).toHaveValue(String(id));expect(errors).toEqual([]);
+});

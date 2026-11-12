@@ -18,7 +18,7 @@ export function fingeringCatalogue(harmony,kind,setIndex=0,source='chord',size=4
   });
  });
 }
-export function playableFingeringStringSets(harmony,kind,source='chord',inversion='all'){
+export function playableFingeringStringSets(harmony,kind,source='chord',inversion='all',modeDegree='all'){
  const sets=kind==='spread'?SPREAD_STRING_SETS:DROP_STRING_SETS[kind]||[];
- return sets.map((strings,index)=>({strings,index})).filter(({index})=>fingeringCatalogue(harmony,kind,index,source).some(e=>e.choices.length&&(inversion==='all'||e.inversion===Number(inversion))));
+ return sets.map((strings,index)=>({strings,index})).filter(({index})=>fingeringCatalogue(harmony,kind,index,source).some(e=>e.choices.length&&(inversion==='all'||e.inversion===Number(inversion))&&(modeDegree==='all'||e.harmony?.modeDegree===Number(modeDegree))));
 }
