@@ -4,7 +4,9 @@ Fretboard and Exercises share the selected fingering, source, starting degree/in
 
 CAGED retains its shared region/manual position route. Three-note-per-string scale and arpeggio patterns use the selected scale shape. Alternating per-string arpeggios use their selected shape's actual strings/frets. Progression generators accept a board/harmony provider so sequence continuity, cell boundaries and direction changes use the same existing rules without reconstructing CAGED geometry.
 
-Changing exercise material can select chord tones within a scale shape without changing its fingering. Open spread/drop grips offer their supported exact-voicing traversal rather than fabricating missing closed-register pitches; incompatible pattern controls are omitted. Extended exact-shape favourites retain their written notes.
+Changing exercise material can select chord tones within a scale shape without changing its fingering. Spread/drop grips support traversal, ordered chord-tone pairs, permutations, repeated-tone orders, starting-tone pedals and chromatic approaches/enclosures. These use the selected grip's actual strings and frets rather than fabricating closed-register pitches. Unsupported scale-run controls and irrelevant octave/root-sequence controls are omitted. Extended exact-shape favourites retain their written notes.
+
+The shared catalogue provides six pairs, six permutations, eighteen four-note repeated-tone orders and three pedals for triads; four-tone voicings provide twelve pairs, twenty-four permutations, 144 five-note repeated-tone orders and four pedals. Chromatic preparations stay on each target voice's string, within frets 1–24. Exercise diagrams expand to include preparatory notes while retaining the original grip for voicing highlights. Favourites distinguish the physical fingering and normalize unavailable register variations.
 
 The passive selection callback keeps the recipe current even before visiting Exercises. Rendering uses the same selection during live backing playback. Restoring a favourite stops exercise audition before applying the recipe so the transport callback cannot overwrite it with the previous selection.
 

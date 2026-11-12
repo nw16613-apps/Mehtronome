@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test';
+const notes=async(page:any)=>page.locator('.exercise-note:not(.resolution-note)').evaluateAll(nodes=>[...new Map(nodes.map(n=>[n.getAttribute('data-note-index'),n.getAttribute('aria-label')!.match(/^(.+), string (\d+), fret (\d+)/)!.slice(1)])).values()]);
+async function open(page:any,kind='spread'){
+ await page.goto('/');await page.locator('[data-workspace-target=guitar-title]').click();await page.locator('#fretboard-fingering').selectOption(kind);if(kind==='spread')await page.locator('#drop-string-set').selectOption('4');await page.locator('.per-string-shape[data-start-degree="0"]').click();
+ const voiced=await page.locator('.per-string-selected .fret-note').evaluateAll(nodes=>nodes.map(n=>n.querySelector('title')!.textContent!.match(/^(.+), string (\d+), fret (\d+)/)!.slice(1)));await page.locator('[data-workspace-target=caged-exercise]').click();return voiced;
+}
+test('spread triads expose systematic pairs, permutations, repeat cells and pedals using the original voicing',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const voiced=await open(page),byName=new Map(voiced.map(n=>[n[0],n]));
+ for(const [family,count,pattern,order]of [['arp_pairs',6,'pair3_51',['E','A']],['arp_permutations',6,'perm3_153',['A','E','C']],['arp_repeatTone',18,'cell3_5313',['E','C','A','C']],['arp_returnStart',3,'pedal3_3',['C','A','C','E','C']]] as const){
+  await page.locator('#exercise-content-family').selectOption(family);await expect(page.locator('#exercise-arpeggio-pattern option')).toHaveCount(count);await page.locator('#exercise-arpeggio-pattern').selectOption(pattern);const actual=await notes(page);expect(actual.slice(0,order.length)).toEqual(order.map(name=>byName.get(name)));await expect(page.locator('#exercise-fingering')).toHaveValue('spread');await expect(page.locator('#exercise-arpeggio-register')).toBeHidden();await expect(page.locator('#exercise-arpeggio-sequence')).toBeHidden();await expect(page.locator('.notation-cell').first()).toBeVisible();
+ }
+ await page.locator('#exercise-favourite').click();await page.locator('#exercise-content-family').selectOption('continuous');await page.locator('#exercise-favourites').selectOption('0');await expect(page.locator('#exercise-content-family')).toHaveValue('arp_returnStart');await expect(page.locator('#exercise-arpeggio-pattern')).toHaveValue('pedal3_3');await page.locator('#exercise-backing').uncheck();await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-note.playing').first()).toBeVisible({timeout:15000});await page.locator('#mini-play').click();expect(errors).toEqual([]);
+});
+test('spread enclosure targets and chromatic preparations stay on the selected voice strings and are fully drawn',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));const voiced=await open(page),root=voiced.find(n=>n[0]==='A')!,fret=Number(root[2]);await page.locator('#exercise-content-family').selectOption('enclosures');await page.locator('#exercise-enclosure-target').selectOption('0');
+ let actual=await notes(page);expect(actual.slice(0,4).map(n=>n[1])).toEqual(Array(4).fill(root[1]));expect(actual.slice(0,4).map(n=>Number(n[2])-fret)).toEqual([2,1,-1,0]);await expect(page.locator(`.exercise-map-diagram .fret-note[data-string="${6-Number(root[1])}"][data-fret="${fret+2}"]`)).toHaveCount(1);
+ await page.locator('#exercise-enclosure-size').selectOption('5');actual=await notes(page);expect(actual.slice(0,5).map(n=>Number(n[2])-fret)).toEqual([2,1,-2,-1,0]);
+ await page.locator('#exercise-content-family').selectOption('arp_permutations');await page.locator('.exercise-pattern-variations>summary').click();await page.locator('#exercise-arpeggio-approach').selectOption('below');actual=await notes(page);for(let i=0;i<6;i+=2){expect(actual[i][1]).toBe(actual[i+1][1]);expect(Number(actual[i][2])).toBe(Number(actual[i+1][2])-1);}expect(errors).toEqual([]);
+});
+test('the same catalogue gives drop chords twelve pairs, twenty-four permutations and 144 repeated-tone cells',async({page})=>{
+ const voiced=await open(page,'drop2'),allowed=new Set(voiced.map(n=>n.slice(1).join(':')));
+ for(const [family,count]of [['arp_pairs',12],['arp_permutations',24],['arp_repeatTone',144],['arp_returnStart',4]] as const){await page.locator('#exercise-content-family').selectOption(family);await expect(page.locator('#exercise-arpeggio-pattern option')).toHaveCount(count);const actual=await notes(page);expect(actual.length).toBeGreaterThan(0);expect(actual.every(n=>allowed.has(n.slice(1).join(':')))).toBe(true);}
+});

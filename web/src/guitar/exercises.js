@@ -1,3 +1,4 @@
+import {isExactVoicingBoard,voicingNeighbour} from './fingering-rules.js';
 import {SCALE_SEQUENCES,scaleSequenceCells,orderedScaleCell} from './scale-sequences.js';
 import {sequenceArpeggioCells} from './arpeggio-sequences.js';
 import {ARPEGGIO_PATTERN_STUDIES,patternedArpeggios,selectedChordSeeds} from './arpeggio-patterns.js';
@@ -86,7 +87,8 @@ function chromaticRoleName(harmony,pc,role) {
   return noteNameForPc(harmony,pc);
 }
 
-function noteAtMidi(board,midi,harmony) {
+function noteAtMidi(board,midi,harmony,target=null) {
+  if(isExactVoicingBoard(board)&&target)return voicingNeighbour(board,target,midi,noteNameForPc(harmony,(midi%12+12)%12));
   const existing=board.notes.find(note=>note.midi===midi);
   if(existing)return {...existing,name:noteNameForPc(harmony,midi%12)};
   const candidates=TUNING.map((open,string)=>({string,fret:midi-open,midi,pc:(midi%12+12)%12,name:noteNameForPc(harmony,midi%12)}))
@@ -119,7 +121,7 @@ function chromaticEnclosures(board,harmony,motion,variant='abovebelow',context={
       const distance=Array.from({length:12},(_,i)=>i+1).find(n=>harmony.scalePcs.includes((target.midi+direction*n+120)%12));
       offsets[index]=direction*distance;
     }
-    const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
+    const notes=offsets.map((offset,index)=>{const note=noteAtMidi(board,target.midi+offset,harmony,target);return note&&pattern.spellings?{...note,name:chromaticRoleName(harmony,note.pc,pattern.spellings[index])}:note;});
     if(notes.every(Boolean))groups.push({chord:`Enclose ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:offsets.map(offset=>offset===0?'target':`${Math.abs(offset)} semitone${Math.abs(offset)>1?'s':''} ${offset>0?'above':'below'}`).join(' · '),targetIndex:notes.length-1,sequenceAnchor:target.midi,sequenceDirection:descending?-1:1});
   }
   return motion==='up-down'?[...groups,...chromaticEnclosures(board,harmony,'descending',variant,context)]:motion==='down-up'?[...groups,...chromaticEnclosures(board,harmony,'ascending',variant,context)]:groups;
@@ -151,7 +153,7 @@ function chromaticTargetCells(board,harmony,motion,kind) {
   };
   const definition=definitions[kind],groups=[];
   for(const target of targets){
-    const notes=definition.offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony));
+    const notes=definition.offsets.map(offset=>noteAtMidi(board,target.midi+offset,harmony,target));
     if(notes.every(Boolean))groups.push({chord:`Resolve to ${target.name}`,rootName:target.name,pcs:notes.map(note=>note.pc),names:notes.map(note=>note.name),notes,annotation:definition.annotation,targetIndex:notes.length-1,sequenceAnchor:target.midi,sequenceDirection:descending?-1:1});
   }
   if(motion==='up-down')return [...groups,...chromaticTargetCells(board,harmony,'descending',kind)];

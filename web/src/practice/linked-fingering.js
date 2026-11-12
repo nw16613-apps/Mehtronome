@@ -1,3 +1,5 @@
+import {isExactVoicing} from '../guitar/fingering-rules.js';
+import {contentFamily,contentFamilies} from './exercise-catalogue.js';
 import {SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
 // Changing a shape keeps the selected pattern; changing its note material only
 // switches between scale/chord versions when the old material cannot fit.
@@ -19,9 +21,12 @@ export function linkExerciseFingering(view,selection,harmony){
   }
  }
  if(kind==='three')view.exactFingering=false;
- if(kind==='spread')view.material='triad';
- // These are exact open chord grips, not closed-register scale windows.
- if(['spread','drop2','drop3'].includes(kind))view.study='positional';
+ if(kind==='spread'){view.material='triad';if(view.enclosureTarget==='3')view.enclosureTarget='all';}
+ if(isExactVoicing(kind)){
+  view.exactFingering=false;view.arpeggioRegister='up';view.arpeggioSequence='stepwise';
+  if(view.arpeggioRoutine==='connected')view.arpeggioRoutine='repeat';
+  if(!contentFamilies(view.material,'selectedChord',view).some(([id])=>id===contentFamily(view)))view.study='positional';
+ }
  if(!['caged','three'].includes(kind)){if(view.study==='positionalscale')view.study='positional';view.arpeggioSource='selectedChord';if(SCALE_SEQUENCES[view.study])view.study='arpseq_'+view.study;}
  return view;
 }

@@ -1,3 +1,4 @@
+import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
 import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.js';
 // A favourite identifies a musical/physical recipe, not tempo, page zoom or
@@ -9,11 +10,13 @@ export function exerciseFavouriteKey(snapshot){
  if(/^(arpseq_)?scaleperm_1234$/.test(v.study))result.study=v.study.replace('scaleperm_1234','groups4');
  if(!['positional','positionalscale'].includes(v.study)&&v.entryTone!=='default')result.entryTone=v.entryTone;
  if(v.exactFingering)result.exactFingering=true;
+ if(v.linkedFingering&&isExactVoicing(v.fingering))result.material=v.material;
  const fields=v.study==='harmonized'?['arpeggioSequence','sequenceAdvance','arpeggioSource','arpeggioPattern','arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
  SCALE_SEQUENCES[v.study.replace(/^arpseq_/, '')]?['sequenceAdvance','sequenceOrder']:
  v.study.startsWith('enclosures')?['enclosureTarget','enclosurePattern']:
  ['positional','positionalscale'].includes(v.study)?['fingering',...(v.fingering!=='caged'?['inversion','fingeringFret','fingeringStringSet',...(v.fingering!=='three'?['spreadSource']:[])]:[]),'startTone','patternStartRoute']:
  v.study==='pentatonic'?['source','pattern']:v.study==='triadpairs'?['source']:[];
+ if(v.linkedFingering&&v.fingering!=='caged')for(const field of ['fingering','inversion','fingeringFret','fingeringStringSet',...(v.fingering!=='three'?['spreadSource']:[])])if(v[field]!==undefined)result[field]=v[field];
  for(const field of fields)if(v[field]!==undefined)result[field]=v[field];
  return JSON.stringify(result);
 }

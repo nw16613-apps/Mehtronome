@@ -1,3 +1,4 @@
+import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,SCALE_SEQUENCE_FAMILY_LABELS} from '../guitar/scale-sequences.js';
 import {SCALE_SEQUENCE_FAMILIES,scaleSequenceFamily} from './exercise-library.js';
 import {arpeggioFamilies,arpeggioPatternFamily,arpeggioPatternGroups,normalizeArpeggioPattern} from '../guitar/arpeggio-patterns.js';
@@ -6,16 +7,18 @@ export function contentMaterial(v){if(v.exactFingering)return 'shape';return v.s
 export function contentSource(v){if(v.exactFingering)return 'selectedChord';if(contentMaterial(v)==='scale')return v.study==='pentatonic'?'pentatonic':'mode';return v.study==='triadpairs'?'triadPair':v.study==='harmonized'?v.arpeggioSource||'diatonic':v.study==='approach'?'diatonic':'selectedChord';}
 export function contentSources(material){if(material==='shape')return [['selectedChord','Selected chord · exact shape']];return material==='scale'?[['mode','Current mode / scale'],['pentatonic','Pentatonic superimposition']]:[['selectedChord','Selected chord'],['diatonic','All scale-degree arpeggios'],['chordRoots','Arpeggios from chord-tone roots'],...(material==='triad'?[['triadPair','Triad pair']]:[])];}
 export function contentFamily(v){if(['positional','positionalscale'].includes(v.study))return 'continuous';if(SCALE_SEQUENCES[v.study.replace(/^arpseq_/,'')])return scaleSequenceFamily(v.study);if(v.study==='harmonized')return 'arp_'+arpeggioPatternFamily(v.arpeggioPattern);if(v.study.startsWith('enclosures'))return 'enclosures';return v.study;}
-export function contentFamilies(material,source){
+export function contentFamilies(material,source,view={}){
+ const whole=arpeggioFamilies(material).map(([id,name])=>['arp_'+id,({permutations:'Whole-arpeggio permutations',repeatTone:'Whole-arpeggio repeated-tone orders',returnStart:'Starting-tone pedals',upBack:'Up and back'})[id]||name]);
+ if(isExactVoicing(view.fingering))return [['continuous','Continuous voicing traversal'],...whole.map(([id,label])=>[id,id==='arp_permutations'?`Voicing permutations · ${material==='triad'?6:24}`:id==='arp_repeatTone'?`Repeated-tone orders · ${material==='triad'?18:144}`:id==='arp_returnStart'?`Starting-tone pedals · ${material==='triad'?3:4}`:label]),['enclosures','Enclosures'],['doubleapproach','Double chromatic approaches'],['chromaticneighbors','Chromatic neighbours']];
  if(material==='shape')return [['continuous','Continuous traversal']];
  if(source==='pentatonic')return [['pentatonic','Pentatonic patterns']];if(source==='triadPair')return [['triadpairs','Triad-pair lines']];
- const whole=arpeggioFamilies(material).map(([id,name])=>['arp_'+id,({permutations:'Whole-arpeggio permutations',repeatTone:'Whole-arpeggio repeated-tone orders',returnStart:'Starting-tone pedals',upBack:'Up and back'})[id]||name]);
+
  if(material!=='scale'&&source!=='selectedChord')return [...whole,...(source==='diatonic'?[['approach','Approach between arpeggios']]:[])];
  return [['continuous','Continuous traversal'],...Object.entries(SCALE_SEQUENCE_FAMILY_LABELS).map(([id,name])=>[id,id==='groups'?'Overlapping note groups':id==='permutations3'?'3-note group permutations (6)':id==='permutations4'?'4-note group permutations (24)':name]),...(material==='scale'?[['passingtones','Chromatic passing tones']]:[...whole,['enclosures','Enclosures'],['doubleapproach','Double chromatic approaches'],['chromaticneighbors','Chromatic neighbours']])];
 }
 export function changeContentFamily(view,family,{material=contentMaterial(view),source=contentSource(view)}={}){
  const previousFamily=contentFamily(view),previousStudy=view.study,previousOrder=view.arpeggioPattern;
- const available=contentFamilies(material,source);if(!available.some(([id])=>id===family))family=available[0][0];
+ const available=contentFamilies(material,source,view);if(!available.some(([id])=>id===family))family=(available.some(([id])=>id==='continuous')?available[0]:available.find(([id])=>id==='arp_permutations')||available[0])[0];
  view.exactFingering=material==='shape';
  view.material=material==='triad'?'triad':'seventh';view.entryTone='default';view.startTone='default';
  if(family==='continuous')view.study=material==='scale'?'positionalscale':'positional';

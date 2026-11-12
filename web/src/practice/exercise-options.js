@@ -1,3 +1,4 @@
+import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,SCALE_CELL_ORDERS} from '../guitar/scale-sequences.js';
 import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
 import {normalizeArpeggioPattern,canonicalArpeggioRecipe} from '../guitar/arpeggio-patterns.js';
@@ -53,6 +54,7 @@ export function normalizeExerciseOptions(view){
    else view.arpeggioRegister=view.arpeggioRegister==='down'?'alternatingDown':'alternating';
   }
  }
+ if(isExactVoicing(view.fingering)){view.exactFingering=false;view.arpeggioRegister='up';view.arpeggioSequence='stepwise';if(view.arpeggioRoutine==='connected')view.arpeggioRoutine='repeat';}
  if(view.study!=='triadpairs')view.motion=['descending','down-up'].includes(view.motion)?'descending':'ascending';
  return view;
 }
