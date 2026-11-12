@@ -33,7 +33,7 @@ test('scale-sequence library starts every direction at the position boundary',()
   assert.deepEqual(thirds[0].pcs,[9,0]);
   for(const study of ['thirds','fourths','sixths','groups3','groups4','digital1324','cells']){
     assert.equal(cagedStudy(board,harmony,study,'seventh','ascending')[0].notes[0].midi,45,study);
-    assert.equal(cagedStudy(board,harmony,study,'seventh','descending')[0].notes[0].midi,74,study);
+    const up=cagedStudy(board,harmony,study,'seventh','ascending'),down=cagedStudy(board,harmony,study,'seventh','descending');assert.deepEqual(down.map(c=>c.notes.map(n=>n.midi)),up.toReversed().map(c=>c.notes.map(n=>n.midi)),study);
   }
   assert.deepEqual(cagedStudy(board,harmony,'groups3','seventh','ascending')[0].notes.map(note=>note.midi),[45,47,48]);
   assert.deepEqual(cagedStudy(board,harmony,'groups4','seventh','ascending')[0].notes.map(note=>note.midi),[45,47,48,50]);
@@ -220,7 +220,7 @@ test('pentatonic library provides groups, cells and alternating up/down permutat
   assert.ok(alternating[0].notes[1].midi>alternating[0].notes[0].midi);
   assert.ok(alternating[1].notes[1].midi<alternating[1].notes[0].midi);
   const descending=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'groups3'});
-  assert.ok(descending[0].notes[1].midi<descending[0].notes[0].midi);
+  assert.ok(descending[0].notes[1].midi>descending[0].notes[0].midi);
 });
 
 test('cascading pentatonic cells reproduce the video exercise families',()=>{
@@ -269,8 +269,8 @@ test('cascading pentatonic cells reproduce the video exercise families',()=>{
     assert.deepEqual(notes,offsets.map(offset=>descendingAvailable[offset].midi),`${pattern} retains its independently transcribed video offsets`);
   }
   const variation=cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','descending',{pattern:'cascade64'});
-  assert.deepEqual(variation[0].notes.map(note=>note.midi),exact[0].notes.map(note=>note.midi),'the picking variation retains the source cell fingering');
-  assert.equal(variation[1].notes[0].midi,variation[0].notes[1].midi,'the sliding variation advances one pentatonic note at a time');
+  assert.deepEqual(variation[0].notes.map(note=>note.midi),cagedStudy(boundedBoard,modalHarmony,'pentatonic','seventh','ascending',{pattern:'cascade64'}).at(-1).notes.map(note=>note.midi),'the generated picking variation keeps its written cell on the descending leg');
+  assert.ok(variation[1].sequenceAnchor<variation[0].sequenceAnchor,'the sliding variation moves its cell anchor downward');
   assert.notEqual(variation[1].notes[0].midi,exact[1].notes[0].midi,'the variation slides each repetition by one note while the video exercise moves by a string pair');
 });
 

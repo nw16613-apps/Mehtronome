@@ -1,5 +1,5 @@
 import {isExactVoicing} from '../guitar/fingering-rules.js';
-import {SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
+import {SCALE_SEQUENCES,hasExerciseCellOrder} from '../guitar/scale-sequences.js';
 import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.js';
 // A favourite identifies a musical/physical recipe, not tempo, page zoom or
 // the chart currently playing. Canonical aliases must share one bookmark.
@@ -11,11 +11,11 @@ export function exerciseFavouriteKey(snapshot){
  if(!['positional','positionalscale'].includes(v.study)&&v.entryTone!=='default')result.entryTone=v.entryTone;
  if(v.exactFingering)result.exactFingering=true;
  if(v.linkedFingering&&isExactVoicing(v.fingering))result.material=v.material;
- const fields=v.study==='harmonized'?['arpeggioSequence','sequenceAdvance','arpeggioSource','arpeggioPattern','arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
+ const fields=v.study==='harmonized'?['arpeggioSequence',...(hasExerciseCellOrder(v)?['sequenceOrder']:[]),'sequenceAdvance','arpeggioSource','arpeggioPattern','arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
  SCALE_SEQUENCES[v.study.replace(/^arpseq_/, '')]?['sequenceAdvance','sequenceOrder']:
- v.study.startsWith('enclosures')?['enclosureTarget','enclosurePattern']:
+ v.study.startsWith('enclosures')?['enclosureTarget','enclosurePattern']:['doubleapproach','chromaticneighbors'].includes(v.study)?['sequenceOrder']:
  ['positional','positionalscale'].includes(v.study)?['fingering',...(v.fingering!=='caged'?['inversion','fingeringFret','fingeringStringSet',...(v.fingering!=='three'?['spreadSource']:[])]:[]),'startTone','patternStartRoute']:
- v.study==='pentatonic'?['source','pattern']:v.study==='triadpairs'?['source']:[];
+ v.study==='pentatonic'?['source','pattern',...(hasExerciseCellOrder(v)?['sequenceOrder']:[])]:v.study==='triadpairs'?['source']:[];
  if(v.linkedFingering&&v.fingering!=='caged')for(const field of ['fingering','inversion','fingeringFret','fingeringStringSet',...(v.fingering!=='three'?['spreadSource']:[])])if(v[field]!==undefined)result[field]=v[field];
  for(const field of fields)if(v[field]!==undefined)result[field]=v[field];
  return JSON.stringify(result);

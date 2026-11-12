@@ -19,7 +19,14 @@ for(let skip=2;skip<=6;skip++){const offsets=run(3).flatMap(i=>[i,i+skip]);add('
 add('pedalLower','pedals','Fixed lower pedal',[0],{pedal:'lower'});add('pedalUpper','pedals','Fixed upper pedal',[0],{pedal:'upper'});
 export const SCALE_SEQUENCE_FAMILY_LABELS={intervals:'Interval pairs',groups:'Consecutive-note groups',permutations3:'3-note permutations · 6',permutations4:'4-note permutations · 24',digital:'Digital patterns',returns:'Return patterns',expanding:'Expanding / contracting intervals',skips:'Skips and steps',pedals:'Fixed pedals'};
 export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse every cell'],['alternate','Reverse alternate cells · written first'],['alternateReverse','Reverse alternate cells · reversed first'],['rotate','Rotate entry each cell'],['cycle','Cycle all orders · 3/4-note cells']];
+// Collections with an explicit written cell retain that cell on both travel
+// legs. Source-transcribed lesson contours and continuous paths stay literal.
+export const hasPentatonicCellOrder=pattern=>!String(pattern||'').startsWith('lesson');
+export const hasChromaticSide=study=>['doubleapproach','chromaticneighbors'].includes(study);
+export const hasExerciseCellOrder=view=>Boolean(SCALE_SEQUENCES[view.study?.replace(/^arpseq_/, '')])||view.study==='pentatonic'&&hasPentatonicCellOrder(view.pattern)||view.study==='harmonized'&&view.arpeggioSequence&&view.arpeggioSequence!=='stepwise'||hasChromaticSide(view.study);
 export function scaleCellOrders(study){
+ if(study==='doubleapproach')return [['normal','From below · −2, −1, target'],['reverse','From above · +2, +1, target']];
+ if(study==='chromaticneighbors')return [['normal','Upper then lower · return to target'],['reverse','Lower then upper · return to target']];
  const definition=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')];
  if(definition?.family!=='intervals')return SCALE_CELL_ORDERS;
  const n=definition.offsets[1]+1;
@@ -32,7 +39,7 @@ export function scaleSequenceCells(board,harmony,study,motion,options={}){
  const sorted=[...byMidi.values()].sort((a,b)=>a.midi-b.midi),anchors=direction>0?sorted:sorted.toReversed(),intervals=harmony.scalePcs.map(pc=>(pc-harmony.scalePcs[0]+12)%12),cells=[];
  for(const anchor of anchors){
   const degree=harmony.scalePcs.indexOf(anchor.pc);
-  const cellDirection=definition.family==='intervals'?1:direction;
+  const cellDirection=1;
   let notes=definition.offsets.map(offset=>{const step=degree+cellDirection*offset,index=(step%count+count)%count,midi=anchor.midi+intervals[index]+12*Math.floor(step/count)-intervals[degree],note=byMidi.get(midi);return note?{...note,name:harmony.scaleNames[index]}:null;});
   if(notes.some(n=>!n))continue;
   if(definition.pedal){const pedal=definition.pedal==='lower'?sorted[0]:sorted.at(-1);if(anchor.midi===pedal.midi)continue;notes=[pedal,anchor].map(n=>({...n,name:harmony.scaleNames[harmony.scalePcs.indexOf(n.pc)]}));}
@@ -42,8 +49,10 @@ export function scaleSequenceCells(board,harmony,study,motion,options={}){
  return cells.filter((_,i)=>i%advance===0).map((c,i)=>({...c,degree:i+1}));
 }
 export function orderedScaleCell(cell,order='normal',ordinal=0){
+ const written=cell.writtenNotes||cell.notes,base=cell.alternateCells&&ordinal%2?written.toReversed():written;
  const reverse=order==='reverse'||order==='alternate'&&ordinal%2===1||order==='alternateReverse'&&ordinal%2===0;
- const cycle=order==='cycle'&&[3,4].includes(cell.notes.length)?permutations(run(cell.notes.length))[ordinal%(cell.notes.length===3?6:24)].map(i=>cell.notes[i]):null;
- const notes=cycle|| (reverse?cell.notes.toReversed():order==='rotate'?[...cell.notes.slice(ordinal%cell.notes.length),...cell.notes.slice(0,ordinal%cell.notes.length)]:cell.notes);
- return {...cell,orderSteps:cell.orderSteps?notes.map(n=>cell.orderSteps[cell.notes.indexOf(n)]):null,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc)};
+ const cycle=order==='cycle'&&[3,4].includes(cell.notes.length)?permutations(run(base.length))[ordinal%(cell.notes.length===3?6:24)].map(i=>base[i]):null;
+ const notes=cycle|| (reverse?base.toReversed():order==='rotate'?[...base.slice(ordinal%base.length),...base.slice(0,ordinal%base.length)]:base);
+ const steps=cell.writtenOrderSteps||cell.orderSteps;
+ return {...cell,orderSteps:steps?notes.map(n=>steps[written.indexOf(n)]):null,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc)};
 }

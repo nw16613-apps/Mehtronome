@@ -49,7 +49,7 @@ test('every directional family selects the nearest forward cell through jazz, mo
      const next=source.map(c=>c.sequenceAnchor).filter(a=>(a-previous)*direction>0).sort((a,b)=>(a-b)*direction);
      assert.equal(g.sequenceAnchors[0],next[0]??source[0]?.sequenceAnchor,`${template} ${key} ${motion} ${study} ${g.slot}`);
     }
-    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);const last=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).find(c=>c.sequenceAnchor===previous),ns=last?.notes||g.notes.slice(-g.cellLengths.at(-1));edge=(SCALE_SEQUENCES[study]&&!['groups3','groups4'].includes(study)||isEnclosureStudy(study))?previous:direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));}
+    if(g.sequenceAnchors.length){previous=g.sequenceAnchors.at(-1);direction=g.sequenceDirections.at(-1);const last=cagedStudy(g.board,g.harmony,study,'seventh',direction>0?'ascending':'descending',{pattern:'groups3'}).find(c=>c.sequenceAnchor===previous),ns=last?.notes||g.notes.slice(-g.cellLengths.at(-1));edge=(SCALE_SEQUENCES[study]||study==='pentatonic'||isEnclosureStudy(study))?previous:direction>0?Math.max(...ns.map(n=>n.midi)):Math.min(...ns.map(n=>n.midi));}
    }
   }
  }
@@ -84,7 +84,7 @@ test('combined directions retain their current traversal leg across a scale chan
   let last=null,travel=motion==='up-down'?1:-1;
   for(const g of gs){
    const source=cagedStudy(g.board,g.harmony,study,'seventh',motion,{pattern:'groups3'});
-   if(last!==null&&g.sequenceAnchors.length&&hs[g.slot]!==hs[g.slot-1]){
+   if(last!==null&&g.sequenceAnchors.length&&!g.cellOffsets[0]&&hs[g.slot]!==hs[g.slot-1]){
     const forward=source.filter(c=>c.sequenceDirection===travel&&(c.sequenceAnchor-last)*travel>0).sort((a,b)=>(a.sequenceAnchor-b.sequenceAnchor)*travel);
     if(forward.length){assert.equal(g.sequenceAnchors[0],forward[0].sequenceAnchor);assert.equal(g.sequenceDirections[0],travel);}
    }

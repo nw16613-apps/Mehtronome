@@ -21,7 +21,7 @@ test('every scale/arpeggio recipe retains theoretical steps, written order and p
   for(const prefix of ['','arpseq_'])for(const [id,def]of Object.entries(SCALE_SEQUENCES))for(const direction of [1,-1]){
    const pcs=prefix?arpeggioHarmony(harmony).chordPcs:harmony.scalePcs,line=Array.from({length:128},(_,i)=>i).filter(m=>pcs.includes(m%12)),cells=cagedStudy(b,harmony,prefix+id,'seventh',direction>0?'ascending':'descending');
    for(const cell of cells){assert.ok(cell.notes.length);for(const n of cell.notes){assert.ok(b.notes.some(p=>p.string===n.string&&p.fret===n.fret&&p.midi===n.midi));assert.equal(n.midi,[40,45,50,55,59,64][n.string]+n.fret);assert.ok(pcs.includes(n.pc));}
-    if(!def.pedal){const start=line.indexOf(cell.sequenceAnchor);assert.deepEqual(cell.notes.map(n=>n.midi),def.offsets.map(i=>line[start+i*(def.family==='intervals'?1:direction)]),`${mode} ${shape} ${prefix+id}`);}else{assert.equal(cell.notes[1].midi,cell.sequenceAnchor);assert.equal(cell.notes[0].midi,def.pedal==='lower'?Math.min(...b.notes.filter(n=>pcs.includes(n.pc)).map(n=>n.midi)):Math.max(...b.notes.filter(n=>pcs.includes(n.pc)).map(n=>n.midi)));}
+    if(!def.pedal){const start=line.indexOf(cell.sequenceAnchor);assert.deepEqual(cell.notes.map(n=>n.midi),def.offsets.map(i=>line[start+i]),`${mode} ${shape} ${prefix+id}`);}else{assert.equal(cell.notes[1].midi,cell.sequenceAnchor);assert.equal(cell.notes[0].midi,def.pedal==='lower'?Math.min(...b.notes.filter(n=>pcs.includes(n.pc)).map(n=>n.midi)):Math.max(...b.notes.filter(n=>pcs.includes(n.pc)).map(n=>n.midi)));}
    }
   }
  }

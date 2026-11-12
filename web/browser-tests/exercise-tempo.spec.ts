@@ -22,7 +22,7 @@ for(const backing of [false,true])test(`tempo and speed shortcuts preserve the p
  await page.locator('#mini-play').click();expect(errors).toEqual([]);
 });
 test('changing tempo during count-in keeps the original start, and a backed passage completes after slowing down',async({page})=>{
- await open(page,true,true);await page.locator('.notation-cell').first().click();await page.locator('#exercise-loop').uncheck();await page.locator('#exercise-preview').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
+ await open(page,true,true);await page.locator('#exercise-content-family').selectOption('groups');await page.locator('#exercise-scale-pattern').selectOption('groups8');await page.locator('.notation-cell').first().click();await page.locator('#exercise-loop').uncheck();await page.locator('#exercise-preview').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');
  await page.locator('[data-tempo-ratio=".5"]').click();await expect(page.locator('.exercise-note.playing')).toHaveCount(0);await expect(page.locator('.exercise-note.playing').first()).toBeVisible({timeout:10000});
  await page.locator('[data-tempo-ratio=".75"]').click();await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','true');await expect(page.locator('#exercise-preview')).toHaveAttribute('aria-pressed','false',{timeout:10000});
  const messages=await page.evaluate(()=>(window as any).audioMessages);expect(messages.filter((m:any)=>m.type==='start')).toHaveLength(1);expect(messages.filter((m:any)=>m.type==='exercise-tempo')).toHaveLength(2);

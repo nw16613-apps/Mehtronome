@@ -1,7 +1,8 @@
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
-import {SCALE_SEQUENCES,orderedScaleCell} from '../guitar/scale-sequences.js';
+import {SCALE_SEQUENCES,orderedScaleCell,hasPentatonicCellOrder,hasChromaticSide} from '../guitar/scale-sequences.js';
+import {orderedArpeggioRootCell} from '../guitar/arpeggio-sequences.js';
 import {ARPEGGIO_PATTERN_STUDIES} from '../guitar/arpeggio-patterns.js';
 import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {scaleStartingState} from './scale-start.js';
@@ -22,22 +23,24 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const path=options.positionPath?.length===harmonies.length?options.positionPath:progressionPositionPath(harmonies,{start:anchor.start,end:anchor.end});
  if(study==='positional')return positionalProgressionGroups(harmonies,durations,path,options);
  const scalar=Boolean(SCALE_SEQUENCES[study.replace(/^arpseq_/, '')]);
+ const pentatonicCells=study==='pentatonic'&&hasPentatonicCellOrder(pattern),rootCells=study==='harmonized'&&options.arpeggioSequence&&options.arpeggioSequence!=='stepwise';
+ const orderCell=(cell,ordinal)=>rootCells?orderedArpeggioRootCell(cell,options.sequenceOrder,ordinal):scalar||pentatonicCells?orderedScaleCell(cell,options.sequenceOrder,ordinal):cell;
  const patterned=ARPEGGIO_PATTERN_STUDIES.has(study)&&options.arpeggioPattern&&options.arpeggioPattern!=='straight';
  const routineConnected=patterned&&options.arpeggioRoutine==='connected';
  const routineAlternating=patterned&&options.arpeggioRoutine==='alternate';
- const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned||scalar)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
+ const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned||scalar||pentatonicCells)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  // Fixed-order cells travel by their root/target. Their last/highest pitch
  // belongs to the pattern, not to the cursor used to select the next cell.
  // Interval cells now use the same lower anchor on both legs: reverse the
  // order of cells, independently of their internal written/reversed order.
- const anchoredTraversal=patterned||scalar&&!['groups3','groups4'].includes(study)||isEnclosureStudy(study);
+ const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  const directional=study!=='grip'&&study!=='triadpairs';
- const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&pattern.startsWith('alternating');
+ const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&!pentatonicCells&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
  const approachEnds=[];let emittedCells=0,triadReference=60;
  const groups=harmonies.map((backingHarmony,slot)=>{
@@ -51,7 +54,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{sequenceAdvance:options.sequenceAdvance,sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{sequenceAdvance:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -70,7 +73,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     // A change inside a group adapts its unplayed tones at the same ordinal.
     // Compare the next structural tone, not a fresh cell's starting note.
     const target=pendingCell.notes[cellOffset].midi;
-    cellIndex=cells.map((cell,index)=>({index,distance:Math.abs((scalar?orderedScaleCell(cell,options.sequenceOrder,emittedCells).notes:routineAlternating&&emittedCells%2?cell.alternateNotes:cell.notes)[cellOffset].midi-target)}))
+    cellIndex=cells.map((cell,index)=>({index,distance:Math.abs((routineAlternating&&emittedCells%2?orderCell(cell,emittedCells).alternateNotes:orderCell(cell,emittedCells).notes)[cellOffset].midi-target)}))
      .sort((a,b)=>a.distance-b.distance||a.index-b.index)[0].index;
    }else if(lastAnchor!==null&&cells.some(c=>Number.isFinite(c.sequenceAnchor))){
     // Preserve the next structural scale endpoint, even when its pitch
@@ -108,7 +111,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
    const nextIndex=routineConnected?cells.findLastIndex(c=>c.sequenceAnchor===cells[cellIndex].sequenceAnchor)+1:cellIndex+1;
-   const originalCell=scalar?orderedScaleCell(cells[cellIndex],options.sequenceOrder,emittedCells):cells[cellIndex],cell=routineAlternating&&emittedCells%2?{...originalCell,notes:originalCell.alternateNotes,patternOrder:originalCell.patternOrder?.toReversed(),targetIndices:originalCell.alternateTargetIndices}:originalCell;
+   const originalCell=orderCell(cells[cellIndex],emittedCells),cell=routineAlternating&&emittedCells%2?{...originalCell,notes:originalCell.alternateNotes,patternOrder:originalCell.patternOrder?.toReversed(),targetIndices:originalCell.alternateTargetIndices}:originalCell;
    // Other families keep their existing complete-cell slot policy.
    if(!flowingCells&&(isEnclosureStudy(study)?enclosureNoteStarts([...cellLengths,cell.notes.length],division).at(-1)>=durations[slot]:notes.length+cell.notes.length>capacity)){
     if(travel!==previousTravel){travel=previousTravel;cells=makeCells();cellIndex=previousIndex;}

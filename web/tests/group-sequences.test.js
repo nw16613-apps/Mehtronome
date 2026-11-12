@@ -11,11 +11,11 @@ const sizeOf=s=>s.endsWith('3')?3:4,pcsFor=(h,s)=>s.startsWith('arp')?arpeggioHa
 const make=(hs,ss,ds,study,rhythm='eighths',motion='ascending')=>progressionExerciseGroups(hs,ds,fretboardFor(hs[0],ss[0]),{study,rhythm,motion,positionPath:hs.map((h,i)=>({...cagedPositionFor(fretboardFor(h,ss[i%ss.length])),geometryShape:ss[i%ss.length]}))});
 function library(h,board,study,direction){
  const line=Array.from({length:128},(_,m)=>m).filter(m=>pcsFor(h,study).includes(m%12)),allowed=new Set(board.notes.map(n=>n.midi)),size=sizeOf(study);
- return line.filter(m=>allowed.has(m)).sort((a,b)=>(a-b)*direction).map(m=>Array.from({length:size},(_,i)=>line[line.indexOf(m)+i*direction])).filter(cell=>cell.every(m=>allowed.has(m)));
+ return line.filter(m=>allowed.has(m)).sort((a,b)=>(a-b)*direction).map(m=>Array.from({length:size},(_,i)=>line[line.indexOf(m)+i])).filter(cell=>cell.every(m=>allowed.has(m)));
 }
 function walk(h,board,study,direction,count){
  let cells=library(h,board,study,direction),index=0,notes=[];if(!cells.length)return [];
- while(notes.length<count){const cell=cells[index++];notes.push(...cell);if(index===cells.length){const edge=direction>0?Math.max(...cell):Math.min(...cell);direction=-direction;cells=library(h,board,study,direction);index=cells.findIndex(c=>(c[0]-edge)*direction>0);if(index<0)index=0;}}
+ while(notes.length<count){const cell=cells[index++];notes.push(...cell);if(index===cells.length){const edge=cell[0];direction=-direction;cells=library(h,board,study,direction);index=cells.findIndex(c=>(c[0]-edge)*direction>0);if(index<0)index=0;}}
  return notes.slice(0,count);
 }
 test('groups follow exact overlapping scale or selected-chord steps in every mode, root and CAGED shape',()=>{

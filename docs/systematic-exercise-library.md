@@ -2,6 +2,16 @@
 
 The library separates **material/source**, **note order**, **routine**, **register**, **travel** and **rhythm**. A familiar name may identify an order; it does not create a second copy of that order. Existing generators and saved identifiers remain readable for compatibility.
 
+## Internal order and travelling direction
+
+Generated scale and chord-tone cells keep their written offsets on both legs: groups, permutations, digital patterns, returns, expanding/contracting intervals, skips and pedals. Written/reversed/alternating/rotating orders act independently of the anchors moving up or down. Both legs share the same structural anchors, so turns select the adjacent available cell without skipping or repeating a whole cell. Cells and variation phase continue across bars and adapt remaining notes when harmony changes.
+
+Generated pentatonic groups and compound cells use the same ordering rules and favourite identity. Source-transcribed `lesson*` patterns preserve their specified contour and do not expose a generic order override. Continuous traversal, directed passing-tone connections and specified triad-pair contours retain their musical purpose.
+
+Whole-arpeggio patterns already retain their chosen internal permutation, repeated-tone order, pedal or explicit register independently of travel. Default straight recipes now use the written 1–3–5 / 1–3–5–7 order for either starting direction. An **Arpeggio-root order** variation changes the order of complete arpeggios inside a root motif; it preserves each arpeggio's internal order, physical notes and approach/target pairs. Root motifs themselves retain their written root offsets on both legs.
+
+Enclosure approach orders stay fixed while their targets travel. Double chromatic approaches offer below/above, and chromatic neighbours offer upper-first/lower-first; these change the approach side while retaining the final resolution target. They never use a naive whole-cell reversal that puts the target first. Numerical interval pair order remains visible in the main controls; other applicable order variations remain under **Pattern variations**. Favourite recipes preserve these choices without adding a parallel selector.
+
 ## Material-first controls
 
 The visible editor starts with **Material → Source → Pattern family → Pattern → Starting note**. The old study/material/traversal selectors are internal compatibility controls, not parallel user-facing menus.

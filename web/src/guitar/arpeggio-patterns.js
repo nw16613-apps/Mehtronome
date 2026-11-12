@@ -115,8 +115,8 @@ export function canonicalArpeggioRecipe(view){
  let routine=['repeat','alternate','inversions','connected'].includes(view.arpeggioRoutine)?view.arpeggioRoutine:'repeat';
  let approach=['none','below','above','directional'].includes(view.arpeggioApproach)?view.arpeggioApproach:'none';
  let register=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
- const triad=view.material==='triad',down=['descending','down-up'].includes(view.motion);
- if(pattern==='straight'){pattern=triad?(down?'perm3_531':'perm3_135'):(down?'perm4_7531':'perm4_1357');register=down?'down':'up';if(triad)close=false;}
+ const triad=view.material==='triad';
+ if(pattern==='straight'){pattern=triad?'perm3_135':'perm4_1357';if(triad)close=false;}
  else if(pattern==='brokenPairs'){pattern=triad?'cell3_1353':'perm4_1375';}
  else if(pattern==='wideSkips'||pattern==='outsideInside'){pattern=triad?'perm3_153':pattern==='wideSkips'?'perm4_1537':'perm4_1735';if(triad)close=false;}
  else if(pattern==='upBack'&&triad)pattern='cell3_1353';

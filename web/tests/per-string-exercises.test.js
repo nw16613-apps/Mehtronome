@@ -16,7 +16,7 @@ test('chord durations, repeated-slot continuity, changed qualities and resolutio
  const other=harmonyAt({key:0,mode:'dorian',chord:'min7'}),hs=[h,h,other],durations=[1,1,2],groups=perStringExerciseGroups(hs,durations,[position,position,position],options);
  assert.deepEqual(groups.map(g=>g.notes.length),[4,4,8]);assert.match(groups[0].warning,/full shape/);assert.deepEqual(groups[1].notes,groups[0].board.notes.slice(4,8));assert.equal(groups[2].notes[0].pc,other.chordPcs[1]);
  const plan=progressionStudyPlan(groups,[0,1,2],[.25,.25,.5],4,'positional','sixteenths');assert.equal(plan.events.length,16);const result=withExerciseResolution(groups,plan);assert.equal(result.groups.at(-1).board,groups[0].board);assert.ok(groups[0].board.notes.some(n=>n.string===result.plan.events.at(-1).note.string&&n.fret===result.plan.events.at(-1).note.fret));
- const fallback=perStringExerciseChoice(harmonyAt({key:9,mode:'major',chord:'major'}),{...options,inversion:6});assert.equal(fallback.index,0);assert.match(fallback.warning,/root position/);
+ const fallback=perStringExerciseChoice(harmonyAt({key:9,mode:'major',chord:'major'}),{...options,inversion:6});assert.equal(fallback.index,0);assert.match(fallback.warning,/first playable inversion/);
  const changing=perStringExerciseGroups([h,harmonyAt({key:0,mode:'major',chord:'major'})],[4,4],[position,position],{...options,inversion:3}),ending=withExerciseResolution(changing,progressionStudyPlan(changing,[0,1],[1,1],4,'positional','sixteenths'));assert.match(changing[1].fingeringLabel,/Root position/);assert.match(ending.groups.at(-1).fingeringLabel,/Third inversion/);
 });
 

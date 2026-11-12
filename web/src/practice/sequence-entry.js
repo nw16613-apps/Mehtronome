@@ -1,12 +1,13 @@
+import {orderedArpeggioRootCell} from '../guitar/arpeggio-sequences.js';
 import {MODES} from '../audio/music.js';
 import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
-import {orderedScaleCell,SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
+import {orderedScaleCell,SCALE_SEQUENCES,hasExerciseCellOrder} from '../guitar/scale-sequences.js';
 const mod=n=>(n%12+12)%12;
 export function sequenceEntryNote(cell,view){
- if(view.study==='harmonized'){const midi=cell.sequenceAnchor;return {midi,pc:mod(midi),name:cell.rootName};}
- if(view.study.startsWith('enclosures')||view.study==='doubleapproach')return cell.notes[cell.targetIndices?.[0]??cell.targetIndex??cell.notes.length-1];
- if(view.study==='pentatonic'&&view.pattern?.startsWith('alternating')){const up=!['descending','down-up'].includes(view.motion),cellUp=cell.notes[1]?.midi>cell.notes[0].midi;return cellUp===up?cell.notes[0]:cell.notes.at(-1);}
- if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/,'')])return orderedScaleCell(cell,view.sequenceOrder,0).notes[0];
+ if(view.study==='harmonized'){const midi=orderedArpeggioRootCell(cell,view.sequenceOrder).rootSequence?.[0]??cell.sequenceAnchor;return {midi,pc:mod(midi),name:cell.rootName};}
+ if(view.study.startsWith('enclosures')||['doubleapproach','chromaticneighbors'].includes(view.study))return cell.notes[cell.targetIndices?.[0]??cell.targetIndex??cell.notes.length-1];
+
+ if(hasExerciseCellOrder(view))return orderedScaleCell(cell,view.sequenceOrder,0).notes[0];
  return cell.notes[0];
 }
 export function sequenceEntryChoices(cells,harmony,view){
