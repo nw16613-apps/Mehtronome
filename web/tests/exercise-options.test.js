@@ -44,3 +44,7 @@ test('saved four- and five-note enclosure exercises migrate to the same exact or
   const view=normalizeExerciseOptions({study,motion});assert.ok(['enclosures4','enclosures5'].includes(view.study));assert.deepEqual(ENCLOSURE_PATTERNS[view.study][view.enclosurePattern],expected);
  }
 });
+
+test('retired closure and cell-label settings cannot restore removed exercise options',()=>{
+ for(const close of [true,false]){const view=normalizeExerciseOptions({study:'harmonized',material:'triad',arpeggioPattern:'perm3_513',arpeggioClose:close,cellLabels:'order'});assert.equal(view.arpeggioClose,false);assert.equal(view.cellLabels,undefined);}
+});

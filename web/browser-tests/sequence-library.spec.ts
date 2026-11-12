@@ -14,7 +14,7 @@ test('scale and core-arpeggio sequences expose complete grouped menus and save t
  await page.setViewportSize({width:390,height:844});await page.locator('#exercise-scale-family').scrollIntoViewIfNeeded();await page.screenshot({path:'/workspace/sequence-library-mobile.png'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);expect(errors).toEqual([]);
 });
 test('whole-arpeggio root sequences keep note order and source separate',async({page})=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await open(page);await page.locator('#exercise-material').selectOption('triad');await page.locator('#exercise-arpeggio-close').uncheck();await page.locator('#exercise-arpeggio-pattern').selectOption('perm3_135');
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await open(page);await page.locator('#exercise-material').selectOption('triad');await page.locator('#exercise-arpeggio-pattern').selectOption('perm3_135');
  await page.locator('#exercise-arpeggio-sequence').selectOption('thirds');await expect(page.locator('#exercise-arpeggio-pattern')).toHaveValue('perm3_135');await expect(page.locator('#caged-exercise-title')).toContainText('Root sequence Thirds');expect(await page.locator('.exercise-note').count()).toBeGreaterThan(5);
  await page.locator('#exercise-favourite').click();await page.locator('#exercise-arpeggio-sequence').selectOption('stepwise');await page.locator('#exercise-favourites').selectOption('0');await expect(page.locator('#exercise-arpeggio-sequence')).toHaveValue('thirds');
  const labels=await page.locator('.aligned-notation .exercise-degree').allTextContents();expect(labels.some(s=>/\d+ cell/.test(s))).toBe(false);expect(errors).toEqual([]);

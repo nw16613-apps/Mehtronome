@@ -15,7 +15,7 @@ Study templates still load the relevant recipe in this unified editor. Selecting
 
 ## Canonical arpeggio orders
 
-- Each tone once: **6 triad permutations**, **24 seventh permutations**, grouped by starting tone. Triads can optionally close an octave away on their starting tone.
+- Each tone once: **6 triad permutations**, **24 seventh permutations**, grouped by starting tone. Triads play the selected order without automatically repeating the starting tone.
 - Repeat one tone: every tone appears, one appears twice, no adjacent repeated tones. **18** four-note triad orders and **144** five-note seventh orders, grouped by repeated tone.
 - Starting-tone pedal: 1–3–1–5–1 / 1–3–1–5–1–7–1.
 - Up and back for sevenths: 1–3–5–7–5–3.
@@ -28,7 +28,7 @@ Named duplicates migrate to the numeric order. Triad Broken pairs and Up/back be
 
 **Chromatic preparation** is separate: none, semitone below, semitone above, or following cell direction. It works on the chosen order and preserves complete approach/target pairs. The older separate Approach every arpeggio tone entry migrates to this configuration.
 
-**Cell register** places the other tones within the octave above/below the entry or alternates that placement. **Travel through position** orders the roots. A fixed permutation is not silently reversed when root travel turns. Optional triad closures and other repeated notes required by the selected cell remain written.
+**Cell register** places the other tones within the octave above/below the entry or alternates that placement. **Travel through position** orders the roots. A fixed permutation is not silently reversed when root travel turns. Repeated notes explicitly required by the selected cell remain written.
 
 The selected-chord source with entry-tone cycling replaces the overlapping Selected-chord inversions / Arpeggio groups of four entries. Old alternating exercise entries migrate into an order routine or alternating register, according to their previous behaviour.
 
@@ -53,7 +53,7 @@ These counts exhaust the stated family, not all pitches, rhythms or registers. T
 
 The explicit **☆ Favourite / ★ Favourited** toggle uses the existing `mehtronome-exercise-favourites` store. The Favourites selector recalls choices on the current chart. Clicking an active star removes it. Reloads preserve the list. Existing saved-options records migrate and aliases deduplicate by canonical recipe.
 
-Musical differences such as source, order, closure, register, routine, preparation, direction and rhythm remain separate favourites. Page zoom/display and tempo do not create duplicate bookmarks. Unused fingering values are ignored for CAGED traversals. No existing saves are deleted by a read; a toggle writes the migrated list.
+Musical differences such as source, order, register, routine, preparation, direction and rhythm remain separate favourites. Page zoom/display and tempo do not create duplicate bookmarks. Unused fingering values are ignored for CAGED traversals. No existing saves are deleted by a read; a toggle writes the migrated list.
 
 ## Verification
 
@@ -95,12 +95,10 @@ The current notation/TAB renderer retains the generator's cell lengths, sizes an
 
 Checks cover scale/core-arpeggio/whole-arpeggio cells, enclosure rests, single-chord flattening, repeated short harmonic cycles, line continuations and browser display/playback.
 
-## Interactive cell tools
+## Simple interactive cell brackets
 
-Root-sequence motifs have nested brackets: the outer level selects the full motif, and inner brackets select its constituent arpeggios. Both retain identity and complete available note ranges across bars and score systems. Playback highlights the active outer cell and inner arpeggio, clearing during rests and after stopping.
+Each logical cell has a single bracket level, including whole-arpeggio root motifs. Brackets retain identity across bars and score systems. Playback highlights the current cell; click/tap or Enter/Space selects its notes and enables Loop. Play starts the selected passage. Clear selection restores the full exercise. Solo playback starts at the first selected note; accompaniment retains the enclosing bars and their original harmonies through a private playback chart.
 
-The View menu's **Cell labels** setting defaults to Off. Note order, starting degree/note, and cell length are available independently of the exercise recipe. A label appears only when its value changes; line continuations do not repeat it. Hover/accessibility details include the order, start and continuation/partial status. The display preference persists without creating extra musical favourites.
+Nested brackets, printed cell labels and the Cell labels menu have been removed. Old label display preferences are ignored. The Close on starting tone control is also removed: restored exercises normalize implicit closure to false. Explicit repeated-tone patterns remain available as written patterns. Favourites no longer distinguish the retired closure setting.
 
-Click/tap or Enter/Space selects the bracket's notes and enables Loop; Play starts the selected passage. Clear selection restores the full exercise. Solo playback starts on the first selected note and repeats at the passage duration. Accompanied playback preserves the enclosing bars and their original harmonies, with rests around the selected notes where needed. This uses a private playback chart and retains the original score indices for cursor alignment. Cells in repeated short harmonic cycles are selected by occurrence, not just reused note indices.
-
-49 focused checks and five browser workflows pass, including backed/solo looping, nested selection, live highlighting, persistent labels, keyboard interaction and mobile layout. Production build passes.
+Verification covers the absent controls/layers, unchanged simple-bracket continuations, solo/backed cell playback, keyboard selection, sequence menus, favourites and legacy options.

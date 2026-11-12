@@ -20,7 +20,7 @@ export function organizeExercisePanel(panel:HTMLElement,guitarVolume=100){
  if(tempoLocked)for(const id of ['exercise-auto-every','exercise-auto-increment','exercise-auto-target'])(find('#'+id) as HTMLInputElement).disabled=true;
  const trainerHelp=document.createElement('p');trainerHelp.className='practice-help';trainerHelp.textContent=tempoLocked?'Turn off Use accompaniment and enable Loop to use the tempo trainer.':'Enable Loop to increase the tempo after each set of repetitions.';trainer.append(trainerHelp);playback.append(find('.exercise-range-controls'),trainer);definition.after(playback);
  const navigation=find('.exercise-navigation');navigation.prepend(Object.assign(document.createElement('h4'),{textContent:'Chord & position'}));definition.after(navigation);navigation.querySelector('h4')!.after(find('.progression-reference'));
- const view=section('exercise-viewbar','View');view.append(label('exercise-display'),label('exercise-zoom'),label('exercise-cell-labels'),label('exercise-chord-diagrams'),find('#exercise-map-toggle'),find('#exercise-focus'));const diagram=find('.exercise-linked-fretboard');heading.after(navigation);navigation.after(diagram);diagram.after(definition);definition.after(view);
+ const view=section('exercise-viewbar','View');view.append(label('exercise-display'),label('exercise-zoom'),label('exercise-chord-diagrams'),find('#exercise-map-toggle'),find('#exercise-focus'));const diagram=find('.exercise-linked-fretboard');heading.after(navigation);navigation.after(diagram);diagram.after(definition);definition.after(view);
  const material=find('.exercise-material-layout');view.after(material);
  const reference=find('.exercise-lesson');
  material.after(playback);playback.after(reference);

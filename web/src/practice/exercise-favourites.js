@@ -7,7 +7,7 @@ export function exerciseFavouriteKey(snapshot){
  if(exerciseMenuOptions(v.study).material)result.material=v.material;
  if(/^(arpseq_)?scaleperm_123$/.test(v.study))result.study=v.study.replace('scaleperm_123','groups3');
  if(/^(arpseq_)?scaleperm_1234$/.test(v.study))result.study=v.study.replace('scaleperm_1234','groups4');
- const fields=v.study==='harmonized'?['arpeggioSequence','sequenceAdvance','arpeggioSource','arpeggioPattern',...(v.arpeggioPattern.startsWith('perm3_')?['arpeggioClose']:[]),'arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
+ const fields=v.study==='harmonized'?['arpeggioSequence','sequenceAdvance','arpeggioSource','arpeggioPattern','arpeggioRegister','arpeggioRoutine','arpeggioApproach']:
  SCALE_SEQUENCES[v.study.replace(/^arpseq_/, '')]?['sequenceAdvance','sequenceOrder']:
  v.study.startsWith('enclosures')?['enclosureTarget','enclosurePattern']:
  ['positional','positionalscale'].includes(v.study)?['fingering',...(v.fingering!=='caged'?['inversion','fingeringFret','fingeringStringSet']:[]),'startTone','patternStartRoute']:

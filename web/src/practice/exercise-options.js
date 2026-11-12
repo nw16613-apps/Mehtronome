@@ -13,7 +13,8 @@ export function normalizeExerciseOptions(view){
  if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]&&view.sequenceOrder==='cycle'&&![3,4].includes(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')].offsets.length))view.sequenceOrder='normal';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
- view.arpeggioClose=view.arpeggioClose!==false;
+ view.arpeggioClose=false; // Retired UI option: play only the selected written order.
+ delete view.cellLabels;
  view.arpeggioRegister=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
  const oldEnclosures={enclosuresdouble:['enclosures4',['descending','down-up'].includes(view.motion)?[-2,-1,1,0]:[2,1,-1,0]],enclosuresfiveone:['enclosures5',[-1,2,1,-1,0]],enclosuresfivetwo:['enclosures5',[1,-2,-1,1,0]],enclosuresfivethree:['enclosures5',[-2,1,-2,-1,0]],enclosuresfivefour:['enclosures5',[2,-1,2,1,0]]};
  if(oldEnclosures[view.study]){const [study,offsets]=oldEnclosures[view.study];view.study=study;view.enclosurePattern=Object.entries(ENCLOSURE_PATTERNS[study]).find(([,p])=>p.join(',')===offsets.join(','))?.[0]||'upper';}
