@@ -1,3 +1,4 @@
+import {routeCellNotes,canRouteNotes} from '../guitar/neck-traversal.js';
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
@@ -35,7 +36,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  // Interval cells now use the same lower anchor on both legs: reverse the
  // order of cells, independently of their internal written/reversed order.
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
- let scaleRemaining=null;
+ let scaleRemaining=null,routePrevious=null,cycleLeg=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
@@ -54,7 +55,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   const makeCells=()=>{
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{sequenceAdvance:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length);
+   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{sequenceAdvance:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -111,6 +112,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
    const nextIndex=routineConnected?cells.findLastIndex(c=>c.sequenceAnchor===cells[cellIndex].sequenceAnchor)+1:cellIndex+1;
+   if(options.once){if(cycleLeg!==null&&cycleLeg!==travel&&travel===(motion==='descending'||motion==='down-up'?-1:1))break;cycleLeg=travel;}
    const originalCell=orderCell(cells[cellIndex],emittedCells),cell=routineAlternating&&emittedCells%2?{...originalCell,notes:originalCell.alternateNotes,patternOrder:originalCell.patternOrder?.toReversed(),targetIndices:originalCell.alternateTargetIndices}:originalCell;
    // Other families keep their existing complete-cell slot policy.
    if(!flowingCells&&(isEnclosureStudy(study)?enclosureNoteStarts([...cellLengths,cell.notes.length],division).at(-1)>=durations[slot]:notes.length+cell.notes.length>capacity)){
@@ -125,6 +127,11 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     if(asc!==nextAscending)cellNotes=[...cell.notes].reverse();
     nextAscending=!nextAscending;
    }
+   if(board.route){
+    const routed=cellOffset&&pendingCell?.routeContext===context?pendingCell.notes:routeCellNotes(cellNotes,board,routePrevious);
+    if(!routed){cellIndex=nextIndex;cellOffset=0;pendingCell=null;continue;}
+    cellNotes=routed;
+   }
    const offset=flowingCells?cellOffset:0,remaining=cellNotes.length-offset;
    const take=flowingCells?Math.min(remaining,capacity-notes.length):remaining;
    const played=cellNotes.slice(offset,offset+take);
@@ -134,11 +141,11 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    // against the outgoing extent, not the previous leg's starting anchor.
    // Use the structural extent so an alternating stroke cannot move the turn.
    lastRangeEdge=anchoredTraversal?lastCursor:travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
-   lastMidi=played.at(-1).midi;
+   lastMidi=played.at(-1).midi;if(board.route)routePrevious=played.at(-1);
    if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
    for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
-   if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=cell;}
+   if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=board.route?{...cell,notes:cellNotes,routeContext:context}:cell;}
    else{cellOffset=0;pendingCell=null;cellIndex=nextIndex;emittedCells++;}
    if(stage==='cell'&&study!=='positionalscale')break;
   }

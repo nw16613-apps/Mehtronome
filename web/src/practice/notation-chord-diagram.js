@@ -24,4 +24,4 @@ export function notationChordDiagram(harmony,board,position,x,y){
  }
  return svg+'</g>';
 }
-export function notationDiagramKey(slot){return slot.position?.numeral||slot.position?.geometryShape||slot.position?.shape||'';}
+export function notationDiagramKey(slot){if(slot.board?.route)return JSON.stringify(slot.board.route);return slot.position?.numeral||slot.position?.geometryShape||slot.position?.shape||'';}

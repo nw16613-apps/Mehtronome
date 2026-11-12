@@ -1,3 +1,4 @@
+import {traversalLabel} from '../guitar/neck-traversal.js';
 import {notationCellBrackets} from './notation-cells.js';
 import {notationRest} from './notation-rest.js';
 import {staffY,notationAccidental} from './notation-pitch.js';
@@ -40,8 +41,9 @@ export function progressionNotationSvg(plan,title,options={chordDiagrams:false})
     // Counts describe renderer segmentation, not musical practice material.
     // Show a useful position label once instead, when a position is known.
     if(/^\d+ cell(?: segments|s)?$/.test(caption)||caption==='Cell')caption=change.position?.numeral?`Position ${change.position.numeral}${change.position.shape?' · '+change.position.shape+' shape':''}`:'';
+    if(change.board?.route&&!change.resolution)caption=traversalLabel(change.board.route);
     const shapeCaption=change.perString&&!change.resolution&&!change.response;
-    const showCaption=Boolean(caption)&&(shapeCaption?fingeringChanges.has(change)&&atChange:!caption.startsWith('Position ')||positionChanges.has(change)&&atChange);
+    const showCaption=Boolean(caption)&&(change.board?.route&&!change.resolution?positionChanges.has(change)&&atChange:shapeCaption?fingeringChanges.has(change)&&atChange:!caption.startsWith('Position ')||positionChanges.has(change)&&atChange);
     svg+='</g>'+(chordChanges.has(change)&&atChange?chordSvg(change.chord,x,40,'backing'):'')+
      (showCaption?`<text class="exercise-degree" x="${x}" y="${272+musicOffset}">${esc(caption)}</text>`:'')+`<g transform="translate(0,${musicOffset})">`;
    }

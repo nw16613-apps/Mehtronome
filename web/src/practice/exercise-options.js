@@ -1,3 +1,4 @@
+import {normalizeTraversal,acrossNeck} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide} from '../guitar/scale-sequences.js';
 import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
@@ -6,6 +7,8 @@ import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
+ normalizeTraversal(view);
+ if(acrossNeck(view)){view.fingering='caged';view.exactFingering=false;}
  view.stage='full';
  view.study=typeof view.study==='string'&&view.study?view.study:'positional';
  if(/^arpgroups[34]$/.test(view.study)){view.study='arpseq_groups'+view.study.at(-1);view.material='seventh';}

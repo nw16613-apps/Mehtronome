@@ -5,6 +5,7 @@ import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.j
 // the chart currently playing. Canonical aliases must share one bookmark.
 export function exerciseFavouriteKey(snapshot){
  const v=normalizeExerciseOptions({...snapshot}),result={study:v.study,motion:v.motion,rhythm:v.rhythm};
+ if(v.traversal!=='position')for(const field of ['traversal','traversalStrings','traversalStart','traversalEnd'])result[field]=v[field];
  if(exerciseMenuOptions(v.study).material&&!v.exactFingering)result.material=v.material;
  if(/^(arpseq_)?scaleperm_123$/.test(v.study))result.study=v.study.replace('scaleperm_123','groups3');
  if(/^(arpseq_)?scaleperm_1234$/.test(v.study))result.study=v.study.replace('scaleperm_1234','groups4');
