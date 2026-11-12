@@ -10,4 +10,6 @@ The shared catalogue provides six pairs, six permutations, eighteen four-note re
 
 The passive selection callback keeps the recipe current even before visiting Exercises. Rendering uses the same selection during live backing playback. Restoring a favourite stops exercise audition before applying the recipe so the transport callback cannot overwrite it with the previous selection.
 
+Interval-pair sequences (seconds through octaves, including chord-tone sequences) reverse from the reached pitch boundary, entering one collection step inward without repeating the apex. They do not reverse from the outgoing pair's starting anchor, which would skip valid return pairs. This structural boundary is independent of cell-order variations; complete cells and their phase continue across bars.
+
 Validation: shared geometry and material/sequence model checks, unchanged sequence-continuity and progression checks, browser coverage for all six non-CAGED types, reverse selection/favourite restoration, material-first workflows and live backing playback.

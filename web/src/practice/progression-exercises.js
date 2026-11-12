@@ -29,7 +29,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const scaleTraversal=study==='positionalscale'&&stage!=='cell';
  // Fixed-order cells travel by their root/target. Their last/highest pitch
  // belongs to the pattern, not to the cursor used to select the next cell.
- const anchoredTraversal=patterned||scalar&&!['groups3','groups4'].includes(study)||isEnclosureStudy(study);
+ // Interval pairs turn from the reached pitch boundary. Turning from their
+ // starting anchor skips the pairs between that anchor and the boundary.
+ const intervalPairs=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')]?.family==='intervals';
+ const anchoredTraversal=patterned||scalar&&!intervalPairs&&!['groups3','groups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null;
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
