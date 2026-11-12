@@ -26,9 +26,12 @@ export function perStringExerciseGroups(harmonies,durations,positions,options){
   const cycle=[...up,...down],identity=JSON.stringify([harmony.chordPcs,board.notes.map(n=>[n.string,n.fret]),options.motion,options.study]);
   if(identity!==previous)phase=0;previous=identity;
   const capacity=durations?Math.max(1,Math.floor(durations[slot]*division)):cycle.length;
+  const phaseStart=cycle.length?phase%cycle.length:0;
   const notes=Array.from({length:cycle.length?capacity:0},()=>cycle[phase++%cycle.length]);
+  const cellLengths=[],cellOffsets=[],cellSizes=[];
+  if(!size&&cycle.length)for(let offset=0;offset<notes.length;){const at=(phaseStart+offset)%cycle.length,legStart=at<up.length?0:up.length,legSize=at<up.length?up.length:down.length,length=Math.min(notes.length-offset,legStart+legSize-at);cellLengths.push(length);cellOffsets.push(at-legStart);cellSizes.push(legSize);offset+=length;}
   const endingDirection=notes.length&&cycle.length>1?Math.sign(cycle[phase%cycle.length].midi-notes.at(-1).midi):options.motion==='descending'?-1:1;
-  const group={endingDirection,slot,globalStart,harmony,board,position:{...positions[slot],perString:true},perString:true,fingeringLabel:choice.label,applicationLabel:choice.label,chord:harmony.name+harmony.suffix,annotation:choice.label,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),warning:[choice.warning,capacity<board.notes.length?`${harmony.name}${harmony.suffix}: only ${capacity} notes fit before the next chord. Use a faster subdivision or longer chord duration for the full shape.`:'',choice.entry.extended?'This continuous shape extends beyond fret 24.':''].filter(Boolean).join(' '),targetIndices:[]};
+  const group={...(cellLengths.length?{cellLengths,cellOffsets,cellSizes}:{}),endingDirection,slot,globalStart,harmony,board,position:{...positions[slot],perString:true},perString:true,fingeringLabel:choice.label,applicationLabel:choice.label,chord:harmony.name+harmony.suffix,annotation:choice.label,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),warning:[choice.warning,capacity<board.notes.length?`${harmony.name}${harmony.suffix}: only ${capacity} notes fit before the next chord. Use a faster subdivision or longer chord duration for the full shape.`:'',choice.entry.extended?'This continuous shape extends beyond fret 24.':''].filter(Boolean).join(' '),targetIndices:[]};
   globalStart+=notes.length;return group;
  });
 }

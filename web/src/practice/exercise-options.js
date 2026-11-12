@@ -6,6 +6,7 @@ import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  view.stage='full';
+ view.study=typeof view.study==='string'&&view.study?view.study:'positional';
  if(/^arpgroups[34]$/.test(view.study)){view.study='arpseq_groups'+view.study.at(-1);view.material='seventh';}
  if(view.study.startsWith('arpseq_'))view.material=view.material==='triad'?'triad':'seventh';
  view.sequenceAdvance=[1,2,3].includes(Number(view.sequenceAdvance))?Number(view.sequenceAdvance):1;
@@ -22,6 +23,8 @@ export function normalizeExerciseOptions(view){
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
  view.fingering=['three','oneTwo','twoOne','drop2','drop3'].includes(view.fingering)?view.fingering:'caged';
+ if(view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
+ if(view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
  view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
  view.inversion=Math.max(0,Math.min(6,Math.floor(Number(view.inversion)||0)));
  view.fingeringFret=Number.isFinite(Number(view.fingeringFret))?Math.max(0,Math.min(36,Number(view.fingeringFret))):5;
