@@ -37,9 +37,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
  const approachEnds=[];let emittedCells=0,triadReference=60;
- const groups=harmonies.map((harmony,slot)=>{
+ const groups=harmonies.map((backingHarmony,slot)=>{
+  const harmony=options.harmonyFor?.(backingHarmony,slot)||backingHarmony;
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
-  const position=path[slot],board=fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
+  const position=path[slot],board=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
   const chosen=sources.find(choice=>choice.id===source)||sources[0],adapted=Boolean(source&&sources.length&&!sources.some(choice=>choice.id===source));
   const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,board.notes.map(n=>[n.string,n.fret,n.pc])]);

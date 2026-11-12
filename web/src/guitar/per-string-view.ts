@@ -5,7 +5,7 @@ import {MODES} from '../audio/music.js';
 import {diagramSvg} from './fretboard.js';
 const esc=(v:any)=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
-export function installPerStringView(getContext:()=>any,practise?:((choice:any)=>void),updateMap?:((context:any)=>void)){
+export function installPerStringView(getContext:()=>any,practise?:((choice:any)=>void),updateMap?:((context:any)=>void),selectionChanged?:((choice:any)=>void)){
  const guitar=document.querySelector<HTMLElement>('.guitar')!,controls=document.createElement('div');controls.className='per-string-controls';
  controls.innerHTML=`<label>Fingering<select id="fretboard-fingering"><option value="caged">CAGED</option><option value="three">Scales · 3 notes per string</option><option value="oneTwo">Arpeggios · 1–2–1–2–1–2</option><option value="twoOne">Arpeggios · 2–1–2–1–2–1</option><option value="spread">Chords · Spread triads</option><option value="drop2">Chords · Drop 2</option><option value="drop3">Chords · Drop 3</option></select></label><label data-spread-control hidden>Build from<select id="spread-triad-source"><option value="chord">Current chord</option><option value="mode">All degrees of the mode</option></select></label><label data-mode-inversion-control hidden>Mode degree<select id="fretboard-mode-degree"><option value="all">All degrees</option></select></label><label data-mode-inversion-control hidden>Inversion<select id="fretboard-mode-inversion"><option value="all">All inversions</option></select></label><label data-drop-control hidden>String set<select id="drop-string-set"></select></label><label data-per-string-control hidden>Labels<select id="per-string-labels"><option value="degrees">Degrees</option><option value="notes">Note names</option></select></label>`;
  guitar.querySelector('.guitar-progression-panel')!.before(controls);
@@ -30,7 +30,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   controls.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked);
   panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked||e.options.length===1);
   panel.querySelectorAll<HTMLButtonElement>('[data-practise-per-string]').forEach(e=>e.disabled=locked);
-  if(!active){lastRender='';updateMap?.(null);return;}
+  if(!active){lastRender='';updateMap?.(null);selectionChanged?.({kind});return;}
   const renderKey=JSON.stringify([kind,inversionFilter,degreeFilter,field('spread-triad-source').value,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
   if(renderKey===lastRender){updateMap?.(lastMap);return;}lastRender=renderKey;
   const names=arp?h.tones:h.scaleNames,degrees=arp?h.intervals:(MODES as any)[h.mode].degrees;
@@ -61,12 +61,13 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  function selectShape(degree:number|undefined){
   const shapes=lastMap?.shapes||[],shape=shapes.find((s:any)=>s.degree===degree)||shapes.find((s:any)=>s.degree===selectedDegree)||shapes[0];
   const featured=panel.querySelector<HTMLElement>('.per-string-featured')!,nav=panel.querySelector<HTMLElement>('.per-string-navigation')!;
-  featured.hidden=!shape;nav.hidden=!shape;if(!shape){featured.innerHTML='';return;}
+  featured.hidden=!shape;nav.hidden=!shape;if(!shape){featured.innerHTML='';selectionChanged?.(selection());return;}
   selectedDegree=shape.degree;
   const {board,entry,index,heading,svg,drop}=shape,{locked}=getContext();
   nav.querySelectorAll<HTMLButtonElement>('button').forEach(button=>button.disabled=locked);
   nav.querySelector('span')!.textContent=`${shapes.indexOf(shape)+1} of ${shapes.length} · ${shape.label}`;
   featured.innerHTML=`<article class="position-card per-string-selected" style="--shape-color:${shapeColor(index)}"><div class="position-heading"><h4>${esc(heading)}</h4><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-selected-controls"><label class="per-string-register-label">${drop?'Bass fret · string '+(6-board.notes[0].string):'Starting fret · low E'}<select data-string-register="${shape.degree}" aria-label="Starting fret for ${esc(shape.label)}" ${locked||entry.choices.length===1?'disabled':''}>${entry.choices.map((b:any)=>`<option value="${b.firstFret}" ${b.firstFret===board.firstFret?'selected':''}>${b.firstFret} · frets ${b.start}–${b.end}</option>`).join('')}</select></label><button type="button" class="practice-button" data-practise-per-string="${index}" data-practice-fret="${board.firstFret}" ${locked?'disabled':''}>Practise this shape →</button></div>${entry.extended?'<p class="per-string-range-note">Extends beyond fret 24 · full pattern shown for reference.</p>':''}<div class="per-string-selected-diagram">${svg.replace('<svg ',`<svg style="min-width:${drop?0:Math.max(480,(board.end-board.start+1)*48)}px" `)}</div></article>`;
+  selectionChanged?.(selection());
  }
  function selectCard(card:HTMLElement|null){
   if(!card||!lastMap?.shapes.some((s:any)=>String(s.degree)===card.dataset.startDegree))return;
@@ -88,5 +89,26 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  controls.addEventListener('change',refresh);
  panel.addEventListener('change',e=>{const target=e.target as HTMLSelectElement;if(target.dataset.stringRegister===undefined)return;registers.set(field('fretboard-fingering').value+':'+target.dataset.stringRegister,Number(target.value));refresh();});
  document.addEventListener('mehtronome-playback-state',refresh);
- refresh();return {refresh};
+ function selection(){
+  const kind=field('fretboard-fingering').value,shape=lastMap?.shapes.find((s:any)=>s.degree===selectedDegree);
+  return {kind,inversion:shape?.index??0,fret:shape?.board.firstFret??5,stringSet:Number(field('drop-string-set').value)||0,spreadSource:field('spread-triad-source').value};
+ }
+ function setSelection(choice:any){
+  if(!choice)return;
+  field('fretboard-fingering').value=choice.kind||choice.fingering||'caged';
+  field('spread-triad-source').value=choice.spreadSource||'chord';
+  field('fretboard-mode-degree').value='all';field('fretboard-mode-inversion').value='all';
+  selectedDegree=undefined;refresh();
+  const set=String(choice.stringSet??choice.fingeringStringSet??0);
+  if(Array.from(field('drop-string-set').options).some(o=>o.value===set))field('drop-string-set').value=set;
+  const kind=field('fretboard-fingering').value;
+  if(kind!=='caged'){
+   const {harmony}=getContext(),entry=fingeringCatalogue(harmony,kind,Number(field('drop-string-set').value),field('spread-triad-source').value)[choice.inversion??0];
+   selectedDegree=entry?.degree;
+   if(entry)registers.set(kind+':'+entry.degree,choice.fret??choice.fingeringFret??5);
+  }
+  const requestedDegree=selectedDegree;lastRender='';refresh();
+  if(requestedDegree!==undefined)selectCard(panel.querySelector(`[data-start-degree="${requestedDegree}"]`));
+ }
+ refresh();return {refresh,selection,setSelection};
 }

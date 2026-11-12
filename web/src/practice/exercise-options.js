@@ -24,11 +24,11 @@ export function normalizeExerciseOptions(view){
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
  view.fingering=['three','oneTwo','twoOne','drop2','drop3','spread'].includes(view.fingering)?view.fingering:'caged';
- if(view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
- if(view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
- if(view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
+ if(!view.linkedFingering&&view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
+ if(!view.linkedFingering&&view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
+ if(!view.linkedFingering&&view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
  if(view.fingering==='spread'){view.material='triad';view.exactFingering=false;}
- view.exactFingering=Boolean((view.exactFingering??(view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
+ view.exactFingering=Boolean((view.exactFingering??(!view.linkedFingering&&view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
  view.spreadSource=view.spreadSource==='mode'?'mode':'chord';
  if(view.spreadSource==='mode')view.exactFingering=false;
  view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='spread'?19:view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));

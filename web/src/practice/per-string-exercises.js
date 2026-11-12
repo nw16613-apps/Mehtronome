@@ -4,8 +4,8 @@ import {MODES} from '../audio/music.js';
 export const PER_STRING_STUDIES=new Set(['positional','positionalscale','arpgroups3','arpgroups4']);
 export function exerciseFingeringCatalogue(h,o){
  const sets=playableFingeringStringSets(h,o.fingering,o.spreadSource),set=sets.find(s=>s.index===o.fingeringStringSet)?.index??sets[0]?.index??o.fingeringStringSet??0;
- const material=o.fingering==='three'||o.exactFingering||o.material===undefined?h:exerciseArpeggioHarmony(h,o.material);
- return fingeringCatalogue(material,o.fingering,set,o.spreadSource,o.material==='triad'?3:4);
+ const material=o.linkedFingering||o.fingering==='three'||o.exactFingering||o.material===undefined?h:exerciseArpeggioHarmony(h,o.material);
+ return fingeringCatalogue(material,o.fingering,set,o.spreadSource,o.linkedFingering&&o.fingering!=='spread'?4:o.material==='triad'?3:4);
 }
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function perStringExerciseChoice(harmony,options){
@@ -22,7 +22,9 @@ export function perStringExerciseGroups(harmonies,durations,positions,options){
  let globalStart=0,phase=0,previous='';
  return harmonies.map((harmony,slot)=>{
   const choice=perStringExerciseChoice(harmony,options),board=choice.board;
-  const ordered=options.motion==='descending'?[...board.notes].reverse():board.notes;
+  const pcs=exerciseArpeggioHarmony(choice.entry.harmony||harmony,options.material).chordPcs;
+  const pool=options.study==='positional'&&options.material!==undefined&&!options.exactFingering?board.notes.filter(n=>pcs.includes(n.pc)):board.notes;
+  const ordered=options.motion==='descending'?[...pool].reverse():pool;
   const size=options.study==='arpgroups3'?3:options.study==='arpgroups4'?4:0;
   const up=size?ordered.slice(0,ordered.length-size+1).flatMap((_,i)=>ordered.slice(i,i+size)):ordered;
   const reverse=[...ordered].reverse();
