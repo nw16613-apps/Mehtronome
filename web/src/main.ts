@@ -84,7 +84,7 @@ import { DEFAULTS } from './audio/engine.js';
 import { MAX_CHART_STEPS, CUSTOM_PROGRESSION_KEY, customPitchName, cloneTemplate, normalizeCustomProgression, progressionText, recommendedMode, romanForStep } from './practice/custom-progression.js';
 import { PRACTICE_TASKS, curriculumKey, completedCount, modeProgress } from './practice/curriculum.js';
 import { compatibleScaleGroups,compatibleModeForChord,chordChoicesForMode,compatibleChordForMode,modeChordGroups } from './practice/scale-explorer.js';
-import { barAlignedDuration } from './practice/exercise-timing.js';
+import { barAlignedDuration,retimeExercise } from './practice/exercise-timing.js';
 import { MODES, CHORDS, SOUNDS, compatibleChords, PROGRESSIONS, progressionDefinition, progressionDurations, progressionBeatDurations, progressionPlaybackBeatDurations, progressionTimeline, progressionPositionAtBeat, progressionStepAtBeat, progressionOrder, progressionStep, characteristicNotes, harmonyAt } from './audio/music.js';
 
 const names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -303,6 +303,7 @@ let currentExerciseGroups:any[]=[];
 let currentExercise:any[]=[];
 let exerciseTimer:ReturnType<typeof setTimeout>|undefined;
 let exerciseSources:AudioScheduledSourceNode[]=[];
+const exerciseSourceTimes=new WeakMap<AudioScheduledSourceNode,{at:number,end:number,gain:GainNode,level:number}>();
 let exerciseGuitarVolume=100;
 try{const saved=localStorage.getItem('mehtronome-exercise-guitar-volume');if(saved!==null&&Number.isFinite(Number(saved)))exerciseGuitarVolume=Math.max(0,Math.min(100,Number(saved)));}catch{}
 let exerciseGuitarGain:GainNode|undefined;
@@ -583,7 +584,30 @@ function exerciseBackingConfig(){
   return {...settings,progression:false,key:studyHarmony.chordPcs[0],chord:studyHarmony.chordId,mode:studyHarmony.scalePcs[0]===studyHarmony.chordPcs[0]?studyHarmony.mode:recommendedMode(studyHarmony.chordId),extensionMorph:false};
 }
 function exerciseAudioSettings(){return {...exerciseBackingConfig(),bpm:exerciseView.tempo,sessionSeconds:exercisePlan&&!exerciseView.loop?(exercisePlaybackPlan||exercisePlan).duration*60/exerciseView.tempo:0,sessionFinishBar:false};}
-function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
+function changeExerciseTempo(value:number,linked=false){
+ const oldTempo=exerciseView.tempo,nextTempo=Math.max(30,Math.min(240,Math.round(value)||settings.bpm));
+ exerciseView.tempoLinked=linked;exerciseView.tempo=nextTempo;
+ if(exercisePlaying&&context&&exerciseTimelineStart!==undefined&&nextTempo!==oldTempo){
+  const now=context.currentTime,division=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
+  const phraseBeats=exercisePlaybackPlan?.duration??exercisePlaybackSequence.length/division;
+  const cycleBeats=exerciseView.loop&&exerciseView.backing?barAlignedDuration(phraseBeats,1,settings.beats):phraseBeats;
+  const timing=retimeExercise(now,exerciseTimelineStart,oldTempo,nextTempo,settings.countIn?settings.beats:0,phraseBeats,cycleBeats);
+  clearTimeout(exerciseTimer);exerciseTimer=undefined;exerciseNoteQueue?.stop();
+  for(const source of exerciseSources){
+   const voice=exerciseSourceTimes.get(source);if(!voice)continue;
+   if(voice.at>now){try{source.stop();}catch{}continue;}
+   // Keep the sounding attack; trim a faster note's tail rather than replay it.
+   if(nextTempo>oldTempo&&voice.end>now){const end=now+(voice.end-now)*oldTempo/nextTempo;voice.gain.gain.cancelScheduledValues(now);voice.gain.gain.setValueAtTime(voice.level,now);voice.gain.gain.setValueAtTime(voice.level,Math.max(now,end-.015));voice.gain.gain.linearRampToValueAtTime(0,end);source.stop(end);voice.end=end;}
+  }
+  exerciseTimelineStart=timing.timelineStart;exerciseCursorKey='';
+  if(exerciseView.backing)node?.port.postMessage({type:'exercise-tempo',bpm:nextTempo,remainingBeats:timing.remainingBeats});
+  fxBuses?.setTempo(nextTempo);
+  scheduleExercise(timing.cycleStart,undefined,now);
+ }
+ const control=document.querySelector<HTMLInputElement>('#exercise-tempo');if(control)control.value=String(nextTempo);
+ syncMiniTransport();
+}
+function scheduleExercise(scheduledStart?:number,timelineOrigin?:number,resumeAfter?:number) {
   if(!context||!master||!currentExercise.length||!exercisePlaying)return;
   const divisions=exerciseView.rhythm==='sixteenths'?4:exerciseView.rhythm==='triplets'?3:2;
   const noteLength=60/exerciseView.tempo/divisions,sequence=exercisePlaybackSequence;
@@ -599,10 +623,10 @@ function scheduleExercise(scheduledStart?:number,timelineOrigin?:number) {
     const offset=Math.max(0,context.currentTime+.005-at),begin=at+offset,end=at+duration;
     if(begin>=end)return;
     gain.gain.setValueAtTime(accent ? .42 : .3,begin);gain.gain.setValueAtTime(accent ? .42 : .3,Math.max(begin,end-release));gain.gain.exponentialRampToValueAtTime(.0001,end);
-    source.connect(gain).connect(exerciseGuitarInstrumentOutput());source.start(begin,offset);source.stop(end);exerciseSources.push(source);
+    source.connect(gain).connect(exerciseGuitarInstrumentOutput());source.start(begin,offset);source.stop(end);exerciseSources.push(source);exerciseSourceTimes.set(source,{at:begin,end,gain,level:accent ? .42 : .3});
     source.onended=()=>{source.disconnect();gain.disconnect();const index=exerciseSources.indexOf(source);if(index>=0)exerciseSources.splice(index,1);};
   });
-  exerciseNoteQueue.enqueue(events);
+  exerciseNoteQueue.enqueue(resumeAfter===undefined?events:events.filter((event:any)=>event.at>=resumeAfter));
   if(exerciseView.loop&&exerciseView.autoTempo&&(exerciseRepetitions+1)%exerciseView.autoEvery===0){
    const nextTempo=Math.min(Math.max(exerciseView.tempo,exerciseView.ceiling),exerciseView.tempo+exerciseView.autoIncrement),generation=exercisePrepareGeneration;
    void exerciseBufferCache.prepare(context,exerciseBufferRequests(nextTempo),()=>generation!==exercisePrepareGeneration);
@@ -1205,6 +1229,7 @@ function tempo(value: number) {
   input('bpm').value = input('tempo').value = String(settings.bpm);
   syncMiniTransport();
   syncTrainerStatus();
+  if(exercisePlaying){if(exerciseView.tempoLinked)changeExerciseTempo(settings.bpm,true);return;}
   queueAudioSettings(settings);
 }
 function reflectPlayback() {
@@ -1598,6 +1623,7 @@ function handleExerciseControl(event:Event){
   if(event.type==='input'&&deferredNumber)return;
   if(event.type==='change'&&!deferredNumber)return;
   if(target.id==='exercise-favourites'&&target.value!==''){restoreExercise(exerciseFavourites()[Number(target.value)]);return;}
+  if(target.id==='exercise-tempo'){changeExerciseTempo(Number(target.value));return;}
   if(target.id==='exercise-position-navigation'){stopExercisePreview();select('featured-position').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position-region'){stopExercisePreview();select('position-region').value=target.value;renderMusic();return;}
   if(target.id==='exercise-position'){const numeral=target.value;stopExercisePreview();chooseOverviewPosition(numeral);el('exercise-position').focus({preventScroll:true});return;}
@@ -1649,7 +1675,6 @@ function handleExerciseControl(event:Event){
   if(target.id==='exercise-display'){exerciseView.display=target.value;localStorage.setItem('mehtronome-notation-display',target.value);}
   if(target.id==='exercise-chord-diagrams'&&target instanceof HTMLInputElement){exerciseView.chordDiagrams=target.checked;localStorage.setItem('mehtronome-notation-chord-diagrams',String(target.checked));}
   if(target.id==='exercise-zoom'){exerciseView.zoom=target.value;localStorage.setItem('mehtronome-notation-zoom',target.value);}
-  if(target.id==='exercise-tempo'){exerciseView.tempoLinked=false;exerciseView.tempo=Math.max(30,Math.min(240,Number(target.value)||settings.bpm));}
   if(target.id==='exercise-auto-tempo'&&target instanceof HTMLInputElement)exerciseView.autoTempo=target.checked;
   if(target.id==='exercise-auto-every')exerciseView.autoEvery=Number(target.value);
   if(target.id==='exercise-auto-increment')exerciseView.autoIncrement=Math.max(1,Math.min(20,Number(target.value)||2));
@@ -1761,7 +1786,7 @@ el('caged-exercise').addEventListener('click',event=>{
   if(event.target.closest('#exercise-preview'))void toggleExercisePreview();
   if(event.target.closest('#exercise-focus'))setNotationFocus(!el('caged-exercise').classList.contains('notation-focused'));
   const note=event.target.closest<SVGElement>('.exercise-note');if(note){if(suppressExerciseNoteClick)suppressExerciseNoteClick=false;else chooseOrAuditionExerciseNote(Number(note.dataset.noteIndex));}
-  const ratio=event.target.closest<HTMLElement>('[data-tempo-ratio]');if(ratio){exerciseView.tempoLinked=ratio.dataset.tempoRatio==='1';exerciseView.tempo=Math.round(settings.bpm*Number(ratio.dataset.tempoRatio));renderGuitar();}
+  const ratio=event.target.closest<HTMLElement>('[data-tempo-ratio]');if(ratio)changeExerciseTempo(settings.bpm*Number(ratio.dataset.tempoRatio),ratio.dataset.tempoRatio==='1');
   if(event.target.closest('#exercise-history-back'))moveExercise(-1);
   if(event.target.closest('#exercise-history-forward'))moveExercise(1);
   if(event.target.closest('#exercise-favourite'))favouriteExercise();
@@ -2127,7 +2152,7 @@ function syncMiniTransportDisplay() {
   mini.hidden = false;
   if (document.activeElement !== input('mini-bpm')) input('mini-bpm').value = String(exercisePlaying?exerciseView.tempo:playing ? currentBpm : settings.bpm);
   el('mini-tempo-label').textContent = exercisePlaying?'STUDY BPM':playing && settings.trainerEnabled ? 'LIVE BPM' : 'BPM';
-  input('mini-bpm').readOnly=exercisePlaying;input('mini-bpm').setAttribute('aria-label',exercisePlaying?'Exercise tempo (change in exercise settings)':'Practice tempo');
+  input('mini-bpm').readOnly=false;input('mini-bpm').setAttribute('aria-label',exercisePlaying?'Exercise tempo':'Practice tempo');
   el('mini-play').textContent = studyAdvancing?'Cancel new study':playing||exercisePlaying||exercisePreparing ? 'Stop' : 'Play';
   el('mini-play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
   el('play').setAttribute('aria-pressed',String(playing||exercisePlaying||exercisePreparing));
@@ -2199,7 +2224,7 @@ el('mini-more').addEventListener('click',()=>{
   el('mini-more').setAttribute('aria-expanded',String(expanded));
   el('mini-more').textContent=expanded?'Done':'Controls';
 });
-input('mini-bpm').addEventListener('change',()=>{ tempo(Number(input('mini-bpm').value)); input('mini-bpm').value=String(settings.bpm); });
+input('mini-bpm').addEventListener('change',()=>{if(exercisePlaying)changeExerciseTempo(Number(input('mini-bpm').value));else tempo(Number(input('mini-bpm').value));input('mini-bpm').value=String(exercisePlaying?exerciseView.tempo:settings.bpm);});
 select('mini-key').addEventListener('input',()=>{
  const value=select('mini-key').value;if(value==='mixed')return;
  if(settings.progression){

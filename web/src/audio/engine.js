@@ -281,6 +281,12 @@ export class Engine {
     return true;
   }
 
+  updateExerciseTempo(bpm,remainingBeats){
+    const tempo=Math.max(30,Math.min(240,Number(bpm)||90));
+    const sessionSeconds=this.settings.sessionSeconds>0?this.sessionFrames/this.rate+Math.max(0,remainingBeats)*60/tempo:0;
+    this.configure({bpm:tempo,sessionSeconds});
+  }
+
   configure(settings,preparedReference=null) {
     const previousTrainer = [this.settings.bpm,this.settings.trainerEnabled,this.settings.trainerBars,this.settings.trainerIncrement,this.settings.trainerTarget,this.settings.beats].join('/');
     const previousBassMuted=this.muted?.has('bass')||false;

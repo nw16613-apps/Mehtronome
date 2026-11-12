@@ -14,6 +14,7 @@ class HarmonyProcessor extends AudioWorkletProcessor {
     this.meterFrames = 0;
     this.onBeat = event => this.port.postMessage(event);
     this.port.onmessage = ({ data }) => {
+      if(data.type==='exercise-tempo'){this.engine.updateExerciseTempo(data.bpm,data.remainingBeats);return;}
       if(data.type==='live-controls'){this.engine.updateLiveSettings(data.settings,data.cancelPending);return;}
       if(data.type==='fx-sends'){this.fxChannels=new Set(data.channels||[]);this.stemsEnabled=STEM_CHANNELS.some(([, , ,id])=>this.fxChannels.has(id));return;}
       if (data.type === 'drum-kit') {
