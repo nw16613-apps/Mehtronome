@@ -22,6 +22,6 @@ export function linkExerciseFingering(view,selection,harmony){
  if(kind==='spread')view.material='triad';
  // These are exact open chord grips, not closed-register scale windows.
  if(['spread','drop2','drop3'].includes(kind))view.study='positional';
- if(!['caged','three'].includes(kind)){view.arpeggioSource='selectedChord';if(SCALE_SEQUENCES[view.study])view.study='arpseq_'+view.study;}
+ if(!['caged','three'].includes(kind)){if(view.study==='positionalscale')view.study='positional';view.arpeggioSource='selectedChord';if(SCALE_SEQUENCES[view.study])view.study='arpseq_'+view.study;}
  return view;
 }

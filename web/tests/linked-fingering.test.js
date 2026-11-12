@@ -25,3 +25,5 @@ test('chord-note sequence generation retains the exact alternating-string arpegg
  const o={linkedFingering:true,fingering:'twoOne',study:'arpseq_groups3',material:'seventh',motion:'ascending',rhythm:'sixteenths',inversion:1,fingeringFret:8},choice=perStringExerciseChoice(h,o),allowed=new Set(choice.board.notes.map(key));
  const groups=progressionExerciseGroups([h],[8],choice.board,{...o,boardFor:()=>choice.board});assert.ok(groups[0].notes.length);assert.ok(groups[0].notes.every(n=>allowed.has(key(n))));
 });
+
+test('exercise-side arpeggio selection cannot retain a scale-only material label',()=>{const v={linkedFingering:true,fingering:'oneTwo',study:'positionalscale',material:'seventh'};linkExerciseFingering(v,{kind:'oneTwo',inversion:0,fret:5},h);assert.equal(v.study,'positional');assert.equal(v.fingering,'oneTwo');assert.equal(v.arpeggioSource,'selectedChord');});
