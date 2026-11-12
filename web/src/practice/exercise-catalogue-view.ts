@@ -1,0 +1,23 @@
+import {CONTENT_MATERIALS,contentMaterial,contentSource,contentSources,contentFamily,contentFamilies,groupPatternLabel} from './exercise-catalogue.js';
+const options=(items:string[][],value:string)=>items.map(([id,name])=>new Option(name,id,false,id===value));
+export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPair=true,nonDiatonic=false){
+ const controls=panel.querySelector<HTMLElement>('.exercise-definition .exercise-controls')!;
+ const hide=(id:string)=>{const node=panel.querySelector('#'+id)?.closest('label') as HTMLElement|null;if(node)node.hidden=true;};
+ for(const id of ['exercise-study','exercise-material','exercise-traversal-material','exercise-scale-family','exercise-arpeggio-family','exercise-arpeggio-source'])hide(id);
+ const material=contentMaterial(view),source=contentSource(view),family=contentFamily(view),stacks=nonDiatonic&&['diatonic','chordRoots'].includes(source);
+ const make=(id:string,title:string,items:string[][],value:string)=>{const label=document.createElement('label'),select=document.createElement('select');label.append(title);select.id=id;select.append(...options(items,value));label.append(select);if(items.length<2)label.hidden=true;return label;};
+ const materialOptions=CONTENT_MATERIALS.map(([id,name])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):name]),sourceOptions=contentSources(material).filter(([id])=>id!=='triadPair'||canTriadPair).map(([id,name])=>[id,nonDiatonic?name.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):name]),familyOptions=contentFamilies(material,source).map(([id,name])=>[id,stacks?name.replace('Whole-arpeggio','Whole-stack'):name]);
+ controls.prepend(make('exercise-content-material','Material',[...materialOptions,...(view.exactFingering?[['shape','Fretboard chord shape']]:[])],material),make('exercise-content-source','Source',sourceOptions,source),make('exercise-content-family','Pattern family',familyOptions,family));
+ const label=(id:string,title:string)=>{const select=panel.querySelector<HTMLSelectElement>('#'+id),parent=select?.closest('label');if(parent)parent.firstChild!.textContent=title;return select;};
+ const pattern=label('exercise-scale-pattern','Pattern');if(pattern)for(const item of Array.from(pattern.options))item.textContent=groupPatternLabel(item.value.replace(/^arpseq_/,''),item.textContent||'');
+ if(view.study==='pentatonic')label('exercise-source','Pentatonic collection');
+ label('exercise-arpeggio-pattern','Note order');label('exercise-enclosure-family','Approach family');label('exercise-enclosure-pattern','Approach order');
+ const roots=label('exercise-arpeggio-sequence',stacks?'Stack-root sequence':'Arpeggio-root sequence');if(roots)for(const item of Array.from(roots.options)){item.textContent=groupPatternLabel(item.value,item.textContent||'',stacks?'stacks':'arpeggios');}
+ label('exercise-sequence-order','Order variation');label('exercise-sequence-advance','Advance between cells');
+ const variations=document.createElement('details');variations.className='exercise-pattern-variations';variations.open=!!view.patternVariationsOpen;const summary=document.createElement('summary');summary.textContent='Pattern variations';variations.append(summary);const grid=document.createElement('div');grid.className='exercise-controls';
+ for(const id of ['exercise-sequence-advance','exercise-sequence-order','exercise-arpeggio-register','exercise-arpeggio-routine','exercise-arpeggio-approach']){const element=panel.querySelector('#'+id)?.closest('label');if(element)grid.append(element);}
+ const defaults:Record<string,string>={'exercise-sequence-advance':'1','exercise-sequence-order':'normal','exercise-arpeggio-register':'up','exercise-arpeggio-routine':'repeat','exercise-arpeggio-approach':'none'},active=Array.from(grid.querySelectorAll('select')).filter(s=>defaults[s.id]!==s.value).length;if(active)summary.textContent+=` (${active} active)`;
+ if(grid.children.length){variations.append(grid);controls.after(variations);}
+ const browse=panel.querySelector<HTMLElement>('.exercise-browse'),families=contentFamilies(material,source),index=families.findIndex(([id])=>id===family);
+ if(browse){browse.hidden=families.length<2;for(const [id,delta]of [['exercise-history-back',-1],['exercise-history-forward',1]]as const){const button=panel.querySelector<HTMLButtonElement>('#'+id)!;button.disabled=!families[index+delta];button.title=families[index+delta]?.[1]||'';button.setAttribute('aria-label',delta<0?'Previous pattern family':'Next pattern family');}}
+}

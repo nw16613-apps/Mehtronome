@@ -1,8 +1,9 @@
+import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {perStringCatalogue} from '../guitar/per-string.js';
 import {dropVoicingCatalogue} from '../guitar/drop-voicings.js';
 import {MODES} from '../audio/music.js';
 export const PER_STRING_STUDIES=new Set(['positional','positionalscale','arpgroups3','arpgroups4']);
-export const exerciseFingeringCatalogue=(h,o)=>o.fingering.startsWith('drop')?dropVoicingCatalogue(h,o.fingering,o.fingeringStringSet||0):perStringCatalogue(h,o.fingering);
+export const exerciseFingeringCatalogue=(h,o)=>o.fingering.startsWith('drop')?dropVoicingCatalogue(h,o.fingering,o.fingeringStringSet||0):perStringCatalogue(o.fingering==='three'||o.exactFingering||o.material===undefined?h:exerciseArpeggioHarmony(h,o.material),o.fingering);
 const inversionNames=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export function perStringExerciseChoice(harmony,options){
  const catalogue=exerciseFingeringCatalogue(harmony,options),entry=catalogue[options.inversion]||catalogue[0];

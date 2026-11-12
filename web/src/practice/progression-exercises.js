@@ -1,3 +1,4 @@
+import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
 import {SCALE_SEQUENCES,orderedScaleCell} from '../guitar/scale-sequences.js';
 import {ARPEGGIO_PATTERN_STUDIES} from '../guitar/arpeggio-patterns.js';
@@ -81,6 +82,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   let startWarning='';
   if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);}
   if(scaleTraversal&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
+  if(slot===0&&!scaleTraversal&&cells.length&&options.entryTone&&options.entryTone!=='default'){const entry=sequenceEntryState(cells,harmony,{...options,study});cellIndex=entry.index;if(study==='triadpairs')emittedCells=entry.index;startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],cellDetailsList=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];

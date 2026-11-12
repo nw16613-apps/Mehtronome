@@ -2,16 +2,23 @@
 
 The library separates **material/source**, **note order**, **routine**, **register**, **travel** and **rhythm**. A familiar name may identify an order; it does not create a second copy of that order. Existing generators and saved identifiers remain readable for compatibility.
 
-## Library entries
+## Material-first controls
 
-- **Continuous traversal**: choose scale notes or core chord tones. These retain their established positional traversal engines and pattern-start controls.
-- **Scale sequences**: interval pairs, overlapping groups or digital patterns, then the particular order. The underlying IDs remain in saved options and progress tracking.
-- **Arpeggio patterns**: choose every scale-degree root, backing chord-tone roots, or the selected chord alone; then triads/seventh chords, family and order.
-- **Core chord tones · groups of three** remains distinct. A three-note window through four core tones is not necessarily a triad, so it is not merged into the triad permutation catalogue.
-- **Enclosures**: choose three/four/five notes, then the applicable neighbour/approach family and order.
-- Other chromatic and superimposition studies retain their different musical rules.
+The visible editor starts with **Material → Source → Pattern family → Pattern → Starting note**. The old study/material/traversal selectors are internal compatibility controls, not parallel user-facing menus.
 
-Study templates still load the relevant recipe in this unified editor. Selecting a template resets its recipe defaults before applying its source/routine.
+- Material is Scale notes, Triad arpeggios or Seventh arpeggios. Continuous traversal belongs to either material. Triad material limits selected-chord notes, chromatic targets and the final resolution to three core tones.
+- Sources distinguish the current mode, pentatonic collections, the selected chord, all scale-degree arpeggios, arpeggios rooted on chord tones, and triad pairs where applicable. Only compatible families are offered for each source; no source selection is silently ignored. Non-seven-note mode-derived collections retain their three-/four-note stack terminology.
+- Families distinguish intervals, overlapping note groups, group permutations, returns, expanding intervals, skips, pedals, whole-arpeggio orders and chromatic patterns. **Groups of 3 notes** and **Groups of 3 arpeggios** explicitly name different units.
+- Pattern selects a concrete group size or order. Compatible material changes retain the selected pattern. Whole-arpeggio root sequences remain separate from internal note order.
+- Starting note is available beyond continuous traversal. Whole-arpeggio patterns call the control **First arpeggio root**; enclosures/approaches call it **First target**, avoiding a false claim about their first audible note. Choices are constructed from complete fitting cells, rather than offering unusable entries.
+
+Continuous scale entries offer all available scale degrees, retaining structural degree roles across modes; legacy chord-degree starts remain readable. Other sequence entries choose the initial cell, retaining internal order, alternating/rotating phase, bar-line continuity and existing boundary rules. Entries that no longer fit a changed setup report their fallback. Starting entries are included in favourite identity and readable labels.
+
+Less-used advance, order variation, register, routine and preparation controls live under **Pattern variations**, with an active-settings count. Its open state survives control changes. Fingering, position routes, diagrams, rhythm and playback retain their existing areas.
+
+Exact extended-chord shapes transferred from Fretboard use an explicit **Fretboard chord shape** material, retaining their written notes, inversion and register. This contextual option avoids silently reducing an imported extended arpeggio to triad/seventh material. Old per-string favourites retain the same exact-shape behavior. The normal material menu retains its three primary choices.
+
+Study templates and favourites still load the relevant recipe in this editor. The underlying saved identifiers remain compatible. Removed closure, nested bracket and cell-label controls remain absent.
 
 ## Canonical arpeggio orders
 
@@ -71,7 +78,7 @@ The ending prefers the nearest different core tone of the opening harmony in the
 
 ## Extended scale and arpeggio sequences
 
-The Exercise menu separates **Scale sequences**, **Arpeggio sequences** (overlapping patterns through the selected chord's core tones, with triad/seventh material), and **Arpeggio patterns** (whole triads/sevenths built from chosen roots).
+The generators distinguish scale-note sequences, overlapping selected-chord arpeggio sequences and whole arpeggios built from chosen roots. The visible material/source/family controls expose these distinctions without separate top-level exercise lists.
 
 Scale and core-arpeggio sequences share these finite families:
 
@@ -85,7 +92,7 @@ Scale and core-arpeggio sequences share these finite families:
 
 Cell advance selects every first, second or third valid anchor in each travel leg. Cell order is written, reversed, alternating in either phase, rotated, or a cycle of all orders for three/four-note groups. Rhythm remains independent. Permutations and internal-order phase continue across bar lines; an incoming harmony/position adapts the outstanding ordinal to a complete fitting cell. No unavailable interior pitch is substituted. Longer cells can span bars. Final resolutions retain structural travel direction. Existing groups of three/four keep their established range-turn policy; straight permutation aliases use the same policy.
 
-**Arpeggio patterns → Root sequence** applies the same catalogue to whole arpeggios. Root steps refer to the selected source: all scale roots, chord-tone roots, or octaves of the selected chord. Every root in a motif must have a complete realization of the chosen note order/register/preparation. Otherwise the motif is unavailable in that position, rather than compressed or reharmonized. Existing empty-material warnings remain visible. Chromatically prepared motifs retain the complete-cell slot policy.
+**Whole-arpeggio families → Arpeggio-root sequence** applies the same catalogue to whole arpeggios. Root steps refer to the selected source: all scale roots, chord-tone roots, or octaves of the selected chord. Every root in a motif must have a complete realization of the chosen note order/register/preparation. Otherwise the motif is unavailable in that position, rather than compressed or reharmonized. Existing empty-material warnings remain visible. Chromatically prepared motifs retain the complete-cell slot policy.
 
 Legacy core arpeggio groups of three/four restore into Arpeggio sequences. Favourites retain sequence, order, advance and root-sequence settings; unchanged straight defaults remain compatible. Tests cover catalogue completeness, physical pitches and theoretical steps across modes/keys/positions, cell phase, root motifs, preparation targets, legacy saves, actual browser playback and mobile menus.
 
@@ -102,3 +109,7 @@ Each logical cell has a single bracket level, including whole-arpeggio root moti
 Nested brackets, printed cell labels and the Cell labels menu have been removed. Old label display preferences are ignored. The Close on starting tone control is also removed: restored exercises normalize implicit closure to false. Explicit repeated-tone patterns remain available as written patterns. Favourites no longer distinguish the retired closure setting.
 
 Verification covers the absent controls/layers, unchanged simple-bracket continuations, solo/backed cell playback, keyboard selection, sequence menus, favourites and legacy options.
+
+## Material-first verification
+
+73 focused model checks and five current-menu browser workflows pass. Coverage includes material/source/family mappings, preserved pattern choices, actual non-root entries, bar-split equivalence, chromatic targets, triad resolutions, favourite migration, exact extended-shape transfers, non-seven-note stack labels, playback and mobile width. Production build passes.

@@ -14,6 +14,7 @@ export function normalizeExerciseOptions(view){
  if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]&&view.sequenceOrder==='cycle'&&![3,4].includes(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')].offsets.length))view.sequenceOrder='normal';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
+ view.entryTone=/^(?:scale:[0-7]|chord:[1-7]|offset:(?:[0-9]|1[01]))$/.test(view.entryTone)?view.entryTone:'default';
  view.arpeggioClose=false; // Retired UI option: play only the selected written order.
  delete view.cellLabels;
  view.arpeggioRegister=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
@@ -24,11 +25,13 @@ export function normalizeExerciseOptions(view){
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
  view.fingering=['three','oneTwo','twoOne','drop2','drop3'].includes(view.fingering)?view.fingering:'caged';
  if(view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
+ if(view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
  if(view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
+ view.exactFingering=Boolean((view.exactFingering??(view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
  view.fingeringStringSet=Math.max(0,Math.min(view.fingering==='drop3'?1:2,Math.floor(Number(view.fingeringStringSet)||0)));
  view.inversion=Math.max(0,Math.min(6,Math.floor(Number(view.inversion)||0)));
  view.fingeringFret=Number.isFinite(Number(view.fingeringFret))?Math.max(0,Math.min(36,Number(view.fingeringFret))):5;
- view.startTone=/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
+ view.startTone=/^(?:scale:[0-7]|degree:[1-7])$/.test(view.startTone)?view.startTone:/^[1-7]:[0-8]$/.test(view.startTone)?view.startTone.split(':')[0]+':0':'default';
  // Retire saved triplet phrase formulas; preserve explicit degree starts.
  delete view.phrase;
  if(view.material==='extensions')view.material='seventh';
@@ -51,7 +54,7 @@ export function normalizeExerciseOptions(view){
  return view;
 }
 export function exerciseMenuOptions(study){
- return {material:study.startsWith('arpseq_')||!fixedMaterial.has(study)&&!SCALE_SEQUENCES[study.replace(/^arpseq_/, '')],directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
+ return {material:study==='positional'||study.startsWith('arpseq_')||!fixedMaterial.has(study)&&!SCALE_SEQUENCES[study.replace(/^arpseq_/, '')],directionLabel:study==='triadpairs'?'Cell contour':'Starting direction',directions:study==='triadpairs'?
  [['ascending','Ascending'],['descending','Descending'],['up-down','Ascending and descending'],['down-up','Descending and ascending']]:
  [['ascending','Upward first'],['descending','Downward first']]};
 }

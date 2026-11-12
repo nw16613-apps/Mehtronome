@@ -3,7 +3,7 @@ import {isEnclosureStudy,enclosureNoteStarts} from '../guitar/enclosures.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {progressionPositionPath} from '../guitar/position-path.js';
 import {progressionStudyPlan} from './progression-timing.js';
-import {arpeggioHarmony} from '../guitar/arpeggio-harmony.js';
+import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {cloneTemplate} from './custom-progression.js';
 import {progressionDefinition,progressionTimeline,progressionBeatDurations} from '../audio/music.js';
 
@@ -19,7 +19,7 @@ export function exerciseEndingDirection(groups,plan){
 /** Add an ending to the displayed/playable study, never to the user's chart or
  * to the sequence generators. The closest different core tone in the final traversal direction uses a CAGED
  * position near the final fret region; a unison on another string is still the same pitch. */
-export function withExerciseResolution(groups,plan){
+export function withExerciseResolution(groups,plan,material='seventh'){
  if(!plan?.events.length||plan.resolution)return {groups,plan};
  const firstSlot=plan.slots[0],finalSlot=plan.slots.at(-1),last=plan.events.at(-1),harmony=firstSlot?.harmony;
  if(!harmony||!finalSlot?.board)return {groups,plan};
@@ -28,7 +28,7 @@ export function withExerciseResolution(groups,plan){
  const perString=firstSlot.position?.perString;
  const position=perString?firstSlot.position:sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
  const board=perString?firstSlot.board:sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
- const core=arpeggioHarmony(harmony),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
+ const core=exerciseArpeggioHarmony(harmony,material),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
  const direction=exerciseEndingDirection(groups,plan),forward=candidates.filter(n=>(n.midi-last.note.midi)*direction>0);
  // At an actual position boundary no further tone may fit in this direction.
  // Stay in the selected region rather than inventing a fretboard jump.

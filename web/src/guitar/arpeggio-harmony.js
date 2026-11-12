@@ -11,3 +11,8 @@ export function arpeggioHarmony(harmony){
  return {...harmony,chordPcs:indices.map(i=>harmony.chordPcs[i]),tones:indices.map(i=>harmony.tones[i]),intervals:indices.map(i=>harmony.intervals?.[i]),...(harmony.midi?{midi:indices.map(i=>harmony.midi[i])}:{})};
 }
 export const ARPEGGIO_STUDIES=new Set(['arpgroups3','arpgroups4','positional','harmonized','alternating','chordtones','chordtonesalternating','inversions','approach','approacheverytone','connections','alternating7','alternating7down','alternating7combined','alternating3','alternating3down','alternating3combined','chordtones7','chordtones7turns','chordtones7turnsdown','chordtones7combined','chordtones3','chordtones3turns','chordtones3turnsdown','chordtones3combined']);
+
+export function exerciseArpeggioHarmony(harmony,material='seventh'){
+ const core=arpeggioHarmony(harmony),size=material==='triad'?3:core.chordPcs.length;
+ return {...core,chordPcs:core.chordPcs.slice(0,size),tones:core.tones.slice(0,size),intervals:core.intervals.slice(0,size)};
+}

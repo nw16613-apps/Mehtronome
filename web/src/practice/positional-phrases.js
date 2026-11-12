@@ -1,3 +1,4 @@
+import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {resolveArpeggioStart} from './arpeggio-start.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
@@ -25,7 +26,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
  let cursor=0,globalStart=0,phaseOffset=0,previousContext='',previousStart='default',nextUp=!descending;
  return harmonies.map((harmony,slot)=>{
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
-  const position=path[slot],board=fretboardFor(harmony,position.geometryShape),available=positionalArpeggio(board,harmony,'ascending')[0]?.notes||[];
+  const position=path[slot],board=fretboardFor(harmony,position.geometryShape),available=positionalArpeggio(board,exerciseArpeggioHarmony(harmony,options.material),'ascending')[0]?.notes||[];
   const size=Math.min(spanSize,available.length),span=descending?available.slice(-size):available.slice(0,size);
   const context=JSON.stringify([harmony.name,harmony.suffix,harmony.mode,harmony.intervals,available.map(n=>[n.midi,n.string,n.fret,n.name])]);
   const patternStart=resolveArpeggioStart(span,harmony,selectedStart==='default'?descending:!nextUp,selectedStart);

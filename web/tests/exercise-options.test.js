@@ -14,8 +14,8 @@ test('legacy favourites retain their starting direction and map removed studies 
 test('menus expose only controls with distinct effects',()=>{
  for(const study of ['positionalscale','positional','harmonized','alternating','chordtones','pentatonic','enclosures'])assert.deepEqual(exerciseMenuOptions(study).directions.map(d=>d[0]),['ascending','descending']);
  assert.equal(exerciseMenuOptions('triadpairs').directions.length,4);
- for(const study of ['positionalscale','positional','upperstructure','triadpairs','pentatonic','thirds','enclosures'])assert.equal(exerciseMenuOptions(study).material,false);
- for(const study of ['harmonized','alternating','chordtones','inversions','approach','approacheverytone'])assert.equal(exerciseMenuOptions(study).material,true);
+ for(const study of ['positionalscale','upperstructure','triadpairs','pentatonic','thirds','enclosures'])assert.equal(exerciseMenuOptions(study).material,false);
+ for(const study of ['positional','harmonized','alternating','chordtones','inversions','approach','approacheverytone'])assert.equal(exerciseMenuOptions(study).material,true);
 });
 
 test('collection-aware labels distinguish scale-step patterns from chord inversions',()=>{

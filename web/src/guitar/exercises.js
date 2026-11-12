@@ -3,7 +3,7 @@ import {sequenceArpeggioCells} from './arpeggio-sequences.js';
 import {ARPEGGIO_PATTERN_STUDIES,patternedArpeggios,selectedChordSeeds} from './arpeggio-patterns.js';
 import {notationRest} from '../practice/notation-rest.js';
 import {ENCLOSURE_PATTERNS,isEnclosureStudy} from './enclosures.js';
-import {arpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
+import {arpeggioHarmony,exerciseArpeggioHarmony,ARPEGGIO_STUDIES} from './arpeggio-harmony.js';
 import {staffY,notationAccidental} from '../practice/notation-pitch.js';
 import {chordSvg} from '../practice/chord-symbol.js';
 import {notationChordDiagram} from '../practice/notation-chord-diagram.js';
@@ -407,6 +407,7 @@ function inversionExercise(board,harmony,material,motion) {
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
   if(study==='upperstructure')study='harmonized';
   if(ARPEGGIO_STUDIES.has(study)||study.startsWith('enclosures'))harmony=arpeggioHarmony(harmony);
+  if(study.startsWith('enclosures')||['doubleapproach','chromaticneighbors'].includes(study))harmony=exerciseArpeggioHarmony(harmony,material);
   const size=MATERIAL_SIZES[material] || 4;
   if(ARPEGGIO_PATTERN_STUDIES.has(study)&&context.arpeggioPattern&&context.arpeggioPattern!=='straight'){
     const base=context.arpeggioSource==='selectedChord'?selectedChordSeeds(board,harmony,material):study.startsWith('chordtones')||context.arpeggioSource==='chordRoots'?chordToneStacks(board,harmony,size,'ascending'):cagedProgressionExercise(board,harmony,material,'ascending');
