@@ -30,13 +30,13 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const routineConnected=patterned&&options.arpeggioRoutine==='connected';
  const routineAlternating=patterned&&options.arpeggioRoutine==='alternate';
  const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned||scalar||pentatonicCells)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
- const scaleTraversal=study==='positionalscale'&&stage!=='cell';
+ const scaleTraversal=study==='positionalscale'&&stage!=='cell'&&!options.regionBoardsFor;
  // Fixed-order cells travel by their root/target. Their last/highest pitch
  // belongs to the pattern, not to the cursor used to select the next cell.
  // Interval cells now use the same lower anchor on both legs: reverse the
  // order of cells, independently of their internal written/reversed order.
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
- let scaleRemaining=null,routePrevious=null,cycleLeg=null;
+ let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
  let cellOffset=0,pendingCell=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
@@ -47,15 +47,28 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const groups=harmonies.map((backingHarmony,slot)=>{
   const harmony=options.harmonyFor?.(backingHarmony,slot)||backingHarmony;
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
-  const position=path[slot],board=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
+  const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
+  const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
+  let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
+  if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:travel>0?0:regionBoards.length-1;
+  let board=regionBoards?.[regionIndex]||outputBoard;
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
   const chosen=sources.find(choice=>choice.id===source)||sources[0],adapted=Boolean(source&&sources.length&&!sources.some(choice=>choice.id===source));
-  const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,board.notes.map(n=>[n.string,n.fret,n.pc])]);
+  const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,(regionBoards||[board]).map(b=>b.notes.map(n=>[n.string,n.fret,n.pc]))]);
   const phaseTurn=scaleTraversal&&scaleRemaining===0;
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
+  if(context!==advanceSourceContext){advanceSourceContext=context;advanceAnchorCache=new Map();}
+  const globalAdvance=regionBoards&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
   const makeCells=()=>{
+   if(regionBoards&&!regionBoards.length)return [];
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   return (study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,{sequenceAdvance:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern})).filter(cell=>cell.notes?.length&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
+   const cellOptions={sequenceAdvance:globalAdvance?1:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern};
+   const raw=study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,cellOptions);
+   if(globalAdvance&&!advanceAnchors.has(leg)){
+    const roots=[...new Set(cagedStudy(outputBoard,harmony,study,material,leg,cellOptions).map(c=>c.sequenceAnchor))],origin=Math.max(0,roots.indexOf(raw[0]?.sequenceAnchor));
+    advanceAnchors.set(leg,new Set(roots.filter((_,i)=>i>=origin&&(i-origin)%Number(options.sequenceAdvance)===0)));
+   }
+   return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -81,20 +94,39 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     // changes with the incoming mode/shape. Do not insert a tiny extra
     // traversal by choosing a new intermediary pitch before that turn.
     let next=study==='positionalscale'&&pendingScaleBoundary?{index:cells.length-1,direction:travel,reset:false}:continueCell(cells,lastCursor??lastAnchor,travel,false,directional&&!alternating?lastMidi:null);
-    const rangeTurn=next.reset&&directional;
+    const rangeTurn=next.reset&&directional&&!regionBoards;
     if(rangeTurn){travel=-travel;cells=makeCells();next=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel);}
-    cellIndex=next.index;
+    cellIndex=regionBoards&&next.reset?cells.length:next.index;
     if(scaleTraversal&&(pendingScaleTurn||rangeTurn))scaleRemaining=Math.max(1,cells.length-1-cellIndex);
    }
   }
+  const advanceRegion=()=>{
+   for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
+    let next=regionIndex+travel,turned=false;
+    if(next<0||next>=regionBoards.length){
+     if(options.once&&++regionTurns>1)return false;
+     travel=-travel;next=regionIndex;turned=true;
+    }
+    regionIndex=next;board=regionBoards[regionIndex];cells=makeCells();cellIndex=0;
+    if(!cells.length)continue;
+    if((options.traversal==='diagonal'||turned)&&lastAnchor!==null){
+     const continuation=continueCell(cells,lastCursor??lastAnchor,travel);
+     if(continuation.reset)continue;
+     cellIndex=continuation.index;
+    }
+    return true;
+   }
+   return false;
+  };
   let startWarning='';
   if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);}
-  if(scaleTraversal&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
+  if((scaleTraversal||regionBoards&&study==='positionalscale')&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
   if(slot===0&&!scaleTraversal&&cells.length&&options.entryTone&&options.entryTone!=='default'){const entry=sequenceEntryState(cells,harmony,{...options,study});cellIndex=entry.index;if(study==='triadpairs')emittedCells=entry.index;startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],cellDetailsList=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];
-  while(cells.length&&notes.length<capacity){
+  while((cells.length||regionBoards?.length)&&notes.length<capacity){
+   if(regionBoards&&(!cells.length||cellIndex>=cells.length)){if(!advanceRegion())break;}
    const previousTravel=travel,previousIndex=cellIndex;
    if(scaleTraversal&&scaleRemaining===0){
     const edgeAlreadyPlayed=cellIndex>=cells.length;travel=-travel;cells=makeCells();
@@ -112,7 +144,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
    const nextIndex=routineConnected?cells.findLastIndex(c=>c.sequenceAnchor===cells[cellIndex].sequenceAnchor)+1:cellIndex+1;
-   if(options.once){if(cycleLeg!==null&&cycleLeg!==travel&&travel===(motion==='descending'||motion==='down-up'?-1:1))break;cycleLeg=travel;}
+   if(options.once&&!regionBoards){if(cycleLeg!==null&&cycleLeg!==travel&&travel===(motion==='descending'||motion==='down-up'?-1:1))break;cycleLeg=travel;}
    const originalCell=orderCell(cells[cellIndex],emittedCells),cell=routineAlternating&&emittedCells%2?{...originalCell,notes:originalCell.alternateNotes,patternOrder:originalCell.patternOrder?.toReversed(),targetIndices:originalCell.alternateTargetIndices}:originalCell;
    // Other families keep their existing complete-cell slot policy.
    if(!flowingCells&&(isEnclosureStudy(study)?enclosureNoteStarts([...cellLengths,cell.notes.length],division).at(-1)>=durations[slot]:notes.length+cell.notes.length>capacity)){
@@ -134,7 +166,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    const offset=flowingCells?cellOffset:0,remaining=cellNotes.length-offset;
    const take=flowingCells?Math.min(remaining,capacity-notes.length):remaining;
-   const played=cellNotes.slice(offset,offset+take);
+   const played=cellNotes.slice(offset,offset+take).map(n=>board.neckCell?{...n,neckCell:board.neckCell}:n);
    const start=notes.length;notes.push(...played);used.push(cell.chord);cellLengths.push(played.length);cellOffsets.push(offset);cellSizes.push(cellNotes.length);cellDetailsList.push(cellDetails({...cell,notes:cellNotes},harmony));
    if(Number.isFinite(cell.sequenceAnchor)){lastAnchor=cell.sequenceAnchor;lastCursor=cell.sequenceCursor??lastAnchor;sequenceAnchors.push(lastAnchor);sequenceCursors.push(lastCursor);sequenceDirections.push(travel);}
    // Opposite legs anchor different ends of a cell. At a turn, compare
@@ -149,9 +181,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    else{cellOffset=0;pendingCell=null;cellIndex=nextIndex;emittedCells++;}
    if(stage==='cell'&&study!=='positionalscale')break;
   }
-  if(study==='positionalscale'){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
-  const missing=!notes.length,warning=missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
-  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning,
+  if(study==='positionalscale'&&!regionBoards){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
+  if(regionBoards?.length)regionCursor={id:board.neckCell.id,firstFret:board.firstFret};
+  const missing=!notes.length,warning=missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
+  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'&&!regionBoards?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(regionBoards?outputBoard:board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });

@@ -14,9 +14,9 @@ test('horizontal routes synchronize both workspaces, notation, map and favourite
  await page.locator('[data-workspace-target="guitar-title"]').click();await expect(page.locator('#position-overview')).toBeVisible();await expect(page.locator('#guitar-neck-traversal')).toHaveValue('position');expect(errors).toEqual([]);
 });
 test('diagonal routes cross strings and frets; map follows exercise playback',async({page})=>{
- await open(page);await page.locator('#guitar-neck-traversal').selectOption('diagonal');await expect(page.locator('#guitar-neck-strings')).toHaveValue('0,1,2,3,4,5');
+ await open(page);await page.locator('#guitar-neck-traversal').selectOption('diagonal');await expect(page.locator('#guitar-neck-strings')).toHaveValue('0,1');await page.locator('#guitar-neck-strings').selectOption('0,1,2,3,4,5');
  await page.locator('[data-workspace-target="caged-exercise"]').click();await page.locator('#exercise-content-material').selectOption('scale');await page.locator('#exercise-content-family').selectOption('groups');await page.locator('#exercise-scale-pattern').selectOption('groups4');
- const notes=await coords(page);expect(new Set(notes.map(n=>n.string)).size).toBeGreaterThan(3);expect(Math.max(...notes.map(n=>n.fret))-Math.min(...notes.map(n=>n.fret))).toBeGreaterThan(6);
+ const notes=await coords(page);expect(new Set(notes.map(n=>n.string)).size).toBeGreaterThan(3);expect(Math.max(...notes.map(n=>n.fret))-Math.min(...notes.map(n=>n.fret))).toBeGreaterThan(3);
  await page.locator('#exercise-neck-traversal').scrollIntoViewIfNeeded();await page.screenshot({path:'/workspace/neck-desktop.png'});
  await page.locator('#exercise-backing').uncheck();await page.locator('#exercise-preview').click();await expect(page.locator('.exercise-linked-fretboard .exercise-current')).toHaveCount(1,{timeout:20000});await page.locator('#exercise-preview').click();
 });

@@ -1,3 +1,4 @@
+import {emphasizeFullNeck} from '../guitar/shape-emphasis.js';
 import {routeMapSvg,traversalLabel} from '../guitar/neck-traversal.js';
 import {cardStartChoices,cardStartLabel} from './pattern-start-route.js';
 import {organizeExercisePanel} from './exercise-layout.js';
@@ -41,22 +42,33 @@ export function learningView(panel:HTMLElement,context:any){
  material.before(navigation);
  const augmented={...board,notes:[...board.notes]};for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===info.chordPcs[0],chord:info.chordPcs.includes(note.pc),scaleIndex:info.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree||['1','♭2','2','♭3','3','4','♭5','5','♭6','6','♭7','7'][(note.pc-info.scalePcs[0]+12)%12]});
  if(study==='grip'||study==='positional')augmented.notes=augmented.notes.map((n:any)=>{const i=info.chordPcs.indexOf(n.pc);return i<0?n:{...n,scaleIndex:-1,chromaticDegree:info.intervals[i]};});
- diagram.querySelector('.exercise-map-diagram')!.innerHTML=board.route?routeMapSvg(augmented,true,MODES[info.mode as keyof typeof MODES].degrees,traversalLabel(board.route),notes):diagramSvg(augmented,true,MODES[info.mode as keyof typeof MODES].degrees,'Exercise fretboard',true,grip);
- diagram.querySelector('svg')!.setAttribute('role','group');
+ diagram.querySelector('.exercise-map-diagram')!.innerHTML=board.route?routeMapSvg(augmented,true,MODES[info.mode as keyof typeof MODES].degrees,traversalLabel(board.route),notes[0]?.neckCell?.notes||notes):diagramSvg(augmented,true,MODES[info.mode as keyof typeof MODES].degrees,'Exercise fretboard',true,grip);
+ diagram.querySelector('svg')!.setAttribute('role','group');if(notes[0]?.neckCell)highlightNeckCell(diagram.querySelector<HTMLElement>('.exercise-map-diagram')!,notes[0].neckCell);
  const targets=new Set(groups.flatMap((g:any)=>(g.targetIndices|| (g.targetIndex===undefined?[]:[g.targetIndex])).map((i:number)=>`${g.notes[i]?.string}:${g.notes[i]?.fret}`)));
  diagram.querySelectorAll<SVGGElement>('.fret-note').forEach(el=>{const string=Number(el.dataset.string),fret=Number(el.dataset.fret),noteIndex=notes.findIndex((n:any)=>n.string===string&&n.fret===fret);el.classList.toggle('exercise-target',targets.has(`${string}:${fret}`));if(noteIndex<0)return;el.dataset.exerciseIndex=String(noteIndex);el.setAttribute('tabindex','0');el.setAttribute('role','button');el.setAttribute('aria-label',`${notes[noteIndex].name}, string ${6-string}, fret ${fret}`);const circle=el.querySelector('circle')!;const square=document.createElementNS('http://www.w3.org/2000/svg','rect');square.setAttribute('x',String(Number(circle.getAttribute('cx'))-15));square.setAttribute('y',String(Number(circle.getAttribute('cy'))-15));square.setAttribute('width','30');square.setAttribute('height','30');square.setAttribute('rx','2');square.setAttribute('class','exercise-current-box');el.append(square);});
  if(board.route){const chordDiagram=panel.querySelector('#exercise-chord-diagrams')?.closest('label');if(chordDiagram)(chordDiagram as HTMLElement).hidden=true;diagram.querySelector('.exercise-map-heading strong')!.textContent=traversalLabel(board.route);diagram.querySelector('.exercise-map-diagram')!.classList.add('neck-route-scroll');navigation.querySelectorAll<HTMLElement>('.position-path-controls label').forEach(control=>control.hidden=true);}
+ if(notes[0]?.neckCell)highlightNeckCell(diagram.querySelector<HTMLElement>('.exercise-map-diagram')!,notes[0].neckCell);
  const score=document.createElement('div');score.className='exercise-score';score.append(notation);material.append(diagram,score);material.classList.toggle('map-hidden',!fretboard);
  const exerciseControls=panel.querySelector('.exercise-controls');if(exerciseControls)toolbar.after(exerciseControls);
  const setup=document.createElement('details');setup.className='exercise-setup';setup.open=!!context.setupOpen;setup.innerHTML='<summary>Tempo, playback and display settings</summary>';for(const selector of ['.exercise-practice-bar']){const el=panel.querySelector(selector);if(el)setup.append(el);}material.after(setup);
  const ceiling=document.createElement('label');ceiling.textContent='Tempo ceiling ';ceiling.innerHTML+=`<input id="exercise-auto-target" type="number" min="30" max="240" value="${context.ceiling}"> BPM · self-set, not an accuracy score`;setup.append(ceiling);
  organizeExercisePanel(panel,context.guitarVolume);
 }
+function highlightNeckCell(container:HTMLElement,cell:any){
+ const svg=container.querySelector<SVGElement>('svg.neck-route-map');if(!svg||!cell)return;
+ const key=JSON.stringify([cell.id,cell.notes.map((n:any)=>[n.string,n.fret,n.pc])]);if(svg.dataset.activeNeckCell===key)return;svg.dataset.activeNeckCell=key;
+ svg.querySelectorAll('.shape-selected-ring').forEach(n=>n.remove());svg.querySelectorAll('.shape-selected-note,.per-string-map-selected').forEach(n=>n.classList.remove('shape-selected-note','per-string-map-selected'));
+ emphasizeFullNeck(container,{notes:cell.notes},Number(cell.id.split(':')[0]));
+ const points=cell.notes.map((note:any)=>{const circle=svg.querySelector(`.fret-note[data-string="${note.string}"][data-fret="${note.fret}"] circle`);return circle?circle.getAttribute('cx')+','+circle.getAttribute('cy'):null;}).filter(Boolean);svg.querySelector('.neck-route-line')?.setAttribute('points',points.join(' '));
+ svg.querySelectorAll<SVGElement>('[data-full-string-position]').forEach(n=>{const active=n.dataset.fullStringPosition===cell.id;n.classList.toggle('selected',active);if(n.hasAttribute('aria-pressed'))n.setAttribute('aria-pressed',String(active));const polygon=n.querySelector('polygon');if(polygon)polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');});
+ const menu=document.querySelector<HTMLSelectElement>('#per-string-neck-shape');if(container.id==='full-fretboard'&&menu&&Array.from(menu.options).some(o=>o.value===cell.id))menu.value=cell.id;
+ const label=container.closest('.exercise-linked-fretboard')?.querySelector('.exercise-map-heading strong');if(label)label.textContent='Current cell · '+cell.label;
+}
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
  document.querySelectorAll<HTMLElement>('.voice-leading-target[data-exercise-index]').forEach(el=>el.classList.toggle('target-active',Number(el.dataset.exerciseIndex)===index));
  document.querySelectorAll('.exercise-note.target-preview').forEach(el=>el.classList.remove('target-preview'));
  if(markNotation&&index!==null)document.querySelectorAll(`.exercise-note[data-note-index="${index}"]`).forEach(el=>el.classList.add('target-preview'));
- const selected=index===null?null:notes[index];document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note, #full-fretboard .neck-route-map .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
+ const selected=index===null?null:notes[index];if(selected?.neckCell)document.querySelectorAll<HTMLElement>('.exercise-map-diagram,#full-fretboard').forEach(container=>highlightNeckCell(container,selected.neckCell));document.querySelectorAll<SVGGElement>('.exercise-linked-fretboard .fret-note, #full-fretboard .neck-route-map .fret-note').forEach(el=>el.classList.toggle('exercise-current',!!selected&&Number(el.dataset.string)===selected.string&&Number(el.dataset.fret)===selected.fret));
 }
 
 /** Update only the linked diagram at a chord boundary; retain notation,
@@ -74,8 +86,8 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
  if(['grip','positional'].includes(study))augmented.notes=augmented.notes.map((n:any)=>{const index=harmony.chordPcs.indexOf(n.pc);return index<0?n:{...n,scaleIndex:-1,chromaticDegree:harmony.intervals[index]};});
  const grip=board.route?null:group.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(harmony,board);
- diagram.innerHTML=board.route?routeMapSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,traversalLabel(board.route),notes):diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
- diagram.querySelector('svg')?.setAttribute('role','group');
+ diagram.innerHTML=board.route?routeMapSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,traversalLabel(board.route),notes[0]?.neckCell?.notes||notes):diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
+ diagram.querySelector('svg')?.setAttribute('role','group');if(notes[0]?.neckCell)highlightNeckCell(diagram,notes[0].neckCell);
  if(group.perString){(diagram.querySelector('svg') as SVGElement).style.minWidth=Math.max(480,(board.end-board.start+1)*48)+'px';diagram.classList.add('per-string-scroll');}
  const span=group.positionalSpan as any[]|undefined,spanPitches=new Set(span?.map((n:any)=>n.midi)||[]);
  const spanStatus=panel.querySelector<HTMLElement>('#exercise-span-status');if(spanStatus)spanStatus.title='Faded chord-tone markers lie outside the selected exercise span.';
@@ -88,5 +100,6 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
   const circle=el.querySelector('circle')!,square=document.createElementNS('http://www.w3.org/2000/svg','rect');square.setAttribute('x',String(Number(circle.getAttribute('cx'))-15));square.setAttribute('y',String(Number(circle.getAttribute('cy'))-15));square.setAttribute('width','30');square.setAttribute('height','30');square.setAttribute('rx','2');square.setAttribute('class','exercise-current-box');el.append(square);
  });
  panel.querySelector('.exercise-map-heading strong')!.textContent=board.route?traversalLabel(board.route):group.perString?`${group.chord} · ${group.fingeringLabel}`:group.fixedRegion?`${group.chord} · frets ${board.start}–${board.end}`:`${group.chord} · Position ${position.numeral} · ${position.shape} framework`;
+ if(notes[0]?.neckCell){const svg=diagram.querySelector<SVGElement>('svg');if(svg)delete svg.dataset.activeNeckCell;highlightNeckCell(diagram,notes[0].neckCell);}
  const positionSelect=panel.querySelector<HTMLSelectElement>('#exercise-position');if(positionSelect)positionSelect.value=position.numeral;
 }
