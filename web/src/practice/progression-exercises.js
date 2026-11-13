@@ -1,4 +1,4 @@
-import {routeCellNotes,canRouteNotes} from '../guitar/neck-traversal.js';
+import {routeCellNotes,canRouteNotes,hasRouteTurnOptions} from '../guitar/neck-traversal.js';
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
@@ -37,10 +37,12 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  // order of cells, independently of their internal written/reversed order.
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
- let cellOffset=0,pendingCell=null;
+ let cellOffset=0,pendingCell=null,regionBoundary=null;
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
- const directional=study!=='grip'&&study!=='triadpairs';
+ let regionTravel=travel;
+ const alternatePositions=options.traversal==='alternate',turnOptions=hasRouteTurnOptions(options),turnOnEntry=turnOptions&&options.traversalTurn==='position';
+ const directional=study!=='grip'&&study!=='triadpairs'||alternatePositions;
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&!pentatonicCells&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
  const approachEnds=[];let emittedCells=0,triadReference=60;
@@ -50,25 +52,30 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
   let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
-  if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:travel>0?0:regionBoards.length-1;
+  if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:regionTravel>0?0:regionBoards.length-1;
   let board=regionBoards?.[regionIndex]||outputBoard;
+  if(regionBoards?.length&&turnOnEntry&&(slot===0||regionBoards.length>1)&&regionIndex===(regionTravel>0?regionBoards.length-1:0)){
+   travel=-travel;regionTravel=-regionTravel;regionTurns++;
+  }
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
   const chosen=sources.find(choice=>choice.id===source)||sources[0],adapted=Boolean(source&&sources.length&&!sources.some(choice=>choice.id===source));
   const context=JSON.stringify([harmony.chordPcs,harmony.scalePcs,harmony.scaleNames,chosen?.id,(regionBoards||[board]).map(b=>b.notes.map(n=>[n.string,n.fret,n.pc]))]);
+  if(regionBoundary?.context!==context)regionBoundary=null;
   const phaseTurn=scaleTraversal&&scaleRemaining===0;
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   if(context!==advanceSourceContext){advanceSourceContext=context;advanceAnchorCache=new Map();}
   const globalAdvance=regionBoards&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
-  const makeCells=()=>{
+  const makeCells=(boundary=false)=>{
    if(regionBoards&&!regionBoards.length)return [];
+   if(!boundary&&regionBoundary&&regionBoundary.id===board.neckCell?.id&&regionBoundary.travel===travel)return [regionBoundary.cell];
    const leg=directional?(travel>0?'ascending':'descending'):motion;
-   const cellOptions={sequenceAdvance:globalAdvance?1:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern};
+   const cellOptions={sequenceAdvance:boundary||globalAdvance?1:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern};
    const raw=study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,cellOptions);
-   if(globalAdvance&&!advanceAnchors.has(leg)){
+   if(globalAdvance&&!boundary&&!advanceAnchors.has(leg)){
     const roots=[...new Set(cagedStudy(outputBoard,harmony,study,material,leg,cellOptions).map(c=>c.sequenceAnchor))],origin=Math.max(0,roots.indexOf(raw[0]?.sequenceAnchor));
     advanceAnchors.set(leg,new Set(roots.filter((_,i)=>i>=origin&&(i-origin)%Number(options.sequenceAdvance)===0)));
    }
-   return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
+   return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||boundary||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
@@ -102,14 +109,27 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   }
   const advanceRegion=()=>{
    for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
-    let next=regionIndex+travel,turned=false;
+    let next=regionIndex+regionTravel,turned=false,enteredTurn=false;
     if(next<0||next>=regionBoards.length){
+     // A strict note turn reaches the actual edge even if an advance of two
+     // or three would otherwise omit its last complete pattern.
+     if(turnOptions&&!turnOnEntry&&!alternatePositions){
+      const edge=makeCells(true).at(-1);
+      if(edge&&edge.sequenceAnchor!==lastAnchor){regionBoundary={context,id:board.neckCell.id,travel,cell:edge};cells=[edge];cellIndex=0;return true;}
+     }
      if(options.once&&++regionTurns>1)return false;
-     travel=-travel;next=regionIndex;turned=true;
+     regionTravel=-regionTravel;travel=-travel;turned=true;
+     next=alternatePositions&&regionBoards.length>1?regionIndex+regionTravel:regionIndex;
+    }else if(alternatePositions){
+     travel=-travel;
+    }else if(turnOnEntry&&next===(regionTravel>0?regionBoards.length-1:0)){
+     if(options.once&&++regionTurns>1)return false;
+     regionTravel=-regionTravel;travel=regionTravel;turned=true;enteredTurn=true;
     }
+    regionBoundary=null;
     regionIndex=next;board=regionBoards[regionIndex];cells=makeCells();cellIndex=0;
     if(!cells.length)continue;
-    if((options.traversal==='diagonal'||turned)&&lastAnchor!==null){
+    if(!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
      const continuation=continueCell(cells,lastCursor??lastAnchor,travel);
      if(continuation.reset)continue;
      cellIndex=continuation.index;

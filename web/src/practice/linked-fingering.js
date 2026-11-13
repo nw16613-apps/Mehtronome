@@ -4,7 +4,7 @@ import {SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
 // Changing a shape keeps the selected pattern; changing its note material only
 // switches between scale/chord versions when the old material cannot fit.
 export function linkExerciseFingering(view,selection,harmony){
- if(['horizontal','diagonal'].includes(view.traversal)){view.fingering='caged';view.exactFingering=false;return view;}
+ if(['horizontal','diagonal','alternate'].includes(view.traversal)){view.fingering='caged';view.exactFingering=false;return view;}
  if(!selection)return view;
  const changed=view.fingering!==selection.kind,kind=selection.kind;
  Object.assign(view,{linkedFingering:true,fingering:kind});

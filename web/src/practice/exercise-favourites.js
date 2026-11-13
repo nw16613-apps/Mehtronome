@@ -1,3 +1,4 @@
+import {hasRouteTurnOptions} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,hasExerciseCellOrder} from '../guitar/scale-sequences.js';
 import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.js';
@@ -6,6 +7,7 @@ import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.j
 export function exerciseFavouriteKey(snapshot){
  const v=normalizeExerciseOptions({...snapshot}),result={study:v.study,motion:v.motion,rhythm:v.rhythm};
  if(v.traversal!=='position')for(const field of ['traversal','traversalStrings','traversalStart','traversalEnd',...(v.traversalCell!=='first'?['traversalCell']:[])])result[field]=v[field];
+ if(hasRouteTurnOptions(v))result.traversalTurn=v.traversalTurn;
  if(exerciseMenuOptions(v.study).material&&!v.exactFingering)result.material=v.material;
  if(/^(arpseq_)?scaleperm_123$/.test(v.study))result.study=v.study.replace('scaleperm_123','groups3');
  if(/^(arpseq_)?scaleperm_1234$/.test(v.study))result.study=v.study.replace('scaleperm_1234','groups4');
