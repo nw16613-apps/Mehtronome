@@ -1,4 +1,4 @@
-import {routeCellNotes,canRouteNotes,hasRouteTurnOptions} from '../guitar/neck-traversal.js';
+import {routeCellNotes,canRouteNotes,hasRouteTurnOptions,alternatesPositions} from '../guitar/neck-traversal.js';
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
@@ -41,7 +41,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  let regionTravel=travel;
- const alternatePositions=options.traversal==='alternate',turnOptions=hasRouteTurnOptions(options),turnOnEntry=turnOptions&&options.traversalTurn==='position';
+ const alternatePositions=alternatesPositions(options),turnOptions=hasRouteTurnOptions(options),turnOnEntry=turnOptions&&options.traversalTurn==='position';
  const directional=study!=='grip'&&study!=='triadpairs'||alternatePositions;
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&!pentatonicCells&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
@@ -64,7 +64,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const phaseTurn=scaleTraversal&&scaleRemaining===0;
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   if(context!==advanceSourceContext){advanceSourceContext=context;advanceAnchorCache=new Map();}
-  const globalAdvance=regionBoards&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
+  const globalAdvance=regionBoards&&!alternatePositions&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
   const makeCells=(boundary=false)=>{
    if(regionBoards&&!regionBoards.length)return [];
    if(!boundary&&regionBoundary&&regionBoundary.id===board.neckCell?.id&&regionBoundary.travel===travel)return [regionBoundary.cell];

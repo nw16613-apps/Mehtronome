@@ -3,9 +3,11 @@ import {SCALE_SEQUENCES} from './scale-sequences.js';
 const names=['low E','A','D','G','B','high E'];
 export const STRING_SETS=Array.from({length:6},(_,size)=>Array.from({length:6-size},(_,start)=>Array.from({length:size+1},(_,i)=>start+i))).flat();
 export function normalizeTraversal(view){
+ if(view.traversal==='alternate'){view.traversal='horizontal';view.traversalPositionOrder='alternate';}
+ view.traversalPositionOrder=view.traversalPositionOrder==='alternate'?'alternate':'follow';
  view.traversalTurn=view.traversalTurn==='position'?'position':'note';
  view.traversalCell=/^\d+:\d+$/.test(view.traversalCell)?view.traversalCell:'first';
- view.traversal=['horizontal','diagonal','alternate'].includes(view.traversal)?view.traversal:'position';
+ view.traversal=['horizontal','diagonal'].includes(view.traversal)?view.traversal:'position';
  const fallback=view.traversal==='diagonal'?'0,1,2,3,4,5':'0,1';
  view.traversalStrings=STRING_SETS.some(s=>s.join(',')===view.traversalStrings&&(view.traversal!=='diagonal'||s.length>1))?view.traversalStrings:fallback;
  view.traversalStart=Math.max(1,Math.min(23,Math.round(Number(view.traversalStart)||5)));
@@ -13,20 +15,21 @@ export function normalizeTraversal(view){
  return view;
 }
 export const acrossNeck=view=>['horizontal','diagonal','alternate'].includes(view?.traversal);
+export const alternatesPositions=view=>view.traversal==='alternate'||view.traversalPositionOrder==='alternate';
 export function hasRouteTurnOptions(view){
- if(!acrossNeck(view)||view.traversal==='alternate')return false;
+ if(!acrossNeck(view)||alternatesPositions(view))return false;
  if(['positional','positionalscale'].includes(view.study))return true;
  const definition=SCALE_SEQUENCES[view.study==='pentatonic'?view.pattern:view.study?.replace(/^arpseq_/,'')],steps=definition?.offsets;
  return view.sequenceOrder==='directional'&&!!steps&&!definition.pedal&&steps[0]===Math.min(...steps)&&steps.at(-1)===Math.max(...steps);
 }
 export function traversalLabel(view){
  const v=normalizeTraversal({...view}),strings=v.traversalStrings.split(',').map(Number);
- return `${v.traversal==='alternate'?'Alternating positions':v.traversal==='diagonal'?'Diagonal':'Horizontal'} · ${strings.map(i=>names[i]).join('–')} · frets ${v.traversalStart}–${v.traversalEnd}`;
+ return `${v.traversal==='diagonal'?'Diagonal':'Horizontal'}${alternatesPositions(v)?' · alternating positions':''} · ${strings.map(i=>names[i]).join('–')} · frets ${v.traversalStart}–${v.traversalEnd}`;
 }
 export function neckRouteBoard(harmony,options){
  const v=normalizeTraversal({...options}),strings=v.traversalStrings.split(',').map(Number);
  const board=fullFretboardFor(harmony,v.traversalStart,v.traversalEnd);
- return {...board,notes:board.notes.filter(n=>strings.includes(n.string)),route:{traversal:v.traversal,traversalStrings:v.traversalStrings,traversalStart:v.traversalStart,traversalEnd:v.traversalEnd}};
+ return {...board,notes:board.notes.filter(n=>strings.includes(n.string)),route:{traversal:v.traversal,traversalPositionOrder:v.traversalPositionOrder,traversalStrings:v.traversalStrings,traversalStart:v.traversalStart,traversalEnd:v.traversalEnd}};
 }
 /** Select actual fingerings without changing the musical cell. Compact hand
  * windows win when possible; wide melodic cells can shift rather than stretch.
@@ -55,7 +58,7 @@ export function routeCellNotes(notes,board,previous=null){
 }
 export function traversalControls(view,prefix='exercise',locked=false){
  const v=normalizeTraversal({...view}),disabled=locked?' disabled':'';
- return `<div class="neck-traversal-controls" aria-label="Fretboard traversal"><label>Traversal<select id="${prefix}-neck-traversal" data-neck-field="traversal"${disabled}>${[['position','Selected position'],['horizontal','Horizontal · complete each cell'],['diagonal','Diagonal · connected shapes'],['alternate','Alternating positions · up/down']].map(([id,label])=>`<option value="${id}" ${v.traversal===id?'selected':''}>${label}</option>`).join('')}</select></label>${hasRouteTurnOptions(v)?`<label>Turn at<select id="${prefix}-neck-turn" data-neck-field="traversalTurn"${disabled}><option value="note" ${v.traversalTurn==='note'?'selected':''}>Boundary note · repeat it</option><option value="position" ${v.traversalTurn==='position'?'selected':''}>Entering end position</option></select></label>`:''}<label ${!acrossNeck(v)?'hidden':''}>String set<select id="${prefix}-neck-strings" data-neck-field="traversalStrings"${disabled}>${Array.from({length:6},(_,size)=>v.traversal==='diagonal'&&size===0?'':`<optgroup label="${size+1} string${size?'s':''}">${STRING_SETS.filter(s=>s.length===size+1).map(s=>`<option value="${s.join(',')}" ${v.traversalStrings===s.join(',')?'selected':''}>${s.map(i=>names[i]).join(' + ')}</option>`).join('')}</optgroup>`).join('')}</select></label><label ${!acrossNeck(v)?'hidden':''}>From fret<input id="${prefix}-neck-start" data-neck-field="traversalStart" type="number" min="1" max="23" value="${v.traversalStart}"${disabled}></label><label ${!acrossNeck(v)?'hidden':''}>To fret<input id="${prefix}-neck-end" data-neck-field="traversalEnd" type="number" min="2" max="24" value="${v.traversalEnd}"${disabled}></label></div>`;
+ return `<div class="neck-traversal-controls" aria-label="Fretboard traversal"><label>Traversal<select id="${prefix}-neck-traversal" data-neck-field="traversal"${disabled}>${[['position','Selected position'],['horizontal','Horizontal · complete each cell'],['diagonal','Diagonal · connected shapes']].map(([id,label])=>`<option value="${id}" ${v.traversal===id?'selected':''}>${label}</option>`).join('')}</select></label>${acrossNeck(v)?`<label>Position order<select id="${prefix}-neck-position-order" data-neck-field="traversalPositionOrder"${disabled}><option value="follow" ${v.traversalPositionOrder==='follow'?'selected':''}>Follow traversal</option><option value="alternate" ${v.traversalPositionOrder==='alternate'?'selected':''}>Alternating positions · up/down</option></select></label>`:''}${hasRouteTurnOptions(v)?`<label>Turn at<select id="${prefix}-neck-turn" data-neck-field="traversalTurn"${disabled}><option value="note" ${v.traversalTurn==='note'?'selected':''}>Boundary note · repeat it</option><option value="position" ${v.traversalTurn==='position'?'selected':''}>Entering end position</option></select></label>`:''}<label ${!acrossNeck(v)?'hidden':''}>String set<select id="${prefix}-neck-strings" data-neck-field="traversalStrings"${disabled}>${Array.from({length:6},(_,size)=>v.traversal==='diagonal'&&size===0?'':`<optgroup label="${size+1} string${size?'s':''}">${STRING_SETS.filter(s=>s.length===size+1).map(s=>`<option value="${s.join(',')}" ${v.traversalStrings===s.join(',')?'selected':''}>${s.map(i=>names[i]).join(' + ')}</option>`).join('')}</optgroup>`).join('')}</select></label><label ${!acrossNeck(v)?'hidden':''}>From fret<input id="${prefix}-neck-start" data-neck-field="traversalStart" type="number" min="1" max="23" value="${v.traversalStart}"${disabled}></label><label ${!acrossNeck(v)?'hidden':''}>To fret<input id="${prefix}-neck-end" data-neck-field="traversalEnd" type="number" min="2" max="24" value="${v.traversalEnd}"${disabled}></label></div>`;
 }
 export function routeMapSvg(board,degrees,modeDegrees,title,notes=[]){
  const extra=notes.filter(n=>!board.notes.some(b=>b.string===n.string&&b.fret===n.fret));

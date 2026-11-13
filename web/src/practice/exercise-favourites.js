@@ -7,6 +7,7 @@ import {normalizeExerciseOptions,exerciseMenuOptions} from './exercise-options.j
 export function exerciseFavouriteKey(snapshot){
  const v=normalizeExerciseOptions({...snapshot}),result={study:v.study,motion:v.motion,rhythm:v.rhythm};
  if(v.traversal!=='position')for(const field of ['traversal','traversalStrings','traversalStart','traversalEnd',...(v.traversalCell!=='first'?['traversalCell']:[])])result[field]=v[field];
+ if(v.traversal!=='position'&&v.traversalPositionOrder==='alternate')result.traversalPositionOrder='alternate';
  if(hasRouteTurnOptions(v))result.traversalTurn=v.traversalTurn;
  if(exerciseMenuOptions(v.study).material&&!v.exactFingering)result.material=v.material;
  if(/^(arpseq_)?scaleperm_123$/.test(v.study))result.study=v.study.replace('scaleperm_123','groups3');

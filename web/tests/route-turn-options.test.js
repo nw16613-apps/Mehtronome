@@ -29,7 +29,7 @@ test('turn policy and alternate-position phase survive beat splits, harmony chan
  }
  const harmonies=[0,1,2].map(i=>harmonyAt({key:9,mode:'dorian',chord:'min7',progression:true,template:'major251altered'},i));
  for(const traversal of ['horizontal','diagonal','alternate'])for(const traversalTurn of ['note','position'])for(const g of neckExerciseGroups(harmonies,[5,3,8],{...base,traversal,traversalTurn}))for(const n of g.notes)assert.ok(n.neckCell&&[0,1].includes(n.string));
- assert.notEqual(exerciseFavouriteKey({...base,traversalTurn:'note'}),exerciseFavouriteKey({...base,traversalTurn:'position'}));assert.equal(normalizeExerciseOptions({...base,traversalTurn:'nonsense'}).traversalTurn,'note');assert.equal(normalizeExerciseOptions({...base,traversal:'alternate'}).traversal,'alternate');assert.equal(hasRouteTurnOptions({...base,study:'enclosures4'}),false);
+ assert.notEqual(exerciseFavouriteKey({...base,traversalTurn:'note'}),exerciseFavouriteKey({...base,traversalTurn:'position'}));assert.equal(normalizeExerciseOptions({...base,traversalTurn:'nonsense'}).traversalTurn,'note');const legacy=normalizeExerciseOptions({...base,traversal:'alternate'});assert.equal(legacy.traversal,'horizontal');assert.equal(legacy.traversalPositionOrder,'alternate');assert.equal(hasRouteTurnOptions({...base,study:'enclosures4'}),false);
 });
 test('strict note turns reach and repeat the boundary even when advancing by two or three',()=>{
  for(const traversal of ['horizontal','diagonal'])for(const sequenceAdvance of [2,3])for(const motion of ['ascending','descending']){

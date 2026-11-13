@@ -1,6 +1,6 @@
 import {traversalScaleCells} from '../guitar/neck-cells.js';
 import {contentMaterial,contentSource} from './exercise-catalogue.js';
-import {neckRouteBoard,traversalLabel} from '../guitar/neck-traversal.js';
+import {neckRouteBoard,traversalLabel,normalizeTraversal} from '../guitar/neck-traversal.js';
 import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {progressionExerciseGroups} from './progression-exercises.js';
 export function neckCellHarmony(harmony,view){
@@ -11,6 +11,7 @@ export function neckExerciseCells(harmony,view){const collection=neckCellHarmony
 /** Across-neck studies use the same cell/travel engine as position studies.
  * A continuous arpeggio is a traversal of core chord pitches, not its mode. */
 export function neckExerciseGroups(harmonies,durations,view){
+ view=normalizeTraversal({...view});
  const boards=harmonies.map(h=>neckRouteBoard(h,view));
  const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,study:view.study==='positional'?'positionalscale':view.study,once:!durations,
   regionBoardsFor:h=>neckExerciseCells(h,view).map(s=>({...s.board,neckCell:{id:s.degree,label:s.label,notes:s.board.notes},route:{...s.board.route,cell:true}})),
