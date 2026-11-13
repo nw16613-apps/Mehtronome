@@ -11,14 +11,14 @@ const sizes={triad:3,seventh:4,extensions:4};
 const midiCells=cells=>cells.map(c=>c.notes.map(n=>n.midi));
 // Independent reference: construct the theoretical scale through MIDI octaves,
 // then retain only cells whose exact pitches are present on this diagram.
-function scaleCells(board,h,offsets,direction){
+function scaleCells(board,h,offsets,direction,fixedOrder=false){
  const line=Array.from({length:128},(_,midi)=>midi).filter(midi=>h.scalePcs.includes(midi%12)),available=new Set(board.notes.map(n=>n.midi));
- return line.filter(midi=>available.has(midi)).sort((a,b)=>(a-b)*direction).map(anchor=>offsets.map(offset=>line[line.indexOf(anchor)+direction*offset])).filter(cell=>cell.every(midi=>available.has(midi)));
+ return line.filter(midi=>available.has(midi)).sort((a,b)=>(a-b)*direction).map(anchor=>offsets.map(offset=>line[line.indexOf(anchor)+(fixedOrder?1:direction)*offset])).filter(cell=>cell.every(midi=>available.has(midi)));
 }
 test('scale sequences include every complete cell across all scale families and CAGED shapes',()=>{
  for(const mode of Object.keys(MODES))for(const key of Array.from({length:12},(_,i)=>i))for(const shape of ['C','A','G','E','D'])for(const direction of [1,-1]){
   const h=harmonyAt({key,mode,chord:MODES[mode].chord}),board=fretboardFor(h,shape),motion=direction>0?'ascending':'descending';
-  for(const [study,offsets]of Object.entries(patterns))assert.deepEqual(midiCells(cagedStudy(board,h,study,'seventh',motion)),scaleCells(board,h,offsets,direction),`${mode} ${key} ${shape} ${motion} ${study}`);
+  for(const [study,offsets]of Object.entries(patterns))assert.deepEqual(midiCells(cagedStudy(board,h,study,'seventh',motion)),scaleCells(board,h,offsets,direction,true),`${mode} ${key} ${shape} ${motion} ${study}`);
  }
 });
 test('harmonized and alternating stacks cover every complete register without inventing scale notes',()=>{

@@ -366,6 +366,7 @@ test('guitar pitch is written one octave above its sounding pitch',()=>{
     {chord:'Am7',source:'A minor',notes:[note]},
   ];
   const svg=exerciseNotationSvg(groups,'eighths','Harmony changes');
-  assert.match(svg,/class="note-head" cx="105" cy="86"/);
+  // Horizontal spacing depends on the fret glyph width; pitch is its y.
+  assert.match(svg,/class="note-head" cx="[\d.]+" cy="86"/);
   assert.equal((svg.match(/class="exercise-title"/g)||[]).length,1);
 });

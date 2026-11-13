@@ -294,11 +294,12 @@ function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=6
   const descending=motion==='descending'||motion==='down-up';
   if(kind==='pentatonic')return pentatonicExercise(board,harmony,choice,motion,pattern,order);
   const groups=choice.groups.map((triad,index)=>{
-    const path=pathForPcs(board,triad.pcs,triad.names,index%2===0?!descending:descending,targetMidi);
+    const path=pathForPcs(board,triad.pcs,triad.names,!descending,targetMidi);
     return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
   }).filter(group=>group.notes?.length===3);
   if(groups.length!==choice.groups.length)return [];
-  return contourGroups(Array.from({length:4},()=>groups).flat(),motion);
+  const phrase=Array.from({length:4},()=>groups).flat();
+  return motion==='up-down'||motion==='down-up'?[...phrase,...phrase.toReversed().map(cell=>({...cell,notes:cell.notes.toReversed()}))]:phrase;
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {

@@ -103,7 +103,8 @@ test('diatonic enclosure neighbours follow semitone boundaries and every-tone ap
   const b=fretboardFor(h,shape);
   for(const study of ['enclosures','enclosuresbelowabove'])for(const motion of ['ascending','descending']){
    for(const cell of cagedStudy(b,h,study,'seventh',motion)){
-    const target=cell.notes.at(-1),diatonic=cell.notes[study==='enclosures'?0:1],direction=motion==='ascending'?1:-1;
+    // Travel reverses the targets; the named approach remains above/below.
+    const target=cell.notes.at(-1),diatonic=cell.notes[study==='enclosures'?0:1],direction=1;
     const distance=Array.from({length:12},(_,i)=>i+1).find(n=>h.scalePcs.includes((target.midi+direction*n+120)%12));
     assert.equal(diatonic.midi,target.midi+direction*distance);
    }

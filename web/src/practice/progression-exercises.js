@@ -29,7 +29,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const patterned=ARPEGGIO_PATTERN_STUDIES.has(study)&&options.arpeggioPattern&&options.arpeggioPattern!=='straight';
  const routineConnected=patterned&&options.arpeggioRoutine==='connected';
  const routineAlternating=patterned&&options.arpeggioRoutine==='alternate';
- const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4'].includes(study)||patterned||scalar||pentatonicCells)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
+ const flowingCells=(['harmonized','groups3','groups4','arpgroups3','arpgroups4','triadpairs'].includes(study)||patterned||scalar||pentatonicCells)&&(!patterned||options.arpeggioPattern!=='approachEach'&&(!options.arpeggioApproach||options.arpeggioApproach==='none'))&&stage!=='cell';
  const scaleTraversal=study==='positionalscale'&&stage!=='cell'&&!options.regionBoardsFor;
  // Fixed-order cells travel by their root/target. Their last/highest pitch
  // belongs to the pattern, not to the cursor used to select the next cell.
@@ -108,6 +108,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
   }
   const advanceRegion=()=>{
+   let fallback=null;
    for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
     let next=regionIndex+regionTravel,turned=false,enteredTurn=false;
     if(next<0||next>=regionBoards.length){
@@ -129,6 +130,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     regionBoundary=null;
     regionIndex=next;board=regionBoards[regionIndex];cells=makeCells();cellIndex=0;
     if(!cells.length)continue;
+    fallback={regionIndex,board,cells,travel,regionTravel};
     if(!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
      const continuation=continueCell(cells,lastCursor??lastAnchor,travel);
      if(continuation.reset)continue;
@@ -136,6 +138,10 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     }
     return true;
    }
+   // A narrow selection may contain just one playable motif. Once both
+   // directions are exhausted, repeat that complete motif rather than
+   // padding every remaining bar with unexplained silence.
+   if(fallback&&!options.once){({regionIndex,board,cells,travel,regionTravel}=fallback);cellIndex=0;return true;}
    return false;
   };
   let startWarning='';
@@ -155,12 +161,14 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    if(cellIndex>=cells.length){
     if(study==='positionalscale'&&stage==='cell'&&notes.length)break;
-    if(!directional)break;
+    if(!directional){if(study==='triadpairs'&&!options.once)cellIndex=0;else break;}
+    else{
     travel=-travel;cells=makeCells();
     if(!cells.length)break;
     cellIndex=0;
     if(lastAnchor!==null)cellIndex=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel).index;
     if(scaleTraversal)scaleRemaining=Math.max(1,cells.length-1-cellIndex);
+    }
    }
    if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
    const nextIndex=routineConnected?cells.findLastIndex(c=>c.sequenceAnchor===cells[cellIndex].sequenceAnchor)+1:cellIndex+1;

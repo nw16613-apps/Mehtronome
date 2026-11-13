@@ -47,5 +47,5 @@ test('triad material also limits the final resolution to triad tones',()=>{const
 
 test('superimposed alternating patterns honour their chosen first note and triad-pair phase',()=>{
  for(const motion of ['ascending','descending']){const v={study:'pentatonic',pattern:'alternating3',motion},cells=cagedStudy(board,h,v.study,'seventh',motion,v),choices=sequenceEntryChoices(cells,h,v);assert.ok(choices.length);for(const choice of choices){const g=run({...v,entryTone:choice.value})[0];assert.equal(g.notes[0].pc,choice.note.pc);}}
- const v={study:'triadpairs',material:'triad',motion:'ascending'},cells=cagedStudy(board,h,v.study,'triad','ascending',v),choices=sequenceEntryChoices(cells,h,v);assert.ok(choices.length>=2);const gs=run({...v,entryTone:choices[1].value},[1,1,1]);assert.deepEqual(gs.map(g=>g.notes[0].pc),[choices[1].note.pc,choices[0].note.pc,choices[1].note.pc]);
+ const v={study:'triadpairs',material:'triad',motion:'ascending'},cells=cagedStudy(board,h,v.study,'triad','ascending',v),choices=sequenceEntryChoices(cells,h,v);assert.ok(choices.length>=2);const gs=run({...v,entryTone:choices[1].value},[1,1,1]);assert.equal(gs[0].notes[0].pc,choices[1].note.pc);assert.deepEqual(gs.flatMap(g=>g.notes),run({...v,entryTone:choices[1].value},[3])[0].notes);assert.deepEqual(gs.map(g=>g.notes.length),[4,4,4]);
 });

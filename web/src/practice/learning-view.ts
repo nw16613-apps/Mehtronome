@@ -20,7 +20,9 @@ export function learningView(panel:HTMLElement,context:any){
  if(context.progressionBacking)for(const id of ['exercise-auto-tempo','exercise-auto-every','exercise-auto-increment']){const control=panel.querySelector<HTMLInputElement>('#'+id);if(control)control.disabled=true;}
  if(context.progression&&context.navigation==='path'){const positionControl=toolbar.querySelector<HTMLSelectElement>('#exercise-position')!;positionControl.disabled=true;positionControl.parentElement!.firstChild!.textContent='CAGED position ';}
  const warnings=[...new Set<string>(context.timingWarnings||[])];
- if(!notes.length)warnings.unshift('No complete study fits this position. Choose another position or exercise.');
+ if(!notes.length&&!warnings.length)warnings.unshift('No complete pattern fits this fingering. Choose a smaller pattern, a larger string set or another position.');
+ // An unavailable recipe is not a silent exercise.
+ if(!notes.length){panel.querySelector('.notation-scroll')?.replaceChildren();for(const id of ['exercise-export','exercise-print']){const button=panel.querySelector<HTMLButtonElement>('#'+id);if(button)button.disabled=true;}}
  if(warnings.length){const notice=document.createElement('p');notice.className='exercise-notice practice-help';notice.setAttribute('role','status');notice.textContent=warnings.join(' ');panel.querySelector('.exercise-controls')!.after(notice);}
  const notation=panel.querySelector('.notation-scroll')!,material=document.createElement('div');material.className='exercise-material-layout';notation.before(material);
  const diagram=document.createElement('section');diagram.className='exercise-linked-fretboard';diagram.innerHTML=`<div class="exercise-map-heading"><strong>Position ${esc(position.numeral)} · ${esc(position.shape)} framework</strong><button type="button" class="practice-button" id="exercise-map-toggle" aria-expanded="${fretboard}">${fretboard?'Hide':'Show'} diagram</button></div><div id="exercise-map-body" ${!fretboard?'hidden':''}><div class="exercise-map-diagram"></div></div>`;
