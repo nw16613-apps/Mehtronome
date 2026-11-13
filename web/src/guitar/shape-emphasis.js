@@ -18,17 +18,17 @@ export function emphasizeFullNeck(container,board,index,diagonal=false){
  svg.prepend(defs,path);
 }
 
-function shapeEnvelope(board){
- // Match the original full-neck canvas (frets 1–17). The envelope follows
- // each string's actual notes, including portions clipped by the map edge.
- const x=fret=>62+(fret-.5)*1240/17,y=string=>54+(5-string)*34;
+function shapeEnvelope(board,range={start:1,end:17}){
+ // Match the map range, defaulting to the original frets 1–17 canvas.
+ // The envelope follows each string's actual notes at either map edge.
+ const x=fret=>62+(fret-range.start+.5)*1240/(range.end-range.start+1),y=string=>54+(5-string)*34;
  const rows=[5,4,3,2,1,0].filter(string=>board.notes.some(n=>n.string===string)).map(string=>{const frets=board.notes.filter(n=>n.string===string).map(n=>n.fret);return {string,left:x(Math.min(...frets))-22,right:x(Math.max(...frets))+22};});
  return [[rows[0].left,y(rows[0].string)-18],...rows.map(r=>[r.left,y(r.string)]),[rows.at(-1).left,y(rows.at(-1).string)+18],[rows.at(-1).right,y(rows.at(-1).string)+18],...rows.toReversed().map(r=>[r.right,y(r.string)]),[rows[0].right,y(rows[0].string)-18]];
 }
 
 /** Clickable envelopes for every per-string shape; their labels remain on top
  * so overlapping diagonals can always be selected independently. */
-export function perStringMapRegions(container,shapes,selected){
+export function perStringMapRegions(container,shapes,selected,range={start:1,end:17}){
  const svg=container.querySelector('svg.fretboard');if(!svg)return;
  svg.querySelector('.shape-boundary')?.remove();
  if(!svg.querySelector('#full-neck-shape-clip')){
@@ -37,11 +37,11 @@ export function perStringMapRegions(container,shapes,selected){
  const usedLabels=[];
  const areas=document.createElementNS(ns,'g'),labels=document.createElementNS(ns,'g');areas.setAttribute('class','per-string-region-areas');labels.setAttribute('class','per-string-region-labels');
  shapes.forEach((shape,index)=>{
-  const active=String(shape.degree)===String(selected),points=shapeEnvelope(shape.board);
+  const active=String(shape.degree)===String(selected),points=shapeEnvelope(shape.board,range);
   const group=document.createElementNS(ns,'g');group.setAttribute('class',`per-string-map-region${active?' selected':''}`);group.setAttribute('data-full-string-position',String(shape.degree));group.style.setProperty('--shape-color',shapeColor(shape.index??index));
   const polygon=document.createElementNS(ns,'polygon');polygon.setAttribute('points',points.map(p=>p.join(',')).join(' '));polygon.setAttribute('clip-path','url(#full-neck-shape-clip)');polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');group.append(polygon);areas.append(group);
   const label=document.createElementNS(ns,'g');label.setAttribute('class',`per-string-map-region per-string-region-label${active?' selected':''}`);label.setAttribute('data-full-string-position',String(shape.degree));label.setAttribute('role','button');label.setAttribute('tabindex','0');label.setAttribute('aria-pressed',String(active));label.setAttribute('aria-label','Highlight '+shape.label);label.style.setProperty('--shape-color',shapeColor(shape.index??index));
-  const first=shape.board.notes[0],desired=62+(first.fret-.5)*1240/17;
+  const first=shape.board.notes[0],desired=62+(first.fret-range.start+.5)*1240/(range.end-range.start+1);
   // Compact numbered labels occupy distinct slots above the string diagram.
   let x=Math.min(1260,Math.max(68,desired));
   const spacing=shapes.length>30?35:40;

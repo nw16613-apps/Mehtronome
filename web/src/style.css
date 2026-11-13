@@ -83,3 +83,4 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-str
 .neck-traversal-controls label{color:var(--muted,#b4c2cf);font-size:12px}
 .neck-traversal-controls :is(select,input){min-height:44px;padding:10px 12px;border:1px solid var(--line,#344e60);border-radius:5px;background:var(--field,#1c3042);color:var(--ink,#e2eaf1);box-shadow:inset 0 2px 4px #0002;font-size:14px}
 @media(max-width:480px){.neck-traversal-controls label:has(select){flex:1 1 100%}.neck-traversal-controls select{width:100%}.neck-traversal-controls label:has(input){flex:1 1 90px}.neck-traversal-controls input{width:100%}}
+.guitar.across-neck #per-string-diagram{display:none!important}
