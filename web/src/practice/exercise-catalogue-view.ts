@@ -1,4 +1,5 @@
 import {isExactVoicing} from '../guitar/fingering-rules.js';
+import {hasDirectionalCellOrder} from '../guitar/scale-sequences.js';
 import {CONTENT_MATERIALS,contentMaterial,contentSource,contentSources,contentFamily,contentFamilies,groupPatternLabel} from './exercise-catalogue.js';
 const options=(items:string[][],value:string)=>items.map(([id,name])=>new Option(name,id,false,id===value));
 export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPair=true,nonDiatonic=false){
@@ -16,9 +17,9 @@ export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPai
  label('exercise-arpeggio-pattern','Note order');label('exercise-enclosure-family','Approach family');label('exercise-enclosure-pattern','Approach order');
  if(isExactVoicing(view.fingering)){hide('exercise-arpeggio-register');hide('exercise-arpeggio-sequence');const routine=panel.querySelector<HTMLSelectElement>('#exercise-arpeggio-routine');routine?.querySelector('option[value=connected]')?.remove();}
  const roots=label('exercise-arpeggio-sequence',stacks?'Stack-root sequence':'Arpeggio-root sequence');if(roots)for(const item of Array.from(roots.options)){item.textContent=groupPatternLabel(item.value,item.textContent||'',stacks?'stacks':'arpeggios');}
- label('exercise-sequence-order',view.study==='doubleapproach'?'Approach from':view.study==='chromaticneighbors'?'Neighbour order':view.study==='harmonized'?'Arpeggio-root order':family==='intervals'?'Pair order':'Order variation');label('exercise-sequence-advance','Advance between cells');
+ label('exercise-sequence-order',view.study==='doubleapproach'?'Approach from':view.study==='chromaticneighbors'?'Neighbour order':view.study==='harmonized'?'Arpeggio-root order':family==='intervals'?'Pair order':family==='groups'?'Group order':'Pattern order');label('exercise-sequence-advance','Advance between cells');
  const variations=document.createElement('details');variations.className='exercise-pattern-variations';variations.open=!!view.patternVariationsOpen;const summary=document.createElement('summary');summary.textContent='Pattern variations';variations.append(summary);const grid=document.createElement('div');grid.className='exercise-controls';
- for(const id of ['exercise-sequence-advance','exercise-sequence-order','exercise-arpeggio-register','exercise-arpeggio-routine','exercise-arpeggio-approach']){const element=panel.querySelector('#'+id)?.closest('label');if(element&&!(id==='exercise-sequence-order'&&family==='intervals'))grid.append(element);}
+ for(const id of ['exercise-sequence-advance','exercise-sequence-order','exercise-arpeggio-register','exercise-arpeggio-routine','exercise-arpeggio-approach']){const element=panel.querySelector('#'+id)?.closest('label');if(element&&!(id==='exercise-sequence-order'&&hasDirectionalCellOrder(view)))grid.append(element);}
  const defaults:Record<string,string>={'exercise-sequence-advance':'1','exercise-sequence-order':'normal','exercise-arpeggio-register':'up','exercise-arpeggio-routine':'repeat','exercise-arpeggio-approach':'none'},active=Array.from(grid.querySelectorAll('select')).filter(s=>!(s.closest('label') as HTMLElement)?.hidden&&defaults[s.id]!==s.value).length;if(active)summary.textContent+=` (${active} active)`;
  if(grid.children.length){variations.append(grid);controls.after(variations);}
  const browse=panel.querySelector<HTMLElement>('.exercise-browse'),families=familyOptions,index=families.findIndex(([id])=>id===family);

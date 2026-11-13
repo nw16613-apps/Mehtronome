@@ -24,11 +24,15 @@ export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse e
 export const hasPentatonicCellOrder=pattern=>!String(pattern||'').startsWith('lesson');
 export const hasChromaticSide=study=>['doubleapproach','chromaticneighbors'].includes(study);
 export const hasExerciseCellOrder=view=>Boolean(SCALE_SEQUENCES[view.study?.replace(/^arpseq_/, '')])||view.study==='pentatonic'&&hasPentatonicCellOrder(view.pattern)||view.study==='harmonized'&&view.arpeggioSequence&&view.arpeggioSequence!=='stepwise'||hasChromaticSide(view.study);
+export const hasDirectionalCellOrder=view=>hasExerciseCellOrder(view)&&!hasChromaticSide(view.study);
 export function scaleCellOrders(study){
  if(study==='doubleapproach')return [['normal','From below · −2, −1, target'],['reverse','From above · +2, +1, target']];
  if(study==='chromaticneighbors')return [['normal','Upper then lower · return to target'],['reverse','Lower then upper · return to target']];
  const definition=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')];
- if(definition?.family!=='intervals')return SCALE_CELL_ORDERS.filter(([id])=>!id.startsWith('directional'));
+ if(definition?.family!=='intervals'){
+  const labels=definition?.family==='groups'?{normal:'Upward groups · both ways',reverse:'Downward groups · both ways',directional:'Upward ascending / downward descending',directionalReverse:'Downward ascending / upward descending'}:{directional:'Written ascending / reversed descending',directionalReverse:'Reversed ascending / written descending'};
+  return [...SCALE_CELL_ORDERS.slice(0,2),...SCALE_CELL_ORDERS.slice(-2),...SCALE_CELL_ORDERS.slice(2,-2)].map(([id,label])=>[id,labels[id]||label]);
+ }
  const n=definition.offsets[1]+1;
  return [['normal',`1–${n}`],['reverse',`${n}–1`],['directional',`1–${n} ascending / ${n}–1 descending`],['directionalReverse',`${n}–1 ascending / 1–${n} descending`],['alternate',`Alternate 1–${n} / ${n}–1`],['alternateReverse',`Alternate ${n}–1 / 1–${n}`]];
 }
