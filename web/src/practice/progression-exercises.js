@@ -37,7 +37,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  // order of cells, independently of their internal written/reversed order.
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
- let cellOffset=0,pendingCell=null,regionBoundary=null,lastPlayedNote=null,lastPlayedDirection=null;
+ let cellOffset=0,pendingCell=null,regionBoundary=null,lastPlayedNote=null,lastPlayedDirection=null,lastCompletedNotes=null;
  const repeatBoundary=options.traversalTurn==='note';
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
@@ -88,7 +88,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   // Changed contexts may rearticulate a shared endpoint; otherwise choose
   // the nearest valid cell in the ongoing direction.
   if(context!==previousContext){
-   lastPlayedNote=null;lastPlayedDirection=null;
+   lastPlayedNote=null;lastPlayedDirection=null;lastCompletedNotes=null;
    cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;
    if(phaseTurn){
     // The preceding form has used its allotted traversal steps. Start the
@@ -187,10 +187,13 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    const direction=cell.sequenceDirection??travel;
    if(direction!==travel)travel=direction;
    if(study==='triadpairs'&&options.traversalTurn==='position'&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes.length>1&&cell.notes[0].midi===lastPlayedNote.midi)cellOffset=1;
-   if(repeatBoundary&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes[0].midi!==lastPlayedNote.midi){
+   if(repeatBoundary&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection){
     // Keep the written motif intact. A separate turnaround note supplies the
     // repeated endpoint when the returning motif starts on another pitch.
-    const note={...lastPlayedNote,boundaryRepeat:true};notes.push(note);used.push('Boundary repeat');cellLengths.push(1);cellOffsets.push(0);cellSizes.push(1);cellDetailsList.push(cellDetails({notes:[note],annotation:'Boundary repeat'},harmony));sequenceAnchors.push(lastAnchor??note.midi);sequenceCursors.push(lastCursor??note.midi);sequenceDirections.push(direction);lastPlayedDirection=direction;continue;
+    const boundary=(lastCompletedNotes||[lastPlayedNote]).reduce((edge,n)=>(n.midi-edge.midi)*lastPlayedDirection>0?n:edge),approach=lastPlayedNote.midi!==boundary.midi;
+    if(approach||cell.notes[0].midi!==boundary.midi){
+     const note={...boundary,boundaryTurn:true,...(approach?{boundaryApproach:true}:{boundaryRepeat:true})},label=approach?'Boundary note':'Boundary repeat';notes.push(note);used.push(label);cellLengths.push(1);cellOffsets.push(0);cellSizes.push(1);cellDetailsList.push(cellDetails({notes:[note],annotation:label},harmony));sequenceAnchors.push(lastAnchor??note.midi);sequenceCursors.push(lastCursor??note.midi);sequenceDirections.push(approach?lastPlayedDirection:direction);lastPlayedNote=note;lastMidi=note.midi;if(board.route)routePrevious=note;if(!approach)lastPlayedDirection=direction;continue;
+    }
    }
    let cellNotes=cell.notes;
    if(alternating){
@@ -217,7 +220,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';
    if(flowingCells&&offset+take<cellNotes.length){cellOffset=offset+take;pendingCell=board.route?{...cell,notes:cellNotes,routeContext:context}:cell;}
-   else{cellOffset=0;pendingCell=null;cellIndex=nextIndex;emittedCells++;}
+   else{lastCompletedNotes=cellNotes.map(n=>board.neckCell?{...n,neckCell:board.neckCell}:n);cellOffset=0;pendingCell=null;cellIndex=nextIndex;emittedCells++;}
    if(stage==='cell'&&study!=='positionalscale')break;
   }
   if(study==='positionalscale'&&!regionBoards){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}

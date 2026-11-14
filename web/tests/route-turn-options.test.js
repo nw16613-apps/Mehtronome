@@ -18,7 +18,7 @@ test('position-entry turns make the terminal position descend/ascend from its fi
 test('alternating positions complete one entire sweep then reverse for each neighbouring position',()=>{
  for(const motion of ['ascending','descending'])for(const study of ['groups4','positionalscale','arpseq_groups3']){
   const view={...base,traversal:'alternate',study,motion},g=neckExerciseGroups([h],null,view)[0],list=segments(g);let lastId=null,visits=[];
-  for(const segment of list.filter(s=>!s.notes[0]?.boundaryRepeat)){if(lastId!==segment.id){visits.push({id:segment.id,dir:segment.dir,notes:[]});lastId=segment.id;}visits.at(-1).notes.push(...segment.notes);assert.equal(segment.dir,visits.at(-1).dir);}
+  for(const segment of list.filter(s=>!s.notes[0]?.boundaryTurn)){if(lastId!==segment.id){visits.push({id:segment.id,dir:segment.dir,notes:[]});lastId=segment.id;}visits.at(-1).notes.push(...segment.notes);assert.equal(segment.dir,visits.at(-1).dir);}
   assert.ok(visits.length>3);for(let i=1;i<visits.length;i++)assert.equal(visits[i].dir,-visits[i-1].dir);assert.equal(visits[0].dir,motion==='descending'?-1:1);
   for(const visit of visits){const midis=visit.notes.map(n=>n.midi);assert.equal(Math.sign(midis.at(-1)-midis[0]),visit.dir);}
  }

@@ -59,8 +59,9 @@ Selected-position and alternating-position recipes offer Continue without repeat
 horizontal/diagonal routes retain Turn on entering end position as the alternative.
 
 On an actual reversal, a repeated endpoint that is not already supplied by the
-returning motif is a separate turnaround note. It does not rotate, reverse or
-shorten the written motif. Selected-position scale/arpeggio streams and exact
+returning motif is a separate turnaround note. If a reversed group finishes away
+from its extremity, the turnaround reaches that extremity first and then repeats
+it. This does not rotate, reverse or shorten the written motif. Selected-position scale/arpeggio streams and exact
 per-string fingerings repeat both extremes when enabled. Triad-pair return
 contours either rearticulate or share their common endpoint, including standalone
 notation. Harmonic changes do not copy an outgoing chord's note into the next

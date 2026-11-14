@@ -35,3 +35,9 @@ test('every selected fingering repeats the turning endpoint without changing its
   assert.deepEqual(stamp(groups),stamp(perStringExerciseGroups([h,h],[5,27],[{},{}],v)));
  }
 });
+test('reversed groups reach the actual motif extremity before repeating it',()=>{
+ for(const motion of ['ascending','descending']){
+  const g=neckExerciseGroups([h],[128],{...base,study:'groups4',traversal:'horizontal',sequenceOrder:'reverse',motion})[0],index=g.notes.findIndex(n=>n.boundaryApproach);assert.ok(index>=4);
+  let offset=0,segment=0;while(offset<index)offset+=g.cellLengths[segment++];const lastMotif=g.notes.slice(index-4,index).map(n=>n.midi),edge=g.sequenceDirections[segment]>0?Math.max(...lastMotif):Math.min(...lastMotif);assert.equal(g.notes[index].midi,edge);assert.equal(g.notes[index+1].midi,edge);
+ }
+});
