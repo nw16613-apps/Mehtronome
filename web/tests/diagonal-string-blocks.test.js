@@ -17,10 +17,10 @@ test('groups of four finish every group on each pair, then restart in the next p
  assert.deepEqual(stamp(g),expected);assert.deepEqual([...new Set(g[0].notes.map(n=>n.neckCell.blockIndex))],[0,1,2]);
  const down={...base,motion:'descending',traversalCell:route.degree},expectedDown=route.blocks.toReversed().flatMap(b=>cagedStudy(b.board,h,'groups4','seventh','descending').flatMap(c=>c.notes.map(n=>[n.midi,n.string,n.fret,b.degree,false])));assert.deepEqual(stamp(neckExerciseGroups([h],[expectedDown.length/4],down)),expectedDown);
 });
-test('block and pattern phase survive bar splits, and returns retrace the same physical blocks',()=>{
+test('block and pattern phase survive bar splits while complete routes advance through positions',()=>{
  for(const study of ['groups3','groups4','thirds','harmonized','positionalscale','positional'])for(const motion of ['ascending','descending'])for(const sequenceOrder of ['normal','reverse','directional']){
   const v={...base,study,motion,sequenceOrder,arpeggioClose:false,material:study==='harmonized'?'triad':'seventh',arpeggioSource:study==='harmonized'?'diatonic':'selectedChord',arpeggioPattern:study==='harmonized'?'perm3_135':'perm4_1357'},whole=neckExerciseGroups([h],[24],v),split=neckExerciseGroups([h,h,h],[1.25,6.75,16],v);assert.deepEqual(stamp(split),stamp(whole));
-  const ids=whole[0].notes.filter(n=>!n.boundaryTurn).map(n=>n.neckCell.blockIndex),visits=ids.filter((id,i)=>!i||id!==ids[i-1]);assert.deepEqual(visits.slice(0,5),motion==='ascending'?[0,1,2,1,0]:[2,1,0,1,2],study);
+  const ids=whole[0].notes.filter(n=>!n.boundaryTurn).map(n=>n.neckCell.blockIndex),visits=ids.filter((id,i)=>!i||id!==ids[i-1]);assert.deepEqual(visits.slice(0,3),motion==='ascending'?[0,1,2]:[2,1,0],study);
  }
 });
 test('an incomplete final string block is explicit and cannot silently lose part of the pattern',()=>{

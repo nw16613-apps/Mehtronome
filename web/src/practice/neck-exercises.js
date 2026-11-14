@@ -19,11 +19,11 @@ export function neckRouteChoice(choices,view){
 export function neckExerciseGroups(harmonies,durations,view){
  view=normalizeTraversal({...view});
  const boards=harmonies.map(h=>neckRouteBoard(h,view));
- const blockTraversal=view.traversal==='diagonal',multiBlock=blockTraversal&&view.traversalShiftStrings<view.traversalStrings.split(',').length,alternateRouteGroups=multiBlock&&view.traversalPositionOrder==='alternate';
- const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,blockTraversal,alternateRouteGroups,strictBlocks:multiBlock,study:view.study==='positional'?'positionalscale':view.study,once:!durations,
+ const blockTraversal=view.traversal==='diagonal',multiBlock=blockTraversal&&view.traversalShiftStrings<view.traversalStrings.split(',').length;
+ const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,blockTraversal,routeGroups:multiBlock,strictBlocks:multiBlock,study:view.study==='positional'?'positionalscale':view.study,once:!durations,
   regionBoardsFor:h=>{
    const choices=neckExerciseCells(h,view),selected=neckRouteChoice(choices,view);
-   const regions=alternateRouteGroups?choices.flatMap((r,routeIndex)=>r.blocks.map(b=>({...b,routeIndex,start:r.degree===selected?.degree&&b.blockIndex===(['descending','down-up'].includes(view.motion)?r.blocks.length-1:0)}))):multiBlock?(selected?.blocks||[]):choices;
+   const regions=multiBlock?choices.flatMap((r,routeIndex)=>r.blocks.map(b=>({...b,routeIndex,start:r.degree===selected?.degree&&b.blockIndex===(['descending','down-up'].includes(view.motion)?r.blocks.length-1:0)}))):choices;
    return regions.map(s=>({...s.board,neckCell:{id:s.degree,label:s.label,notes:s.board.notes,harmony:h,...(multiBlock?{routeId:s.routeId,routeIndex:s.routeIndex,blockIndex:s.blockIndex,parentId:s.parentId,start:s.start}: {})},route:{...s.board.route,cell:true,traversalStrings:multiBlock?s.strings.join(','):s.board.route.traversalStrings}}));
   },
   positionPath:harmonies.map(()=>({neck:true})),boardFor:(_,i)=>boards[i],harmonyFor:h=>{

@@ -73,3 +73,23 @@ families, both starting directions, selected CAGED traversals, all six non-CAGED
 fingering types, exact repeated coordinates, chart phase, timing and favourites.
 Browser coverage verifies placement and persistent availability, shared state,
 existing turning policies and live playback.
+
+## Further traversal audit — 14 November 2026
+
+- Alternating positions no longer adds boundary approach/repeat notes. Its
+  boundary control is hidden, inactive saved boundary choices sound identical,
+  and equivalent favourites deduplicate. A stored alternating setting also no
+  longer affects selected-position mode where that setting is inactive.
+- Follow traversal advances through complete diagonal positions. Early turns
+  reverse the entire terminal position rather than reversing its last string
+  block. Normal boundary turns retrace the entire terminal route.
+- A single available diagonal position no longer resets its direction and
+  string-block cursor at each new bar when early turning is selected.
+- Alternating positions requires at least two complete playable positions.
+  A one-position range no longer masquerades as a multi-position exercise.
+- The audit verifies every string-block size on two-, four- and six-string sets,
+  both starting directions, both position orders, both saved boundary policies,
+  note/TAB coordinates, timed-event counts, bar-split phase and favourites.
+  Scale and core-arpeggio traversals, scalar/arpeggio-tone groups, whole triads
+  and enclosures are covered. Impossible block/pattern combinations continue
+  to produce an explicit availability message rather than partial material.

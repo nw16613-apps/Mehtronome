@@ -3,9 +3,9 @@ import {harmonyAt} from '../src/audio/music.js';import {fretboardFor} from '../s
 import {cagedStudy} from '../src/guitar/exercises.js';
 const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),base={traversalShiftStrings:3,material:'seventh',traversalStrings:'0,1,2',traversalStart:5,traversalEnd:17,rhythm:'sixteenths',motion:'ascending',traversalTurn:'note'};
 const stamp=gs=>gs.flatMap(g=>g.notes.map(n=>[n.midi,n.string,n.fret,!!n.boundaryRepeat]));
-test('boundary choice is independent of material, family, order, position traversal and alternation',()=>{
+test('boundary choice covers every family but is inactive when alternating positions',()=>{
  for(const traversal of ['position','horizontal','diagonal'])for(const traversalPositionOrder of ['follow','alternate'])for(const study of ['groups4','harmonized','enclosures4','positionalscale','positional','triadpairs'])for(const sequenceOrder of ['normal','reverse','alternate','directional']){
-  const view={...base,traversal,traversalPositionOrder,study,sequenceOrder};assert.ok(hasRouteTurnOptions(view));assert.match(traversalControls(view),/id="exercise-neck-turn"/);assert.doesNotMatch(traversalControls(view,'guitar'),/id="guitar-neck-turn"/);
+  const view={...base,traversal,traversalPositionOrder,study,sequenceOrder},alternating=traversal!=='position'&&traversalPositionOrder==='alternate';assert.equal(hasRouteTurnOptions(view),!alternating);if(alternating)assert.doesNotMatch(traversalControls(view),/id="exercise-neck-turn"/);else assert.match(traversalControls(view),/id="exercise-neck-turn"/);assert.doesNotMatch(traversalControls(view,'guitar'),/id="guitar-neck-turn"/);
  }
 });
 test('all written cell orders keep complete motifs and repeat the outgoing note at a route turn',()=>{

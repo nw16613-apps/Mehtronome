@@ -18,12 +18,19 @@ the chosen fret range.
 
 Ascending first visits lower-string blocks followed by higher-string blocks.
 Descending first retraces the route from its highest-string block. With Follow
-traversal, return movement reverses the same physical blocks. Alternating
+traversal, finish a complete diagonal position before starting the next position
+in the same direction; return through complete positions at the fret-range limit.
+An early turn starts the entire terminal position in the return direction, not
+only its final string block. Alternating
 positions treats the complete diagonal route as one position: ascend through
 all its blocks, descend through every block of the next route, then ascend the
 next. It does not alternate direction between the blocks within a route. At
 the fret-range limit, traversal returns through complete neighbouring routes.
-Existing boundary-repeat and early terminal-position turns remain available.
+Boundary-repeat and early terminal-position turns apply to Follow traversal.
+When alternating positions they are inactive and the control is hidden: no
+extra approach or repeated boundary notes are inserted between positions.
+Alternation requires at least two complete playable positions; a one-position
+range is explicitly unavailable instead of silently repeating the same route.
 If the block size equals the entire selected string set, diagonal traversal
 reduces to horizontal position traversal.
 

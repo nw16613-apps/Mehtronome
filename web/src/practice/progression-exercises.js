@@ -38,7 +38,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
  let cellOffset=0,pendingCell=null,regionBoundary=null,lastPlayedNote=null,lastPlayedDirection=null,lastCompletedNotes=null;
- const repeatBoundary=options.traversalTurn==='note';
+ const repeatBoundary=options.traversalTurn==='note'&&!alternatesPositions(options);
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  let regionTravel=travel;
@@ -56,10 +56,13 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
   let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
-  if(options.alternateRouteGroups&&!regionCursor&&regionIndex<0)regionIndex=regionBoards.findIndex(b=>b.neckCell.start);
+  if(options.routeGroups&&!regionCursor&&regionIndex<0)regionIndex=regionBoards.findIndex(b=>b.neckCell.start);
   if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:(options.blockTraversal&&regionCursor.blockIndex!==undefined&&b.neckCell.blockIndex!==regionCursor.blockIndex?100:0)+Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:regionTravel>0?0:regionBoards.length-1;
   let board=regionBoards?.[regionIndex]||outputBoard;
-  if(regionBoards?.length&&turnOnEntry&&(slot===0||regionBoards.length>1)&&regionIndex===(regionTravel>0?regionBoards.length-1:0)){
+  if(regionBoards?.length&&turnOnEntry&&options.routeGroups){
+   const ids=[...new Set(regionBoards.map(b=>b.neckCell.routeId))],edge=regionTravel>0?ids.at(-1):ids[0];
+   if((slot===0||ids.length>1)&&board.neckCell.routeId===edge){travel=-travel;regionTravel=-regionTravel;regionTurns++;const entries=regionBoards.flatMap((b,i)=>b.neckCell.routeId===edge?[i]:[]);regionIndex=travel>0?entries[0]:entries.at(-1);board=regionBoards[regionIndex];}
+  }else if(regionBoards?.length&&turnOnEntry&&(slot===0||regionBoards.length>1)&&regionIndex===(regionTravel>0?regionBoards.length-1:0)){
    travel=-travel;regionTravel=-regionTravel;regionTurns++;
   }
   const sources=study==='pentatonic'?theoryOptions(harmony).pentatonics:study==='triadpairs'?theoryOptions(harmony).triadPairs:[];
@@ -83,8 +86,9 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||boundary||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
-  const blocked=[];
-  if(options.strictBlocks){const original=board;for(const candidate of regionBoards||[]){board=candidate;if(!makeCells().length)blocked.push(candidate.neckCell.label);}board=original;}
+  const blocked=[],playableRoutes=new Map();
+  if(options.strictBlocks||alternatePositions){const original=board;for(const candidate of regionBoards||[]){board=candidate;const fits=!!makeCells().length,id=candidate.neckCell.routeId||candidate.neckCell.id;playableRoutes.set(id,(playableRoutes.get(id)??true)&&fits);if(options.strictBlocks&&!fits)blocked.push(candidate.neckCell.label);}board=original;}
+  const unavailableAlternation=alternatePositions&&regionBoards&&[...playableRoutes.values()].filter(Boolean).length<2;
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
@@ -119,9 +123,9 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    let fallback=null;
    for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
     let next=regionIndex+regionTravel,turned=false,enteredTurn=false;
-    if(options.alternateRouteGroups){
-     // A diagonal position contains several string blocks. Finish every block
-     // in one direction before alternating into the neighbouring full route.
+    if(options.routeGroups){
+     // Both direction order and boundary turns belong to complete positions,
+     // never to individual string blocks inside a diagonal route.
      const currentRoute=board.neckCell.routeId,within=regionIndex+travel;
      if(regionBoards[within]?.neckCell.routeId===currentRoute)next=within;
      else{
@@ -129,9 +133,16 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
       let nextRoute=current+regionTravel;
       if(nextRoute<0||nextRoute>=routeIds.length){
        if(options.once&&++regionTurns>1)return false;
-       regionTravel=-regionTravel;nextRoute=routeIds.length>1?current+regionTravel:current;
+       regionTravel=-regionTravel;nextRoute=alternatePositions&&routeIds.length>1?current+regionTravel:current;
+       travel=-travel;
+      }else if(alternatePositions){
+       travel=-travel;
+      }else if(turnOnEntry&&nextRoute===(regionTravel>0?routeIds.length-1:0)){
+       if(options.once&&++regionTurns>1)return false;
+       regionTravel=-regionTravel;travel=regionTravel;
+      }else{
+       travel=regionTravel;
       }
-      travel=-travel;
       const candidates=regionBoards.flatMap((b,i)=>b.neckCell.routeId===routeIds[nextRoute]?[i]:[]);
       next=travel>0?candidates[0]:candidates.at(-1);
      }
@@ -175,7 +186,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],cellDetailsList=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];
-  while(!blocked.length&&(cells.length||regionBoards?.length)&&notes.length<capacity){
+  while(!blocked.length&&!unavailableAlternation&&(cells.length||regionBoards?.length)&&notes.length<capacity){
    if(regionBoards&&(!cells.length||cellIndex>=cells.length)){if(!advanceRegion())break;}
    const previousTravel=travel,previousIndex=cellIndex;
    if(scaleTraversal&&scaleRemaining===0){
@@ -205,7 +216,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    const direction=cell.sequenceDirection??travel;
    if(direction!==travel)travel=direction;
-   if(study==='triadpairs'&&options.traversalTurn==='position'&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes.length>1&&cell.notes[0].midi===lastPlayedNote.midi)cellOffset=1;
+   if(study==='triadpairs'&&!alternatePositions&&options.traversalTurn==='position'&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes.length>1&&cell.notes[0].midi===lastPlayedNote.midi)cellOffset=1;
    if(repeatBoundary&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection){
     // Keep the written motif intact. A separate turnaround note supplies the
     // repeated endpoint when the returning motif starts on another pitch.
@@ -244,7 +255,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   }
   if(study==='positionalscale'&&!regionBoards){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
   if(regionBoards?.length)regionCursor={id:board.neckCell.id,firstFret:board.firstFret,blockIndex:board.neckCell.blockIndex};
-  const missing=!notes.length,warning=blocked.length?`${harmony.name}${harmony.suffix}: no complete pattern fits ${blocked.join('; ')}. Increase Strings before position change or choose a smaller pattern.`:missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
+  const missing=!notes.length,warning=blocked.length?`${harmony.name}${harmony.suffix}: no complete pattern fits ${blocked.join('; ')}. Increase Strings before position change or choose a smaller pattern.`:unavailableAlternation?`${harmony.name}${harmony.suffix}: alternating positions needs at least two playable positions. Widen the fret range or choose a smaller pattern.`:missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
   const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'&&!regionBoards?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(regionBoards?outputBoard:board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;

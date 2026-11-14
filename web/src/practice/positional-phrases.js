@@ -3,6 +3,7 @@ import {resolveArpeggioStart} from './arpeggio-start.js';
 import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
+import {alternatesPositions} from '../guitar/neck-traversal.js';
 
 // Endpoint repetition is independent of subdivision and chart bar lines.
 export function rangePhrase(span,descending,repeatBoundary=false){
@@ -29,7 +30,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   const size=Math.min(spanSize,available.length),span=descending?available.slice(-size):available.slice(0,size);
   const context=JSON.stringify([harmony.name,harmony.suffix,harmony.mode,harmony.intervals,available.map(n=>[n.midi,n.string,n.fret,n.name])]);
   const patternStart=resolveArpeggioStart(span,harmony,selectedStart==='default'?descending:!nextUp,selectedStart);
-  const {cycle,sections}=rangePhrase(span,descending,options.traversalTurn==='note');
+  const {cycle,sections}=rangePhrase(span,descending,options.traversalTurn==='note'&&!alternatesPositions(options));
   const sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
   if(selectedStart==='default'&&(explicit||context!==previousContext||previousStart!==selectedStart))phaseOffset=-cursor;
   if(selectedStart!=='default'&&(explicit||context!==previousContext||selectedStart!==previousStart)){

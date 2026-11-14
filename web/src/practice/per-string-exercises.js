@@ -1,6 +1,7 @@
 import {fingeringCatalogue,playableFingeringStringSets,fingeringName} from '../guitar/fingering-catalogue.js';
 import {exerciseArpeggioHarmony} from '../guitar/arpeggio-harmony.js';
 import {MODES} from '../audio/music.js';
+import {alternatesPositions} from '../guitar/neck-traversal.js';
 export const PER_STRING_STUDIES=new Set(['positional','positionalscale','arpgroups3','arpgroups4']);
 export function exerciseFingeringCatalogue(h,o){
  const sets=playableFingeringStringSets(h,o.fingering,o.spreadSource),set=sets.find(s=>s.index===o.fingeringStringSet)?.index??sets[0]?.index??o.fingeringStringSet??0;
@@ -28,7 +29,7 @@ export function perStringExerciseGroups(harmonies,durations,positions,options){
   const size=options.study==='arpgroups3'?3:options.study==='arpgroups4'?4:0;
   const up=size?ordered.slice(0,ordered.length-size+1).flatMap((_,i)=>ordered.slice(i,i+size)):ordered;
   const reverse=[...ordered].reverse();
-  const down=size?reverse.slice(1,reverse.length-size).flatMap((_,i)=>reverse.slice(i+1,i+1+size)):options.traversalTurn==='note'?ordered.toReversed():ordered.slice(1,-1).reverse();
+  const down=size?reverse.slice(1,reverse.length-size).flatMap((_,i)=>reverse.slice(i+1,i+1+size)):options.traversalTurn==='note'&&!alternatesPositions(options)?ordered.toReversed():ordered.slice(1,-1).reverse();
   const cycle=[...up,...down],identity=JSON.stringify([harmony.chordPcs,board.notes.map(n=>[n.string,n.fret]),options.motion,options.study]);
   if(identity!==previous)phase=0;previous=identity;
   const capacity=durations?Math.max(1,Math.floor(durations[slot]*division)):cycle.length;
