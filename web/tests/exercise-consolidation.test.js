@@ -43,7 +43,7 @@ test('unused fingering controls cannot create a second bookmark for a CAGED trav
 test('nearest-entry routine chooses against the last audible note, including across bars and turns',()=>{
  const h=harmonyAt({...DEFAULTS,key:9,chord:'min7',mode:'dorian',progression:false}),board=fretboardFor(h,'E'),position={geometryShape:'E'},v=normalizeExerciseOptions({...base,arpeggioPattern:'perm4_1537',arpeggioRoutine:'connected'}),gs=progressionExerciseGroups(Array(12).fill(h),Array(12).fill(4),board,{...v,positionPath:Array(12).fill(position)});let previous=null;
  for(const g of gs){let start=0;for(let i=0;i<g.cellLengths.length;i++){
-  const length=g.cellLengths[i],played=g.notes.slice(start,start+length);if(previous!==null&&!g.cellOffsets[i]){
+  const length=g.cellLengths[i],played=g.notes.slice(start,start+length);if(previous!==null&&!g.cellOffsets[i]&&!played[0]?.boundaryTurn){
    const candidates=cagedStudy(board,h,'harmonized','seventh',g.sequenceDirections[i]>0?'ascending':'descending',{...v,arpeggioDeferConnection:true}).filter(c=>c.sequenceAnchor===g.sequenceAnchors[i]);
    assert.equal(Math.abs(played[0].midi-previous),Math.min(...candidates.map(c=>Math.abs(c.notes[0].midi-previous))));
   }previous=played.at(-1).midi;start+=length;

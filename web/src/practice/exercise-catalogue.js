@@ -3,7 +3,7 @@ import {SCALE_SEQUENCES,SCALE_SEQUENCE_FAMILY_LABELS} from '../guitar/scale-sequ
 import {SCALE_SEQUENCE_FAMILIES,scaleSequenceFamily} from './exercise-library.js';
 import {arpeggioFamilies,arpeggioPatternFamily,arpeggioPatternGroups,normalizeArpeggioPattern} from '../guitar/arpeggio-patterns.js';
 export const CONTENT_MATERIALS=[['scale','Scale notes'],['triad','Triad arpeggios'],['seventh','Seventh arpeggios']];
-export function contentMaterial(v){if(v.exactFingering)return 'shape';return v.study==='positionalscale'||SCALE_SEQUENCES[v.study]||['passingtones','pentatonic'].includes(v.study)?'scale':v.study==='triadpairs'?'triad':v.material==='triad'?'triad':'seventh';}
+export function contentMaterial(v){if(v.exactFingering)return 'shape';return v.study==='positionalscale'||SCALE_SEQUENCES[v.study]||v.study==='pentatonic'?'scale':v.study==='triadpairs'?'triad':v.material==='triad'?'triad':'seventh';}
 export function contentSource(v){if(v.exactFingering)return 'selectedChord';if(contentMaterial(v)==='scale')return v.study==='pentatonic'?'pentatonic':'mode';return v.study==='triadpairs'?'triadPair':v.study==='harmonized'?v.arpeggioSource||'diatonic':v.study==='approach'?'diatonic':'selectedChord';}
 export function contentSources(material){if(material==='shape')return [['selectedChord','Selected chord · exact shape']];return material==='scale'?[['mode','Current mode / scale'],['pentatonic','Pentatonic superimposition']]:[['selectedChord','Selected chord'],['diatonic','All scale-degree arpeggios'],['chordRoots','Arpeggios from chord-tone roots'],...(material==='triad'?[['triadPair','Triad pair']]:[])];}
 export function contentFamily(v){if(['positional','positionalscale'].includes(v.study))return 'continuous';if(SCALE_SEQUENCES[v.study.replace(/^arpseq_/,'')])return scaleSequenceFamily(v.study);if(v.study==='harmonized')return 'arp_'+arpeggioPatternFamily(v.arpeggioPattern);if(v.study.startsWith('enclosures'))return 'enclosures';return v.study;}
@@ -14,7 +14,7 @@ export function contentFamilies(material,source,view={}){
  if(source==='pentatonic')return [['pentatonic','Pentatonic patterns']];if(source==='triadPair')return [['triadpairs','Triad-pair lines']];
 
  if(material!=='scale'&&source!=='selectedChord')return [...whole,...(source==='diatonic'?[['approach','Approach between arpeggios']]:[])];
- return [['continuous','Continuous traversal'],...Object.entries(SCALE_SEQUENCE_FAMILY_LABELS).map(([id,name])=>[id,id==='groups'?'Overlapping note groups':id==='permutations3'?'3-note group permutations (6)':id==='permutations4'?'4-note group permutations (24)':name]),...(material==='scale'?[['passingtones','Chromatic passing tones']]:[...whole,['enclosures','Enclosures'],['doubleapproach','Double chromatic approaches'],['chromaticneighbors','Chromatic neighbours']])];
+ return [['continuous','Continuous traversal'],...Object.entries(SCALE_SEQUENCE_FAMILY_LABELS).map(([id,name])=>[id,id==='groups'?'Overlapping note groups':id==='permutations3'?'3-note group permutations (6)':id==='permutations4'?'4-note group permutations (24)':name]),...(material==='scale'?[]:[...whole,['enclosures','Enclosures'],['doubleapproach','Double chromatic approaches'],['chromaticneighbors','Chromatic neighbours']])];
 }
 export function changeContentFamily(view,family,{material=contentMaterial(view),source=contentSource(view)}={}){
  const previousFamily=contentFamily(view),previousStudy=view.study,previousOrder=view.arpeggioPattern;

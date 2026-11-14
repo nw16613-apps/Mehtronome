@@ -5,12 +5,13 @@ import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
 import {normalizeArpeggioPattern,canonicalArpeggioRecipe} from '../guitar/arpeggio-patterns.js';
 import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
-const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','passingtones','upperstructure','triadpairs','pentatonic']);
+const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  normalizeTraversal(view);
  if(acrossNeck(view)){view.fingering='caged';view.exactFingering=false;}
  view.stage='full';
  view.study=typeof view.study==='string'&&view.study?view.study:'positional';
+ if(view.study==='passingtones')view.study='positionalscale';
  if(/^arpgroups[34]$/.test(view.study)){view.study='arpseq_groups'+view.study.at(-1);view.material='seventh';}
  if(view.study.startsWith('arpseq_'))view.material=view.material==='triad'?'triad':'seventh';
  view.sequenceAdvance=[1,2,3].includes(Number(view.sequenceAdvance))?Number(view.sequenceAdvance):1;
@@ -101,7 +102,6 @@ export function exerciseGuidance(study){
   approach:'Play each arpeggio, then approach the first note of the next cell chromatically.',
   doubleapproach:'Lead into each arpeggio cell with two chromatic approach notes.',
   chromaticneighbors:'Move away from a chord tone to its written chromatic neighbour, then return.',
-  passingtones:'Connect scale notes with the written chromatic passing tones.',
   approacheverytone:'Approach each arpeggio tone chromatically, then resolve to it.',
   triadpairs:'Alternate the selected pair of triads as a melodic line, then resolve to a backing-chord tone.',
   pentatonic:'Play the selected pattern using the chosen pentatonic source. Resolve the phrase to a backing-chord tone.',
