@@ -1,4 +1,4 @@
-import {routeCellNotes,canRouteNotes,hasRouteTurnOptions,alternatesPositions} from '../guitar/neck-traversal.js';
+import {routeCellNotes,canRouteNotes,alternatesPositions} from '../guitar/neck-traversal.js';
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
 import {cellDetails} from './notation-cells.js';
@@ -37,11 +37,15 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  // order of cells, independently of their internal written/reversed order.
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
- let cellOffset=0,pendingCell=null,regionBoundary=null;
+ let cellOffset=0,pendingCell=null,regionBoundary=null,lastPlayedNote=null,lastPlayedDirection=null;
+ const repeatBoundary=options.traversalTurn==='note';
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  let regionTravel=travel;
- const alternatePositions=alternatesPositions(options),turnOptions=hasRouteTurnOptions(options),turnOnEntry=turnOptions&&options.traversalTurn==='position';
+ const turnDefinition=SCALE_SEQUENCES[study==='pentatonic'?pattern:study.replace(/^arpseq_/,'')],turnSteps=turnDefinition?.offsets;
+ // Connected orders can turn directly on their final note. Other orders
+ // keep their motif and use a separate repeated turnaround note.
+ const alternatePositions=alternatesPositions(options),turnOptions=['positional','positionalscale'].includes(study)||options.sequenceOrder==='directional'&&!!turnSteps&&!turnDefinition.pedal&&turnSteps[0]===Math.min(...turnSteps)&&turnSteps.at(-1)===Math.max(...turnSteps),turnOnEntry=!alternatePositions&&options.traversalTurn==='position';
  const directional=study!=='grip'&&study!=='triadpairs'||alternatePositions;
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&!pentatonicCells&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
@@ -78,18 +82,19 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||boundary||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
-  if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-1);
+  if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
   // Changed contexts may rearticulate a shared endpoint; otherwise choose
   // the nearest valid cell in the ongoing direction.
   if(context!==previousContext){
+   lastPlayedNote=null;lastPlayedDirection=null;
    cellIndex=study==='triadpairs'&&cells.length?emittedCells%cells.length:0;
    if(phaseTurn){
     // The preceding form has used its allotted traversal steps. Start the
     // opposite form at the incoming position's actual endpoint, rather than
     // continuing upward to it from the nearest pitch.
-    cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);
+    cellIndex=0;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));
    }else if(flowingCells&&cellOffset&&pendingCell&&cells.length){
     // A change inside a group adapts its unplayed tones at the same ordinal.
     // Compare the next structural tone, not a fresh cell's starting note.
@@ -104,7 +109,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     const rangeTurn=next.reset&&directional&&!regionBoards;
     if(rangeTurn){travel=-travel;cells=makeCells();next=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel);}
     cellIndex=regionBoards&&next.reset?cells.length:next.index;
-    if(scaleTraversal&&(pendingScaleTurn||rangeTurn))scaleRemaining=Math.max(1,cells.length-1-cellIndex);
+    if(scaleTraversal&&(pendingScaleTurn||rangeTurn))scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);
    }
   }
   const advanceRegion=()=>{
@@ -145,8 +150,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    return false;
   };
   let startWarning='';
-  if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-1);}
-  if((scaleTraversal||regionBoards&&study==='positionalscale')&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-1-cellIndex);startWarning=entry.warning;}
+  if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));}
+  if((scaleTraversal||regionBoards&&study==='positionalscale')&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);startWarning=entry.warning;}
   if(slot===0&&!scaleTraversal&&cells.length&&options.entryTone&&options.entryTone!=='default'){const entry=sequenceEntryState(cells,harmony,{...options,study});cellIndex=entry.index;if(study==='triadpairs')emittedCells=entry.index;startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
@@ -156,8 +161,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    const previousTravel=travel,previousIndex=cellIndex;
    if(scaleTraversal&&scaleRemaining===0){
     const edgeAlreadyPlayed=cellIndex>=cells.length;travel=-travel;cells=makeCells();
-    cellIndex=edgeAlreadyPlayed?continuationCell(cells,lastAnchor,travel).index:0;
-    scaleRemaining=Math.max(1,cells.length-1-cellIndex);
+    cellIndex=repeatBoundary?0:edgeAlreadyPlayed?continuationCell(cells,lastAnchor,travel).index:0;
+    scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);
    }
    if(cellIndex>=cells.length){
     if(study==='positionalscale'&&stage==='cell'&&notes.length)break;
@@ -167,7 +172,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     if(!cells.length)break;
     cellIndex=0;
     if(lastAnchor!==null)cellIndex=continueCell(cells,lastRangeEdge??lastCursor??lastAnchor,travel).index;
-    if(scaleTraversal)scaleRemaining=Math.max(1,cells.length-1-cellIndex);
+    if(scaleTraversal)scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);
     }
    }
    if(routineConnected&&!cellOffset){const root=cells[cellIndex].sequenceAnchor,reference=lastMidi??triadReference,choices=cells.map((cell,index)=>({cell,index})).filter(({cell})=>cell.sequenceAnchor===root).sort((a,b)=>Math.abs(a.cell.notes[0].midi-reference)-Math.abs(b.cell.notes[0].midi-reference)||a.index-b.index);cellIndex=choices[0].index;}
@@ -181,6 +186,12 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    }
    const direction=cell.sequenceDirection??travel;
    if(direction!==travel)travel=direction;
+   if(study==='triadpairs'&&options.traversalTurn==='position'&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes.length>1&&cell.notes[0].midi===lastPlayedNote.midi)cellOffset=1;
+   if(repeatBoundary&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes[0].midi!==lastPlayedNote.midi){
+    // Keep the written motif intact. A separate turnaround note supplies the
+    // repeated endpoint when the returning motif starts on another pitch.
+    const note={...lastPlayedNote,boundaryRepeat:true};notes.push(note);used.push('Boundary repeat');cellLengths.push(1);cellOffsets.push(0);cellSizes.push(1);cellDetailsList.push(cellDetails({notes:[note],annotation:'Boundary repeat'},harmony));sequenceAnchors.push(lastAnchor??note.midi);sequenceCursors.push(lastCursor??note.midi);sequenceDirections.push(direction);lastPlayedDirection=direction;continue;
+   }
    let cellNotes=cell.notes;
    if(alternating){
     const asc=cell.notes[1]?.midi>cell.notes[0].midi;
@@ -201,7 +212,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    // against the outgoing extent, not the previous leg's starting anchor.
    // Use the structural extent so an alternating stroke cannot move the turn.
    lastRangeEdge=anchoredTraversal?lastCursor:travel>0?Math.max(...cell.notes.map(n=>n.midi)):Math.min(...cell.notes.map(n=>n.midi));
-   lastMidi=played.at(-1).midi;if(board.route)routePrevious=played.at(-1);
+   lastMidi=played.at(-1).midi;lastPlayedNote=played.at(-1);lastPlayedDirection=direction;if(board.route)routePrevious=played.at(-1);
    if(scaleTraversal)scaleRemaining=Math.max(0,scaleRemaining-played.length);
    for(const target of cell.targetIndices||(cell.targetIndex===undefined?[]:[cell.targetIndex]))if(target>=offset&&target<offset+take)targetIndices.push(start+target-offset);
    approachEnds[slot]=cell.annotation==='arpeggio · chromatic approach';

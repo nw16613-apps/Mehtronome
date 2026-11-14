@@ -15,7 +15,7 @@ test('both traversal routes alternate complete positions while preserving select
 });
 test('controls keep only position/horizontal/diagonal routes, with alternation as a nested shared choice',()=>{
  for(const traversal of ['horizontal','diagonal']){
-  const view={...base,traversal,traversalPositionOrder:'alternate'},html=traversalControls(view);assert.match(html,/data-neck-field="traversalPositionOrder"/);assert.doesNotMatch(html,/<option value="alternate"[^>]*>Alternating positions[^<]*<\/option><\/select><\/label><label[^>]*>Traversal/);assert.equal(hasRouteTurnOptions(view),false);assert.match(traversalLabel(view),/alternating positions/);
+  const view={...base,traversal,traversalPositionOrder:'alternate'},html=traversalControls(view);assert.match(html,/data-neck-field="traversalPositionOrder"/);assert.doesNotMatch(html,/<option value="alternate"[^>]*>Alternating positions[^<]*<\/option><\/select><\/label><label[^>]*>Traversal/);assert.equal(hasRouteTurnOptions(view),true);assert.match(traversalLabel(view),/alternating positions/);
   assert.equal(html.split('data-neck-field="traversal"')[1].split('</select>')[0].includes('value="alternate"'),false);
  }
 });

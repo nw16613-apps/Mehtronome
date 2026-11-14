@@ -11,6 +11,7 @@ import {chordSvg} from '../practice/chord-symbol.js';
 import {notationChordDiagram} from '../practice/notation-chord-diagram.js';
 import {theoryOptions} from './superimposition.js';
 import {continuationCell} from '../practice/sequence-continuity.js';
+import {cellDetails} from '../practice/notation-cells.js';
 
 const LETTERS=['C','D','E','F','G','A','B'];
 const TUNING=[40,45,50,55,59,64];
@@ -286,7 +287,7 @@ function pentatonicExercise(board,harmony,choice,motion,pattern='groups4',order=
   return literal?groups:groups.map((cell,i)=>orderedScaleCell(cell,order,i));
 }
 
-function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=60,order='normal') {
+function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=60,order='normal',shareBoundary=false) {
   const options=theoryOptions(harmony);
   const choices=kind==='pentatonic'?options.pentatonics:options.triadPairs;
   const choice=choices.find(option=>option.id===choiceId)||choices[0];
@@ -295,11 +296,14 @@ function overlayExercise(board,harmony,kind,motion,choiceId,pattern,targetMidi=6
   if(kind==='pentatonic')return pentatonicExercise(board,harmony,choice,motion,pattern,order);
   const groups=choice.groups.map((triad,index)=>{
     const path=pathForPcs(board,triad.pcs,triad.names,!descending,targetMidi);
-    return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
+    return {chord:triad.name,rootName:triad.names[0],pcs:triad.pcs,names:triad.names,notes:path,sequenceDirection:descending?-1:1,annotation:`Triad ${index===0?'A':'B'}`,source:`${index===0?'A':'B'} · ${triad.name}`};
   }).filter(group=>group.notes?.length===3);
   if(groups.length!==choice.groups.length)return [];
   const phrase=Array.from({length:4},()=>groups).flat();
-  return motion==='up-down'||motion==='down-up'?[...phrase,...phrase.toReversed().map(cell=>({...cell,notes:cell.notes.toReversed()}))]:phrase;
+  if(motion!=='up-down'&&motion!=='down-up')return phrase;
+  const returning=phrase.toReversed().map(cell=>({...cell,notes:cell.notes.toReversed(),sequenceDirection:-cell.sequenceDirection}));
+  if(shareBoundary){const cell=returning[0];returning[0]={...cell,notes:cell.notes.slice(1),cellLengths:[cell.notes.length-1],cellOffsets:[1],cellSizes:[cell.notes.length],cellDetails:[cellDetails(cell,harmony)]};}
+  return [...phrase,...returning];
 }
 
 export function cagedProgressionExercise(board,harmony,material='seventh',motion='ascending') {
@@ -457,7 +461,7 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(study==='approacheverytone')return approachEveryArpeggioTone(board,harmony,material,motion);
   if(study==='guidetones')return guideToneLines(board,harmony,motion,context.progression);
   if(study==='connections')return connectedArpeggios(board,harmony,material,motion,context.progression);
-  if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source,undefined,context.anchorMidi??60);
+  if(study==='triadpairs')return overlayExercise(board,harmony,'triads',motion,context.source,undefined,context.anchorMidi??60,'normal',context.traversalTurn==='position');
   if(study==='pentatonic')return overlayExercise(board,harmony,'pentatonic',motion,context.source,context.pattern,60,context.sequenceOrder);
   return cagedProgressionExercise(board,harmony,material,motion);
 }

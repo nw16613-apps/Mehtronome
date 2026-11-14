@@ -49,3 +49,26 @@ Production build passes.
 
 Recipe coverage is systematic; keys, modes, rhythm and UI combinations are
 representative, not an exhaustive visual or listening review of every combination.
+
+## Boundary controls — 14 November 2026
+
+Boundary turn is now a material-level exercise control, independent of pattern
+family, internal note order, selected-position/horizontal/diagonal traversal, or
+alternating positions. It is no longer placed in the top traversal controls.
+Selected-position and alternating-position recipes offer Continue without repeat;
+horizontal/diagonal routes retain Turn on entering end position as the alternative.
+
+On an actual reversal, a repeated endpoint that is not already supplied by the
+returning motif is a separate turnaround note. It does not rotate, reverse or
+shorten the written motif. Selected-position scale/arpeggio streams and exact
+per-string fingerings repeat both extremes when enabled. Triad-pair return
+contours either rearticulate or share their common endpoint, including standalone
+notation. Harmonic changes do not copy an outgoing chord's note into the next
+chord merely to create a repeat. The setting does not add a return leg to an
+exercise that contains only one direction.
+
+The universal boundary tests check all cell orders across representative pattern
+families, both starting directions, selected CAGED traversals, all six non-CAGED
+fingering types, exact repeated coordinates, chart phase, timing and favourites.
+Browser coverage verifies placement and persistent availability, shared state,
+existing turning policies and live playback.

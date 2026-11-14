@@ -18,7 +18,7 @@ test('position-entry turns make the terminal position descend/ascend from its fi
 test('alternating positions complete one entire sweep then reverse for each neighbouring position',()=>{
  for(const motion of ['ascending','descending'])for(const study of ['groups4','positionalscale','arpseq_groups3']){
   const view={...base,traversal:'alternate',study,motion},g=neckExerciseGroups([h],null,view)[0],list=segments(g);let lastId=null,visits=[];
-  for(const segment of list){if(lastId!==segment.id){visits.push({id:segment.id,dir:segment.dir,notes:[]});lastId=segment.id;}visits.at(-1).notes.push(...segment.notes);assert.equal(segment.dir,visits.at(-1).dir);}
+  for(const segment of list.filter(s=>!s.notes[0]?.boundaryRepeat)){if(lastId!==segment.id){visits.push({id:segment.id,dir:segment.dir,notes:[]});lastId=segment.id;}visits.at(-1).notes.push(...segment.notes);assert.equal(segment.dir,visits.at(-1).dir);}
   assert.ok(visits.length>3);for(let i=1;i<visits.length;i++)assert.equal(visits[i].dir,-visits[i-1].dir);assert.equal(visits[0].dir,motion==='descending'?-1:1);
   for(const visit of visits){const midis=visit.notes.map(n=>n.midi);assert.equal(Math.sign(midis.at(-1)-midis[0]),visit.dir);}
  }
@@ -29,7 +29,7 @@ test('turn policy and alternate-position phase survive beat splits, harmony chan
  }
  const harmonies=[0,1,2].map(i=>harmonyAt({key:9,mode:'dorian',chord:'min7',progression:true,template:'major251altered'},i));
  for(const traversal of ['horizontal','diagonal','alternate'])for(const traversalTurn of ['note','position'])for(const g of neckExerciseGroups(harmonies,[5,3,8],{...base,traversal,traversalTurn}))for(const n of g.notes)assert.ok(n.neckCell&&[0,1].includes(n.string));
- assert.notEqual(exerciseFavouriteKey({...base,traversalTurn:'note'}),exerciseFavouriteKey({...base,traversalTurn:'position'}));assert.equal(normalizeExerciseOptions({...base,traversalTurn:'nonsense'}).traversalTurn,'note');const legacy=normalizeExerciseOptions({...base,traversal:'alternate'});assert.equal(legacy.traversal,'horizontal');assert.equal(legacy.traversalPositionOrder,'alternate');assert.equal(hasRouteTurnOptions({...base,study:'enclosures4'}),false);
+ assert.notEqual(exerciseFavouriteKey({...base,traversalTurn:'note'}),exerciseFavouriteKey({...base,traversalTurn:'position'}));assert.equal(normalizeExerciseOptions({...base,traversalTurn:'nonsense'}).traversalTurn,'note');const legacy=normalizeExerciseOptions({...base,traversal:'alternate'});assert.equal(legacy.traversal,'horizontal');assert.equal(legacy.traversalPositionOrder,'alternate');assert.equal(hasRouteTurnOptions({...base,study:'enclosures4'}),true);
 });
 test('strict note turns reach and repeat the boundary even when advancing by two or three',()=>{
  for(const traversal of ['horizontal','diagonal'])for(const sequenceAdvance of [2,3])for(const motion of ['ascending','descending']){

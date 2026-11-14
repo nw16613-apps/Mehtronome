@@ -4,12 +4,11 @@ import {fretboardFor} from '../guitar/fretboard.js';
 import {positionalArpeggio} from './learning.js';
 import {MODES} from '../audio/music.js';
 
-// A positional traversal has the same pitches and unrepeated endpoints at
-// every subdivision. Timing never inserts runs or pads a phrase to a bar.
-export function rangePhrase(span,descending){
+// Endpoint repetition is independent of subdivision and chart bar lines.
+export function rangePhrase(span,descending,repeatBoundary=false){
  const cycle=[],sections=[];
  if(span.length<2)return {cycle:[...span],sections:span.length?[{start:0,length:1,up:!descending}]:[]};
- const leg=span.length-1;
+ const leg=span.length-(repeatBoundary?0:1);
  for(const down of [descending,!descending]){
   sections.push({start:cycle.length,length:leg,up:!down});
   cycle.push(...(down?span.toReversed():span).slice(0,leg));
@@ -30,7 +29,7 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   const size=Math.min(spanSize,available.length),span=descending?available.slice(-size):available.slice(0,size);
   const context=JSON.stringify([harmony.name,harmony.suffix,harmony.mode,harmony.intervals,available.map(n=>[n.midi,n.string,n.fret,n.name])]);
   const patternStart=resolveArpeggioStart(span,harmony,selectedStart==='default'?descending:!nextUp,selectedStart);
-  const {cycle,sections}=rangePhrase(span,descending);
+  const {cycle,sections}=rangePhrase(span,descending,options.traversalTurn==='note');
   const sectionAt=phase=>sections.find(s=>phase>=s.start&&phase<s.start+s.length);
   if(selectedStart==='default'&&(explicit||context!==previousContext||previousStart!==selectedStart))phaseOffset=-cursor;
   if(selectedStart!=='default'&&(explicit||context!==previousContext||selectedStart!==previousStart)){
@@ -54,7 +53,8 @@ export function positionalProgressionGroups(harmonies,durations,path,options){
   if(cycle.length)nextUp=sectionAt((phaseStart+notes.length)%cycle.length)?.up??nextUp;
   cursor+=notes.length;
   const warning=(!span.length?`${harmony.name}${harmony.suffix}: no chord tones are available in this position.`:span.length<spanSize?`${harmony.name}${harmony.suffix}, Position ${position.numeral}: only ${span.length} distinct chord-tone pitches fit; this span has a shorter phrase.`:'')+(patternStart.warning?' '+patternStart.warning:'');
-  const endingDirection=notes.length&&cycle.length>1?Math.sign(cycle[(phaseStart+notes.length)%cycle.length].midi-notes.at(-1).midi):descending?-1:1;
+  const delta=notes.length&&cycle.length>1?cycle[(phaseStart+notes.length)%cycle.length].midi-notes.at(-1).midi:0;
+  const endingDirection=delta?Math.sign(delta):notes.length&&cycle.length>1?(sectionAt((phaseStart+notes.length-1)%cycle.length)?.up?1:-1):descending?-1:1;
   const group={endingDirection,slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board,position,notes,targetIndices:[],pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells,cellLengths,cellOffsets,cellSizes,sequenceAnchors:[],sequenceDirections:[],globalStart,warning,positionalSpan:span,phraseLegLength:Math.max(1,size-1),phraseCycleLength:cycle.length,phrasePhase:phaseStart,phraseDivision:division,phraseSpanSize:spanSize,phraseStyle:'continuous',phraseStartIndex:patternStart.index,annotation:span.length?`${MODES[harmony.mode].name} · ${span.length}-note arpeggio span`:'Rest · no chord tones in this position'};
   globalStart+=notes.length;return group;
  });
