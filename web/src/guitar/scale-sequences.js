@@ -23,9 +23,11 @@ export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse e
 // legs. Source-transcribed lesson contours and continuous paths stay literal.
 export const hasPentatonicCellOrder=pattern=>!String(pattern||'').startsWith('lesson');
 export const hasChromaticSide=study=>['doubleapproach','chromaticneighbors'].includes(study);
-export const hasExerciseCellOrder=view=>Boolean(SCALE_SEQUENCES[view.study?.replace(/^arpseq_/, '')])||view.study==='pentatonic'&&hasPentatonicCellOrder(view.pattern)||view.study==='harmonized'&&view.arpeggioSequence&&view.arpeggioSequence!=='stepwise'||hasChromaticSide(view.study);
+export function hasDistinctCellReversal(study){const definition=SCALE_SEQUENCES[String(study||'').replace(/^arpseq_/,'')];return !definition||!!definition.pedal||definition.offsets.some((n,i,a)=>n!==a[a.length-1-i]);}
+export const hasExerciseCellOrder=view=>(Boolean(SCALE_SEQUENCES[view.study?.replace(/^arpseq_/, '')])||view.study==='pentatonic'&&hasPentatonicCellOrder(view.pattern)||view.study==='harmonized'&&view.arpeggioSequence&&view.arpeggioSequence!=='stepwise'||hasChromaticSide(view.study))&&hasDistinctCellReversal(view.study==='harmonized'?view.arpeggioSequence:view.study);
 export const hasDirectionalCellOrder=view=>hasExerciseCellOrder(view)&&!hasChromaticSide(view.study);
 export function scaleCellOrders(study){
+ if(!hasDistinctCellReversal(study))return [['normal','Written order']];
  if(study==='doubleapproach')return [['normal','From below · −2, −1, target'],['reverse','From above · +2, +1, target']];
  if(study==='chromaticneighbors')return [['normal','Upper then lower · return to target'],['reverse','Lower then upper · return to target']];
  const definition=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')];

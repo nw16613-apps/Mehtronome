@@ -1,6 +1,6 @@
 import {normalizeTraversal,acrossNeck} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
-import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide,hasDirectionalCellOrder} from '../guitar/scale-sequences.js';
+import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide,hasDirectionalCellOrder,hasDistinctCellReversal} from '../guitar/scale-sequences.js';
 import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
 import {normalizeArpeggioPattern,canonicalArpeggioRecipe} from '../guitar/arpeggio-patterns.js';
 import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
@@ -17,6 +17,7 @@ export function normalizeExerciseOptions(view){
  view.sequenceOrder=SCALE_CELL_ORDERS.some(([id])=>id===view.sequenceOrder)?view.sequenceOrder:'normal';
  if(hasChromaticSide(view.study)&&!['normal','reverse'].includes(view.sequenceOrder))view.sequenceOrder='normal';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
+ if(!hasDistinctCellReversal(view.study==='harmonized'?view.arpeggioSequence:view.study))view.sequenceOrder='normal';
  if(view.sequenceOrder.startsWith('directional')&&!hasDirectionalCellOrder(view))view.sequenceOrder='normal';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
  view.entryTone=/^(?:scale:[0-7]|chord:[1-7]|offset:(?:[0-9]|1[01]))$/.test(view.entryTone)?view.entryTone:'default';
