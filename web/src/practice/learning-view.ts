@@ -58,6 +58,8 @@ export function learningView(panel:HTMLElement,context:any){
 }
 function highlightNeckCell(container:HTMLElement,cell:any){
  const svg=container.querySelector<SVGElement>('svg.neck-route-map');if(!svg||!cell)return;
+ const harmonyKey=cell.harmony?JSON.stringify([cell.harmony.chordPcs,cell.harmony.scalePcs,cell.harmony.scaleNames]):null;
+ if(container.id==='full-fretboard'&&cell.routeId&&(svg.dataset.routeId!==cell.routeId||harmonyKey&&svg.dataset.routeHarmony!==harmonyKey))document.dispatchEvent(new CustomEvent('mehtronome-neck-route',{detail:cell}));
  const key=JSON.stringify([cell.id,cell.notes.map((n:any)=>[n.string,n.fret,n.pc])]);if(svg.dataset.activeNeckCell===key)return;svg.dataset.activeNeckCell=key;
  svg.querySelectorAll('.shape-selected-ring').forEach(n=>n.remove());svg.querySelectorAll('.shape-selected-note,.per-string-map-selected').forEach(n=>n.classList.remove('shape-selected-note','per-string-map-selected'));
  emphasizeFullNeck(container,{notes:cell.notes},Number(cell.id.split(':')[0]));

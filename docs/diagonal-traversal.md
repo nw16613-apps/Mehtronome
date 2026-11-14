@@ -17,9 +17,13 @@ apply within each block. Notes cannot cross into unselected strings or leave
 the chosen fret range.
 
 Ascending first visits lower-string blocks followed by higher-string blocks.
-Descending first retraces the route from its highest-string block. Return
-movement reverses the same physical blocks. Existing boundary-repeat, early
-terminal-position turns and alternating-position directions remain available.
+Descending first retraces the route from its highest-string block. With Follow
+traversal, return movement reverses the same physical blocks. Alternating
+positions treats the complete diagonal route as one position: ascend through
+all its blocks, descend through every block of the next route, then ascend the
+next. It does not alternate direction between the blocks within a route. At
+the fret-range limit, traversal returns through complete neighbouring routes.
+Existing boundary-repeat and early terminal-position turns remain available.
 If the block size equals the entire selected string set, diagonal traversal
 reduces to horizontal position traversal.
 

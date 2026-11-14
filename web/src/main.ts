@@ -2580,9 +2580,9 @@ function reflectNeckTraversal(info:any){
  if(!active)return;
  renderNeckTraversalMap(info);
 }
-function renderNeckTraversalMap(info:any){
+function renderNeckTraversalMap(info:any,activeCell:any=null){
  const board=neckRouteBoard(info,exerciseView),shapes=neckExerciseCells(info,exerciseView),cellHarmony=neckCellHarmony(info,exerciseView);
- const playingElement=document.querySelector('.exercise-note.playing'),playingCell=exercisePlaying&&playingElement?currentExercise[Number(playingElement.getAttribute('data-note-index'))]?.neckCell:null;
+ const playingElement=document.querySelector('.exercise-note.playing'),playingCell=activeCell||(exercisePlaying&&playingElement?currentExercise[Number(playingElement.getAttribute('data-note-index'))]?.neckCell:null);
  if(neckMapShape!=='all')neckMapShape=shapes.some((s:any)=>s.degree===exerciseView.traversalCell)?exerciseView.traversalCell:neckRouteChoice(shapes,exerciseView)?.degree||'all';
  const activeRoute=playingCell?.routeId||playingCell?.id||neckMapShape;
  const shape:any=shapes.find((s:any)=>s.degree===activeRoute),menu=select('per-string-neck-shape');
@@ -2591,11 +2591,18 @@ function renderNeckTraversalMap(info:any){
  perStringMapMenu.hidden=false;perStringMapMenu.querySelector('span')!.textContent=shape?.blocks?'Highlight route':'Highlight cell';perStringMapMenu.style.setProperty('--shape-color',shapeColor(shape?.index||0));input('show-regions').closest('label')!.hidden=false;
  const target=el('full-fretboard'),scroll=target.scrollLeft;
  target.innerHTML=routeMapSvg(board,guitarDegrees,MODES[info.mode as keyof typeof MODES].degrees,traversalLabel(exerciseView),shape?.board.notes||[],shape?.blocks||[]);
+ const svg=target.querySelector<SVGElement>('svg');if(svg&&shape){svg.dataset.routeId=shape.degree;svg.dataset.routeHarmony=JSON.stringify([info.chordPcs,info.scalePcs,info.scaleNames]);}
+ if(playingCell)target.querySelectorAll<SVGElement>('[data-route-block]').forEach(n=>{const active=Number(n.dataset.routeBlock)===playingCell.blockIndex;n.classList.toggle('active',active);n.querySelector('circle')?.setAttribute('stroke-width',active?'3':'1');});
  emphasizeFullNeck(target,playingCell?{...shape?.board,notes:playingCell.notes}:shape?.board,shape?.index||0);
  if(input('show-regions').checked)perStringMapRegions(target,shapes,activeRoute,board);
  target.scrollLeft=scroll;
  fullFretboardPanel.querySelector('.full-fretboard-toolbar>div>span')!.textContent=traversalLabel(exerciseView)+(shape?' · '+shape.label:'');
 }
+
+document.addEventListener('mehtronome-neck-route',event=>{
+ const cell=(event as CustomEvent).detail;if(!acrossNeck(exerciseView)||!cell)return;
+ renderNeckTraversalMap(cell.harmony||chordInfo(playing?livePlaybackStep:step),cell);
+});
 
 document.addEventListener('change',event=>{
  const target=event.target;if(!(target instanceof HTMLInputElement||target instanceof HTMLSelectElement)||!target.dataset.neckField)return;

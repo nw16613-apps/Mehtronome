@@ -56,6 +56,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
   let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
+  if(options.alternateRouteGroups&&!regionCursor&&regionIndex<0)regionIndex=regionBoards.findIndex(b=>b.neckCell.start);
   if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:(options.blockTraversal&&regionCursor.blockIndex!==undefined&&b.neckCell.blockIndex!==regionCursor.blockIndex?100:0)+Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:regionTravel>0?0:regionBoards.length-1;
   let board=regionBoards?.[regionIndex]||outputBoard;
   if(regionBoards?.length&&turnOnEntry&&(slot===0||regionBoards.length>1)&&regionIndex===(regionTravel>0?regionBoards.length-1:0)){
@@ -118,7 +119,23 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    let fallback=null;
    for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
     let next=regionIndex+regionTravel,turned=false,enteredTurn=false;
-    if(next<0||next>=regionBoards.length){
+    if(options.alternateRouteGroups){
+     // A diagonal position contains several string blocks. Finish every block
+     // in one direction before alternating into the neighbouring full route.
+     const currentRoute=board.neckCell.routeId,within=regionIndex+travel;
+     if(regionBoards[within]?.neckCell.routeId===currentRoute)next=within;
+     else{
+      const routeIds=[...new Set(regionBoards.map(b=>b.neckCell.routeId))],current=routeIds.indexOf(currentRoute);
+      let nextRoute=current+regionTravel;
+      if(nextRoute<0||nextRoute>=routeIds.length){
+       if(options.once&&++regionTurns>1)return false;
+       regionTravel=-regionTravel;nextRoute=routeIds.length>1?current+regionTravel:current;
+      }
+      travel=-travel;
+      const candidates=regionBoards.flatMap((b,i)=>b.neckCell.routeId===routeIds[nextRoute]?[i]:[]);
+      next=travel>0?candidates[0]:candidates.at(-1);
+     }
+    }else if(next<0||next>=regionBoards.length){
      // A strict note turn reaches the actual edge even if an advance of two
      // or three would otherwise omit its last complete pattern.
      if(turnOptions&&!turnOnEntry&&!alternatePositions){
