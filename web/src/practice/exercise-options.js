@@ -15,14 +15,9 @@ export function normalizeExerciseOptions(view){
  if(view.study.startsWith('arpseq_'))view.material=view.material==='triad'?'triad':'seventh';
  view.sequenceAdvance=[1,2,3].includes(Number(view.sequenceAdvance))?Number(view.sequenceAdvance):1;
  view.sequenceOrder=SCALE_CELL_ORDERS.some(([id])=>id===view.sequenceOrder)?view.sequenceOrder:'normal';
- if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]&&view.sequenceOrder==='cycle'&&![3,4].includes(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')].offsets.length))view.sequenceOrder='normal';
- if(SCALE_SEQUENCES[view.study.replace(/^arpseq_/, '')]?.family==='intervals'&&view.sequenceOrder==='rotate')view.sequenceOrder='alternate';
  if(hasChromaticSide(view.study)&&!['normal','reverse'].includes(view.sequenceOrder))view.sequenceOrder='normal';
  view.arpeggioSequence=Object.hasOwn(ARPEGGIO_ROOT_SEQUENCES,view.arpeggioSequence)?view.arpeggioSequence:'stepwise';
  if(view.sequenceOrder.startsWith('directional')&&!hasDirectionalCellOrder(view))view.sequenceOrder='normal';
- if(view.study==='harmonized'&&view.sequenceOrder==='cycle'&&![3,4].includes(ARPEGGIO_ROOT_SEQUENCES[view.arpeggioSequence].offsets.length))view.sequenceOrder='normal';
- if(view.study==='harmonized'&&SCALE_SEQUENCES[view.arpeggioSequence]?.family==='intervals'&&view.sequenceOrder==='rotate')view.sequenceOrder='alternate';
- if(view.study==='pentatonic'&&view.sequenceOrder==='cycle'&&!['groups3','groups4','digital1324','rolling','alternating3','alternating4'].includes(view.pattern))view.sequenceOrder='normal';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
  view.entryTone=/^(?:scale:[0-7]|chord:[1-7]|offset:(?:[0-9]|1[01]))$/.test(view.entryTone)?view.entryTone:'default';
  view.arpeggioClose=false; // Retired UI option: play only the selected written order.

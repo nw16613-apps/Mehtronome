@@ -18,7 +18,7 @@ for(let n=3;n<=8;n++){
 for(let skip=2;skip<=6;skip++){const offsets=run(3).flatMap(i=>[i,i+skip]);add('skip'+skip,'skips','Skip / step · '+offsets.map(x=>x+1).join('–'),offsets);}
 add('pedalLower','pedals','Fixed lower pedal',[0],{pedal:'lower'});add('pedalUpper','pedals','Fixed upper pedal',[0],{pedal:'upper'});
 export const SCALE_SEQUENCE_FAMILY_LABELS={intervals:'Interval pairs',groups:'Consecutive-note groups',permutations3:'3-note permutations · 6',permutations4:'4-note permutations · 24',digital:'Digital patterns',returns:'Return patterns',expanding:'Expanding / contracting intervals',skips:'Skips and steps',pedals:'Fixed pedals'};
-export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse every cell'],['alternate','Reverse alternate cells · written first'],['alternateReverse','Reverse alternate cells · reversed first'],['rotate','Rotate entry each cell'],['cycle','Cycle all orders · 3/4-note cells'],['directional','Follow travel direction'],['directionalReverse','Opposite to travel direction']];
+export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse every cell'],['alternate','Reverse alternate cells · written first'],['alternateReverse','Reverse alternate cells · reversed first'],['directional','Follow travel direction'],['directionalReverse','Opposite to travel direction']];
 // Collections with an explicit written cell retain that cell on both travel
 // legs. Source-transcribed lesson contours and continuous paths stay literal.
 export const hasPentatonicCellOrder=pattern=>!String(pattern||'').startsWith('lesson');
@@ -55,8 +55,7 @@ export function scaleSequenceCells(board,harmony,study,motion,options={}){
 export function orderedScaleCell(cell,order='normal',ordinal=0){
  const written=cell.writtenNotes||cell.notes,base=cell.alternateCells&&ordinal%2?written.toReversed():written;
  const reverse=order==='reverse'||order==='alternate'&&ordinal%2===1||order==='alternateReverse'&&ordinal%2===0||order==='directional'&&cell.sequenceDirection<0||order==='directionalReverse'&&cell.sequenceDirection>0;
- const cycle=order==='cycle'&&[3,4].includes(cell.notes.length)?permutations(run(base.length))[ordinal%(cell.notes.length===3?6:24)].map(i=>base[i]):null;
- const notes=cycle|| (reverse?base.toReversed():order==='rotate'?[...base.slice(ordinal%base.length),...base.slice(0,ordinal%base.length)]:base);
+ const notes=reverse?base.toReversed():base;
  const steps=cell.writtenOrderSteps||cell.orderSteps;
  return {...cell,orderSteps:steps?notes.map(n=>steps[written.indexOf(n)]):null,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc)};
 }
