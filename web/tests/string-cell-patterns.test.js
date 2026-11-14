@@ -6,12 +6,9 @@ test('horizontal completes every valid groups-of-four cell pattern before advanc
  const h=harmony(),view={...base},regions=neckExerciseCells(h,view),expected=regions.slice(0,2).flatMap(r=>cagedStudy(r.board,h,'groups4','seventh','ascending').flatMap(c=>c.notes.map(n=>[n.midi,n.string,n.fret,r.degree])));
  const actual=coords(neckExerciseGroups([h],[expected.length/4],view));assert.deepEqual(actual,expected);assert.equal(expected.length,24);
 });
-test('diagonal joins successive shapes at the next anchor and reverses only at the neck limit',()=>{
- const h=harmony(),view={...base,traversal:'diagonal'},regions=neckExerciseCells(h,view),g=neckExerciseGroups([h],null,view)[0];
- let turned=false,last=null;const directionChanges=g.sequenceDirections.filter((d,i,a)=>i&&d!==a[i-1]);assert.deepEqual(directionChanges,[-1]);
- let noteOffset=0;g.sequenceAnchors.forEach((anchor,i)=>{const boundary=g.notes[noteOffset]?.boundaryTurn;noteOffset+=g.cellLengths[i];if(boundary)return;const direction=g.sequenceDirections[i];if(last!==null)assert.ok((anchor-last)*direction>0);if(direction===-1)turned=true;else assert.equal(turned,false);last=anchor;});
- assert.ok(new Set(g.notes.map(n=>n.neckCell.id)).size===regions.length);
- const lastAscending=g.sequenceDirections.lastIndexOf(1);assert.equal(g.notes[lastAscending*4].neckCell.id,regions.at(-1).degree);
+test('diagonal with a block covering the string set completes each position before restarting in the next',()=>{
+ const h=harmony(),view={...base,traversal:'diagonal',traversalShiftStrings:2},regions=neckExerciseCells(h,view),expected=regions.slice(0,2).flatMap(r=>cagedStudy(r.board,h,'groups4','seventh','ascending').flatMap(c=>c.notes.map(n=>[n.midi,n.string,n.fret,r.degree])));
+ assert.deepEqual(coords(neckExerciseGroups([h],[expected.length/4],view)),expected);
 });
 test('spatial cell and pattern phase survive a bar split with identical harmony',()=>{
  for(const traversal of ['horizontal','diagonal'])for(const study of ['groups3','groups4','thirds','positionalscale','harmonized']){
@@ -41,12 +38,11 @@ test('core arpeggio cells, selected starting cells, and harmony changes keep rea
 test('a pattern larger than its physical cell is unavailable, never extended outside it',()=>{
  const g=neckExerciseGroups([harmony()],[4],{...base,study:'groups7'})[0];assert.equal(g.notes.length,0);assert.ok(g.warning);
 });
-test('diagonal advance keeps its note-step phase across shapes, bar splits and a chosen starting cell',()=>{
- const h=harmony(),view={...base,traversal:'diagonal',traversalEnd:24},line=Array.from({length:128},(_,i)=>i).filter(n=>h.scalePcs.includes(n%12));
- for(const sequenceAdvance of [2,3])for(const selected of ['first',neckExerciseCells(h,view)[1].degree]){
-  const recipe={...view,sequenceAdvance,traversalCell:selected},g=neckExerciseGroups([h],null,recipe)[0];let previous=null;
-  let noteOffset=0,previousDirection=null;g.sequenceAnchors.forEach((anchor,i)=>{const boundary=g.notes[noteOffset]?.boundaryTurn;noteOffset+=g.cellLengths[i];if(boundary)return;if(previous!==null&&g.sequenceDirections[i]===previousDirection)assert.equal(Math.abs(line.indexOf(anchor)-line.indexOf(previous)),sequenceAdvance);previous=anchor;previousDirection=g.sequenceDirections[i];});
+test('diagonal advance restarts locally in each position and keeps its phase across bars',()=>{
+ const h=harmony(),view={...base,traversal:'diagonal',traversalShiftStrings:2,traversalEnd:24};
+ for(const sequenceAdvance of [2,3]){
+  const recipe={...view,sequenceAdvance},regions=neckExerciseCells(h,recipe),expected=regions.slice(0,2).flatMap(r=>cagedStudy(r.board,h,'groups4','seventh','ascending',{sequenceAdvance}).flatMap(c=>c.notes.map(n=>[n.midi,n.string,n.fret,r.degree])));
+  assert.deepEqual(coords(neckExerciseGroups([h],[expected.length/4],recipe)),expected);
   assert.deepEqual(coords(neckExerciseGroups([h],[8],recipe)),coords(neckExerciseGroups([h,h,h],[1.25,2.75,4],recipe)));
-  if(selected!=='first')assert.equal(g.notes[0].neckCell.id,selected);
  }
 });

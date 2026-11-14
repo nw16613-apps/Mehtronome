@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {harmonyAt} from '../src/audio/music.js';import {fretboardFor} from '../src/guitar/fretboard.js';import {hasRouteTurnOptions,traversalControls} from '../src/guitar/neck-traversal.js';import {neckExerciseGroups} from '../src/practice/neck-exercises.js';import {progressionExerciseGroups} from '../src/practice/progression-exercises.js';import {progressionStudyPlan} from '../src/practice/progression-timing.js';import {perStringExerciseGroups} from '../src/practice/per-string-exercises.js';
 import {cagedStudy} from '../src/guitar/exercises.js';
-const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),base={material:'seventh',traversalStrings:'0,1,2',traversalStart:5,traversalEnd:17,rhythm:'sixteenths',motion:'ascending',traversalTurn:'note'};
+const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),base={traversalShiftStrings:3,material:'seventh',traversalStrings:'0,1,2',traversalStart:5,traversalEnd:17,rhythm:'sixteenths',motion:'ascending',traversalTurn:'note'};
 const stamp=gs=>gs.flatMap(g=>g.notes.map(n=>[n.midi,n.string,n.fret,!!n.boundaryRepeat]));
 test('boundary choice is independent of material, family, order, position traversal and alternation',()=>{
  for(const traversal of ['position','horizontal','diagonal'])for(const traversalPositionOrder of ['follow','alternate'])for(const study of ['groups4','harmonized','enclosures4','positionalscale','positional','triadpairs'])for(const sequenceOrder of ['normal','reverse','alternate','directional']){

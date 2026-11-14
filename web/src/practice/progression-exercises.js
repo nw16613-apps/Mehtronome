@@ -56,7 +56,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
   let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
-  if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:regionTravel>0?0:regionBoards.length-1;
+  if(regionBoards?.length&&regionIndex<0)regionIndex=regionCursor?regionBoards.map((b,index)=>({index,distance:(options.blockTraversal&&regionCursor.blockIndex!==undefined&&b.neckCell.blockIndex!==regionCursor.blockIndex?100:0)+Math.abs(b.firstFret-regionCursor.firstFret)})).sort((a,b)=>a.distance-b.distance)[0].index:regionTravel>0?0:regionBoards.length-1;
   let board=regionBoards?.[regionIndex]||outputBoard;
   if(regionBoards?.length&&turnOnEntry&&(slot===0||regionBoards.length>1)&&regionIndex===(regionTravel>0?regionBoards.length-1:0)){
    travel=-travel;regionTravel=-regionTravel;regionTurns++;
@@ -68,7 +68,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   const phaseTurn=scaleTraversal&&scaleRemaining===0;
   if(context!==previousContext||scaleTraversal&&explicit){triadReference=lastMidi??60;if(phaseTurn||study==='positionalscale'&&pendingScaleTurn)travel=-travel;}
   if(context!==advanceSourceContext){advanceSourceContext=context;advanceAnchorCache=new Map();}
-  const globalAdvance=regionBoards&&!alternatePositions&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
+  const globalAdvance=regionBoards&&!options.blockTraversal&&!alternatePositions&&options.traversal==='diagonal'&&(scalar||study==='harmonized')&&[2,3].includes(Number(options.sequenceAdvance)),advanceAnchors=advanceAnchorCache;
   const makeCells=(boundary=false)=>{
    if(regionBoards&&!regionBoards.length)return [];
    if(!boundary&&regionBoundary&&regionBoundary.id===board.neckCell?.id&&regionBoundary.travel===travel)return [regionBoundary.cell];
@@ -82,6 +82,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    return raw.filter(cell=>cell.notes?.length&&(!globalAdvance||boundary||advanceAnchors.get(leg).has(cell.sequenceAnchor))&&(!board.route||canRouteNotes(cell.notes,board)&&(!cell.alternateNotes||canRouteNotes(cell.alternateNotes,board))));
   };
   let cells=makeCells();
+  const blocked=[];
+  if(options.strictBlocks){const original=board;for(const candidate of regionBoards||[]){board=candidate;if(!makeCells().length)blocked.push(candidate.neckCell.label);}board=original;}
   if(scaleTraversal&&scaleRemaining===null)scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));
   // The family owns its starting edge, ordering and contour. Never rotate
   // its cells to the backing root. Identical contexts retain their cursor;
@@ -136,7 +138,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     regionIndex=next;board=regionBoards[regionIndex];cells=makeCells();cellIndex=0;
     if(!cells.length)continue;
     fallback={regionIndex,board,cells,travel,regionTravel};
-    if(!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
+    if(!options.blockTraversal&&!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
      const continuation=continueCell(cells,lastCursor??lastAnchor,travel);
      if(continuation.reset)continue;
      cellIndex=continuation.index;
@@ -156,7 +158,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],cellDetailsList=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];
-  while((cells.length||regionBoards?.length)&&notes.length<capacity){
+  while(!blocked.length&&(cells.length||regionBoards?.length)&&notes.length<capacity){
    if(regionBoards&&(!cells.length||cellIndex>=cells.length)){if(!advanceRegion())break;}
    const previousTravel=travel,previousIndex=cellIndex;
    if(scaleTraversal&&scaleRemaining===0){
@@ -224,8 +226,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    if(stage==='cell'&&study!=='positionalscale')break;
   }
   if(study==='positionalscale'&&!regionBoards){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
-  if(regionBoards?.length)regionCursor={id:board.neckCell.id,firstFret:board.firstFret};
-  const missing=!notes.length,warning=missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
+  if(regionBoards?.length)regionCursor={id:board.neckCell.id,firstFret:board.firstFret,blockIndex:board.neckCell.blockIndex};
+  const missing=!notes.length,warning=blocked.length?`${harmony.name}${harmony.suffix}: no complete pattern fits ${blocked.join('; ')}. Increase Strings before position change or choose a smaller pattern.`:missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
   const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'&&!regionBoards?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(regionBoards?outputBoard:board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning,
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;

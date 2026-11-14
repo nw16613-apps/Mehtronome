@@ -43,7 +43,7 @@ test('new chords adapt route notes and chromatic targets without escaping select
 test('continuous route arpeggios use only core triad or seventh pitches, and retain backing harmony',async()=>{
  const {neckExerciseGroups}=await import('../src/practice/neck-exercises.js'),h=harmony();
  for(const material of ['triad','seventh'])for(const traversal of ['horizontal','diagonal']){
-  const g=neckExerciseGroups([h],null,{study:'positional',material,traversal,traversalStrings:'0,1,2',rhythm:'sixteenths'})[0];
+  const g=neckExerciseGroups([h],null,{study:'positional',material,traversal,traversalStrings:'0,1,2',traversalShiftStrings:3,rhythm:'sixteenths'})[0];
   assert.ok(g.notes.length>5&&g.notes.length<300);assert.equal(g.harmony,h);assert.ok(g.notes.every(n=>h.chordPcs.slice(0,material==='triad'?3:4).includes(n.pc)));
  }
 });

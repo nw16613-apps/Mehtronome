@@ -1,6 +1,6 @@
 import {MODES} from '../audio/music.js';
 import {TUNING} from './fretboard.js';
-import {neckRouteBoard} from './neck-traversal.js';
+import {neckRouteBoard,normalizeTraversal} from './neck-traversal.js';
 /** Consecutive pitches on each selected string: three for scale cells, or
  * the requested chord-tone count. Never clip cells or skip pitches to fit. */
 export function traversalScaleCells(harmony,options,notesPerString=3){
@@ -22,4 +22,23 @@ export function traversalScaleCells(harmony,options,notesPerString=3){
   shapes.push({degree:`${degree}:${first}`,scaleDegree:degree,index:degree,tag,label:`Degree ${tag} · ${harmony.scaleNames[degree]} · ${notes.length}-note cell · frets ${start}–${end}`,board:{...board,notes,start,end,firstFret:first}});
  }
  return shapes;
+}
+
+/** A diagonal route crosses successive string blocks, using the neighbouring
+ * position for each block. Every block retains that position's real fingering. */
+export function diagonalStringRoutes(harmony,options,notesPerString=3){
+ const view=normalizeTraversal({...options}),strings=view.traversalStrings.split(',').map(Number),size=view.traversalShiftStrings;
+ const positions=traversalScaleCells(harmony,view,notesPerString);
+ if(size>=strings.length)return positions;
+ const sets=[];for(let i=0;i<strings.length;i+=size)sets.push(strings.slice(i,i+size));
+ const routes=[];
+ for(let start=0;start+sets.length<=positions.length;start++){
+  const first=positions[start],blocks=sets.map((set,index)=>{
+   const parent=positions[start+index],notes=parent.board.notes.filter(n=>set.includes(n.string)),frets=notes.map(n=>n.fret),id=`${first.degree}/block:${index}`;
+   return {degree:id,index,tag:String(index+1),blockIndex:index,parentId:parent.degree,routeId:first.degree,strings:set,label:`Block ${index+1} · ${set.map(s=>['low E','A','D','G','B','high E'][s]).join(' + ')} · frets ${Math.min(...frets)}–${Math.max(...frets)}`,board:{...parent.board,notes,start:Math.min(...frets),end:Math.max(...frets),firstFret:parent.board.firstFret}};
+  });
+  const notes=blocks.flatMap(b=>b.board.notes),frets=notes.map(n=>n.fret);
+  routes.push({...first,blocks,label:`Degree ${first.tag} · ${harmony.scaleNames[first.scaleDegree]} · ${blocks.length} blocks · frets ${Math.min(...frets)}–${Math.max(...frets)}`,board:{...first.board,notes,start:Math.min(...frets),end:Math.max(...frets)}});
+ }
+ return routes;
 }

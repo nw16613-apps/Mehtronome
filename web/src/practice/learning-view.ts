@@ -62,8 +62,10 @@ function highlightNeckCell(container:HTMLElement,cell:any){
  svg.querySelectorAll('.shape-selected-ring').forEach(n=>n.remove());svg.querySelectorAll('.shape-selected-note,.per-string-map-selected').forEach(n=>n.classList.remove('shape-selected-note','per-string-map-selected'));
  emphasizeFullNeck(container,{notes:cell.notes},Number(cell.id.split(':')[0]));
  const points=cell.notes.map((note:any)=>{const circle=svg.querySelector(`.fret-note[data-string="${note.string}"][data-fret="${note.fret}"] circle`);return circle?circle.getAttribute('cx')+','+circle.getAttribute('cy'):null;}).filter(Boolean);svg.querySelector('.neck-route-line')?.setAttribute('points',points.join(' '));
- svg.querySelectorAll<SVGElement>('[data-full-string-position]').forEach(n=>{const active=n.dataset.fullStringPosition===cell.id;n.classList.toggle('selected',active);if(n.hasAttribute('aria-pressed'))n.setAttribute('aria-pressed',String(active));const polygon=n.querySelector('polygon');if(polygon)polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');});
- const menu=document.querySelector<HTMLSelectElement>('#per-string-neck-shape');if(container.id==='full-fretboard'&&menu&&Array.from(menu.options).some(o=>o.value===cell.id))menu.value=cell.id;
+ const routeId=cell.routeId||cell.id;
+ svg.querySelectorAll<SVGElement>('[data-full-string-position]').forEach(n=>{const active=n.dataset.fullStringPosition===routeId;n.classList.toggle('selected',active);if(n.hasAttribute('aria-pressed'))n.setAttribute('aria-pressed',String(active));const polygon=n.querySelector('polygon');if(polygon)polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');});
+ svg.querySelectorAll<SVGElement>('[data-route-block]').forEach(n=>{const active=Number(n.dataset.routeBlock)===cell.blockIndex;n.classList.toggle('active',active);const circle=n.querySelector('circle');if(circle)circle.setAttribute('stroke-width',active?'3':'1');});
+ const menu=document.querySelector<HTMLSelectElement>('#per-string-neck-shape');if(container.id==='full-fretboard'&&menu&&Array.from(menu.options).some(o=>o.value===routeId))menu.value=routeId;
  const label=container.closest('.exercise-linked-fretboard')?.querySelector('.exercise-map-heading strong');if(label)label.textContent='Current cell · '+cell.label;
 }
 export function highlightLearningNote(index:number|null,notes:any[],markNotation=false){
