@@ -20,6 +20,14 @@ Ascending first visits lower-string blocks followed by higher-string blocks.
 Descending first retraces the route from its highest-string block. With Follow
 traversal, finish a complete diagonal position before starting the next position
 in the same direction; return through complete positions at the fret-range limit.
+Up and down each position plays both legs of a complete route before moving
+to the neighbouring route. Starting direction chooses up/down or down/up. The
+neck cursor reverses at the fret-range limits independently of the local legs.
+Boundary note repetition is optional at each local turn; Continue without repeat
+shares the turning note in continuous scales. Pattern cells retain their
+complete internal note order. This option also applies to horizontal cells,
+works with a single available position, and is retained in favourites.
+
 An early turn starts the entire terminal position in the return direction, not
 only its final string block. Alternating
 positions treats the complete diagonal route as one position: ascend through

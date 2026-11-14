@@ -41,11 +41,12 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const repeatBoundary=options.traversalTurn==='note'&&!alternatesPositions(options);
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
- let regionTravel=travel;
+ let regionTravel=travel,positionReturn=false;
+ const positionRoundtrip=['horizontal','diagonal'].includes(options.traversal)&&options.traversalPositionOrder==='roundtrip',outwardTravel=travel;
  const turnDefinition=SCALE_SEQUENCES[study==='pentatonic'?pattern:study.replace(/^arpseq_/,'')],turnSteps=turnDefinition?.offsets;
  // Connected orders can turn directly on their final note. Other orders
  // keep their motif and use a separate repeated turnaround note.
- const alternatePositions=alternatesPositions(options),turnOptions=['positional','positionalscale'].includes(study)||options.sequenceOrder==='directional'&&!!turnSteps&&!turnDefinition.pedal&&turnSteps[0]===Math.min(...turnSteps)&&turnSteps.at(-1)===Math.max(...turnSteps),turnOnEntry=!alternatePositions&&options.traversalTurn==='position';
+ const alternatePositions=alternatesPositions(options),turnOptions=['positional','positionalscale'].includes(study)||options.sequenceOrder==='directional'&&!!turnSteps&&!turnDefinition.pedal&&turnSteps[0]===Math.min(...turnSteps)&&turnSteps.at(-1)===Math.max(...turnSteps),turnOnEntry=!positionRoundtrip&&!alternatePositions&&options.traversalTurn==='position';
  const directional=study!=='grip'&&study!=='triadpairs'||alternatePositions;
  const alternating=!patterned&&(study==='alternating'||study==='chordtonesalternating')||study==='pentatonic'&&!pentatonicCells&&pattern.startsWith('alternating');
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
@@ -123,7 +124,22 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    let fallback=null;
    for(let attempt=0;attempt<Math.max(2,(regionBoards?.length||0)*2+2);attempt++){
     let next=regionIndex+regionTravel,turned=false,enteredTurn=false;
-    if(options.routeGroups){
+    if(positionRoundtrip){
+     // Return through every block of this position before advancing the
+     // independent neck cursor. The return leg persists across chart bars.
+     const id=b=>options.routeGroups?b.neckCell.routeId:b.neckCell.id,currentId=id(board),within=regionIndex+travel;
+     if(options.routeGroups&&regionBoards[within]&&id(regionBoards[within])===currentId)next=within;
+     else{
+      const ids=[...new Set(regionBoards.map(id))];let target=ids.indexOf(currentId);
+      if(!positionReturn){positionReturn=true;travel=-outwardTravel;turned=true;}
+      else{
+       positionReturn=false;travel=outwardTravel;target+=regionTravel;
+       if(target<0||target>=ids.length){if(options.once&&++regionTurns>1)return false;regionTravel=-regionTravel;target=ids.length>1?ids.indexOf(currentId)+regionTravel:0;}
+       turned=target===ids.indexOf(currentId);
+      }
+      const entries=regionBoards.flatMap((b,i)=>id(b)===ids[target]?[i]:[]);next=travel>0?entries[0]:entries.at(-1);
+     }
+    }else if(options.routeGroups){
      // Both direction order and boundary turns belong to complete positions,
      // never to individual string blocks inside a diagonal route.
      const currentRoute=board.neckCell.routeId,within=regionIndex+travel;
@@ -166,7 +182,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
     regionIndex=next;board=regionBoards[regionIndex];cells=makeCells();cellIndex=0;
     if(!cells.length)continue;
     fallback={regionIndex,board,cells,travel,regionTravel};
-    if(!options.blockTraversal&&!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
+    if(positionRoundtrip&&turned&&!repeatBoundary&&cells[0]?.notes.length===1&&cells[0].notes[0].midi===lastPlayedNote?.midi&&cells.length>1)cellIndex=1;
+    if(!positionRoundtrip&&!options.blockTraversal&&!alternatePositions&&!enteredTurn&&!(turned&&turnOptions)&&(options.traversal==='diagonal'||turned)&&lastAnchor!==null){
      const continuation=continueCell(cells,lastCursor??lastAnchor,travel);
      if(continuation.reset)continue;
      cellIndex=continuation.index;
@@ -217,7 +234,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    const direction=cell.sequenceDirection??travel;
    if(direction!==travel)travel=direction;
    if(study==='triadpairs'&&!alternatePositions&&options.traversalTurn==='position'&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection&&cell.notes.length>1&&cell.notes[0].midi===lastPlayedNote.midi)cellOffset=1;
-   if(repeatBoundary&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection){
+   if(repeatBoundary&&(!positionRoundtrip||(board.neckCell.routeId||board.neckCell.id)===(lastPlayedNote?.neckCell?.routeId||lastPlayedNote?.neckCell?.id))&&!cellOffset&&lastPlayedNote&&lastPlayedDirection!==null&&direction!==lastPlayedDirection){
     // Keep the written motif intact. A separate turnaround note supplies the
     // repeated endpoint when the returning motif starts on another pitch.
     const boundary=(lastCompletedNotes||[lastPlayedNote]).reduce((edge,n)=>(n.midi-edge.midi)*lastPlayedDirection>0?n:edge),approach=lastPlayedNote.midi!==boundary.midi;
