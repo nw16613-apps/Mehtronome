@@ -260,3 +260,6 @@ html:root[data-palette][data-theme] body :is(#mix-panel,#floating-mixer){
 .per-string-selected-diagram{overflow-x:auto;max-width:100%}
 .per-string-selected-diagram svg{display:block;width:100%;max-width:850px;margin-inline:auto}
 @media(max-width:520px){.per-string-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.per-string-navigation{gap:8px}.per-string-navigation button{padding:10px}.per-string-selected{padding:12px}}
+/* Note labels and modal colours now apply to every supported fingering. */
+.guitar.per-string-active #fretboard-appearance .fretboard-toolbar{display:grid!important}
+.fretboard-appearance .fretboard-overlay-controls[hidden]{display:none!important}

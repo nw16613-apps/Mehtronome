@@ -1,0 +1,20 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {harmonyAt} from '../src/audio/music.js';import {fretboardFor} from '../src/guitar/fretboard.js';import {fretboardCollection,collectionBoard,fretboardStudyControls,routePreviewMarkup} from '../src/guitar/fretboard-study.js';import {neckExerciseCells} from '../src/practice/neck-exercises.js';import {changeContentMaterial,changeContentSource} from '../src/practice/exercise-catalogue.js';import {positionRouteCards} from '../src/practice/position-route.js';import {neckRouteBoard} from '../src/guitar/neck-traversal.js';
+const h=harmonyAt({key:9,mode:'dorian',chord:'min7'}),v={study:'positionalscale',fingering:'caged',material:'seventh',traversal:'diagonal',traversalStrings:'2,3,4,5',traversalShiftStrings:2,traversalStart:1,traversalEnd:24};
+test('shared material and source choices produce exact scale/core/diatonic collections',()=>{
+ const view={...v};assert.deepEqual(fretboardCollection(h,view).pcs,h.scalePcs);changeContentMaterial(view,'triad');assert.deepEqual(fretboardCollection(h,view).pcs,h.chordPcs.slice(0,3));changeContentMaterial(view,'seventh');assert.deepEqual(fretboardCollection(h,view).pcs,h.chordPcs);changeContentSource(view,'diatonic');let c=fretboardCollection(h,view);assert.equal(c.arpeggios.length,7);c=fretboardCollection(h,{...view,fretboardDegree:1});assert.equal(c.rootPc,h.scalePcs[1]);assert.equal(c.pcs.length,4);changeContentSource(view,'chordRoots');assert.equal(fretboardCollection(h,view).arpeggios.length,4);
+});
+test('pentatonic and triad-pair sources retain their exercise collection identifiers',()=>{
+ for(const [study,material]of [['pentatonic','seventh'],['triadpairs','triad']]){const view={...v,study,material},initial=fretboardCollection(h,view);assert.ok(initial.choices.length);const choice=initial.choices.at(-1),c=fretboardCollection(h,{...view,source:choice.id});assert.deepEqual(c.pcs,choice.pcs);assert.equal(c.choice,choice.id);}
+});
+test('material filtering preserves physical coordinates and names arpeggio degrees relative to its root',()=>{
+ const board=fretboardFor(h,'E'),c=fretboardCollection(h,{...v,study:'harmonized',material:'triad',arpeggioSource:'diatonic',fretboardDegree:1}),shown=collectionBoard(board,c);assert.ok(shown.notes.length);assert.ok(shown.notes.every(n=>c.pcs.includes(n.pc)&&board.notes.some(b=>b.string===n.string&&b.fret===n.fret)));assert.ok(shown.notes.filter(n=>n.root).every(n=>n.pc===c.rootPc));assert.ok(shown.notes.every(n=>n.scaleIndex===-1));assert.equal(board.notes.length>shown.notes.length,true);
+});
+test('selected diagonal diagrams contain the complete route and identify its source shapes',()=>{
+ const shape=neckExerciseCells(h,v)[0],parents=neckExerciseCells(h,{...v,traversal:'horizontal'}),html=routePreviewMarkup(shape,fretboardCollection(h,v),true,['1','2','♭3','4','5','6','♭7'],parents);assert.match(html,/Source positions/);assert.match(html,/Block 1/);assert.match(html,/Block 2/);assert.ok(parents.filter(p=>shape.blocks.some(b=>b.parentId===p.degree)).every(p=>html.includes(p.label)));const svg=html.split('neck-selected-diagram')[1].split('</svg>')[0];assert.equal((svg.match(/class="fret-note/g)||[]).length,shape.board.notes.length);
+});
+test('material menus and compact chord cards share the actual fingering state',()=>{
+ const html=fretboardStudyControls(h,v);assert.match(html,/guitar-content-material/);assert.match(html,/Triad arpeggios/);assert.match(html,/guitar-content-source/);const groups=[{chord:'Am7',board:neckRouteBoard(h,v)}];assert.doesNotMatch(positionRouteCards(groups,[0],0,false,true),/3NPS|CAGED|Horizontal|Diagonal/);assert.match(positionRouteCards(groups,[0],0,false,false),/CAGED/);
+});
+test('non-heptatonic stack labels match the exercise source semantics',()=>{
+ const harmony=harmonyAt({key:9,mode:'whole_tone',chord:'dom9sharp5'}),html=fretboardStudyControls(harmony,{...v,study:'harmonized',arpeggioSource:'diatonic',material:'triad'});assert.match(html,/3-note scale stacks/);assert.match(html,/All scale-degree stacks/);assert.match(html,/View stack/);
+});

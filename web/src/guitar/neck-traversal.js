@@ -26,7 +26,7 @@ export function traversalLabel(view){
 export function neckRouteBoard(harmony,options){
  const v=normalizeTraversal({...options}),strings=v.traversalStrings.split(',').map(Number);
  const board=fullFretboardFor(harmony,v.traversalStart,v.traversalEnd);
- return {...board,notes:board.notes.filter(n=>strings.includes(n.string)),route:{traversal:v.traversal,traversalPositionOrder:v.traversalPositionOrder,traversalStrings:v.traversalStrings,traversalShiftStrings:v.traversalShiftStrings,traversalStart:v.traversalStart,traversalEnd:v.traversalEnd}};
+ return {...board,notes:board.notes.filter(n=>strings.includes(n.string)),route:{fingering:v.fingering,traversal:v.traversal,traversalPositionOrder:v.traversalPositionOrder,traversalStrings:v.traversalStrings,traversalShiftStrings:v.traversalShiftStrings,traversalStart:v.traversalStart,traversalEnd:v.traversalEnd}};
 }
 /** Select actual fingerings without changing the musical cell. Compact hand
  * windows win when possible; wide melodic cells can shift rather than stretch.

@@ -1,3 +1,4 @@
+import {fretboardCollection,collectionBoard} from './fretboard-study.js';
 import {modeChordHarmonies} from './mode-chords.js';
 import {fingeringCatalogue,playableFingeringStringSets} from './fingering-catalogue.js';
 import {shapeColor} from './shape-emphasis.js';
@@ -15,6 +16,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div><div class="per-string-navigation"><button type="button" class="practice-button" data-shape-move="-1">← Previous</button><span></span><button type="button" class="practice-button" data-shape-move="1">Next →</button></div><div class="per-string-featured"></div>';
  function refresh(){
   const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=kind!=='three',drop=kind==='drop2'||kind==='drop3'||kind==='spread';
+  if(getContext().view&&getContext().view.fingering!==kind)selectionChanged?.({kind,inversion:0,fret:5,stringSet:Number(field('drop-string-set').value)||0,spreadSource:field('spread-triad-source').value});
   guitar.classList.toggle('per-string-active',active);panel.hidden=!active;
   guitar.querySelector('.guitar-progression-panel>h3')!.textContent=active?'Chord progression':'Chord & position';
   controls.querySelectorAll<HTMLElement>('[data-per-string-control]').forEach(e=>e.hidden=!active);
@@ -31,7 +33,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   panel.querySelectorAll<HTMLSelectElement>('select').forEach(e=>e.disabled=locked||e.options.length===1);
   panel.querySelectorAll<HTMLButtonElement>('[data-practise-per-string]').forEach(e=>e.disabled=locked);
   if(!active){lastRender='';updateMap?.(null);selectionChanged?.({kind});return;}
-  const renderKey=JSON.stringify([kind,inversionFilter,degreeFilter,field('spread-triad-source').value,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
+  const displayView=getContext().view,displayKey=displayView?fretboardCollection(h,displayView):null;
+  const renderKey=JSON.stringify([displayKey?.pcs,displayKey?.title,getContext().degrees,getContext().highlight,kind,inversionFilter,degreeFilter,field('spread-triad-source').value,field('drop-string-set').value,[...registers],field('per-string-labels').value,h.name,h.suffix,h.mode,h.scalePcs,h.chordPcs]);
   if(renderKey===lastRender){updateMap?.(lastMap);return;}lastRender=renderKey;
   const names=arp?h.tones:h.scaleNames,degrees=arp?h.intervals:(MODES as any)[h.mode].degrees;
   const material=arp&&field('spread-triad-source').value==='mode'?h.scaleNames[0]+' '+(MODES as any)[h.mode].name:arp?h.name+h.suffix:h.scaleNames[0]+' '+(MODES as any)[h.mode].name,title=material+' · '+(drop?(kind==='spread'?'Spread triads':kind==='drop2'?'Drop 2':'Drop 3'):arp?(kind==='oneTwo'?'1–2–1–2–1–2':'2–1–2–1–2–1'):'3 notes per string');
@@ -49,7 +52,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
    if(!board&&arp)return '';
    if(!board)return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><h5>${esc(heading)}</h5><p>${drop?'No playable voicing fits this string set within frets 1–24.':'No complete pattern fits within frets 0–36.'}</p></article>`;
    mapShapes.push({degree,board,harmony:shapeHarmony,label:heading,tag:entry.tag|| (arp?(i===0?'R':['','1st','2nd','3rd','4th','5th','6th'][i]):degrees[degree])});
-   const svg=diagramSvg(board,field('per-string-labels').value==='degrees',arp?shapeHarmony.intervals:degrees,title+', '+heading,true,drop?{notes:board.notes,muted:board.muted}:null);
+   const display=getContext().view?fretboardCollection(shapeHarmony,getContext().view):null;
+   const svg=diagramSvg(display?collectionBoard(board,display):board,getContext().degrees??(field('per-string-labels').value==='degrees'),arp?shapeHarmony.intervals:degrees,title+', '+heading,getContext().highlight??true,drop?{notes:board.notes,muted:board.muted}:null);
    Object.assign(mapShapes[mapShapes.length-1],{index:i,entry,heading,svg,drop});
    return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-scroll" tabindex="0" role="button" aria-pressed="false" aria-label="Highlight ${esc(heading)} on full-neck map">${svg}</div></article>`;
   }).join('');

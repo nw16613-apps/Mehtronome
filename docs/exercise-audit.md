@@ -112,3 +112,20 @@ existing turning policies and live playback.
   geometry. Unsupported fingerings have an explicit unavailable state.
 - Old stored across-neck recipes migrate to 3NPS (the geometry they actually
   played). New snapshots carry traversalGeometryVersion 3 and preserve CAGED.
+
+## Fretboard exploration workspace
+
+Material and Source on Fretboard use the exercise catalogue's state and actions.
+A separate View arpeggio selector inspects individual diatonic/chord-root sources
+without limiting the exercise's full source. Pentatonic and triad-pair collection
+choices use the same identifiers as Exercises. Display filtering preserves the
+selected geometry and uses chord-relative degrees for individual arpeggios.
+
+Horizontal/diagonal modes retain a detailed selected diagram beside the neck map.
+Diagonal diagrams show the complete composite route, coloured string blocks,
+and expandable source positions. Map selectors, previous/next navigation and
+live route events update both views. On narrow screens the diagrams stack.
+Across-neck chord cards omit repeated geometry descriptions; route metadata
+now carries the actual fingering so captions cannot silently fall back to 3NPS.
+Display settings are collapsed and only applicable controls are shown. Labels
+and modal-colour toggles apply to both CAGED and per-string diagrams.
