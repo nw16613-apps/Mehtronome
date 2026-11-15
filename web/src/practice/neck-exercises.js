@@ -1,5 +1,5 @@
 import {isPentatonicFingering,PENTATONIC_FINGERINGS} from '../guitar/fingering-types.js';
-import {scaleCollectionHarmony,exerciseCollectionBoard,usesPentatonicCollection} from '../guitar/scale-collection.js';
+import {scaleCollectionHarmony,exerciseCollectionBoard,usesPentatonicCollection,normalizePentatonicLayout} from '../guitar/scale-collection.js';
 import {traversalScaleCells,diagonalStringRoutes} from '../guitar/neck-cells.js';
 import {contentMaterial,contentSource} from './exercise-catalogue.js';
 import {neckRouteBoard,traversalLabel,normalizeTraversal} from '../guitar/neck-traversal.js';
@@ -9,11 +9,11 @@ export function neckCellHarmony(harmony,view){
  if(contentMaterial(view)==='scale'||contentSource(view)!=='selectedChord')return harmony;
  const core=exerciseArpeggioHarmony(harmony,view.material);return {...core,scalePcs:core.chordPcs,scaleNames:core.tones,cellDegrees:core.intervals};
 }
-export function neckExerciseCells(harmony,view){if(view.fingering&&!['caged','three'].includes(view.fingering)&&!isPentatonicFingering(view.fingering))return [];const collection=neckCellHarmony(harmony,view),routes=view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells;
+export function neckExerciseCells(harmony,view){view=normalizePentatonicLayout({...view});if(view.fingering&&!['caged','three'].includes(view.fingering)&&!isPentatonicFingering(view.fingering))return [];const collection=neckCellHarmony(harmony,view),routes=view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells;
  if(usesPentatonicCollection(view)){
   const ph=scaleCollectionHarmony(harmony,view),dedicated=isPentatonicFingering(view.fingering),base=dedicated?ph:harmony;
   const subset=board=>exerciseCollectionBoard(board,harmony,view);
-  return routes(base,view,dedicated?PENTATONIC_FINGERINGS[view.fingering]:3,harmony).map(r=>({...r,label:!dedicated&&view.fingering==='three'?r.label.replace(/\d+-note cell/,'modal shape · pentatonic subset'):r.label,board:subset(r.board),...(r.blocks?{blocks:r.blocks.map(b=>({...b,board:subset(b.board)}))}:{})})).filter(r=>r.board.notes.length&&(!r.blocks||r.blocks.every(b=>b.board.notes.length)));
+  return routes(base,view,dedicated?PENTATONIC_FINGERINGS[view.fingering]:3,harmony).map(r=>({...r,board:subset(r.board),...(r.blocks?{blocks:r.blocks.map(b=>({...b,board:subset(b.board)}))}:{})})).filter(r=>r.board.notes.length&&(!r.blocks||r.blocks.every(b=>b.board.notes.length)));
  }
  if(view.fingering==='three'&&collection.cellDegrees&&!view.traversalLegacyCore){
   const subset=board=>({...board,notes:board.notes.filter(n=>collection.scalePcs.includes(n.pc))});
@@ -29,7 +29,7 @@ export function neckRouteChoice(choices,view){
 /** Across-neck studies use the same cell/travel engine as position studies.
  * A continuous arpeggio is a traversal of core chord pitches, not its mode. */
 export function neckExerciseGroups(harmonies,durations,view){
- view=normalizeTraversal({...view});
+ view=normalizeTraversal(normalizePentatonicLayout({...view}));
  const boards=harmonies.map(h=>neckRouteBoard(h,view));
  const multiBlock=view.traversal==='diagonal'&&view.traversalShiftStrings<view.traversalStrings.split(',').length,blockTraversal=multiBlock;
  const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,traversal:multiBlock?'diagonal':'horizontal',blockTraversal,routeGroups:multiBlock,strictBlocks:multiBlock,study:view.study==='positional'?'positionalscale':view.study,once:!durations,

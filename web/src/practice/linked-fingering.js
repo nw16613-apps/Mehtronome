@@ -1,3 +1,4 @@
+import {usesPentatonicCollection} from '../guitar/scale-collection.js';
 import {isScaleFingering,isPentatonicFingering} from '../guitar/fingering-types.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {contentFamily,contentFamilies} from './exercise-catalogue.js';
@@ -5,6 +6,7 @@ import {SCALE_SEQUENCES} from '../guitar/scale-sequences.js';
 // Changing a shape keeps the selected pattern; changing its note material only
 // switches between scale/chord versions when the old material cannot fit.
 export function linkExerciseFingering(view,selection,harmony){
+ if(selection?.kind==='three'&&usesPentatonicCollection(view))selection={...selection,kind:'caged'};
  if(['horizontal','diagonal','alternate'].includes(view.traversal)){if(selection)view.fingering=selection.kind;view.exactFingering=false;return view;}
  if(!selection)return view;
  const changed=view.fingering!==selection.kind,kind=selection.kind,scale=isScaleFingering(kind);

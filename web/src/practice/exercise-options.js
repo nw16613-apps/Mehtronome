@@ -1,3 +1,4 @@
+import {normalizePentatonicLayout} from '../guitar/scale-collection.js';
 import {isPentatonicFingering} from '../guitar/fingering-types.js';
 import {normalizeTraversal,acrossNeck} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
@@ -8,6 +9,7 @@ import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 // Keep restored favourites/presets compatible with the current exercise menu.
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
+ normalizePentatonicLayout(view);
  normalizeTraversal(view);
  if(acrossNeck(view))view.exactFingering=false;
  view.stage='full';if(isPentatonicFingering(view.fingering)){view.scaleCollection='pentatonic';if(view.study!=='pentatonic'&&!SCALE_SEQUENCES[view.study])view.study='positionalscale';}
@@ -112,5 +114,5 @@ export function exerciseGuidance(study){
 }
 
 export function migrateTraversalSnapshot(snapshot){
- const v={...snapshot};if(acrossNeck(v)&&v.traversalGeometryVersion!==3){v.fingering='three';v.exactFingering=false;v.traversalLegacyCore=true;}v.traversalGeometryVersion=3;return v;
+ const v={...snapshot};if(acrossNeck(v)&&v.traversalGeometryVersion!==3){v.fingering='three';v.exactFingering=false;v.traversalLegacyCore=true;}v.traversalGeometryVersion=3;return normalizePentatonicLayout(v);
 }

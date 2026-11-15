@@ -12,3 +12,9 @@ export function exerciseCollectionBoard(board,h,v){
  const c=scaleCollectionHarmony(h,v);if(c===h&&!h.pentatonicCollection)return board;
  return {...board,notes:board.notes.filter(n=>c.scalePcs.includes(n.pc)).map(n=>({...n,name:c.scaleNames[c.scalePcs.indexOf(n.pc)],scaleIndex:-1,scale:true,chromaticDegree:c.collectionDegrees?.[c.scalePcs.indexOf(n.pc)]||n.chromaticDegree}))};
 }
+
+// Retired modal-3NPS pentatonic subsets open in the retained CAGED layout.
+export function normalizePentatonicLayout(v){
+ if(v.fingering==='three'&&usesPentatonicCollection(v)){v.fingering='caged';v.inversion=0;v.traversalCell='first';}
+ return v;
+}

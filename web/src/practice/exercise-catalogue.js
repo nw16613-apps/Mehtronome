@@ -1,5 +1,5 @@
 import {isPentatonicFingering} from '../guitar/fingering-types.js';
-import {usesPentatonicCollection} from '../guitar/scale-collection.js';
+import {usesPentatonicCollection,normalizePentatonicLayout} from '../guitar/scale-collection.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,SCALE_SEQUENCE_FAMILY_LABELS} from '../guitar/scale-sequences.js';
 import {SCALE_SEQUENCE_FAMILIES,scaleSequenceFamily} from './exercise-library.js';
@@ -29,7 +29,7 @@ export function changeContentFamily(view,family,{material=contentMaterial(view),
  else view.study=family==='enclosures'?'enclosures4':family;
  if(family==='enclosures'&&material==='triad'&&view.enclosureTarget==='3')view.enclosureTarget='all';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
- return view;
+ return normalizePentatonicLayout(view);
 }
 export function changeContentMaterial(view,material){return changeContentFamily(view,contentFamily(view),{material,source:material==='scale'?'mode':contentMaterial(view)==='scale'?'selectedChord':contentSource(view)==='triadPair'&&material!=='triad'?'selectedChord':contentSource(view)});}
 export function changeContentSource(view,source){if(isExactVoicing(view.fingering)){view.spreadSource=source==='diatonic'?'mode':'chord';return view;}if(source==='mode'&&isPentatonicFingering(view.fingering))view.fingering='three';return changeContentFamily(view,contentFamily(view),{source});}

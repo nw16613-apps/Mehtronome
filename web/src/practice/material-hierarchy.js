@@ -15,7 +15,7 @@ export function changeNoteMaterial(v,value){if(materialKind(v)==='chords'){v.inv
 export function fingeringOptions(v,across=false){
  const kind=materialKind(v),pent=usesPentatonicCollection(v);
  if(kind==='chords')return [['spread','Spread triads'],['drop2','Drop 2'],['drop3','Drop 3']];
- const result=[['caged',pent?'CAGED · pentatonic subset':'CAGED'],['three',pent?'3NPS modal shape · pentatonic subset':'3 notes per string']];
+ const result=[['caged',pent?'CAGED · pentatonic subset':'CAGED'],...(!pent?[['three','3 notes per string']]:[])];
  if(kind==='arpeggios'&&!across)result.push(['oneTwo','1–2–1–2–1–2'],['twoOne','2–1–2–1–2–1']);
  if(kind==='scales'&&pent)result.push(...Object.entries(PENTATONIC_FINGERING_LABELS));
  return result;

@@ -151,3 +151,8 @@ Standard scale-pattern families now work on pentatonic collections. Collection
 filters apply to exercise notes, diagrams and resolution targets. Legacy
 pentatonic pattern recipes retain their established generation/entry logic.
 Favourites preserve the collection identifier and dedicated-layout kind.
+
+The modal-3NPS pentatonic subset option has been retired. Pentatonic choices
+are now CAGED subsets and the three dedicated pentatonic layouts. Saved modal
+3NPS subset recipes migrate to CAGED while retaining their collection and
+pattern; full-mode and arpeggio 3NPS remain available.
