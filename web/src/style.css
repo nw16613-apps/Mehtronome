@@ -151,3 +151,10 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-str
 
 .exercise-empty-state{padding:36px 24px;text-align:center;color:var(--muted);border:1px solid var(--line);border-radius:10px}
 .study-practice-recipe{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:10px}
+
+.arpeggio-inspection-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:12px 0 22px}
+.arpeggio-inspection-row .position-thumbnail{width:100%;text-align:left;--shape-color:var(--accent,#83c7ff)}
+.arpeggio-inspection-row .fretboard{width:100%;min-width:0!important}
+.arpeggio-selected-detail{max-width:850px;margin:0 auto}
+.arpeggio-selected-detail h5{font-size:16px;margin:12px 0}
+.arpeggio-selected-detail>.fretboard{width:100%;min-width:0!important}

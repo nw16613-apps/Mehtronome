@@ -6,7 +6,11 @@ The layout follows the shared chart slots, position controls, position tabs/thum
 
 Every direct position choice (thumbnail, previous/next, keyboard arrows or full-neck region) switches the selected chart slot to manual using the same route update. The automatic-route description explains this transition. Other chart slots retain their positions, including repeated chord symbols. Navigation locks during playback and unlocks after stopping.
 
-The Display group contains diagram content, labels, chord voicing and focus. Melodic overlay chooses a pentatonic source or triad pair. Unavailable overlays are disabled. An active overlay hides ineffective voicing-stage actions, disables the retained voicing/content settings, and explicitly explains that switching it off restores those settings. Source notes/degrees and the currently relevant legend remain visible; longer application guidance is under Overlay details.
+Display settings contains labels, degree reference, chord voicing and focus. Pentatonics and triad pairs are chosen through the primary material/source controls; there is no independent melodic overlay. Pentatonic diagrams retain purple notes, a distinct pentatonic-root ring and the backing-root amber accent.
+
+For multi-arpeggio sources, the position row is followed by member thumbnails and one enlarged selected arpeggio, with its bass inversion labelled. The same member supplies note colours, labels and the full-neck map: amber root, teal remaining tones. Position changes preserve the inspected member when it belongs to the source. Inspection is a display preference; Exercises continues to practise the selected source collection rather than silently filtering it to the inspected member.
+
+“Degrees relative to” selects the collection root or current backing chord for both arpeggio and pentatonic labels. It leaves notes, fingering coordinates and colours unchanged. The reference and inspected member persist locally, separately from exercise recipes. Dedicated alternating-string arpeggios retain the backing chord as the chord reference even when the physical fingering belongs to a different source member.
 
 Voicing only / Voicing + scale describe the actual display. Strum chord and Practise arpeggio stay near the diagram; detailed voiced notes, bass, omissions and the complete written chord formula are optional. The arpeggio action still opens the full positional arpeggio in Exercises.
 

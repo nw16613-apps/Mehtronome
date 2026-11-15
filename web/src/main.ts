@@ -1,7 +1,7 @@
 import {PRACTICE_RECIPE_KEY,practiceRecipe,recipePatterns} from './practice/recipe-controls.js';
 import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
 import {isPentatonicFingering} from './guitar/fingering-types.js';
-import {changeMaterialKind,changeNoteMaterial} from './practice/material-hierarchy.js';
+import {materialKind,changeMaterialKind,changeNoteMaterial} from './practice/material-hierarchy.js';
 import {scaleCollectionHarmony,exerciseCollectionBoard,usesPentatonicCollection} from './guitar/scale-collection.js';
 import {fretboardCollection,fretboardStudyControls,collectionBoard,routePreviewMarkup,arpeggioDiagramsMarkup} from './guitar/fretboard-study.js';
 import {neckExerciseGroups,neckExerciseCells,neckCellHarmony,neckRouteChoice} from './practice/neck-exercises.js';
@@ -300,7 +300,8 @@ const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
 let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
 let neckTraversalPanel:HTMLDivElement|undefined;
-const exerciseView={scaleCollection:'mode',traversalShiftStrings:2,traversalPositionOrder:'follow',traversalTurn:'note',traversalCell:'first',traversal:'position',traversalStrings:'0,1',traversalStart:5,traversalEnd:17,exactFingering:false,patternVariationsOpen:false,entryTone:'default',sequenceAdvance:1,sequenceOrder:'normal',arpeggioSequence:'stepwise',arpeggioPattern:'straight',arpeggioRegister:'up',arpeggioClose:false,arpeggioSource:'diatonic',arpeggioRoutine:'repeat',arpeggioApproach:'none',enclosureTarget:'all',enclosurePattern:'upper',fingering:'caged',inversion:0,fingeringFret:5,spreadSource:'chord',fingeringStringSet:0,study:'positionalscale',material:'seventh',motion:'ascending',rhythm:'sixteenths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',startTone:'default',fretboard:true,setupOpen:false,chordDiagrams:false};
+const exerciseView={degreeReference:'collection',inspectedArpeggio:'',scaleCollection:'mode',traversalShiftStrings:2,traversalPositionOrder:'follow',traversalTurn:'note',traversalCell:'first',traversal:'position',traversalStrings:'0,1',traversalStart:5,traversalEnd:17,exactFingering:false,patternVariationsOpen:false,entryTone:'default',sequenceAdvance:1,sequenceOrder:'normal',arpeggioSequence:'stepwise',arpeggioPattern:'straight',arpeggioRegister:'up',arpeggioClose:false,arpeggioSource:'diatonic',arpeggioRoutine:'repeat',arpeggioApproach:'none',enclosureTarget:'all',enclosurePattern:'upper',fingering:'caged',inversion:0,fingeringFret:5,spreadSource:'chord',fingeringStringSet:0,study:'positionalscale',material:'seventh',motion:'ascending',rhythm:'sixteenths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',startTone:'default',fretboard:true,setupOpen:false,chordDiagrams:false};
+try{const display=JSON.parse(localStorage.getItem('mehtronome-fretboard-display-v1')||'null');if(display){exerciseView.degreeReference=display.degreeReference==='chord'?'chord':'collection';exerciseView.inspectedArpeggio=String(display.inspectedArpeggio??'');}}catch{}
 try{const saved=JSON.parse(localStorage.getItem(PRACTICE_RECIPE_KEY)||'null');if(saved&&typeof saved==='object')Object.assign(exerciseView,practiceRecipe(saved),{linkedFingering:true});normalizeExerciseOptions(exerciseView);}catch{}
 exerciseView.chordDiagrams=localStorage.getItem('mehtronome-notation-chord-diagrams')==='true';
 input('pattern-start-route').value=localStorage.getItem('mehtronome-pattern-start-route')||'';
@@ -843,6 +844,8 @@ function fillChordScaleOptions(chordId:string,currentMode:string){
   el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`Full scales include every chord tone. Pentatonic/blues guides may omit tones; blues notes add passing colour.`;
 }
 
+function saveFretboardDisplay(){try{localStorage.setItem('mehtronome-fretboard-display-v1',JSON.stringify({degreeReference:exerciseView.degreeReference,inspectedArpeggio:exerciseView.inspectedArpeggio}));}catch{}}
+document.addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLButtonElement>('[data-inspect-arpeggio]');if(!button||button.disabled)return;event.preventDefault();event.stopPropagation();cagedMapAll=false;if(perStringMapShape==='all')perStringMapShape=String(perStringMapContext?.shapes[0]?.degree??'0');if(neckMapShape==='all')neckMapShape='first';exerciseView.inspectedArpeggio=button.dataset.inspectArpeggio!;saveFretboardDisplay();renderGuitar(true);document.querySelector<HTMLButtonElement>(`[data-inspect-arpeggio="${exerciseView.inspectedArpeggio}"]`)?.focus({preventScroll:true});},true);
 function renderGuitar(skipExercise:any=false,positionOverride:any=null){return withPlaybackSettings(()=>renderGuitarDisplay(skipExercise,positionOverride));}
 function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
   skipExercise=skipExercise===true;
@@ -867,7 +870,7 @@ function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
   el('position-path-guide').querySelector('p')!.textContent=following?'Use the closest shapes to this region throughout the chart. Choose a shape to set this chord manually.':'Choose a chord card, then its shape. Other cards keep their positions.';
   select('guitar-chord-position').parentElement!.hidden=!settings.progression||following;
   el('guitar-title').closest('section')!.classList.add('has-featured');
-  const info = chordInfo(step),displayCollection=fretboardCollection(info,exerciseView);
+  const info = chordInfo(step),displayCollection=fretboardCollection(info,exerciseView,true);
   const chord = `${info.name}${info.suffix}`;
   const mode = MODES[info.mode as keyof typeof MODES];
   const suggestions = theoryOptions(info) as {pentatonics:TheorySuggestion[];triadPairs:TheorySuggestion[]};
@@ -926,14 +929,14 @@ function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
     const title = `${chord}, position ${position.numeral}, frets ${board.start} to ${board.end}`;
     return `<article style="--shape-color:${shapeColor(POSITIONS.findIndex(p=>p.numeral===position.numeral))}" class="position-card featured-position" data-position="${position.numeral}" data-shape="${position.shape}" data-geometry="${position.geometryShape}"><div class="position-heading"><h4>${escapeHtml(chord)} · Position ${position.numeral} · ${position.shape} shape</h4><span>Frets ${board.start}–${board.end}</span></div>${displayCollection.arpeggios?.length>1?arpeggioDiagramsMarkup(source,displayCollection,guitarDegrees,mode.degrees,input('highlight-mode').checked):diagramSvg(gripOnly&&grip&&!overlay?{...board,notes:grip.notes}:board, guitarDegrees, mode.degrees, title, input('highlight-mode').checked, grip, overlay)}<p class="position-anchor">Parent-shape anchor: ${board.anchorName} · ${['low E','A','D','G','B','high E'][board.rootString]} string, ${board.rootFret === 0 ? 'open' : `fret ${board.rootFret}`}.</p>${gripDetails}</article>`;
   }).join('');
-  el('guitar-diagrams').querySelectorAll<SVGElement>('svg.fretboard').forEach(svg=>{svg.setAttribute('tabindex','0');svg.setAttribute('role','button');svg.setAttribute('aria-label',`Highlight Position ${selectedPosition.numeral} on full-neck map`);svg.setAttribute('aria-pressed',String(!cagedMapAll));});
+  el('guitar-diagrams').querySelectorAll<SVGElement>('svg.fretboard').forEach(svg=>{if(svg.closest('[data-inspect-arpeggio]'))return;svg.setAttribute('tabindex','0');svg.setAttribute('role','button');svg.setAttribute('aria-label',`Highlight Position ${selectedPosition.numeral} on full-neck map`);svg.setAttribute('aria-pressed',String(!cagedMapAll));});
   const fullBoard=collectionBoard(fullFretboardFor(info,1,17),displayCollection);
   const fullFretboardGrips=showGrip&&!selectedTheory?displayedPositions.map(position=>{
     const grip=recommendedGrip(info,position.board);
     return grip?{numeral:position.numeral!,notes:grip.notes}:null;
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
   el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,...position.range})),cagedMapAll?'all':selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
-  emphasizeFullNeck(el('full-fretboard'),cagedMapAll?null:selectedPosition.board,POSITIONS.findIndex(p=>p.numeral===selectedPosition.numeral));
+  emphasizeFullNeck(el('full-fretboard'),cagedMapAll?null:collectionBoard(selectedPosition.board,displayCollection),POSITIONS.findIndex(p=>p.numeral===selectedPosition.numeral));
   reflectFullFretboard();
   perStringView?.refresh();
   if(!skipExercise)renderCagedExercise(selectedPosition,fretboardFor(info,selectedPosition.geometryShape),info,settings.progression?progressionOrder(settings).map((index:number)=>path[index]):undefined);
@@ -1517,7 +1520,7 @@ function renderPerStringMap(context:any){
  if(!shapes.length)perStringMapShape='all';
  if(perStringMapShape!=='all'&&!shapes.some((s:any)=>String(s.degree)===perStringMapShape))perStringMapShape=String(shapes[0]?.degree);
  const menu=select('per-string-neck-shape');menu.innerHTML='<option value="all">All notes</option>'+shapes.map((s:any)=>`<option value="${s.degree}">${escapeHtml(s.label)}</option>`).join('');menu.value=perStringMapShape;
- const shape=shapes.find((s:any)=>String(s.degree)===perStringMapShape),dedicated=shape&&['oneTwo','twoOne'].includes(exerciseView.fingering),collection=fretboardCollection(dedicated?shape.harmony:harmony,dedicated?{...exerciseView,study:'positional',arpeggioSource:'selectedChord'}:exerciseView),base=fullFretboardFor(shape?.harmony||harmony,1,17,arp);
+ const shape=shapes.find((s:any)=>String(s.degree)===perStringMapShape),dedicated=shape&&['oneTwo','twoOne'].includes(exerciseView.fingering),collection=fretboardCollection(dedicated?shape.harmony:harmony,dedicated?{...exerciseView,study:'positional',arpeggioSource:'selectedChord'}:exerciseView,true,chordInfo(playing?livePlaybackStep:step)),base=fullFretboardFor(shape?.harmony||harmony,1,17,arp);
  const board=collectionBoard({...base,notes:arp?base.notes.map((n:any)=>({...n,scaleIndex:-1})):base.notes.filter((n:any)=>n.scale)},collection);
  const target=el('full-fretboard'),scroll=target.scrollLeft;target.innerHTML=fullFretboardSvg(board,labels,degrees,title+' · full fretboard, frets 1 to 17',[], 'I',input('highlight-mode').checked,null,false);
  emphasizeFullNeck(target,shape?collectionBoard(shape.board,collection):null,(shape?.index??0));
@@ -2586,8 +2589,10 @@ function renderFretboardStudyControls(info:any){
  select('fret-view').closest('label')!.hidden=true;
  const guide=el('position-path-guide').querySelector('p');if(guide)guide.hidden=across;
  if(!document.getElementById('guitar-colour-notes')){const label=document.createElement('label');label.className='check';label.innerHTML='<input type="checkbox" id="guitar-colour-notes">Modal colour notes';guitarPanel.querySelector('.guitar-viewbar')?.append(label);label.querySelector('input')!.addEventListener('change',event=>{input('highlight-mode').checked=(event.target as HTMLInputElement).checked;renderGuitar();});}
+ if(!document.getElementById('fret-degree-reference')){const label=document.createElement('label');label.innerHTML='<span>Degrees relative to</span><select id="fret-degree-reference"><option value="collection">Selected collection</option><option value="chord">Current chord</option></select>';select('fret-labels').closest('label')!.after(label);label.querySelector('select')!.addEventListener('change',event=>{exerciseView.degreeReference=(event.target as HTMLSelectElement).value;saveFretboardDisplay();renderGuitar(true);});}
+ select('fret-degree-reference').value=exerciseView.degreeReference;select('fret-degree-reference').closest('label')!.hidden=materialKind(exerciseView)==='chords'||contentMaterial(exerciseView)==='scale'&&contentSource(exerciseView)!=='pentatonic';
  input('guitar-colour-notes').checked=input('highlight-mode').checked;
- const collection=fretboardCollection(info,exerciseView),legend=guitarPanel.querySelector('.guitar-legend');input('guitar-colour-notes').closest('label')!.hidden=!collection.scale;select('fret-labels').querySelector('option[value=degrees]')!.textContent=collection.scale?'Scale degrees':collection.arpeggios?.length>1?'Degrees':'Arpeggio degrees';if(legend){for(const [kind,text]of [['root',collection.scale?'Current root':collection.arpeggios?.length>1?'Source arpeggio roots':'Arpeggio root'],['chord',collection.scale?'Chord tone':'Arpeggio tone']]){const icon=legend.querySelector('i.'+kind);if(icon?.parentElement)icon.parentElement.replaceChildren(icon,document.createTextNode(text));}(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=!collection.scale;el('characteristic-legend').hidden=!collection.scale||!input('highlight-mode').checked;}
+ const collection=fretboardCollection(info,exerciseView,true),legend=guitarPanel.querySelector('.guitar-legend');input('guitar-colour-notes').closest('label')!.hidden=!collection.scale;select('fret-labels').querySelector('option[value=degrees]')!.textContent=collection.scale?'Scale degrees':collection.arpeggios?.length>1?'Degrees':'Arpeggio degrees';if(legend){for(const [kind,text]of [['root',collection.scale?'Current root':'Arpeggio root'],['chord',collection.scale?'Chord tone':'Arpeggio tone']]){const icon=legend.querySelector('i.'+kind);if(icon?.parentElement)icon.parentElement.replaceChildren(icon,document.createTextNode(text));}(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=!collection.scale;el('characteristic-legend').hidden=!collection.scale||!input('highlight-mode').checked;}
  input('show-grip').closest('label')!.hidden=across||exerciseView.fingering!=='caged'||!['mode','selectedChord'].includes(collection.source);
  const overlayControls=guitarPanel.querySelector<HTMLElement>('.fretboard-overlay-controls');if(overlayControls)overlayControls.hidden=true;
  const pentatonic=collection.source==='pentatonic';if(legend)(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=pentatonic;const colourKey=document.getElementById('fretboard-overlay-key');if(colourKey)colourKey.innerHTML=pentatonic?'<span><i class="theory-pentatonic-key"></i>Pentatonic notes</span><span><i class="theory-pentatonic-root-key"></i>Pentatonic root</span>':'';if(pentatonic&&legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=true;(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=true;el('characteristic-legend').hidden=true;}if(pentatonic)input('guitar-colour-notes').closest('label')!.hidden=true;
@@ -2629,7 +2634,7 @@ function reflectNeckTraversal(info:any){
 }
 function renderNeckTraversalMap(info:any,activeCell:any=null){
  info=info.geometryHarmony||info;
- const collection=fretboardCollection(info,exerciseView),board=collectionBoard(neckRouteBoard(info,exerciseView),collection),shapes=neckExerciseCells(info,exerciseView),cellHarmony=neckCellHarmony(info,exerciseView);
+ const collection=fretboardCollection(info,exerciseView,true),board=collectionBoard(neckRouteBoard(info,exerciseView),collection),shapes=neckExerciseCells(info,exerciseView),cellHarmony=neckCellHarmony(info,exerciseView);
  const playingElement=document.querySelector('.exercise-note.playing'),playingCell=activeCell||(exercisePlaying&&playingElement?currentExercise[Number(playingElement.getAttribute('data-note-index'))]?.neckCell:null);
  if(neckMapShape!=='all')neckMapShape=shapes.some((s:any)=>s.degree===exerciseView.traversalCell)?exerciseView.traversalCell:neckRouteChoice(shapes,exerciseView)?.degree||'all';
  const activeRoute=playingCell?.routeId||playingCell?.id||neckMapShape;
@@ -2643,10 +2648,10 @@ function renderNeckTraversalMap(info:any,activeCell:any=null){
  if(playingCell)target.querySelectorAll<SVGElement>('[data-route-block]').forEach(n=>{const active=Number(n.dataset.routeBlock)===playingCell.blockIndex;n.classList.toggle('active',active);n.querySelector('circle')?.setAttribute('stroke-width',active?'3':'1');});
  emphasizeFullNeck(target,playingCell?collectionBoard({...shape?.board,notes:playingCell.notes},collection):shape?collectionBoard(shape.board,collection):null,shape?.index||0);
  if(input('show-regions').checked)perStringMapRegions(target,shapes,activeRoute,board);
- const shown=shape||neckRouteChoice(shapes,exerciseView),detailCollection=shown?.board.exerciseHarmony?fretboardCollection(shown.board.exerciseHarmony,{...exerciseView,study:'positional',arpeggioSource:'selectedChord'}):collection;
+ const shown=shape||neckRouteChoice(shapes,exerciseView),detailCollection=shown?.board.exerciseHarmony?fretboardCollection(shown.board.exerciseHarmony,{...exerciseView,study:'positional',arpeggioSource:'selectedChord'},true,info):collection;
  renderNeckSelectedShape(info,shapes,shown,detailCollection,playingCell);
  target.scrollLeft=scroll;
- fullFretboardPanel.querySelector('.full-fretboard-toolbar>div>span')!.textContent=traversalLabel(exerciseView)+(shape?' · '+shape.label:'')+(collection.arpeggios?.length>1&&guitarDegrees?' · map labels: mode degrees':'');
+ fullFretboardPanel.querySelector('.full-fretboard-toolbar>div>span')!.textContent=traversalLabel(exerciseView)+(shape?' · '+shape.label:'');
 }
 
 document.addEventListener('mehtronome-neck-route',event=>{
