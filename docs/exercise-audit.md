@@ -129,3 +129,25 @@ Across-neck chord cards omit repeated geometry descriptions; route metadata
 now carries the actual fingering so captions cannot silently fall back to 3NPS.
 Display settings are collapsed and only applicable controls are shown. Labels
 and modal-colour toggles apply to both CAGED and per-string diagrams.
+
+## Material and fingering hierarchy
+
+Scales / Arpeggios / Chords is the shared primary Material menu. Arpeggios
+select triads or sevenths independently of CAGED/3NPS parent geometry, with
+alternating-string dedicated arpeggio layouts retained as alternatives. Chords
+contain Spread triads, Drop 2 and Drop 3 under Voicing type. Choosing a chord
+size selects a compatible voicing, and chord-source scope uses the primary
+Source menu rather than a second Build from selector.
+
+Pentatonic is a scale collection, not merely an overlay or a fixed pattern
+family. CAGED and modal 3NPS subsets preserve their parent string/fret geometry.
+Dedicated pentThree, pent31 and pent13 layouts respectively place 3/3/3/3/3/3,
+3/1/3/1/3/1 and 1/3/1/3/1/3 consecutive pentatonic pitches on the strings.
+All five entry tones are available. Complete wide layouts are retained with
+an explicit beyond-fret-24 notice where needed, never clipped into a false
+fingering. Horizontal/diagonal traversal supports all these scale layouts.
+
+Standard scale-pattern families now work on pentatonic collections. Collection
+filters apply to exercise notes, diagrams and resolution targets. Legacy
+pentatonic pattern recipes retain their established generation/entry logic.
+Favourites preserve the collection identifier and dedicated-layout kind.

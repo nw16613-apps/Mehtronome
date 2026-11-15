@@ -1,3 +1,4 @@
+import {isPentatonicFingering} from '../guitar/fingering-types.js';
 import {normalizeTraversal,acrossNeck} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide,hasDirectionalCellOrder,hasDistinctCellReversal,normalizeSequenceRecipe} from '../guitar/scale-sequences.js';
@@ -9,7 +10,7 @@ const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups
 export function normalizeExerciseOptions(view){
  normalizeTraversal(view);
  if(acrossNeck(view))view.exactFingering=false;
- view.stage='full';
+ view.stage='full';if(isPentatonicFingering(view.fingering)){view.scaleCollection='pentatonic';if(view.study!=='pentatonic'&&!SCALE_SEQUENCES[view.study])view.study='positionalscale';}
  view.study=typeof view.study==='string'&&view.study?view.study:'positional';
  if(view.study==='passingtones')view.study='positionalscale';
  if(/^arpgroups[34]$/.test(view.study)){view.study='arpseq_groups'+view.study.at(-1);view.material='seventh';}
@@ -31,8 +32,8 @@ export function normalizeExerciseOptions(view){
  view.enclosureTarget=['all','0','1','2','3'].includes(view.enclosureTarget)?view.enclosureTarget:'all';
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
- view.fingering=['three','oneTwo','twoOne','drop2','drop3','spread'].includes(view.fingering)?view.fingering:'caged';
- if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
+ view.fingering=['three','oneTwo','twoOne','drop2','drop3','spread','pentThree','pent31','pent13'].includes(view.fingering)?view.fingering:'caged';
+ if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positionalscale'&&!['caged','three','pentThree','pent31','pent13'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
  if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
  if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
  if(view.fingering==='spread'){view.material='triad';view.exactFingering=false;}

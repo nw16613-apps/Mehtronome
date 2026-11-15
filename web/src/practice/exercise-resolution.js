@@ -27,8 +27,9 @@ export function withExerciseResolution(groups,plan,material='seventh'){
  const identity=h=>JSON.stringify([h?.mode,h?.chordPcs,h?.scalePcs,h?.tones,h?.scaleNames]);
  const sameHarmony=identity(harmony)===identity(finalSlot.harmony);
  const perString=firstSlot.position?.perString;
- const position=finalSlot.board.route?finalSlot.position:perString?firstSlot.position:sameHarmony?finalSlot.position:progressionPositionPath([harmony],finalSlot.board)[0];
- const board=finalSlot.board.route?neckRouteBoard(harmony,finalSlot.board.route):perString?firstSlot.board:sameHarmony?finalSlot.board:fretboardFor(harmony,position.geometryShape);
+ const position=finalSlot.board.route?finalSlot.position:perString?firstSlot.position:sameHarmony?finalSlot.position:progressionPositionPath([harmony.geometryHarmony||harmony],finalSlot.board)[0];
+ const rawBoard=finalSlot.board.route?neckRouteBoard(harmony.geometryHarmony||harmony,finalSlot.board.route):perString?firstSlot.board:sameHarmony?finalSlot.board:fretboardFor(harmony.geometryHarmony||harmony,position.geometryShape);
+ const board=harmony.pentatonicCollection?{...rawBoard,notes:rawBoard.notes.filter(n=>harmony.scalePcs.includes(n.pc))}:rawBoard;
  const core=exerciseArpeggioHarmony(harmony,material),candidates=board.notes.filter(n=>core.chordPcs.includes(n.pc)&&n.midi!==last.note.midi);
  const direction=exerciseEndingDirection(groups,plan),forward=candidates.filter(n=>(n.midi-last.note.midi)*direction>0);
  // At an actual position boundary no further tone may fit in this direction.

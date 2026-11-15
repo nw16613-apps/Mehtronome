@@ -11,7 +11,7 @@ export function traversalScaleCells(harmony,options,notesPerString=3,geometryHar
   const startMidi=TUNING[strings[0]]+first,degree=harmony.scalePcs.indexOf(startMidi%12);if(degree<0)continue;
   const notes=[];let previous=startMidi-1,valid=true;
   for(const string of strings){
-   for(let i=0;i<notesPerString;i++){
+   for(let i=0;i<(Array.isArray(notesPerString)?notesPerString[string]:notesPerString);i++){
     let midi=previous+1;while(!harmony.scalePcs.includes(midi%12))midi++;
     const note=byPosition.get(`${string}:${midi-TUNING[string]}`);
     if(!note){valid=false;break;}notes.push(note);previous=midi;

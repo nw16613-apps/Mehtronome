@@ -1,3 +1,4 @@
+import {scaleCollectionHarmony,exerciseCollectionBoard} from './scale-collection.js';
 import {isExactVoicingBoard,voicingNeighbour} from './fingering-rules.js';
 import {SCALE_SEQUENCES,scaleSequenceCells,orderedScaleCell} from './scale-sequences.js';
 import {sequenceArpeggioCells} from './arpeggio-sequences.js';
@@ -414,6 +415,7 @@ function inversionExercise(board,harmony,material,motion) {
 }
 
 export function cagedStudy(board,harmony,study='harmonized',material='seventh',motion='ascending',context={}) {
+ if(context.scaleCollection==='pentatonic'&&study!=='pentatonic'){const v={...context,study};board=exerciseCollectionBoard(board,harmony,v);harmony=scaleCollectionHarmony(harmony,v);}
   if(study==='upperstructure')study='harmonized';
   if(ARPEGGIO_STUDIES.has(study)||study.startsWith('enclosures'))harmony=arpeggioHarmony(harmony);
   if(study.startsWith('enclosures')||['doubleapproach','chromaticneighbors'].includes(study))harmony=exerciseArpeggioHarmony(harmony,material);

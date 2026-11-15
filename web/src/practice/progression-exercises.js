@@ -1,3 +1,4 @@
+import {scaleCollectionHarmony,exerciseCollectionBoard} from '../guitar/scale-collection.js';
 import {routeCellNotes,canRouteNotes,alternatesPositions} from '../guitar/neck-traversal.js';
 import {voicingExerciseBoard} from '../guitar/fingering-rules.js';
 import {sequenceEntryState} from './sequence-entry.js';
@@ -52,9 +53,9 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const continueCell=(cells,anchor,direction,canTurn=false,shared=null)=>continuationCell(cells.map(c=>c.sequenceCursor===undefined?c:{...c,sequenceAnchor:c.sequenceCursor}),anchor,direction,canTurn,shared);
  const approachEnds=[];let emittedCells=0,triadReference=60;
  const groups=harmonies.map((backingHarmony,slot)=>{
-  const harmony=options.harmonyFor?.(backingHarmony,slot)||backingHarmony;
+  const originalHarmony=options.harmonyFor?.(backingHarmony,slot)||backingHarmony,harmony=scaleCollectionHarmony(originalHarmony,options);
   const override=options.startTones?.[slot],explicit=override&&override!=='inherit',selectedStart=explicit?override:options.startTone||'default';
-  const position=path[slot],outputBoard=options.boardFor?.(backingHarmony,slot)||fretboardFor(harmony,position.geometryShape),capacity=Math.max(1,Math.floor(durations[slot]*division));
+  const position=path[slot],outputBoard=exerciseCollectionBoard(options.boardFor?.(backingHarmony,slot)||fretboardFor(originalHarmony,position.geometryShape),originalHarmony,options),capacity=Math.max(1,Math.floor(durations[slot]*division));
   const regionBoards=options.regionBoardsFor?.(backingHarmony,slot);
   let regionIndex=regionBoards?.findIndex(b=>b.neckCell.id===(regionCursor?.id||options.traversalCell))??-1;
   if(options.routeGroups&&!regionCursor&&regionIndex<0)regionIndex=regionBoards.findIndex(b=>b.neckCell.start);
@@ -198,8 +199,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   };
   let startWarning='';
   if(scaleTraversal&&(explicit||previousStart!==selectedStart)&&selectedStart==='default'){cellIndex=0;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1));}
-  if((scaleTraversal||regionBoards&&study==='positionalscale')&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);startWarning=entry.warning;}
-  if(slot===0&&!scaleTraversal&&cells.length&&options.entryTone&&options.entryTone!=='default'){const entry=sequenceEntryState(cells,harmony,{...options,study});cellIndex=entry.index;if(study==='triadpairs')emittedCells=entry.index;startWarning=entry.warning;}
+  if((scaleTraversal||regionBoards&&study==='positionalscale')&&(explicit||slot===0||context!==previousContext||selectedStart!==previousStart)&&selectedStart&&selectedStart!=='default'&&cells.length){const directed=cells.flatMap(cell=>cell.notes),entry=scaleStartingState(travel<0?directed.toReversed():directed,harmony.geometryHarmony||harmony,travel<0,selectedStart);cellIndex=entry.index;scaleRemaining=Math.max(1,cells.length-(repeatBoundary?0:1)-cellIndex);startWarning=entry.warning;}
+  if(slot===0&&!scaleTraversal&&cells.length&&options.entryTone&&options.entryTone!=='default'){const entry=sequenceEntryState(cells,harmony.geometryHarmony||harmony,{...options,study});cellIndex=entry.index;if(study==='triadpairs')emittedCells=entry.index;startWarning=entry.warning;}
   if(!directional&&cellIndex>=cells.length)cellIndex=0;
   previousContext=context;previousStart=selectedStart;
   const notes=[],targetIndices=[],used=[],cellLengths=[],cellOffsets=[],cellSizes=[],cellDetailsList=[],sequenceAnchors=[],sequenceCursors=[],sequenceDirections=[];
@@ -273,7 +274,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
   if(study==='positionalscale'&&!regionBoards){pendingScaleBoundary=cells.length>1&&cellIndex===cells.length-1;pendingScaleTurn=cells.length>1&&cellIndex>=cells.length;}
   if(regionBoards?.length)regionCursor={id:board.neckCell.id,firstFret:board.firstFret,blockIndex:board.neckCell.blockIndex};
   const missing=!notes.length,warning=blocked.length?`${harmony.name}${harmony.suffix}: no complete pattern fits ${blocked.join('; ')}. Increase Strings before position change or choose a smaller pattern.`:unavailableAlternation?`${harmony.name}${harmony.suffix}: alternating positions needs at least two playable positions. Widen the fret range or choose a smaller pattern.`:missing&&regionBoards?`${harmony.name}${harmony.suffix}: no complete pattern fits these string-set cells. Choose a smaller pattern, a larger string set or a wider fret range.`:missing?`${harmony.name}${harmony.suffix}: no complete ${study==='grip'?'grip':'cell'} fits this chord slot in this region. Use a faster subdivision, a longer chord duration or another position.`:startWarning;
-  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'&&!regionBoards?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(regionBoards?outputBoard:board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning,
+  const group={...(isEnclosureStudy(study)?{noteStarts:enclosureNoteStarts(cellLengths,division)}:{}),...(study==='positionalscale'&&!regionBoards?{positionalSpan:cagedStudy(board,harmony,'positionalscale','seventh','ascending').flatMap(cell=>cell.notes)}:{}),slot,chord:harmony.name+harmony.suffix,rootName:harmony.name,harmony,board:voicingExerciseBoard(regionBoards?outputBoard:board,notes),position,sourceName:chosen?.name||'',sourceAdapted:adapted,notes,targetIndices,pcs:notes.map(n=>n.pc),names:notes.map(n=>n.name),materialCells:used,cellLengths,cellOffsets,cellSizes,cellDetails:cellDetailsList,sequenceAnchors,sequenceCursors,sequenceDirections,endingDirection:travel,globalStart,warning:[warning,harmony.collectionWarning].filter(Boolean).join(' '),
    annotation:missing?'Rest · no complete cell fits':`${MODES[harmony.mode].name} · ${used.length} ${cellOffsets.some((offset,i)=>offset||cellLengths[i]<cellSizes[i])?'cell segments':used.length===1?'cell':'cells'}${adapted?' · source adapted':''}`};
   globalStart+=notes.length;return group;
  });

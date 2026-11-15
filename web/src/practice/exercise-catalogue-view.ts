@@ -1,16 +1,21 @@
+import {materialKind,MATERIAL_KINDS} from './material-hierarchy.js';
+import {isScaleFingering} from '../guitar/fingering-types.js';
+import {theoryOptions} from '../guitar/superimposition.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {hasDirectionalCellOrder} from '../guitar/scale-sequences.js';
 import {CONTENT_MATERIALS,contentMaterial,contentSource,contentSources,contentFamily,contentFamilies,groupPatternLabel} from './exercise-catalogue.js';
 const options=(items:string[][],value:string)=>items.map(([id,name])=>new Option(name,id,false,id===value));
-export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPair=true,nonDiatonic=false){
+export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPair=true,nonDiatonic=false,harmony:any=null){
  const controls=panel.querySelector<HTMLElement>('.exercise-definition .exercise-controls')!;
  const hide=(id:string)=>{const node=panel.querySelector('#'+id)?.closest('label') as HTMLElement|null;if(node)node.hidden=true;};
  for(const id of ['exercise-study','exercise-material','exercise-traversal-material','exercise-scale-family','exercise-arpeggio-family','exercise-arpeggio-source'])hide(id);
  const material=contentMaterial(view),source=contentSource(view),family=contentFamily(view),stacks=nonDiatonic&&['diatonic','chordRoots'].includes(source);
  const make=(id:string,title:string,items:string[][],value:string)=>{const label=document.createElement('label'),select=document.createElement('select');label.append(title);select.id=id;select.append(...options(items,value));label.append(select);if(items.length<2)label.hidden=true;return label;};
- const sparse=view.linkedFingering&&!['caged','three'].includes(view.fingering);
- const materialOptions=CONTENT_MATERIALS.filter(([id])=>!sparse||id!=='scale').filter(([id])=>view.fingering!=='spread'||id==='triad').map(([id,name])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):name]),sourceOptions=contentSources(material).filter(([id])=>!sparse||id==='selectedChord').filter(([id])=>id!=='triadPair'||canTriadPair).map(([id,name])=>[id,nonDiatonic?name.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):name]),familyOptions=contentFamilies(material,source,view).map(([id,name])=>[id,stacks?name.replace('Whole-arpeggio','Whole-stack'):name]);
- controls.prepend(make('exercise-content-material','Material',[...materialOptions,...(view.exactFingering?[['shape','Fretboard chord shape']]:[])],material),make('exercise-content-source','Source',sourceOptions,source),make('exercise-content-family','Pattern family',familyOptions,family));
+ const sparse=view.linkedFingering&&!isScaleFingering(view.fingering);
+ const materialOptions=CONTENT_MATERIALS.filter(([id])=>!sparse||id!=='scale').map(([id,name])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):id==='triad'?'Triads':id==='seventh'?(materialKind(view)==='chords'?'Seventh chords':'Sevenths'):name]),sourceOptions=contentSources(material).filter(([id])=>!sparse||id==='selectedChord'||materialKind(view)==='chords'&&id==='diatonic').filter(([id])=>id!=='triadPair'||canTriadPair).map(([id,name])=>[id,nonDiatonic?name.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):name]),familyOptions=contentFamilies(material,source,view).map(([id,name])=>[id,stacks?name.replace('Whole-arpeggio','Whole-stack'):name]);
+ controls.prepend(make('exercise-material-kind','Material',MATERIAL_KINDS,materialKind(view)),make('exercise-content-material',materialKind(view)==='chords'?'Chord type':'Arpeggio type',[...materialOptions,...(view.exactFingering?[['shape','Fretboard chord shape']]:[])],material),make('exercise-content-source',materialKind(view)==='scales'?'Collection':'Source',sourceOptions,source),make('exercise-content-family','Pattern family',familyOptions,family));
+ if(materialKind(view)==='scales')hide('exercise-content-material');
+
  const positionOrder=panel.querySelector('#exercise-neck-position-order')?.closest('label');if(positionOrder)controls.querySelector('#exercise-content-material')?.closest('label')?.after(positionOrder);
  const turn=panel.querySelector<HTMLSelectElement>('#exercise-neck-turn');if(turn){const parent=turn.closest('label')!;parent.firstChild!.textContent='Boundary turn';const alternative=turn.querySelector<HTMLOptionElement>('option[value=position]')!;alternative.textContent=view.traversal==='position'||['alternate','roundtrip'].includes(view.traversalPositionOrder)?'Continue without repeat':'Turn on entering end position';(positionOrder||controls.querySelector('#exercise-content-material')?.closest('label'))?.after(parent);}
  const label=(id:string,title:string)=>{const select=panel.querySelector<HTMLSelectElement>('#'+id),parent=select?.closest('label');if(parent)parent.firstChild!.textContent=title;return select;};

@@ -1,14 +1,15 @@
+import {PENTATONIC_FINGERINGS,isPentatonicFingering} from './fingering-types.js';
 import {TUNING} from './fretboard.js';
 import {characteristicNotes} from '../audio/music.js';
-export const STRING_PATTERNS={three:[3,3,3,3,3,3],oneTwo:[1,2,1,2,1,2],twoOne:[2,1,2,1,2,1]};
+export const STRING_PATTERNS={three:[3,3,3,3,3,3],oneTwo:[1,2,1,2,1,2],twoOne:[2,1,2,1,2,1],...PENTATONIC_FINGERINGS};
 
 /** Consecutive ascending pitches, read low E to high E. No boundary-note
  * duplication or window filtering: exactly the requested attacks per string. */
 export function perStringFingerings(harmony,kind='three',startDegree=0,maxFret=24){
  const pattern=STRING_PATTERNS[kind];if(!pattern)throw new Error('Choose a supported per-string pattern.');
- const arpeggio=kind!=='three',pcs=arpeggio?harmony.chordPcs:harmony.scalePcs;
+ const arpeggio=kind!=='three'&&!isPentatonicFingering(kind),pcs=arpeggio?harmony.chordPcs:harmony.scalePcs;
  if(!Number.isInteger(startDegree)||startDegree<0||startDegree>=pcs.length)throw new Error('Choose an available starting degree.');
- const startPc=pcs[startDegree],colour=new Set(characteristicNotes(harmony).map(n=>n.pc)),fingerings=[];
+ const startPc=pcs[startDegree],colour=new Set(characteristicNotes(harmony.geometryHarmony||harmony).map(n=>n.pc)),fingerings=[];
  for(let first=0;first<=maxFret;first++){
   if((TUNING[0]+first)%12!==startPc)continue;
   const notes=[];let previous=TUNING[0]+first-1,valid=true;
@@ -18,10 +19,10 @@ export function perStringFingerings(harmony,kind='three',startDegree=0,maxFret=2
    // Reject an unplayable register instead of skipping material or wrapping.
    if(fret<0||fret>maxFret){valid=false;break;}
    const pc=midi%12,scaleIndex=harmony.scalePcs.indexOf(pc),chordIndex=harmony.chordPcs.indexOf(pc);
-   notes.push({string,fret,midi,pc,scaleIndex:arpeggio?-1:scaleIndex,root:pc===harmony.chordPcs[0],chord:chordIndex>=0,scale:scaleIndex>=0,characteristic:colour.has(pc),name:arpeggio?harmony.tones[chordIndex]:harmony.scaleNames[scaleIndex],chromaticDegree:arpeggio?harmony.intervals[chordIndex]:''});
+   notes.push({string,fret,midi,pc,scaleIndex:arpeggio?-1:scaleIndex,root:pc===(harmony.geometryHarmony||harmony).chordPcs[0],chord:chordIndex>=0,scale:scaleIndex>=0,characteristic:colour.has(pc),name:arpeggio?harmony.tones[chordIndex]:harmony.scaleNames[scaleIndex],chromaticDegree:arpeggio?harmony.intervals[chordIndex]:''});
    previous=midi;
   }
-  if(valid){const frets=notes.map(n=>n.fret);fingerings.push({kind,startDegree,firstFret:first,start:Math.min(...frets),end:Math.max(...frets),rootPc:harmony.chordPcs[0],notes});}
+  if(valid){const frets=notes.map(n=>n.fret);fingerings.push({kind,startDegree,firstFret:first,start:Math.min(...frets),end:Math.max(...frets),rootPc:(harmony.geometryHarmony||harmony).chordPcs[0],notes});}
  }
  return fingerings;
 }
@@ -30,7 +31,7 @@ export function perStringFingerings(harmony,kind='three',startDegree=0,maxFret=2
  * 24-fret guitar; retain a labelled theoretical diagram if the full continuous
  * pattern needs a longer neck. Never omit a degree to satisfy the range. */
 export function perStringCatalogue(harmony,kind='three'){
- const pcs=kind==='three'?harmony.scalePcs:harmony.chordPcs;
+ const pcs=kind==='three'||isPentatonicFingering(kind)?harmony.scalePcs:harmony.chordPcs;
  return pcs.flatMap((pc,index)=>{
   if(pcs.indexOf(pc)!==index)return [];
   // Recommended scale and arpeggio registers are always fully fretted.

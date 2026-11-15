@@ -1,3 +1,4 @@
+import {isPentatonicFingering} from '../guitar/fingering-types.js';
 import {contentMaterial,contentSource} from './exercise-catalogue.js';
 import {hasRouteTurnOptions} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
@@ -7,6 +8,7 @@ import {normalizeExerciseOptions,exerciseMenuOptions,migrateTraversalSnapshot} f
 // the chart currently playing. Canonical aliases must share one bookmark.
 export function exerciseFavouriteKey(snapshot){
  const v=canonicalSequenceRecipe(normalizeExerciseOptions({...snapshot})),result={study:v.study,motion:v.motion,rhythm:v.rhythm};
+ if(v.scaleCollection==='pentatonic'||v.study==='pentatonic'){result.scaleCollection='pentatonic';result.source=v.source;}
  if(v.traversal!=='position'){result.fingering=v.fingering;if(v.fingering==='three'&&v.traversalLegacyCore&&contentMaterial(v)!=='scale'&&contentSource(v)==='selectedChord')result.traversalLegacyCore=true;}
  if(v.traversal!=='position')for(const field of ['traversal','traversalStrings','traversalStart','traversalEnd',...(v.traversalCell!=='first'?['traversalCell']:[])])result[field]=v[field];
  if(v.traversal!=='position'&&['alternate','roundtrip'].includes(v.traversalPositionOrder))result.traversalPositionOrder=v.traversalPositionOrder;
@@ -25,6 +27,7 @@ export function exerciseFavouriteKey(snapshot){
  v.study==='pentatonic'?['source','pattern',...(hasExerciseCellOrder(v)?['sequenceOrder']:[])]:v.study==='triadpairs'?['source']:[];
  if(v.linkedFingering&&v.fingering!=='caged')for(const field of ['fingering','inversion','fingeringFret','fingeringStringSet',...(v.fingering!=='three'?['spreadSource']:[])])if(v[field]!==undefined)result[field]=v[field];
  for(const field of fields)if(v[field]!==undefined)result[field]=v[field];
+ if(isPentatonicFingering(v.fingering)){delete result.fingeringStringSet;delete result.spreadSource;}
  if(v.traversal!=='position'){for(const field of ['inversion','fingeringFret','fingeringStringSet','spreadSource','exactFingering'])delete result[field];}
  if(v.traversal==='diagonal'&&v.traversalShiftStrings===v.traversalStrings.split(',').length){result.traversal='horizontal';delete result.traversalShiftStrings;}
  return JSON.stringify(result);
