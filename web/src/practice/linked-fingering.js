@@ -20,7 +20,7 @@ export function linkExerciseFingering(view,selection,harmony){
   else if(!scale&&['pentatonic','triadpairs','guidetones','connections'].includes(view.study))view.study='positional';
   if(!scale){
    view.material=kind==='spread'?'triad':isExactVoicing(kind)?'seventh':view.material==='triad'?'triad':'seventh';
-   view.arpeggioSource='selectedChord';
+   if(!['oneTwo','twoOne'].includes(kind)||!view.arpeggioSource)view.arpeggioSource='selectedChord';
    // A layout change preserves the selected triad/seventh material.
   }
  }
@@ -31,6 +31,6 @@ export function linkExerciseFingering(view,selection,harmony){
   if(view.arpeggioRoutine==='connected')view.arpeggioRoutine='repeat';
   if(!contentFamilies(view.material,'selectedChord',view).some(([id])=>id===contentFamily(view)))view.study='positional';
  }
- if(!scale){if(view.study==='positionalscale')view.study='positional';view.arpeggioSource='selectedChord';if(SCALE_SEQUENCES[view.study])view.study='arpseq_'+view.study;}
+ if(!scale){if(view.study==='positionalscale')view.study='positional';if(!['oneTwo','twoOne'].includes(kind)||!view.arpeggioSource)view.arpeggioSource='selectedChord';if(SCALE_SEQUENCES[view.study])view.study='arpseq_'+view.study;}
  return view;
 }

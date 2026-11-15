@@ -71,7 +71,7 @@ export function patternedArpeggios(board,groups,pattern,{motion='ascending',regi
    };
    const normal=prepare(notes),reversed=prepare(notes.toReversed());if(!normal||requireAlternate&&!reversed)continue;
    let targetIndices=normal.targetIndices;notes=normal.notes;
-   cells.push({...group,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),...(targetIndices?{targetIndices}:{}),...(requireAlternate&&reversed?{alternateNotes:reversed.notes,alternateTargetIndices:reversed.targetIndices}:{}),sequenceAnchor:base[0].midi,...(routine==='inversions'||pattern==='inversionCycle'?{sequenceCursor:base[0].midi*8+variant}:{}),sequenceDirection:down?-1:1,arpeggioPattern:pattern,patternOrder:slots.map(n=>[1,3,5,7][n]),annotation:arpeggioPatternLabel(pattern,closeTriad)});
+   cells.push({...group,notes,names:notes.map(n=>n.name),pcs:notes.map(n=>n.pc),...(targetIndices?{targetIndices}:{}),...(requireAlternate&&reversed?{alternateNotes:reversed.notes,alternateTargetIndices:reversed.targetIndices}:{}),sequenceAnchor:base[0].midi,...(routine==='inversions'||pattern==='inversionCycle'?{sequenceCursor:base[0].midi*8+variant}:{}),sequenceDirection:down?-1:1,arpeggioPattern:pattern,patternOrder:slots.map(n=>[1,3,5,7][n]),annotation:group.chord+' · '+arpeggioPatternLabel(pattern,closeTriad)});
   }
   if((pattern==='connected'||routine==='connected')&&!deferConnection&&cells.length){cells.sort((a,b)=>Math.abs(a.notes[0].midi-previous)-Math.abs(b.notes[0].midi-previous));result.push(cells[0]);previous=cells[0].notes.at(-1).midi;}
   else result.push(...cells);

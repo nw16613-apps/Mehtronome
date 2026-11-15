@@ -140,3 +140,11 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-str
 .neck-explorer-layout .full-fretboard-toolbar .per-string-neck-option select{width:100%;max-width:none}
 .neck-explorer-layout .neck-route-map{min-width:760px!important}
 .neck-detail-block{pointer-events:none}
+
+.neck-fingering-controls{font-size:12px;color:var(--muted)}
+.neck-fingering-controls select{min-height:48px;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--field);color:var(--ink);font:inherit}
+.arpeggio-source-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.arpeggio-source-shape{min-width:0;padding:12px;border:1px solid var(--line);border-radius:8px}
+.arpeggio-source-shape h5{margin:0 0 10px;font-size:13px}
+.arpeggio-source-shape .fretboard{min-width:0!important;width:100%;max-width:680px}
+.position-thumbnail .arpeggio-source-gallery{display:none}

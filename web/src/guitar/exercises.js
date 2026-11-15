@@ -1,3 +1,4 @@
+import {arpeggioCollection} from './arpeggio-collection.js';
 import {scaleCollectionHarmony,exerciseCollectionBoard} from './scale-collection.js';
 import {isExactVoicingBoard,voicingNeighbour} from './fingering-rules.js';
 import {SCALE_SEQUENCES,scaleSequenceCells,orderedScaleCell} from './scale-sequences.js';
@@ -420,9 +421,10 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   if(ARPEGGIO_STUDIES.has(study)||study.startsWith('enclosures'))harmony=arpeggioHarmony(harmony);
   if(study.startsWith('enclosures')||['doubleapproach','chromaticneighbors'].includes(study))harmony=exerciseArpeggioHarmony(harmony,material);
   const size=MATERIAL_SIZES[material] || 4;
-  if(ARPEGGIO_PATTERN_STUDIES.has(study)&&context.arpeggioPattern&&context.arpeggioPattern!=='straight'){
-    const base=context.arpeggioSource==='selectedChord'?selectedChordSeeds(board,harmony,material):study.startsWith('chordtones')||context.arpeggioSource==='chordRoots'?chordToneStacks(board,harmony,size,'ascending'):cagedProgressionExercise(board,harmony,material,'ascending');
-    const cells=patternedArpeggios(board,base,context.arpeggioPattern,{motion,register:context.arpeggioRegister,alternate:study==='alternating'||study==='chordtonesalternating',anchorMidi:context.anchorMidi,closeTriad:context.arpeggioClose,routine:context.arpeggioRoutine,approach:context.arpeggioApproach,requireAlternate:context.arpeggioRequireAlternate||context.arpeggioRoutine==='alternate',deferConnection:context.arpeggioDeferConnection});
+  if(ARPEGGIO_PATTERN_STUDIES.has(study)&&(context.arpeggioPattern||context.arpeggioSource)){
+    const source=context.arpeggioSource||(study.startsWith('chordtones')?'chordRoots':'diatonic');
+    const base=arpeggioCollection(harmony,material,source).flatMap(h=>selectedChordSeeds(board,h,material)).sort((a,b)=>a.notes[0].midi-b.notes[0].midi);
+    const cells=patternedArpeggios(board,base,context.arpeggioPattern||'straight',{motion,register:context.arpeggioRegister,alternate:study==='alternating'||study==='chordtonesalternating',anchorMidi:context.anchorMidi,closeTriad:context.arpeggioClose,routine:context.arpeggioRoutine,approach:context.arpeggioApproach,requireAlternate:context.arpeggioRequireAlternate||context.arpeggioRoutine==='alternate',deferConnection:context.arpeggioDeferConnection});
     return sequenceArpeggioCells(cells,board,harmony,context.arpeggioSequence,context.arpeggioSource,motion,context.sequenceAdvance,context.sequenceOrder);
   }
   if(study.startsWith('arpseq_')){const core=arpeggioHarmony(harmony),size=material==='triad'?3:4;return scaleSequenceCells(board,{...core,scalePcs:core.chordPcs.slice(0,size),scaleNames:core.tones.slice(0,size)},study.slice(7),motion,context).map((c,i)=>orderedScaleCell(c,context.sequenceOrder,i));}

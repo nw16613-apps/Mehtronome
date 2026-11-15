@@ -1,7 +1,7 @@
 import {usesPentatonicCollection} from './scale-collection.js';
 import {isScaleFingering,isPentatonicFingering,PENTATONIC_FINGERING_LABELS} from './fingering-types.js';
 import {fingeringOptions,materialKind} from '../practice/material-hierarchy.js';
-import {fretboardCollection,collectionBoard} from './fretboard-study.js';
+import {fretboardCollection,collectionBoard,arpeggioDiagramsMarkup} from './fretboard-study.js';
 import {modeChordHarmonies} from './mode-chords.js';
 import {fingeringCatalogue,playableFingeringStringSets} from './fingering-catalogue.js';
 import {shapeColor} from './shape-emphasis.js';
@@ -26,8 +26,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
   guitar.querySelector('.guitar-progression-panel>h3')!.textContent=active?'Chord progression':'Chord & position';
   controls.querySelectorAll<HTMLElement>('[data-per-string-control]').forEach(e=>e.hidden=!active);
   controls.querySelectorAll<HTMLElement>('[data-drop-control]').forEach(e=>e.hidden=!drop);
-  controls.querySelectorAll<HTMLElement>('[data-spread-control]').forEach(e=>e.hidden=!active||!arp||getContext().view&&materialKind(getContext().view)==='chords');
-  const modeInversions=active&&arp&&field('spread-triad-source').value==='mode';
+  controls.querySelectorAll<HTMLElement>('[data-spread-control]').forEach(e=>e.hidden=!active||!arp||!!getContext().view);
+  const modeInversions=active&&drop&&field('spread-triad-source').value==='mode';
   controls.querySelectorAll<HTMLElement>('[data-mode-inversion-control]').forEach(e=>e.hidden=!modeInversions);
   if(modeInversions){const menu=field('fretboard-mode-inversion'),previous=menu.value;menu.innerHTML='<option value="all">All inversions</option>'+inversionNames.slice(0,kind==='spread'?3:4).map((name,i)=>`<option value="${i}">${name}</option>`).join('');menu.value=Array.from(menu.options).some(o=>o.value===previous)?previous:'all';}
   if(modeInversions){const menu=field('fretboard-mode-degree'),previous=menu.value;menu.innerHTML='<option value="all">All degrees</option>'+modeChordHarmonies(h,kind==='spread'?3:4).map((chord:any,i:number)=>`<option value="${i}">Degree ${(MODES as any)[h.mode].degrees[i]} · ${esc(chord.name+chord.suffix)}</option>`).join('');menu.value=Array.from(menu.options).some(o=>o.value===previous)?previous:'all';}
@@ -57,8 +57,8 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
    if(!board&&arp)return '';
    if(!board)return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><h5>${esc(heading)}</h5><p>${drop?'No playable voicing fits this string set within frets 1–24.':'No complete pattern fits within frets 0–36.'}</p></article>`;
    mapShapes.push({degree,board,harmony:entry.geometryHarmony||shapeHarmony,label:heading,tag:entry.tag|| (arp?(i===0?'R':['','1st','2nd','3rd','4th','5th','6th'][i]):degrees[degree])});
-   const display=getContext().view?fretboardCollection(entry.geometryHarmony||shapeHarmony,getContext().view):null;
-   const svg=diagramSvg(display?collectionBoard(board,display):board,getContext().degrees??(field('per-string-labels').value==='degrees'),arp?shapeHarmony.intervals:degrees,title+', '+heading,getContext().highlight??true,drop?{notes:board.notes,muted:board.muted}:null);
+   const display=getContext().view?fretboardCollection(entry.geometryHarmony||shapeHarmony,['oneTwo','twoOne'].includes(kind)?{...getContext().view,study:'positional',arpeggioSource:'selectedChord'}:getContext().view):null;
+   const svg=display?.arpeggios?.length>1?arpeggioDiagramsMarkup(board,display,getContext().degrees??true,degrees,getContext().highlight??true):diagramSvg(display?collectionBoard(board,display):board,getContext().degrees??(field('per-string-labels').value==='degrees'),arp?shapeHarmony.intervals:degrees,title+', '+heading,getContext().highlight??true,drop?{notes:board.notes,muted:board.muted}:null);
    Object.assign(mapShapes[mapShapes.length-1],{index:i,entry,heading,svg,drop});
    return `<article style="--shape-color:${shapeColor(i)}" class="position-card per-string-shape" data-start-degree="${degree}"><div class="position-heading"><h5>${esc(heading)}</h5><span>Frets ${board.start}–${board.end}</span></div><div class="per-string-scroll" tabindex="0" role="button" aria-pressed="false" aria-label="Highlight ${esc(heading)} on full-neck map">${svg}</div></article>`;
   }).join('');

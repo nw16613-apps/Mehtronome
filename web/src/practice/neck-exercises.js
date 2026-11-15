@@ -9,7 +9,7 @@ export function neckCellHarmony(harmony,view){
  if(contentMaterial(view)==='scale'||contentSource(view)!=='selectedChord')return harmony;
  const core=exerciseArpeggioHarmony(harmony,view.material);return {...core,scalePcs:core.chordPcs,scaleNames:core.tones,cellDegrees:core.intervals};
 }
-export function neckExerciseCells(harmony,view){view=normalizePentatonicLayout({...view});if(view.fingering&&!['caged','three'].includes(view.fingering)&&!isPentatonicFingering(view.fingering))return [];const collection=neckCellHarmony(harmony,view),routes=view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells;
+function rawNeckExerciseCells(harmony,view){view=normalizePentatonicLayout({...view});if(view.fingering&&!['caged','three'].includes(view.fingering)&&!isPentatonicFingering(view.fingering))return [];const collection=neckCellHarmony(harmony,view),routes=view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells;
  if(usesPentatonicCollection(view)){
   const ph=scaleCollectionHarmony(harmony,view),dedicated=isPentatonicFingering(view.fingering),base=dedicated?ph:harmony;
   const subset=board=>exerciseCollectionBoard(board,harmony,view);
@@ -20,6 +20,11 @@ export function neckExerciseCells(harmony,view){view=normalizePentatonicLayout({
   return routes(harmony,view,3,harmony).map(r=>({...r,board:subset(r.board),...(r.blocks?{blocks:r.blocks.map(b=>({...b,board:subset(b.board)}))}:{})})).filter(r=>r.board.notes.length&&(!r.blocks||r.blocks.every(b=>b.board.notes.length)));
  }
  return routes(collection,view,collection.cellDegrees?2:3,harmony);}
+export function neckExerciseCells(harmony,view){
+ const shapes=rawNeckExerciseCells(harmony,view);
+ if(contentMaterial(view)==='scale')return shapes;
+ return shapes.map(s=>({...s,label:s.label.replace(/^Degree /,'Parent scale degree ').replace(/\d+-note cell/,contentSource(view)==='selectedChord'?`${s.board.notes.length}-note arpeggio subset`:'source arpeggios')}));
+}
 export function neckRouteChoice(choices,view){
  const exact=choices.find(s=>s.degree===view.traversalCell);if(exact)return exact;
  const fret=Number(String(view.traversalCell||'').split(':').at(-1));

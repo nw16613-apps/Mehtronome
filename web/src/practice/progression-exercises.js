@@ -39,7 +39,7 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
  const anchoredTraversal=patterned||scalar||pentatonicCells||['arpgroups3','arpgroups4'].includes(study)||isEnclosureStudy(study);
  let scaleRemaining=null,routePrevious=null,cycleLeg=null,regionCursor=null,regionTurns=0,advanceSourceContext='',advanceAnchorCache=new Map();
  let cellOffset=0,pendingCell=null,regionBoundary=null,lastPlayedNote=null,lastPlayedDirection=null,lastCompletedNotes=null;
- const repeatBoundary=options.traversalTurn==='note'&&!alternatesPositions(options);
+ const repeatBoundary=options.traversalTurn==='note'&&!alternatesPositions(options)&&study!=='harmonized';
  let globalStart=0,previousContext='',previousStart='default',cellIndex=0,pendingScaleBoundary=false,pendingScaleTurn=false;
  let lastAnchor=null,lastCursor=null,lastMidi=null,lastRangeEdge=null,travel=motion==='descending'||motion==='down-up'?-1:1,nextAscending=travel>0;
  let regionTravel=travel,positionReturn=false;

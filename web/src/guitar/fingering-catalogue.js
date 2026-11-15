@@ -1,4 +1,4 @@
-import {exerciseArpeggioHarmony} from './arpeggio-harmony.js';
+import {arpeggioCollection} from './arpeggio-collection.js';
 import {isPentatonicFingering,PENTATONIC_FINGERING_LABELS} from './fingering-types.js';
 import {scaleCollectionHarmony} from './scale-collection.js';
 import {MODES} from '../audio/music.js';
@@ -11,15 +11,16 @@ export const fingeringName=kind=>PENTATONIC_FINGERING_LABELS[kind]||({spread:'Sp
 const practicalArpeggio=board=>board.end<=24&&board.notes.every(n=>n.fret>0)&&Array.from({length:6},(_,string)=>board.notes.filter(n=>n.string===string).map(n=>n.fret)).every(frets=>Math.max(...frets)-Math.min(...frets)<=4);
 export function fingeringCatalogue(harmony,kind,setIndex=0,source='chord',size=4,options={}){
  if(isPentatonicFingering(kind)){const h=scaleCollectionHarmony(harmony,{...options,fingering:kind});return perStringCatalogue(h,kind).map(e=>({...e,harmony:h,geometryHarmony:harmony,label:'Starting tone · '+h.scaleNames[e.degree]}));}
- if(['oneTwo','twoOne'].includes(kind)&&options.material&&!options.exactFingering){harmony=exerciseArpeggioHarmony(harmony,options.material);size=options.material==='triad'?3:4;}
+ if(['oneTwo','twoOne'].includes(kind)&&options.material&&!options.exactFingering){size=options.material==='triad'?3:4;}
  if(kind==='spread')return spreadTriadCatalogue(harmony,setIndex,source);
  if(kind==='three')return perStringCatalogue(harmony,kind);
- const sources=source==='mode'?modeChordHarmonies(harmony,kind.startsWith('drop')?4:size):[harmony];
+ const sourceKind=['oneTwo','twoOne'].includes(kind)&&options.arpeggioSource?options.arpeggioSource:source==='mode'?'diatonic':'selectedChord';
+ const sources=['oneTwo','twoOne'].includes(kind)?arpeggioCollection(harmony,options.material|| (size===3?'triad':'seventh'),sourceKind):source==='mode'?modeChordHarmonies(harmony,kind.startsWith('drop')?4:size):[harmony];
  return sources.flatMap((h,modeDegree)=>{
   const entries=kind.startsWith('drop')?dropVoicingCatalogue(h,kind,setIndex):perStringCatalogue(h,kind);
   return entries.map((entry,inversion)=>{
    const choices=kind.startsWith('drop')?entry.choices:entry.choices.filter(practicalArpeggio);
-   return {...entry,choices,extended:false,inversion,harmony:h,degree:source==='mode'?modeDegree*size+inversion:entry.degree,label:(source==='mode'?'Degree '+MODES[harmony.mode].degrees[modeDegree]+' · '+h.name+h.suffix+' · ':'')+inversions[inversion]+' · '+h.tones[entry.degree]+' ('+h.intervals[entry.degree]+')',tag:source==='mode'?MODES[harmony.mode].degrees[modeDegree]+['R','¹','²','³'][inversion]:['R','1st','2nd','3rd','4th','5th','6th'][inversion]};
+   return {...entry,choices,extended:false,inversion,harmony:h,degree:sources.length>1?h.modeDegree*size+inversion:entry.degree,label:(sources.length>1?'Degree '+MODES[harmony.mode].degrees[h.modeDegree]+' · '+h.name+h.suffix+' · ':'')+inversions[inversion]+' · '+h.tones[entry.degree]+' ('+h.intervals[entry.degree]+')',tag:sources.length>1?MODES[harmony.mode].degrees[h.modeDegree]+['R','¹','²','³'][inversion]:['R','1st','2nd','3rd','4th','5th','6th'][inversion]};
   });
  });
 }
