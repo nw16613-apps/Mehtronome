@@ -15,7 +15,7 @@ export function fingeringCatalogue(harmony,kind,setIndex=0,source='chord',size=4
  if(kind==='spread')return spreadTriadCatalogue(harmony,setIndex,source);
  if(kind==='three')return perStringCatalogue(harmony,kind);
  const sourceKind=['oneTwo','twoOne'].includes(kind)&&options.arpeggioSource?options.arpeggioSource:source==='mode'?'diatonic':'selectedChord';
- const sources=['oneTwo','twoOne'].includes(kind)?arpeggioCollection(harmony,options.material|| (size===3?'triad':'seventh'),sourceKind):source==='mode'?modeChordHarmonies(harmony,kind.startsWith('drop')?4:size):[harmony];
+ const sources=['oneTwo','twoOne'].includes(kind)?arpeggioCollection(harmony,options.material|| (size===3?'triad':'seventh'),sourceKind,options.source):source==='mode'?modeChordHarmonies(harmony,kind.startsWith('drop')?4:size):[harmony];
  return sources.flatMap((h,modeDegree)=>{
   const entries=kind.startsWith('drop')?dropVoicingCatalogue(h,kind,setIndex):perStringCatalogue(h,kind);
   return entries.map((entry,inversion)=>{

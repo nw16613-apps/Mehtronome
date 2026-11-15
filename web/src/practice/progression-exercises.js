@@ -80,7 +80,8 @@ export function progressionExerciseGroups(harmonies,durations,anchor,options){
    if(!boundary&&regionBoundary&&regionBoundary.id===board.neckCell?.id&&regionBoundary.travel===travel)return [regionBoundary.cell];
    const leg=directional?(travel>0?'ascending':'descending'):motion;
    const cellOptions={sequenceAdvance:boundary||globalAdvance?1:options.sequenceAdvance,sequenceOrder:hasChromaticSide(study)?options.sequenceOrder:'normal',arpeggioSequence:options.arpeggioSequence,source:chosen?.id,pattern,anchorMidi:triadReference,arpeggioPattern:options.arpeggioPattern,arpeggioRegister:options.arpeggioRegister,arpeggioClose:options.arpeggioClose,arpeggioSource:options.arpeggioSource,arpeggioRoutine:routineAlternating?'repeat':options.arpeggioRoutine,arpeggioApproach:options.arpeggioApproach,arpeggioRequireAlternate:routineAlternating,arpeggioDeferConnection:routineConnected,enclosureTarget:options.enclosureTarget,enclosurePattern:options.enclosurePattern};
-   const raw=study==='grip'?gripStudy(board,harmony):cagedStudy(board,harmony,study,material,leg,cellOptions);
+   const physicalHarmony=board.exerciseHarmony||harmony,physicalOptions=board.exerciseHarmony?{...cellOptions,arpeggioSource:'selectedChord'}:cellOptions;
+   const raw=study==='grip'?gripStudy(board,physicalHarmony):cagedStudy(board,physicalHarmony,study,material,leg,physicalOptions);
    if(globalAdvance&&!boundary&&!advanceAnchors.has(leg)){
     const roots=[...new Set(cagedStudy(outputBoard,harmony,study,material,leg,cellOptions).map(c=>c.sequenceAnchor))],origin=Math.max(0,roots.indexOf(raw[0]?.sequenceAnchor));
     advanceAnchors.set(leg,new Set(roots.filter((_,i)=>i>=origin&&(i-origin)%Number(options.sequenceAdvance)===0)));

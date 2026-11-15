@@ -148,3 +148,6 @@ html[data-palette]:not([data-palette=light]):not([data-palette=dark]) .muted-str
 .arpeggio-source-shape h5{margin:0 0 10px;font-size:13px}
 .arpeggio-source-shape .fretboard{min-width:0!important;width:100%;max-width:680px}
 .position-thumbnail .arpeggio-source-gallery{display:none}
+
+.exercise-empty-state{padding:36px 24px;text-align:center;color:var(--muted);border:1px solid var(--line);border-radius:10px}
+.study-practice-recipe{margin:16px 0;padding:16px;border:1px solid var(--line);border-radius:10px}

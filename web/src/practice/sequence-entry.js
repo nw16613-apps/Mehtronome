@@ -17,6 +17,10 @@ export function sequenceEntryChoices(cells,harmony,view){
   const degree=scale&&scaleIndex>=0?'Degree '+(MODES[harmony.mode]?.degrees[scaleIndex]||scaleIndex+1):coreIndex>=0?'Degree '+core.intervals[coreIndex]:'Note';choices.push({value,label:degree+' · '+(scaleIndex>=0?harmony.scaleNames[scaleIndex]:coreIndex>=0?core.tones[coreIndex]:note.name),note});
  }return choices;
 }
+export function sequenceEntryPitch(selected,harmony){
+ const [kind,raw]=String(selected||'default').split(':'),number=Number(raw),core=arpeggioHarmony(harmony);
+ return kind==='scale'?harmony.scalePcs[number]:kind==='chord'?core.chordPcs[core.intervals.findIndex(n=>n?.match(/\d+/)?.[0]===raw)]:kind==='offset'?mod(harmony.chordPcs[0]+number):undefined;
+}
 export function sequenceEntryState(cells,harmony,view){
  const selected=view.entryTone||'default';if(selected==='default'||!cells.length)return {index:0,warning:''};
  const [kind,raw]=selected.split(':'),number=Number(raw),core=arpeggioHarmony(harmony),target=kind==='scale'?harmony.scalePcs[number]:kind==='chord'?core.chordPcs[core.intervals.findIndex(n=>n?.match(/\d+/)?.[0]===raw)]:kind==='offset'?mod(harmony.chordPcs[0]+number):undefined;

@@ -54,7 +54,7 @@ export function normalizeExerciseOptions(view){
  if(['guidetones','connections','shells','shellphrases','drops'].includes(view.study))view.study='harmonized';
  const oldStudy=view.study,originalPattern=view.arpeggioPattern;
  if(['harmonized','alternating','chordtones','chordtonesalternating','inversions','arpgroups4','approacheverytone'].includes(oldStudy)){
-  view.arpeggioSource=['diatonic','chordRoots','selectedChord'].includes(view.arpeggioSource)?view.arpeggioSource:'diatonic';
+  view.arpeggioSource=['diatonic','chordRoots','selectedChord','triadPair'].includes(view.arpeggioSource)?view.arpeggioSource:'diatonic';
   if(oldStudy.startsWith('chordtones'))view.arpeggioSource='chordRoots';
   if(['inversions','arpgroups4'].includes(oldStudy)){view.arpeggioSource='selectedChord';view.arpeggioRoutine='inversions';view.arpeggioPattern='straight';view.arpeggioClose=false;if(oldStudy==='arpgroups4')view.material='seventh';}
   if(oldStudy==='approacheverytone'){view.arpeggioApproach='directional';view.arpeggioPattern='straight';}

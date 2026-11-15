@@ -1,4 +1,4 @@
-import {arpeggioCollection} from './arpeggio-collection.js';
+import {arpeggioCollection,triadPairCollectionHarmony} from './arpeggio-collection.js';
 import {scaleCollectionHarmony,exerciseCollectionBoard} from './scale-collection.js';
 import {isExactVoicingBoard,voicingNeighbour} from './fingering-rules.js';
 import {SCALE_SEQUENCES,scaleSequenceCells,orderedScaleCell} from './scale-sequences.js';
@@ -423,11 +423,11 @@ export function cagedStudy(board,harmony,study='harmonized',material='seventh',m
   const size=MATERIAL_SIZES[material] || 4;
   if(ARPEGGIO_PATTERN_STUDIES.has(study)&&(context.arpeggioPattern||context.arpeggioSource)){
     const source=context.arpeggioSource||(study.startsWith('chordtones')?'chordRoots':'diatonic');
-    const base=arpeggioCollection(harmony,material,source).flatMap(h=>selectedChordSeeds(board,h,material)).sort((a,b)=>a.notes[0].midi-b.notes[0].midi);
+    const base=arpeggioCollection(harmony,material,source,context.source).flatMap(h=>selectedChordSeeds(board,h,material)).sort((a,b)=>a.notes[0].midi-b.notes[0].midi);
     const cells=patternedArpeggios(board,base,context.arpeggioPattern||'straight',{motion,register:context.arpeggioRegister,alternate:study==='alternating'||study==='chordtonesalternating',anchorMidi:context.anchorMidi,closeTriad:context.arpeggioClose,routine:context.arpeggioRoutine,approach:context.arpeggioApproach,requireAlternate:context.arpeggioRequireAlternate||context.arpeggioRoutine==='alternate',deferConnection:context.arpeggioDeferConnection});
     return sequenceArpeggioCells(cells,board,harmony,context.arpeggioSequence,context.arpeggioSource,motion,context.sequenceAdvance,context.sequenceOrder);
   }
-  if(study.startsWith('arpseq_')){const core=arpeggioHarmony(harmony),size=material==='triad'?3:4;return scaleSequenceCells(board,{...core,scalePcs:core.chordPcs.slice(0,size),scaleNames:core.tones.slice(0,size)},study.slice(7),motion,context).map((c,i)=>orderedScaleCell(c,context.sequenceOrder,i));}
+  if(study.startsWith('arpseq_')){const core=arpeggioHarmony(harmony),size=material==='triad'?3:4,pair=triadPairCollectionHarmony(harmony,context);return scaleSequenceCells(board,context.arpeggioSource==='triadPair'?pair:{...core,scalePcs:core.chordPcs.slice(0,size),scaleNames:core.tones.slice(0,size)},study.slice(7),motion,context).map((c,i)=>orderedScaleCell(c,context.sequenceOrder,i));}
   if(SCALE_SEQUENCES[study])return scaleSequenceCells(board,harmony,study,motion,context).map((c,i)=>orderedScaleCell(c,context.sequenceOrder,i));
   if(study==='positionalscale')return scalePatternExercise(board,harmony,motion,[0],'scale');
   if(study==='arpgroups3'||study==='arpgroups4')return scaleSequenceCells(board,{...harmony,scalePcs:harmony.chordPcs,scaleNames:harmony.tones},'groups'+study.at(-1),motion,context).map((c,i)=>orderedScaleCell(c,context.sequenceOrder,i));

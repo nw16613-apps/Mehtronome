@@ -15,7 +15,7 @@ The governing rule is: material/source defines the musical collection; fingering
 - Fixed the selected dedicated arpeggio's neck map: viewing a member no longer recalculates chord-tone roots from that member instead of the backing chord.
 - Preserved the vertical gallery → navigation → detailed shapes → neck map arrangement. Restored the relocated Fingering selector's styling.
 
-## Remaining issues found in the wider review
+## Findings addressed in the follow-up implementation
 
 ### 1. Study does not use the same material recipe as Fretboard/Exercises — high priority
 
@@ -48,3 +48,16 @@ Reviewed Study setup/loading, source and material menus, CAGED/modal-3NPS/dedica
 Regression coverage includes exact source membership in all 12 keys and all seven diatonic modes; triads and sevenths; both straight and explicit permutation orders; physical note coordinates; source/inversion catalogues; cross-bar phase; and complete arpeggio-cell boundaries. Browser checks cover both pages, source collections, selected inversion transfer and map correspondence, layout/mobile behaviour, saved recipes and Study workflows. Physically incomplete blocks are treated as unavailable, not as permission to fabricate notes.
 
 Validation completed: 77 focused model tests and 32 distinct browser workflows passed. Existing Favourites/Study checks were updated from hidden retired selectors/aliases to the current public hierarchy. Build passed. Logs are retained in `/workspace/arpeggio-source-model-full.log`, `/workspace/arpeggio-source-browser-verified.log` and `/workspace/arpeggio-source-browser-last.log`; the last two together contain the final 32 passing workflows.
+
+## Follow-up fixes — 15 November 2026
+
+All four findings above have been addressed:
+
+1. Study now renders shared material/source/fingering/pattern controls from the same recipe helpers, retains the selected layout and register on load, and persists the shared recipe across reloads. Tier controls continue to own harmony and route planning. Study progress IDs include the recipe, and explicit Reload study restores the captured setup.
+2. Shared capability checks use the real physical boards and pattern generator, disable unavailable orders/families with reasons, and replace unavailable studies with an explicit empty state. Playback/export are disabled for these states. Study uses the same fit check. Shapes are never padded with invented pitches.
+3. Alternating-string arpeggio fingerings now support horizontal and diagonal routes, including selected string blocks and complete-cell requirements. Triad pairs support general interval/group/permutation and whole-triad orders using the selected pair, and favourites retain pair identity. Chord voicings still retain their own physical constraints; impossible pattern/block combinations remain unavailable.
+4. Source, material and family changes preserve valid starting choices. Equivalent scale/chord labels are reconciled to the same pitch. An unavailable saved entry remains explicit and uses the directional-boundary fallback rather than silently discarding the saved choice.
+
+The checks are based on actual generated cells, not on whether a menu or score merely exists.
+
+Follow-up verification: 94 model checks and 42 distinct browser workflows passed, covering Study recipe load/reload, tempo/sound preservation, automatic randomisation, desktop/mobile layout, impossible-pattern recovery, all source collections, saved recipes, exact physical routes and starting-note preservation. Fit validation now checks every chord slot in a progression. The follow-up logs are `/workspace/wider-fixes-model-full.log`, `/workspace/wider-fixes-browser-final.log` and `/workspace/wider-fixes-browser-release.log`.
