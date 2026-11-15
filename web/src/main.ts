@@ -3,7 +3,7 @@ import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
 import {isPentatonicFingering} from './guitar/fingering-types.js';
 import {materialKind,changeMaterialKind,changeNoteMaterial} from './practice/material-hierarchy.js';
 import {scaleCollectionHarmony,exerciseCollectionBoard,usesPentatonicCollection} from './guitar/scale-collection.js';
-import {fretboardCollection,fretboardStudyControls,collectionBoard,routePreviewMarkup,arpeggioDiagramsMarkup} from './guitar/fretboard-study.js';
+import {fretboardCollection,fretboardStudyControls,collectionBoard,routePreviewMarkup,arpeggioDiagramsMarkup,inspectedCollection} from './guitar/fretboard-study.js';
 import {neckExerciseGroups,neckExerciseCells,neckCellHarmony,neckRouteChoice} from './practice/neck-exercises.js';
 import {acrossNeck,hasRouteTurnOptions,normalizeTraversal,neckRouteBoard,traversalControls,traversalLabel,routeMapSvg} from './guitar/neck-traversal.js';
 import {GUITAR_TUNINGS,GUITAR_TUNING_KEY,normalizeGuitarTuning,guitarTuningRatio} from './audio/guitar-tuning.js';
@@ -2590,14 +2590,21 @@ function renderFretboardStudyControls(info:any){
  const guide=el('position-path-guide').querySelector('p');if(guide)guide.hidden=across;
  if(!document.getElementById('guitar-colour-notes')){const label=document.createElement('label');label.className='check';label.innerHTML='<input type="checkbox" id="guitar-colour-notes">Modal colour notes';guitarPanel.querySelector('.guitar-viewbar')?.append(label);label.querySelector('input')!.addEventListener('change',event=>{input('highlight-mode').checked=(event.target as HTMLInputElement).checked;renderGuitar();});}
  if(!document.getElementById('fret-degree-reference')){const label=document.createElement('label');label.innerHTML='<span>Degrees relative to</span><select id="fret-degree-reference"><option value="collection">Selected collection</option><option value="chord">Current chord</option></select>';select('fret-labels').closest('label')!.after(label);label.querySelector('select')!.addEventListener('change',event=>{exerciseView.degreeReference=(event.target as HTMLSelectElement).value;saveFretboardDisplay();renderGuitar(true);});}
- select('fret-degree-reference').value=exerciseView.degreeReference;select('fret-degree-reference').closest('label')!.hidden=materialKind(exerciseView)==='chords'||contentMaterial(exerciseView)==='scale'&&contentSource(exerciseView)!=='pentatonic';
+ select('fret-degree-reference').value=exerciseView.degreeReference;
  input('guitar-colour-notes').checked=input('highlight-mode').checked;
  const collection=fretboardCollection(info,exerciseView,true),legend=guitarPanel.querySelector('.guitar-legend');input('guitar-colour-notes').closest('label')!.hidden=!collection.scale;select('fret-labels').querySelector('option[value=degrees]')!.textContent=collection.scale?'Scale degrees':collection.arpeggios?.length>1?'Degrees':'Arpeggio degrees';if(legend){for(const [kind,text]of [['root',collection.scale?'Current root':'Arpeggio root'],['chord',collection.scale?'Chord tone':'Arpeggio tone']]){const icon=legend.querySelector('i.'+kind);if(icon?.parentElement)icon.parentElement.replaceChildren(icon,document.createTextNode(text));}(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=!collection.scale;el('characteristic-legend').hidden=!collection.scale||!input('highlight-mode').checked;}
+ const dedicatedShape=!across&&['oneTwo','twoOne'].includes(exerciseView.fingering)?perStringMapContext?.shapes.find((s:any)=>String(s.degree)===perStringMapShape):null;
+ reflectDegreeReference(dedicatedShape?fretboardCollection(dedicatedShape.harmony,{...exerciseView,study:'positional',arpeggioSource:'selectedChord'},true,info):collection);
  input('show-grip').closest('label')!.hidden=across||exerciseView.fingering!=='caged'||!['mode','selectedChord'].includes(collection.source);
  const overlayControls=guitarPanel.querySelector<HTMLElement>('.fretboard-overlay-controls');if(overlayControls)overlayControls.hidden=true;
  const pentatonic=collection.source==='pentatonic';if(legend)(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=pentatonic;const colourKey=document.getElementById('fretboard-overlay-key');if(colourKey)colourKey.innerHTML=pentatonic?'<span><i class="theory-pentatonic-key"></i>Pentatonic notes</span><span><i class="theory-pentatonic-root-key"></i>Pentatonic root</span>':'';if(pentatonic&&legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=true;(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=true;el('characteristic-legend').hidden=true;}if(pentatonic)input('guitar-colour-notes').closest('label')!.hidden=true;
 }
+function reflectDegreeReference(collection:any){
+ const selected=inspectedCollection(collection);
+ select('fret-degree-reference').closest('label')!.hidden=materialKind(exerciseView)==='chords'||selected.scale&&selected.source!=='pentatonic'||selected.rootPc===selected.backingRootPc;
+}
 function renderNeckSelectedShape(info:any,shapes:any[],shape:any,collection:any,playingCell:any){
+ reflectDegreeReference(collection);
  const opened=neckSelectedPanel.querySelector<HTMLDetailsElement>('details')?.open;
  const parents=neckExerciseCells(info,{...exerciseView,traversal:'horizontal'});
  neckSelectedPanel.innerHTML=routePreviewMarkup(shape,collection,guitarDegrees,MODES[info.mode as keyof typeof MODES].degrees,parents,input('highlight-mode').checked);
