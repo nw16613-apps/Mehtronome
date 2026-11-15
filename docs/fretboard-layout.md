@@ -8,6 +8,8 @@ Every direct position choice (thumbnail, previous/next, keyboard arrows or full-
 
 Display settings contains labels, degree reference, chord voicing and focus. Pentatonics and triad pairs are chosen through the primary material/source controls; there is no independent melodic overlay. Pentatonic diagrams retain purple notes, a distinct pentatonic-root ring and the backing-root amber accent.
 
+Position thumbnails and diagonal source-position previews contain one compact diagram each; they never contain member selectors or enlarged detail panels.
+
 For multi-arpeggio sources, the position row is followed by member thumbnails and one enlarged selected arpeggio, with its bass inversion labelled. The same member supplies note colours, labels and the full-neck map: amber root, teal remaining tones. Position changes preserve the inspected member when it belongs to the source. Inspection is a display preference; Exercises continues to practise the selected source collection rather than silently filtering it to the inspected member.
 
 “Degrees relative to” selects the collection root or current backing chord for both arpeggio and pentatonic labels. It is hidden when the selected collection and backing chord share a root, including Selected chord arpeggios; the saved preference is retained. It leaves notes, fingering coordinates and colours unchanged. The reference and inspected member persist locally, separately from exercise recipes. Dedicated alternating-string arpeggios retain the backing chord as the chord reference even when the physical fingering belongs to a different source member.
