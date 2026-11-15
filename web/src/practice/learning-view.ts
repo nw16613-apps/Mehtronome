@@ -1,3 +1,4 @@
+import {fretboardCollection,collectionBoard} from '../guitar/fretboard-study.js';
 import {emphasizeFullNeck} from '../guitar/shape-emphasis.js';
 import {routeMapSvg,traversalLabel} from '../guitar/neck-traversal.js';
 import {cardStartChoices,cardStartLabel} from './pattern-start-route.js';
@@ -10,8 +11,8 @@ import {exerciseGuidance} from './exercise-options.js';
 import {recommendedGrip} from '../guitar/grips.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function learningView(panel:HTMLElement,context:any){
- const {board,info,position,groups,notes,study,fretboard}=context;
- const grip=board.route?null:context.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(info,board);
+ const {info,position,groups,notes,study,fretboard}=context,collection=context.view?fretboardCollection(info,context.view):null,pentatonic=collection?.source==='pentatonic',board=pentatonic?collectionBoard(context.board,collection):context.board;
+ const grip=pentatonic||board.route?null:context.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(info,board);
  const toolbar=document.createElement('div');toolbar.className='exercise-learning-toolbar';toolbar.innerHTML=`<label>${context.progression?'Selected chord position':'Position'}<select id="exercise-position">${['I','II','III','IV','V'].map(n=>`<option ${n===position.numeral?'selected':''}>${n}</option>`).join('')}</select></label>`;
  const oldStudy=panel.querySelector('#exercise-study')?.closest('label');if(oldStudy)toolbar.prepend(oldStudy);
  const focusButton=panel.querySelector('#exercise-focus');if(focusButton)toolbar.append(focusButton);const previewButton=panel.querySelector('#exercise-preview');if(previewButton)toolbar.append(previewButton);
@@ -79,7 +80,7 @@ export function highlightLearningNote(index:number|null,notes:any[],markNotation
 
 /** Update only the linked diagram at a chord boundary; retain notation,
  * selection, focus and the hide/reveal state. */
-export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
+export function updateProgressionMap(panel:HTMLElement,group:any,study:string,view:any=null){
  const localStart=panel.querySelector<HTMLSelectElement>('#exercise-card-start');
  if(localStart)localStart.disabled=!!group.resolution;
  if(localStart&&!group.resolution){
@@ -87,11 +88,11 @@ export function updateProgressionMap(panel:HTMLElement,group:any,study:string){
   localStart.innerHTML=`<option value="inherit">Use global default</option><option value="default">Shape default</option>${choices.map((c:any)=>`<option value="${esc(c.value)}">${esc(c.label)}</option>`).join('')}${!['inherit','default',...choices.map((c:any)=>c.value)].includes(value)?`<option value="${esc(value)}">${esc(cardStartLabel(group.harmony,value))} · unavailable; using shape default</option>`:''}`;
   localStart.value=value;
  }
- const {board,harmony,position,notes}=group,diagram=panel.querySelector<HTMLElement>('.exercise-map-diagram');if(!diagram)return;
+ const {harmony,position,notes}=group,collection=view?fretboardCollection(harmony,view):null,pentatonic=collection?.source==='pentatonic',board=pentatonic?collectionBoard(group.board,collection):group.board,diagram=panel.querySelector<HTMLElement>('.exercise-map-diagram');if(!diagram)return;
  const augmented={...board,notes:[...board.notes]};
  for(const note of notes)if(!augmented.notes.some((n:any)=>n.string===note.string&&n.fret===note.fret))augmented.notes.push({...note,root:note.pc===harmony.chordPcs[0],chord:harmony.chordPcs.includes(note.pc),scaleIndex:harmony.scalePcs.indexOf(note.pc),chromaticDegree:note.chromaticDegree});
  if(['grip','positional'].includes(study))augmented.notes=augmented.notes.map((n:any)=>{const index=harmony.chordPcs.indexOf(n.pc);return index<0?n:{...n,scaleIndex:-1,chromaticDegree:harmony.intervals[index]};});
- const grip=board.route?null:group.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(harmony,board);
+ const grip=pentatonic||board.route?null:group.perString?(board.muted?{notes:board.notes,muted:board.muted}:null):recommendedGrip(harmony,board);
  diagram.innerHTML=board.route?routeMapSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,traversalLabel(board.route),notes[0]?.neckCell?.notes||notes):diagramSvg(augmented,true,MODES[harmony.mode as keyof typeof MODES].degrees,`${group.chord} · ${group.annotation}`,true,grip);
  diagram.querySelector('svg')?.setAttribute('role','group');if(notes[0]?.neckCell)highlightNeckCell(diagram,notes[0].neckCell);
  if(group.perString){(diagram.querySelector('svg') as SVGElement).style.minWidth=Math.max(480,(board.end-board.start+1)*48)+'px';diagram.classList.add('per-string-scroll');}

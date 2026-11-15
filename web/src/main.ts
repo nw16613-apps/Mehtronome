@@ -224,7 +224,7 @@ app.innerHTML = `
         <div class="guitar-controls"><label>Position navigation<select id="featured-position"><option value="path" selected>Automatic route</option><option value="all">Choose positions yourself</option></select></label><label>Diagram<select id="fret-view"><option value="scale">Scale + chord tones</option><option value="arpeggio">Chord tones only</option></select></label><label>Labels<select id="fret-labels"><option value="notes">Note names</option><option value="degrees" selected>Scale degrees</option></select></label></div>
         <input type="hidden" id="pattern-start-route" value=""><input type="hidden" id="manual-position-route" value=""><div id="position-path-guide" class="position-path-guide" hidden><div class="position-path-heading"><label>Fretboard region<select id="position-region">${Object.entries(FRET_REGIONS).map(([id,region])=>`<option value="${id}" ${id==='middle'?'selected':''}>${region.name}</option>`).join('')}</select></label><label hidden>Selected chord position<select id="guitar-chord-position">${POSITIONS.map(p=>`<option value="${p.numeral}">${p.numeral} · ${p.shape} framework</option>`).join('')}</select></label><p>Automatic CAGED route · choose a region</p></div><div id="position-path" class="position-path"></div></div>
         <label class="check grip-toggle"><input id="show-grip" type="checkbox">Show chord voicing</label><p id="grip-preview-status" class="guitar-help" role="status" hidden>Chord on · click the active button to stop.</p>
-        <div class="theory-controls shared-theory-controls"><label>Melodic overlay<select id="theory-view" aria-label="Melodic overlay"><option value="none">Off</option><option value="pentatonic">Pentatonic superimposition</option><option value="triads">Triad pairs</option></select></label><label id="theory-choice-label" hidden>Pentatonic source<select id="theory-choice" aria-label="Pentatonic source"><option value="">None</option></select></label></div><div id="theory-description"></div>
+        <div class="theory-controls shared-theory-controls" hidden><label>Melodic overlay<select id="theory-view" aria-label="Melodic overlay"><option value="none">Off</option></select></label><label id="theory-choice-label" hidden>Pentatonic source<select id="theory-choice" aria-label="Pentatonic source"><option value="">None</option></select></label></div><div id="theory-description"></div>
         <div class="guitar-legend"><span><i class="root"></i>Current root</span><span><i class="chord"></i>Chord tone</span><span><i class="scale"></i>Scale tone</span><span id="grip-legend"><i class="grip"></i>Chord voicing</span><span id="characteristic-legend"><i class="characteristic"></i>Modal colour note</span></div>
       </div>
       <div id="full-fretboard-panel" class="full-fretboard-panel"><div class="full-fretboard-toolbar"><div><strong>Full-neck map</strong><span>Frets 1–17 · click a CAGED region to focus it</span></div><label class="check full-fretboard-option"><input id="show-regions" type="checkbox" checked>Show positions</label><button id="full-fretboard-expand" type="button" class="practice-button full-fretboard-option">Fullscreen</button><button id="full-fretboard-collapse" type="button" class="practice-button" aria-expanded="true" aria-controls="full-fretboard">Hide map</button></div><div id="full-fretboard" class="full-fretboard-scroll"></div></div>
@@ -375,7 +375,7 @@ function stopExercisePreview() {
   document.querySelectorAll('.exercise-note').forEach(note=>note.classList.remove('playing','played'));
   highlightExerciseCells(null);
   highlightLearningNote(null,currentExercise);syncMiniTransport();
-  reflectExerciseSelection();if(exercisePlan&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,Math.min(currentExerciseGroups.length-1,exerciseMapSlot));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}refreshBackingSymbols();
+  reflectExerciseSelection();if(exercisePlan&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,Math.min(currentExerciseGroups.length-1,exerciseMapSlot));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study,exerciseView);}refreshBackingSymbols();
 }
 
 function exerciseRange(){
@@ -589,13 +589,13 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   previousExercise.disabled=exerciseIndex<=0;nextExercise.disabled=exerciseIndex<0||exerciseIndex>=exerciseOptions.length-1;
   previousExercise.title=exerciseIndex>0?`Previous: ${exerciseOptions[exerciseIndex-1].text}`:'First exercise';
   nextExercise.title=exerciseIndex>=0&&exerciseIndex<exerciseOptions.length-1?`Next: ${exerciseOptions[exerciseIndex+1].text}`:'Last exercise';
-  learningView(el('caged-exercise'),{perString,guitarVolume:exerciseGuitarVolume,locked:exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,rhythm:exerciseView.rhythm,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan&&isAlignedStudy(),adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
+  learningView(el('caged-exercise'),{view:exerciseView,perString,guitarVolume:exerciseGuitarVolume,locked:exercisePlaying||exercisePreparing,board,info,position,groups:currentExerciseGroups,notes:currentExercise,study:exerciseView.study,source:sourceChoice,stage:exerciseView.stage,rhythm:exerciseView.rhythm,backing:exerciseView.backing,fretboard:exerciseView.fretboard,ceiling:exerciseView.ceiling,setupOpen:exerciseView.setupOpen,aligned:!!exercisePlan&&isAlignedStudy(),adaptive:settings.progression&&!isAlignedStudy(),progressionSteps:progressionOrder(settings),inspectedStep:step,navigation:select('featured-position').value,region:select('position-region').value,progression:settings.progression,progressionBacking:settings.progression&&exerciseView.backing,timingWarnings:exercisePlan?.warnings,guidePaths:['guidetones','connections'].includes(exerciseView.study)?guideToneExamples(exerciseProgression):[]});
   if(!neck)arpeggioFingeringControls(el('caged-exercise'),exerciseView,info,perString,exercisePlaying||exercisePreparing);
   el('caged-exercise').querySelector('.exercise-heading')!.insertAdjacentHTML('afterend',traversalControls(exerciseView,'exercise',exercisePlaying||exercisePreparing));
   organizeExerciseCatalogue(el('caged-exercise'),exerciseView,!!suggestions.triadPairs.length,nonDiatonic,info);
   applyExerciseCapabilities(el('caged-exercise'),info,exerciseView,board,currentExercise.length>0,currentExerciseGroups.find((g:any)=>g.warning)?.warning,exerciseProgression.map((harmony:any,i:number)=>({harmony,board:settings.progression?currentExerciseGroups[i]?.board:board})));
   reflectExerciseSelection();
-  exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study);}
+  exerciseMapSlot=-1;if(settings.progression&&currentExerciseGroups[0]?.harmony){exerciseMapSlot=Math.max(0,progressionOrder(settings).indexOf(step));updateProgressionMap(el('caged-exercise'),currentExerciseGroups[exerciseMapSlot],exerciseView.study,exerciseView);}
   try{localStorage.setItem(PRACTICE_RECIPE_KEY,JSON.stringify(practiceRecipe(exerciseView)));}catch{}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
   void document.fonts.ready.then(()=>reserveChordBands(el('caged-exercise')));
@@ -871,10 +871,10 @@ function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
   const chord = `${info.name}${info.suffix}`;
   const mode = MODES[info.mode as keyof typeof MODES];
   const suggestions = theoryOptions(info) as {pentatonics:TheorySuggestion[];triadPairs:TheorySuggestion[]};
-  for(const [kind,choices] of [['pentatonic',suggestions.pentatonics],['triads',suggestions.triadPairs]] as const){select('theory-view').querySelector<HTMLOptionElement>(`option[value=${kind}]`)!.disabled=!choices.length;if(theoryView.kind===kind&&!choices.length)theoryView.kind='none';}
+  retireTheoryViews();
   const theoryOptionsForView = theoryView.kind === 'triads' ? suggestions.triadPairs : suggestions.pentatonics;
   const selectedTheory = theoryView.kind === 'none' ? null : theoryOptionsForView.find(option=>option.id===theoryView.choiceId) || theoryOptionsForView[0];
-  const showGrip=requestedGrip&&!selectedTheory;
+  const showGrip=requestedGrip&&!selectedTheory&&['mode','selectedChord'].includes(displayCollection.source);
   input('show-grip').disabled=Boolean(selectedTheory);select('fret-view').disabled=Boolean(selectedTheory);
   el('grip-legend').hidden=!showGrip;
   el('characteristic-legend').hidden=Boolean(selectedTheory)||!input('highlight-mode').checked;
@@ -1732,7 +1732,7 @@ async function auditionExerciseNote(index:number){
 function showExerciseGroup(group:any){
  if(!group?.harmony)return;
  if(settings.progression){const actualStep=group.resolution?exercisePlan?.slots.at(-1)?.step:progressionOrder(settings)[group.slot];if(actualStep===undefined)return;step=actualStep;if(exercisePlaying&&document.body.dataset.workspace==='exercises'){exerciseReferenceDirty=true;renderProgressionReference(step,true);}else{renderMusic(true,group.position);renderProgressionReference(step);}}
- exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study);syncMiniTransport();
+ exerciseMapSlot=group.slot;updateProgressionMap(el('caged-exercise'),group,exerciseView.study,exerciseView);syncMiniTransport();
 }
 function chooseOrAuditionExerciseNote(index:number){if(playing||exercisePlaying||exercisePreparing)return;
  const group=currentExerciseGroups.find((g:any)=>index>=g.globalStart&&index<g.globalStart+g.notes.length);
@@ -1831,23 +1831,8 @@ el('caged-exercise').addEventListener('click',event=>{
 });
 el('caged-exercise').addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target instanceof SVGElement&&event.target.matches('.notation-cell')){event.preventDefault();selectExerciseCell(event.target);return;}if((event.key==='Enter'||event.key===' ')&&event.target instanceof SVGElement&&event.target.hasAttribute('data-exercise-index')){event.preventDefault();chooseOrAuditionExerciseNote(Number(event.target.dataset.exerciseIndex));return;}if((event.key==='Enter'||event.key===' ')&&event.target instanceof SVGElement&&event.target.matches('.exercise-note')){event.preventDefault();chooseOrAuditionExerciseNote(Number(event.target.dataset.noteIndex));}});
 window.addEventListener('keydown',event=>{if(event.key==='Escape'&&el('caged-exercise').classList.contains('notation-focused'))setNotationFocus(false);});
-for(const id of ['theory-view','theory-choice'])select(id).addEventListener('input',()=>{
-  if(id==='theory-view'){
-    const value=select(id).value;
-    theoryView.kind=['pentatonic','triads'].includes(value)?value as 'pentatonic'|'triads':'none';
-    theoryView.choiceId='';
-  }else theoryView.choiceId=select(id).value;
-  renderGuitar();
-  el(id).focus({preventScroll:true});
-});
-function restoreTheoryViews(controls:Record<string,string|boolean>) {
-  const legacyKind=controls['theory-view-I'];
-  const legacyChoice=controls['theory-choice-I'];
-  const kind=controls['theory-view'] ?? legacyKind;
-  const choice=controls['theory-choice'] ?? legacyChoice;
-  theoryView.kind=kind==='pentatonic'||kind==='triads'?kind:'none';
-  theoryView.choiceId=typeof choice==='string'?choice:'';
-}
+function retireTheoryViews(){theoryView.kind='none';theoryView.choiceId='';select('theory-view').value='none';select('theory-choice').value='';}
+function restoreTheoryViews(_controls:Record<string,string|boolean>){retireTheoryViews();}
 
 const gripButton = (target: EventTarget | null) => target instanceof HTMLElement ? target.closest<HTMLButtonElement>('button[data-grip]') : null;
 for (const diagrams of [guitarDiagrams,el('caged-exercise')]) {
@@ -2604,7 +2589,8 @@ function renderFretboardStudyControls(info:any){
  input('guitar-colour-notes').checked=input('highlight-mode').checked;
  const collection=fretboardCollection(info,exerciseView),legend=guitarPanel.querySelector('.guitar-legend');input('guitar-colour-notes').closest('label')!.hidden=!collection.scale;select('fret-labels').querySelector('option[value=degrees]')!.textContent=collection.scale?'Scale degrees':collection.arpeggios?.length>1?'Degrees':'Arpeggio degrees';if(legend){for(const [kind,text]of [['root',collection.scale?'Current root':collection.arpeggios?.length>1?'Source arpeggio roots':'Arpeggio root'],['chord',collection.scale?'Chord tone':'Arpeggio tone']]){const icon=legend.querySelector('i.'+kind);if(icon?.parentElement)icon.parentElement.replaceChildren(icon,document.createTextNode(text));}(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=!collection.scale;el('characteristic-legend').hidden=!collection.scale||!input('highlight-mode').checked;}
  input('show-grip').closest('label')!.hidden=across||exerciseView.fingering!=='caged'||!['mode','selectedChord'].includes(collection.source);
- const overlayControls=guitarPanel.querySelector<HTMLElement>('.fretboard-overlay-controls');if(overlayControls)overlayControls.hidden=across||exerciseView.fingering!=='caged';
+ const overlayControls=guitarPanel.querySelector<HTMLElement>('.fretboard-overlay-controls');if(overlayControls)overlayControls.hidden=true;
+ const pentatonic=collection.source==='pentatonic';if(legend)(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=pentatonic;const colourKey=document.getElementById('fretboard-overlay-key');if(colourKey)colourKey.innerHTML=pentatonic?'<span><i class="theory-pentatonic-key"></i>Pentatonic notes</span><span><i class="theory-pentatonic-root-key"></i>Pentatonic root</span>':'';if(pentatonic&&legend){(legend.querySelector('.chord')!.parentElement as HTMLElement).hidden=true;(legend.querySelector('.scale')!.parentElement as HTMLElement).hidden=true;el('characteristic-legend').hidden=true;}if(pentatonic)input('guitar-colour-notes').closest('label')!.hidden=true;
 }
 function renderNeckSelectedShape(info:any,shapes:any[],shape:any,collection:any,playingCell:any){
  const opened=neckSelectedPanel.querySelector<HTMLDetailsElement>('details')?.open;

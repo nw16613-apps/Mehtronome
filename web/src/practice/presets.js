@@ -13,10 +13,6 @@ export const PRESET_CONTROLS = [
   'fret-labels','highlight-mode','show-grip',
   'gap-enabled','gap-play','gap-mute','gap-target','loop-enabled','loop-start','loop-end','loop-unit','loop-beat-start','loop-beat-end',
   'trainer-enabled','trainer-bars','trainer-increment','trainer-target','featured-position','position-region','manual-position-route','pattern-start-route',
-  'theory-view','theory-choice',
-  // Retained so older exported presets can migrate their Position I choice to
-  // the shared Explore control when imported.
-  ...['I','II','III','IV','V'].flatMap(position=>[`theory-view-${position}`,`theory-choice-${position}`]),
 ];
 export function readPresets(raw) {
   if (!raw) return [];

@@ -1,142 +1,20 @@
-import {test,expect,type Page} from '@playwright/test';
-import {harmonyAt,MODES} from '../src/audio/music.js';
-import {theoryOptions} from '../src/guitar/superimposition.js';
-import {fretboardFor,POSITIONS} from '../src/guitar/fretboard.js';
-
-const card=(page:Page,position:string)=>page.locator(`#guitar-diagrams [data-position="${position}"]`);
-const coordinates=(page:Page)=>page.locator('#guitar-diagrams .fret-note').evaluateAll(notes=>notes.map(n=>[n.getAttribute('data-string'),n.getAttribute('data-fret'),n.getAttribute('data-pc')]));
-
-async function expectOverlay(page:Page,position:string,kind:'pentatonic'|'triads',harmony:ReturnType<typeof harmonyAt>){
-  const options=theoryOptions(harmony);
-  const selected=await page.locator('#theory-choice').inputValue();
-  const suggestions=kind==='pentatonic'?options.pentatonics:options.triadPairs;
-  const suggestion=suggestions.find((option:any)=>option.id===selected)!;
-  expect(suggestion).toBeTruthy();
-  const geometry=await card(page,position).getAttribute('data-geometry');
-  const board=fretboardFor(harmony,geometry!);
-  const expected=board.notes.filter(n=>suggestion.pcs.includes(n.pc)).map(n=>`${n.string}:${n.fret}:${n.pc}`).sort();
-  const actual=await card(page,position).locator('.theory-note').evaluateAll(notes=>notes.map(n=>`${n.getAttribute('data-string')}:${n.getAttribute('data-fret')}:${n.getAttribute('data-pc')}`).sort());
-  expect(actual).toEqual(expected);
-  await expect(card(page,position).locator('svg')).toHaveClass(new RegExp(`theory-${kind}`));
-  await expect(card(page,position).locator('svg')).toHaveAttribute('aria-label',new RegExp(kind==='pentatonic'?'pentatonic|five-note':'triad','i'));
-  if(kind==='triads'){
-    const pair=suggestion as typeof options.triadPairs[number];
-    for(const [group,label] of pair.groups.map((group:any,index:number)=>[group,index===0?'a':'b']) as [any,string][]){
-      const expectedGroup=board.notes.filter(n=>group.pcs.includes(n.pc)).map(n=>`${n.string}:${n.fret}:${n.pc}`).sort();
-      const actualGroup=await card(page,position).locator(`[data-theory-group="${label}"]`).evaluateAll(notes=>notes.map(n=>`${n.getAttribute('data-string')}:${n.getAttribute('data-fret')}:${n.getAttribute('data-pc')}`).sort());
-      expect(actualGroup).toEqual(expectedGroup);
-    }
-    expect(pair.groups[0].pcs.filter((pc:number)=>pair.groups[1].pcs.includes(pc))).toEqual([]);
-    await expect(card(page,position).locator('.theory-badge')).not.toHaveCount(0);
-  }
+import {test,expect} from '@playwright/test';
+const tab=async(page:any,target:string)=>page.locator(`[data-workspace-target=${target}]`).click();
+async function choosePentatonic(page:any,kind='caged'){
+ await page.goto('/');await tab(page,'guitar-title');await page.locator('#guitar-content-source').selectOption('pentatonic');await page.locator('#guitar-content-collection').selectOption('pent-0-minor');await page.locator('#fretboard-fingering').selectOption(kind);
 }
-
-test('the shared Explore control overlays every CAGED position without changing fingerings',async({page})=>{
-  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/');
-  const before=await coordinates(page);
-  await expect(page.locator('#theory-view')).toHaveValue('none');
-  await page.locator('#theory-view').selectOption('pentatonic');
-  const harmony=harmonyAt({key:9,mode:'dorian',chord:'min13'});
-  for(const position of ['I','II','III','IV','V'])await expectOverlay(page,position,'pentatonic',harmony);
-  expect(await coordinates(page)).toEqual(before);
-  for(const position of ['I','II','III','IV','V'])await expect(card(page,position).locator('.grip-ring')).toHaveCount(0);
-  await page.locator('#theory-view').selectOption('triads');
-  for(const position of ['I','II','III','IV','V'])await expectOverlay(page,position,'triads',harmony);
-  await page.locator('#theory-view').selectOption('none');
-  expect(await coordinates(page)).toEqual(before);
-  await expect(card(page,'I').locator('.grip-ring')).toHaveCount(0);
-  await page.locator('#show-grip').check();
-  await expect(card(page,'I').locator('.grip-ring')).not.toHaveCount(0);
-  expect(errors).toEqual([]);
+const pcs=(l:any)=>l.locator('.fret-note').evaluateAll((ns:Element[])=>[...new Set(ns.map(n=>Number(n.getAttribute('data-pc'))))].sort((a,b)=>a-b));
+for(const kind of ['caged','pentThree','pent31','pent13'])test(`${kind}: one pentatonic selector controls diagram notes, purple styling and exercise material`,async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await choosePentatonic(page,kind);await page.locator('#fretboard-appearance summary').click();await expect(page.locator('#theory-view')).not.toBeVisible();await expect(page.locator('#theory-choice')).not.toBeVisible();await expect(page.locator('.fretboard-overlay-controls')).not.toBeVisible();
+ const detail=page.locator(kind==='caged'?'#guitar-diagrams':'.per-string-selected-diagram');await expect(detail.locator('svg.fretboard').first()).toHaveClass(/theory-pentatonic/);const allowed=await pcs(detail);expect(allowed).toEqual([0,2,4,7,9]);await expect(detail).not.toContainText('undefined');await expect(page.locator('#full-fretboard svg')).toHaveClass(/theory-pentatonic/);await expect(detail.locator('.pentatonic-root').first()).toBeVisible();
+ await page.locator('#guitar-content-collection').selectOption('pent-7-minor');expect(await pcs(detail)).toEqual([2,4,7,9,11]);await expect(detail).not.toContainText('undefined');await expect(page.locator('#full-fretboard')).not.toContainText('undefined');await tab(page,'caged-exercise');await expect(page.locator('#exercise-source')).toHaveValue('pent-7-minor');await expect(page.locator('.exercise-map-diagram svg')).toHaveClass(/theory-pentatonic/);await expect(page.locator('.notation-scroll .theory-pentatonic,.notation-scroll .theory-note')).toHaveCount(0);const notes=await page.locator('.exercise-note').evaluateAll(ns=>ns.map(n=>{const m=n.getAttribute('aria-label')!.match(/string (\d), fret (\d+)/)!;return ([0,64,59,55,50,45,40][Number(m[1])]+Number(m[2]))%12;}));expect(notes.every(n=>[2,4,7,9,11].includes(n))).toBeTruthy();expect(errors).toEqual([]);
 });
-
-test('theory suggestions transpose and follow major, melodic-minor and harmonic-minor modes',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view').selectOption('pentatonic');
-  for(const [mode,key] of [['major','0'],['dorian','2'],['lydian','6'],['melodic_minor','9'],['altered','7'],['harmonic_minor','0'],['ultralocrian','6']]){
-    await page.locator('#quality').selectOption(mode);await page.locator('#key').selectOption(key);
-    const harmony=harmonyAt({key:Number(key),mode,chord:MODES[mode as keyof typeof MODES].chord});
-    await expectOverlay(page,'I','pentatonic',harmony);await expectOverlay(page,'V','pentatonic',harmony);
-    const pcs=await page.locator('#guitar-diagrams .theory-note').evaluateAll(notes=>notes.map(n=>Number(n.getAttribute('data-pc'))));
-    expect(pcs.every(pc=>harmony.scalePcs.includes(pc))).toBe(true);
-  }
+for(const traversal of ['horizontal','diagonal'])test(`${traversal}: the selected pentatonic colours both diagrams and the neck map`,async({page})=>{
+ await choosePentatonic(page);await page.locator('#guitar-neck-traversal').selectOption(traversal);await page.locator('#guitar-neck-strings').selectOption('2,3,4,5');await page.locator('#guitar-neck-start').fill('1');await page.locator('#guitar-neck-start').press('Tab');await page.locator('#guitar-neck-end').fill('24');await page.locator('#guitar-neck-end').press('Tab');await expect(page.locator('#neck-selected-panel svg.fretboard').first()).toHaveClass(/theory-pentatonic/);await expect(page.locator('#full-fretboard svg')).toHaveClass(/theory-pentatonic/);const selectedPcs=await pcs(page.locator('#neck-selected-panel .neck-selected-diagram'));expect(selectedPcs.length).toBeGreaterThan(0);expect(selectedPcs.every((pc:number)=>[0,2,4,7,9].includes(pc))).toBeTruthy();await expect(page.locator('#neck-selected-panel')).not.toContainText('undefined');await page.locator('#neck-shape-next').click();await expect(page.locator('#neck-selected-panel svg.fretboard').first()).toHaveClass(/theory-pentatonic/);
 });
-
-test('pentatonic menu lists every parent-scale minor pentatonic and one modal choice',async({page})=>{
-  await page.goto('/');
-  await page.locator('#theory-view').selectOption('pentatonic');
-  const names=()=>page.locator('#theory-choice option').allTextContents();
-  expect(await names()).toEqual(['A minor pentatonic','B minor pentatonic','E minor pentatonic','A Dorian modal pentatonic']);
-
-  await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('lydian');
-  expect(await names()).toEqual(['E minor pentatonic','A minor pentatonic','B minor pentatonic','C Lydian modal pentatonic']);
-
-  await page.locator('#quality').selectOption('harmonic_minor');
-  expect(await names()).toEqual(['C Harmonic minor modal pentatonic']);
+test('purple notes retain the existing colour scheme and root accents',async({page})=>{
+ await choosePentatonic(page);const diagram=page.locator('#guitar-diagrams');const colors=await diagram.evaluate(node=>{const note=node.querySelector('.theory-note:not(.root)>circle:first-of-type')!,root=node.querySelector('.theory-note.root>circle:first-of-type')!;const probe=document.createElement('span');probe.style.color='var(--theory-pentatonic)';node.append(probe);const purple=getComputedStyle(probe).color;probe.remove();return {note:getComputedStyle(note).fill,root:getComputedStyle(root).fill,purple};});expect(colors.note).toBe(colors.purple);expect(colors.root).not.toBe(colors.note);await page.locator('.guitar').screenshot({path:'/workspace/pentatonic-primary-colours.png'});await page.locator('#guitar-content-source').selectOption('mode');await expect(page.locator('.guitar-legend span').filter({hasText:'Chord tone'})).toBeVisible();
 });
-
-test('pentatonic notes use a distinct colour from chord tones in every theme',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view').selectOption('pentatonic');
-  for(const palette of ['midnight','plum','evergreen']){
-    await page.locator('#palette').selectOption(palette);
-    const colours=await card(page,'I').evaluate(node=>{
-      const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
-      return {pentatonic:style('.theory-note > circle:first-of-type'),chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
-    });
-    expect(colours.pentatonic,`${palette} pentatonic colour`).not.toBe(colours.chord);
-  }
-});
-
-test('pentatonic, triad A, triad B and chord tones all use distinct colours in every theme',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view').selectOption('triads');
-  for(const palette of ['midnight','plum','evergreen']){
-    await page.locator('#palette').selectOption(palette);
-    const colours=await card(page,'I').evaluate(node=>{
-      const style=(selector:string)=>getComputedStyle(node.querySelector(selector)!).fill;
-      const probe=document.createElement('span');probe.style.color='var(--theory-pentatonic)';node.appendChild(probe);
-      const pentatonic=getComputedStyle(probe).color;probe.remove();
-      return {a:style('.theory-a > circle:first-of-type'),b:style('.theory-b > circle:first-of-type'),pentatonic,chord:style('.fret-note.chord:not(.theory-note) > circle:first-of-type')};
-    });
-    expect(new Set(Object.values(colours)).size,`${palette} exploration and chord colours`).toBe(4);
-  }
-});
-
-test('turning overlays off restores arpeggio view and related modes retain their parent-major geometry',async({page})=>{
-  await page.goto('/');await page.locator('#key').selectOption('0');await page.locator('#quality').selectOption('major');
-  const major=await coordinates(page);
-  await page.locator('#quality').selectOption('dorian');await page.locator('#key').selectOption('2');
-  expect(await coordinates(page)).toEqual(major);
-  await page.locator('#exercise').selectOption('arpeggio');
-  const arpeggio=await card(page,'I').locator('.fret-note').count();
-  await page.locator('#theory-view').selectOption('pentatonic');
-  expect(await card(page,'I').locator('.fret-note').count()).toBeGreaterThan(arpeggio);
-  await page.locator('#theory-view').selectOption('none');
-  await expect(card(page,'I').locator('.fret-note')).toHaveCount(arpeggio);
-  await expect(page.locator('#exercise')).toHaveValue('arpeggio');
-});
-
-test('shared theory choice survives presets and remains legible in featured Focus view on mobile',async({page})=>{
-  await page.goto('/');await page.locator('#theory-view').selectOption('triads');
-  const choices=await page.locator('#theory-choice option').evaluateAll(options=>options.map(n=>(n as HTMLOptionElement).value));
-  await page.locator('#theory-choice').selectOption(choices.at(-1)!);
-  const pair=await page.locator('#theory-choice').inputValue();
-  await page.locator('#preset-name').fill('Dorian theory');await page.locator('#preset-save').click();
-  await page.locator('#theory-view').selectOption('none');
-  await page.locator('#preset-load').click();
-  await expect(page.locator('#theory-view')).toHaveValue('triads');await expect(page.locator('#theory-choice')).toHaveValue(pair);
-  await page.locator('#fret-labels').selectOption('notes');
-  await expect(card(page,'I').locator('.fret-note > text').first()).toHaveText(/^[A-G]/);
-  await page.locator('#fret-labels').selectOption('degrees');
-  await expect(card(page,'I').locator('.fret-note > text').first()).toHaveText(/[1-7]/);
-  await page.locator('#featured-position').selectOption('IV');await page.locator('#focus-view').click();
-  for(const palette of ['midnight','plum','evergreen']){
-    await page.locator('#palette').selectOption(palette);
-    for(const width of [1440,900,390]){
-      await page.setViewportSize({width,height:900});
-      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-      await expect(card(page,'IV')).toHaveClass(/featured-position/);
-      await expect(card(page,'IV').locator('.theory-a')).not.toHaveCount(0);await expect(card(page,'IV').locator('.theory-b')).not.toHaveCount(0);
-    }
-  }
-  await page.locator('#exit-focus').click();
+test('retired overlay settings cannot override a saved primary collection or its diagrams',async({page})=>{
+ await choosePentatonic(page);await tab(page,'progress-title');await page.locator('#preset-name').fill('Pentatonic collection');await page.locator('#preset-save').click();await page.evaluate(()=>{const key='mehtronome-practice-presets-v1',data=JSON.parse(localStorage.getItem(key)!);Object.assign(data.items[0].controls,{'theory-view':'pentatonic','theory-choice':'pent-7-minor','theory-view-I':'triads','theory-choice-I':'old-pair'});localStorage.setItem(key,JSON.stringify(data));});await page.reload();await tab(page,'progress-title');const value=await page.locator('#preset-list option').nth(1).getAttribute('value');await page.locator('#preset-list').selectOption(value!);await page.locator('#preset-load').click();await tab(page,'guitar-title');await expect(page.locator('#guitar-content-collection')).toHaveValue('pent-0-minor');expect(await pcs(page.locator('#guitar-diagrams'))).toEqual([0,2,4,7,9]);await expect(page.locator('#theory-view')).not.toBeVisible();await expect(page.locator('#guitar-diagrams')).not.toContainText('undefined');
 });

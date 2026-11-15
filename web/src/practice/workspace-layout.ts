@@ -73,7 +73,7 @@ export function organizeWorkspaces(navigate:(workspace:string,target:string)=>vo
  move(fretboardWorkspace,get('position-path-guide'),get('position-overview'),query('.position-navigation'));
  const toolbar=group('Diagram','fretboard-toolbar'),guitarView=group('Display','guitar-viewbar');
  move(guitarView,query('.guitar-controls'),query('.grip-toggle'),guitar.querySelector('[data-learning-focus]'));
- const overlays=group('Overlay','fretboard-overlay-controls');move(overlays,query('.shared-theory-controls'));toolbar.append(guitarView,overlays);
+ const overlays=group('Overlay','fretboard-overlay-controls');move(overlays,query('.shared-theory-controls'));overlays.hidden=true;toolbar.append(guitarView,overlays);
  const displayStatus=document.createElement('p');displayStatus.id='fretboard-display-status';displayStatus.className='practice-help';toolbar.append(displayStatus);fretboardWorkspace.append(toolbar);
  move(fretboardWorkspace,get('guitar-diagrams'),legend,get('grip-preview-status'));
  const overlayKey=document.createElement('div');overlayKey.id='fretboard-overlay-key';overlayKey.className='theory-legend';legend.append(overlayKey);

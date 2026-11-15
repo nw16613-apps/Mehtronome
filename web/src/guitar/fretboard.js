@@ -195,9 +195,10 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   // Theory is a pitch-class overlay on the established fingering, never a new
   // position. Give it its own layer so finger badges and modal rings do not
   // obscure the pentatonic or triad-pair markers.
+  const collectionPentatonic=board.notes.some(n=>n.collectionStyle==='pentatonic');
   const shownGrip = theory ? null : grip;
   const shownTitle = theory ? `${title}, ${theory.kind === 'pentatonic' ? 'pentatonic' : 'triad-pair'} overlay: ${theory.name}` : title;
-  let svg = `<svg class="fretboard${shownGrip ? ' grip-active' : ''}${theory ? ` theory-active theory-${theory.kind}` : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
+  let svg = `<svg class="fretboard${shownGrip ? ' grip-active' : ''}${collectionPentatonic?' theory-pentatonic':''}${theory ? ` theory-active theory-${theory.kind}` : ''}" viewBox="0 0 480 218" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
   for (let fret = board.start; fret <= board.end; fret++) {
     svg += `<text class="fret-number" x="${x(fret)}" y="205" text-anchor="middle">${fret === 0 ? 'open' : fret}</text>`;
   }
@@ -212,11 +213,11 @@ export function diagramSvg(board, degrees, modeDegrees, title, highlight = false
   // Display them only with the grip; never change the underlying scale board.
   const diagramNotes=shownGrip?[...board.notes,...shownGrip.notes.filter(g=>!board.notes.some(n=>n.string===g.string&&n.fret===g.fret))]:board.notes;
   for (const note of diagramNotes) {
-    const label = degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name;
-    const colour = !theory && highlight && note.characteristic;
+    const label = (degrees ? note.scaleIndex >= 0 ? modeDegrees[note.scaleIndex] : note.chromaticDegree : note.name)??note.chromaticDegree??note.name??'';
+    const colour = !theory && !collectionPentatonic && highlight && note.characteristic;
     const finger = shownGrip?.notes.some(n=>n.string===note.string && n.fret===note.fret);
-    const selected = theory?.kind==='pentatonic' ? pentatonicShape?.keys.has(`${note.string}:${note.fret}`) : theory?.pcs.includes(note.pc);
-    const pentatonicRoot = selected && theory?.kind === 'pentatonic' && note.pc === theory.rootPc;
+    const selected = note.collectionStyle==='pentatonic'||(theory?.kind==='pentatonic' ? pentatonicShape?.keys.has(`${note.string}:${note.fret}`) : theory?.pcs.includes(note.pc));
+    const pentatonicRoot = note.collectionStyle==='pentatonic'&&note.collectionRoot||selected && theory?.kind === 'pentatonic' && note.pc === theory.rootPc;
     const groupIndex = selected && theory?.kind === 'triads' ? theory.groups?.findIndex(group=>group.pcs.includes(note.pc)) ?? -1 : -1;
     const group = groupIndex === 0 ? 'a' : groupIndex === 1 ? 'b' : null;
     const groupName = group ? theory.groups[groupIndex].name : null;
@@ -245,13 +246,14 @@ export function fullFretboardSvg(board, degrees, modeDegrees, title, regions = [
   const boundary=fret=>left+(fret-board.start)*spacing;
   const y=string=>top+(5-string)*34;
   const shownTitle=theory?`${title}, ${theory.kind==='pentatonic'?'pentatonic':'triad-pair'} overlay: ${theory.name}`:title;
+  const collectionPentatonic=board.notes.some(n=>n.collectionStyle==='pentatonic');
   const shownGrips=theory?[]:grips;
   const gripNotes=new Map();
   for(const grip of shownGrips)for(const note of grip.notes){
     const key=`${note.string}:${note.fret}`,positions=gripNotes.get(key)||new Set();
     positions.add(grip.numeral);gripNotes.set(key,positions);
   }
-  let svg=`<svg class="fretboard full-fretboard${shownGrips.length?' grip-active':''}${theory?` theory-active theory-${theory.kind}`:''}" viewBox="0 0 ${width} ${top+5*34+bottom}" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
+  let svg=`<svg class="fretboard full-fretboard${shownGrips.length?' grip-active':''}${collectionPentatonic?' theory-pentatonic':''}${theory?` theory-active theory-${theory.kind}`:''}" viewBox="0 0 ${width} ${top+5*34+bottom}" role="img" aria-label="${escape(shownTitle)}"><title>${escape(shownTitle)}</title>`;
   if(showRegions)for(const region of regions){
     const start=Math.max(board.start,region.start),end=Math.min(board.end,region.end);
     if(start>end)continue;
@@ -262,10 +264,10 @@ export function fullFretboardSvg(board, degrees, modeDegrees, title, regions = [
   for(let column=0;column<=columns;column++){const bx=left+column*spacing;svg+=`<line class="fret-wire" x1="${bx}" x2="${bx}" y1="${top}" y2="${top+5*34}"/>`;}
   TUNING.forEach((_,string)=>{svg+=`<line class="guitar-string" style="stroke-width:${2.2-string*.25}" x1="${left}" x2="${width-right}" y1="${y(string)}" y2="${y(string)}"/><text class="string-name" x="28" y="${y(string)+5}" text-anchor="middle">${['E','A','D','G','B','E'][string]}</text>`;});
   for(const note of board.notes){
-    const label=degrees?(note.scaleIndex>=0?modeDegrees[note.scaleIndex]:note.chromaticDegree):note.name;
-    const colour=!theory&&highlight&&note.characteristic,selected=theory?.pcs.includes(note.pc);
+    const label=(degrees?(note.scaleIndex>=0?modeDegrees[note.scaleIndex]:note.chromaticDegree):note.name)??note.chromaticDegree??note.name??'';
+    const colour=!theory&&!collectionPentatonic&&highlight&&note.characteristic,selected=note.collectionStyle==='pentatonic'||theory?.pcs.includes(note.pc);
     const gripPositions=gripNotes.get(`${note.string}:${note.fret}`),gripNote=Boolean(gripPositions),selectedGrip=gripPositions?.has(selectedPosition);
-    const pentatonicRoot=selected&&theory?.kind==='pentatonic'&&note.pc===theory.rootPc;
+    const pentatonicRoot=note.collectionStyle==='pentatonic'&&note.collectionRoot||selected&&theory?.kind==='pentatonic'&&note.pc===theory.rootPc;
     const groupIndex=selected&&theory?.kind==='triads'?(theory.groups?.findIndex(group=>group.pcs.includes(note.pc))??-1):-1;
     const group=groupIndex===0?'a':groupIndex===1?'b':null;
     const kind=note.root?'root':note.chord?'chord':'scale';
