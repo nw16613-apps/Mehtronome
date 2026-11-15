@@ -1,6 +1,6 @@
-import {materialKind,MATERIAL_KINDS} from '../practice/material-hierarchy.js';
+import {materialKind,MATERIAL_KINDS,noteMaterialOptions} from '../practice/material-hierarchy.js';
 import {isScaleFingering} from './fingering-types.js';
-import {CONTENT_MATERIALS,contentMaterial,contentSource,contentSources} from '../practice/exercise-catalogue.js';
+import {contentMaterial,contentSource,contentSources} from '../practice/exercise-catalogue.js';
 import {modeChordHarmonies} from './mode-chords.js';
 import {exerciseArpeggioHarmony} from './arpeggio-harmony.js';
 import {theoryOptions} from './superimposition.js';
@@ -18,8 +18,8 @@ export function fretboardCollection(harmony,view){
 }
 export function fretboardStudyControls(harmony,view,locked=false){
  const material=contentMaterial(view),source=contentSource(view),stacks=harmony.scalePcs.length!==7&&['diatonic','chordRoots'].includes(source),sparse=!isScaleFingering(view.fingering),c=fretboardCollection(harmony,view),theory=theoryOptions(harmony);
- const materials=[...CONTENT_MATERIALS,...(material==='shape'?[['shape','Fretboard chord shape']]:[])].filter(([id])=>!sparse||id!=='scale').map(([id,label])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):label]);
- const sources=contentSources(material).filter(([id])=>!sparse||id==='selectedChord'||materialKind(view)==='chords'&&id==='diatonic').filter(([id])=>id!=='triadPair'||theory.triadPairs.length).filter(([id])=>id!=='pentatonic'||theory.pentatonics.length).map(([id,label])=>[id,harmony.scalePcs.length!==7?label.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):label]);
+ const materials=[...noteMaterialOptions(view),...(material==='shape'?[['shape','Fretboard chord shape']]:[])].filter(([id])=>!sparse||id!=='scale').map(([id,label])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):label]);
+ const sources=contentSources(material).filter(([id])=>!sparse||id==='selectedChord'||materialKind(view)==='chords'&&id==='diatonic').filter(([id])=>id!=='triadPair'||theory.triadPairs.length).filter(([id])=>id!=='pentatonic'||theory.pentatonics.length).map(([id,label])=>[id,materialKind(view)==='chords'&&id==='diatonic'?'All scale-degree chords':harmony.scalePcs.length!==7?label.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):label]);
  return select('guitar-material-kind','Material',MATERIAL_KINDS,materialKind(view),locked)+`<span ${materialKind(view)==='scales'?'hidden':''}>`+select('guitar-content-material',materialKind(view)==='chords'?'Chord type':'Arpeggio type',materials.map(([id,name])=>[id,stacks?name:id==='triad'?'Triads':id==='seventh'?(materialKind(view)==='chords'?'Seventh chords':'Sevenths'):name]),material,locked)+`</span>`+select('guitar-content-source',materialKind(view)==='scales'?'Collection':'Source',sources,source,locked)+(c.choices.length?select('guitar-content-collection',source==='triadPair'?'Triad pair':'Pentatonic collection',c.choices.map(c=>[c.id,c.name]),c.choice,locked):'')+(c.arpeggios?.length?select('guitar-content-degree',stacks?'View stack':'View arpeggio',c.arpeggios.map(h=>[h.modeDegree,`${h.name}${h.suffix} · degree ${h.modeDegree+1}`]),c.degree,locked):'');
 }
 export function collectionBoard(board,collection){

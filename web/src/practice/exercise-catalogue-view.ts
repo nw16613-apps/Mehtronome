@@ -1,9 +1,9 @@
-import {materialKind,MATERIAL_KINDS} from './material-hierarchy.js';
+import {materialKind,MATERIAL_KINDS,noteMaterialOptions} from './material-hierarchy.js';
 import {isScaleFingering} from '../guitar/fingering-types.js';
 import {theoryOptions} from '../guitar/superimposition.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
 import {hasDirectionalCellOrder} from '../guitar/scale-sequences.js';
-import {CONTENT_MATERIALS,contentMaterial,contentSource,contentSources,contentFamily,contentFamilies,groupPatternLabel} from './exercise-catalogue.js';
+import {contentMaterial,contentSource,contentSources,contentFamily,contentFamilies,groupPatternLabel} from './exercise-catalogue.js';
 const options=(items:string[][],value:string)=>items.map(([id,name])=>new Option(name,id,false,id===value));
 export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPair=true,nonDiatonic=false,harmony:any=null){
  const controls=panel.querySelector<HTMLElement>('.exercise-definition .exercise-controls')!;
@@ -12,7 +12,7 @@ export function organizeExerciseCatalogue(panel:HTMLElement,view:any,canTriadPai
  const material=contentMaterial(view),source=contentSource(view),family=contentFamily(view),stacks=nonDiatonic&&['diatonic','chordRoots'].includes(source);
  const make=(id:string,title:string,items:string[][],value:string)=>{const label=document.createElement('label'),select=document.createElement('select');label.append(title);select.id=id;select.append(...options(items,value));label.append(select);if(items.length<2)label.hidden=true;return label;};
  const sparse=view.linkedFingering&&!isScaleFingering(view.fingering);
- const materialOptions=CONTENT_MATERIALS.filter(([id])=>!sparse||id!=='scale').map(([id,name])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):id==='triad'?'Triads':id==='seventh'?(materialKind(view)==='chords'?'Seventh chords':'Sevenths'):name]),sourceOptions=contentSources(material).filter(([id])=>!sparse||id==='selectedChord'||materialKind(view)==='chords'&&id==='diatonic').filter(([id])=>id!=='triadPair'||canTriadPair).map(([id,name])=>[id,nonDiatonic?name.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):name]),familyOptions=contentFamilies(material,source,view).map(([id,name])=>[id,stacks?name.replace('Whole-arpeggio','Whole-stack'):name]);
+ const materialOptions=noteMaterialOptions(view).filter(([id])=>!sparse||id!=='scale').map(([id,name])=>[id,stacks&&id!=='scale'?(id==='triad'?'3-note scale stacks':'4-note scale stacks'):id==='triad'?'Triads':id==='seventh'?(materialKind(view)==='chords'?'Seventh chords':'Sevenths'):name]),sourceOptions=contentSources(material).filter(([id])=>!sparse||id==='selectedChord'||materialKind(view)==='chords'&&id==='diatonic').filter(([id])=>id!=='triadPair'||canTriadPair).map(([id,name])=>[id,materialKind(view)==='chords'&&id==='diatonic'?'All scale-degree chords':nonDiatonic?name.replace('All scale-degree arpeggios','All scale-degree stacks').replace('Arpeggios from chord-tone roots','Stacks from chord-tone roots'):name]),familyOptions=contentFamilies(material,source,view).map(([id,name])=>[id,stacks?name.replace('Whole-arpeggio','Whole-stack'):name]);
  controls.prepend(make('exercise-material-kind','Material',MATERIAL_KINDS,materialKind(view)),make('exercise-content-material',materialKind(view)==='chords'?'Chord type':'Arpeggio type',[...materialOptions,...(view.exactFingering?[['shape','Fretboard chord shape']]:[])],material),make('exercise-content-source',materialKind(view)==='scales'?'Collection':'Source',sourceOptions,source),make('exercise-content-family','Pattern family',familyOptions,family));
  if(materialKind(view)==='scales')hide('exercise-content-material');
 

@@ -11,7 +11,8 @@ export function changeMaterialKind(v,kind){
  else{v.fingering=['caged','three'].includes(v.fingering)||kind==='arpeggios'&&['oneTwo','twoOne'].includes(v.fingering)?v.fingering:v.scaleFingering||'caged';if(kind==='arpeggios')v.scaleCollection='mode';changeContentMaterial(v,kind==='scales'?'scale':v.material==='triad'?'triad':'seventh');}
  v.linkedFingering=true;v.exactFingering=false;return v;
 }
-export function changeNoteMaterial(v,value){if(materialKind(v)==='chords'){v.inversion=0;v.fingering=value==='triad'?'spread':v.fingering==='spread'?'drop2':v.fingering;v.chordFingering=v.fingering;}return changeContentMaterial(v,value);}
+export function noteMaterialOptions(v){return materialKind(v)==='scales'?[['scale','Scale notes']]:[['triad','Triads'],['seventh',materialKind(v)==='chords'?'Seventh chords':'Sevenths']];}
+export function changeNoteMaterial(v,value){if(!noteMaterialOptions(v).some(([id])=>id===value))return v;if(materialKind(v)==='chords'){v.inversion=0;v.fingering=value==='triad'?'spread':v.fingering==='spread'?'drop2':v.fingering;v.chordFingering=v.fingering;}return changeContentMaterial(v,value);}
 export function fingeringOptions(v,across=false){
  const kind=materialKind(v),pent=usesPentatonicCollection(v);
  if(kind==='chords')return [['spread','Spread triads'],['drop2','Drop 2'],['drop3','Drop 3']];
