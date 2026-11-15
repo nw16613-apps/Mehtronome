@@ -1,5 +1,5 @@
 import {SCALE_SEQUENCES,SCALE_SEQUENCE_FAMILY_LABELS} from '../guitar/scale-sequences.js';
-export const SCALE_SEQUENCE_FAMILIES=Object.fromEntries(Object.keys(SCALE_SEQUENCE_FAMILY_LABELS).map(family=>[family,Object.entries(SCALE_SEQUENCES).filter(([,d])=>d.family===family).map(([id,d])=>[id,d.label])]));
+export const SCALE_SEQUENCE_FAMILIES=Object.fromEntries(Object.keys(SCALE_SEQUENCE_FAMILY_LABELS).map(family=>[family,Object.entries(SCALE_SEQUENCES).filter(([,d])=>d.family===family).map(([id,d])=>[id,d.label+(/^scaleperm_1234?$/.test(id)?' · same as Groups of '+(id.length-10):'')])]));
 export const SCALE_SEQUENCE_STUDIES=new Set(Object.values(SCALE_SEQUENCE_FAMILIES).flat().flatMap(([id])=>[id,'arpseq_'+id]));
 export const scaleSequenceFamily=study=>Object.entries(SCALE_SEQUENCE_FAMILIES).find(([,items])=>items.some(([id])=>id===study.replace(/^arpseq_/, '')))?.[0]||'groups';
 export const scaleSequenceLabel=study=>Object.values(SCALE_SEQUENCE_FAMILIES).flat().find(([id])=>id===study.replace(/^arpseq_/, ''))?.[1]||'';

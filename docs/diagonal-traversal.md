@@ -7,8 +7,10 @@ One-string sets are supported.
 
 Divide the selected strings into consecutive, non-overlapping blocks. Use the
 starting position's fingering for the first block, the neighbouring position
-higher on the neck for the next block, and so on. Each position supplies its
-actual three scale notes per string, or two core arpeggio tones per string.
+higher on the neck for the next block, and so on. Each position supplies the selected fingering's actual notes. CAGED uses the
+existing modal CAGED geometry; 3NPS uses three scale notes per string. Chord exercises filter the selected
+CAGED or 3NPS shape to core tones without changing its geometry. Older saved
+3NPS arpeggio recipes retain their legacy two-core-tone-per-string geometry.
 
 Complete the applicable musical cells within a block before moving on. Restart
 the pattern locally in the incoming block; do not continue an absolute scale

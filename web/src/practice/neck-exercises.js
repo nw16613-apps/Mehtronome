@@ -7,10 +7,15 @@ export function neckCellHarmony(harmony,view){
  if(contentMaterial(view)==='scale'||contentSource(view)!=='selectedChord')return harmony;
  const core=exerciseArpeggioHarmony(harmony,view.material);return {...core,scalePcs:core.chordPcs,scaleNames:core.tones,cellDegrees:core.intervals};
 }
-export function neckExerciseCells(harmony,view){const collection=neckCellHarmony(harmony,view);return (view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells)(collection,view,collection.cellDegrees?2:3);}
+export function neckExerciseCells(harmony,view){if(view.fingering&&!['caged','three'].includes(view.fingering))return [];const collection=neckCellHarmony(harmony,view),routes=view.traversal==='diagonal'?diagonalStringRoutes:traversalScaleCells;
+ if(view.fingering==='three'&&collection.cellDegrees&&!view.traversalLegacyCore){
+  const subset=board=>({...board,notes:board.notes.filter(n=>collection.scalePcs.includes(n.pc))});
+  return routes(harmony,view,3,harmony).map(r=>({...r,board:subset(r.board),...(r.blocks?{blocks:r.blocks.map(b=>({...b,board:subset(b.board)}))}:{})})).filter(r=>r.board.notes.length&&(!r.blocks||r.blocks.every(b=>b.board.notes.length)));
+ }
+ return routes(collection,view,collection.cellDegrees?2:3,harmony);}
 export function neckRouteChoice(choices,view){
  const exact=choices.find(s=>s.degree===view.traversalCell);if(exact)return exact;
- const fret=Number(String(view.traversalCell||'').split(':')[1]);
+ const fret=Number(String(view.traversalCell||'').split(':').at(-1));
  if(Number.isFinite(fret)&&choices.length)return [...choices].sort((a,b)=>Math.abs(a.board.firstFret-fret)-Math.abs(b.board.firstFret-fret))[0];
  return ['descending','down-up'].includes(view.motion)?choices.at(-1):choices[0];
 }
@@ -19,8 +24,8 @@ export function neckRouteChoice(choices,view){
 export function neckExerciseGroups(harmonies,durations,view){
  view=normalizeTraversal({...view});
  const boards=harmonies.map(h=>neckRouteBoard(h,view));
- const blockTraversal=view.traversal==='diagonal',multiBlock=blockTraversal&&view.traversalShiftStrings<view.traversalStrings.split(',').length;
- const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,blockTraversal,routeGroups:multiBlock,strictBlocks:multiBlock,study:view.study==='positional'?'positionalscale':view.study,once:!durations,
+ const multiBlock=view.traversal==='diagonal'&&view.traversalShiftStrings<view.traversalStrings.split(',').length,blockTraversal=multiBlock;
+ const groups=progressionExerciseGroups(harmonies,durations||[2048],boards[0],{...view,traversal:multiBlock?'diagonal':'horizontal',blockTraversal,routeGroups:multiBlock,strictBlocks:multiBlock,study:view.study==='positional'?'positionalscale':view.study,once:!durations,
   regionBoardsFor:h=>{
    const choices=neckExerciseCells(h,view),selected=neckRouteChoice(choices,view);
    const regions=multiBlock?choices.flatMap((r,routeIndex)=>r.blocks.map(b=>({...b,routeIndex,start:r.degree===selected?.degree&&b.blockIndex===(['descending','down-up'].includes(view.motion)?r.blocks.length-1:0)}))):choices;
@@ -30,6 +35,6 @@ export function neckExerciseGroups(harmonies,durations,view){
    if(view.study!=='positional')return h;
    const core=exerciseArpeggioHarmony(h,view.material);return {...core,scalePcs:core.chordPcs,scaleNames:core.tones};
   }});
- for(const [i,group]of groups.entries()){group.harmony=harmonies[i];group.annotation=traversalLabel(view);}
+ for(const [i,group]of groups.entries()){group.harmony=harmonies[i];group.annotation=traversalLabel(view);if(!['caged','three',undefined].includes(view.fingering))group.warning='Across-neck traversal supports CAGED and 3NPS fingerings. Choose one of these fingerings or Selected position.';}
  return groups;
 }

@@ -17,6 +17,21 @@ for(let n=3;n<=8;n++){
 }
 for(let skip=2;skip<=6;skip++){const offsets=run(3).flatMap(i=>[i,i+skip]);add('skip'+skip,'skips','Skip / step · '+offsets.map(x=>x+1).join('–'),offsets);}
 add('pedalLower','pedals','Fixed lower pedal',[0],{pedal:'lower'});add('pedalUpper','pedals','Fixed upper pedal',[0],{pedal:'upper'});
+// The straight permutations share the same musical cell as overlapping groups.
+for(const n of [3,4])SCALE_SEQUENCES['scaleperm_'+run(n).map(i=>i+1).join('')].offsets=SCALE_SEQUENCES['groups'+n].offsets;
+export function normalizeSequenceRecipe(view){
+ const prefix=view.study?.startsWith('arpseq_')?'arpseq_':'',id=String(view.study||'').replace(/^arpseq_/,''),d=SCALE_SEQUENCES[id];
+ if(!d||!['permutations3','permutations4','expanding'].includes(d.family)||!['reverse','alternateReverse','directionalReverse'].includes(view.sequenceOrder))return view;
+ const reversed=d.offsets.toReversed().join(','),other=Object.entries(SCALE_SEQUENCES).find(([,v])=>v.family===d.family&&v.offsets.join(',')===reversed);
+ if(other){view.study=prefix+other[0];view.sequenceOrder=({reverse:'normal',alternateReverse:'alternate',directionalReverse:'directional'})[view.sequenceOrder];}
+ return view;
+}
+export function canonicalSequenceRecipe(view){
+ const d=SCALE_SEQUENCES[String(view.study||'').replace(/^arpseq_/,'')];if(!d||d.pedal)return view;
+ const prefix=view.study.startsWith('arpseq_')?'arpseq_':'',reverse=['reverse','alternateReverse','directionalReverse'].includes(view.sequenceOrder),steps=(reverse?d.offsets.toReversed():d.offsets).join(',');
+ const canonical=Object.entries(SCALE_SEQUENCES).find(([,v])=>!v.pedal&&v.offsets.join(',')===steps);
+ return canonical?{...view,study:prefix+canonical[0],sequenceOrder:({reverse:'normal',alternateReverse:'alternate',directionalReverse:'directional'})[view.sequenceOrder]||view.sequenceOrder}:view;
+}
 export const SCALE_SEQUENCE_FAMILY_LABELS={intervals:'Interval pairs',groups:'Consecutive-note groups',permutations3:'3-note permutations · 6',permutations4:'4-note permutations · 24',digital:'Digital patterns',returns:'Return patterns',expanding:'Expanding / contracting intervals',skips:'Skips and steps',pedals:'Fixed pedals'};
 export const SCALE_CELL_ORDERS=[['normal','Written order'],['reverse','Reverse every cell'],['alternate','Reverse alternate cells · written first'],['alternateReverse','Reverse alternate cells · reversed first'],['directional','Follow travel direction'],['directionalReverse','Opposite to travel direction']];
 // Collections with an explicit written cell retain that cell on both travel
@@ -33,7 +48,8 @@ export function scaleCellOrders(study){
  const definition=SCALE_SEQUENCES[study.replace(/^arpseq_/, '')];
  if(definition?.family!=='intervals'){
   const labels=definition?.family==='groups'?{normal:'Upward groups · both ways',reverse:'Downward groups · both ways',directional:'Upward ascending / downward descending',directionalReverse:'Downward ascending / upward descending'}:{directional:'Written ascending / reversed descending',directionalReverse:'Reversed ascending / written descending'};
-  return [...SCALE_CELL_ORDERS.slice(0,2),...SCALE_CELL_ORDERS.slice(-2),...SCALE_CELL_ORDERS.slice(2,-2)].map(([id,label])=>[id,labels[id]||label]);
+  const explicitReversal=['permutations3','permutations4','expanding'].includes(definition?.family);
+  return [...SCALE_CELL_ORDERS.slice(0,2),...SCALE_CELL_ORDERS.slice(-2),...SCALE_CELL_ORDERS.slice(2,-2)].filter(([id])=>!explicitReversal||!['reverse','alternateReverse','directionalReverse'].includes(id)).map(([id,label])=>[id,labels[id]||label]);
  }
  const n=definition.offsets[1]+1;
  return [['normal',`1–${n}`],['reverse',`${n}–1`],['directional',`1–${n} ascending / ${n}–1 descending`],['directionalReverse',`${n}–1 ascending / 1–${n} descending`],['alternate',`Alternate 1–${n} / ${n}–1`],['alternateReverse',`Alternate ${n}–1 / 1–${n}`]];

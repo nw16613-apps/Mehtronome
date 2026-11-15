@@ -93,3 +93,22 @@ existing turning policies and live playback.
   Scale and core-arpeggio traversals, scalar/arpeggio-tone groups, whole triads
   and enclosures are covered. Impossible block/pattern combinations continue
   to produce an explicit availability message rather than partial material.
+
+## Catalogue consolidation and fingering geometry
+
+- Straight 1–2–3 / 1–2–3–4 permutations share overlapping-group cells and are
+  labelled as aliases in the complete permutation menus.
+- Explicit permutations and Expand/Contract patterns no longer offer a second
+  redundant reversal selector. Old reversal settings translate to the matching
+  explicit pattern, preserving directional/alternate-cell behaviour.
+- Favourites use canonical pattern recipes, distinguish CAGED from 3NPS, and
+  deduplicate diagonal routes that use all selected strings against horizontal.
+- Horizontal/diagonal CAGED routes reuse the modal fretboard geometry, with
+  complete octave copies inside the selected range. Core-tone exercises use a
+  subset of those shapes rather than rebuilding them as two-note-per-string cells.
+- Diagonal string blocks select neighbouring positions of the chosen system.
+  A block as large as the entire string set is explicitly labelled horizontal.
+- Shared Fingering controls on Fretboard and Exercises retain the selected
+  geometry. Unsupported fingerings have an explicit unavailable state.
+- Old stored across-neck recipes migrate to 3NPS (the geometry they actually
+  played). New snapshots carry traversalGeometryVersion 3 and preserve CAGED.

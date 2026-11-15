@@ -1,6 +1,6 @@
 import {normalizeTraversal,acrossNeck} from '../guitar/neck-traversal.js';
 import {isExactVoicing} from '../guitar/fingering-rules.js';
-import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide,hasDirectionalCellOrder,hasDistinctCellReversal} from '../guitar/scale-sequences.js';
+import {SCALE_SEQUENCES,SCALE_CELL_ORDERS,hasChromaticSide,hasDirectionalCellOrder,hasDistinctCellReversal,normalizeSequenceRecipe} from '../guitar/scale-sequences.js';
 import {ARPEGGIO_ROOT_SEQUENCES} from '../guitar/arpeggio-sequences.js';
 import {normalizeArpeggioPattern,canonicalArpeggioRecipe} from '../guitar/arpeggio-patterns.js';
 import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
@@ -8,7 +8,7 @@ import {ENCLOSURE_PATTERNS} from '../guitar/enclosures.js';
 const fixedMaterial=new Set(['enclosures4','enclosures5','arpgroups3','arpgroups4','positionalscale','positional','cells','thirds','fourths','sixths','digital1324','groups3','groups4','enclosures','enclosuresbelowabove','enclosureschromatic','enclosuresdouble','enclosuresfiveone','enclosuresfivetwo','enclosuresfivethree','enclosuresfivefour','doubleapproach','chromaticneighbors','upperstructure','triadpairs','pentatonic']);
 export function normalizeExerciseOptions(view){
  normalizeTraversal(view);
- if(acrossNeck(view)){view.fingering='caged';view.exactFingering=false;}
+ if(acrossNeck(view))view.exactFingering=false;
  view.stage='full';
  view.study=typeof view.study==='string'&&view.study?view.study:'positional';
  if(view.study==='passingtones')view.study='positionalscale';
@@ -22,6 +22,7 @@ export function normalizeExerciseOptions(view){
  if(view.sequenceOrder.startsWith('directional')&&!hasDirectionalCellOrder(view))view.sequenceOrder='normal';
  view.arpeggioPattern=normalizeArpeggioPattern(view.arpeggioPattern||'straight',view.material);
  view.entryTone=/^(?:scale:[0-7]|chord:[1-7]|offset:(?:[0-9]|1[01]))$/.test(view.entryTone)?view.entryTone:'default';
+ normalizeSequenceRecipe(view);
  view.arpeggioClose=false; // Retired UI option: play only the selected written order.
  delete view.cellLabels;
  view.arpeggioRegister=['up','down','alternating','alternatingDown'].includes(view.arpeggioRegister)?view.arpeggioRegister:'up';
@@ -31,9 +32,9 @@ export function normalizeExerciseOptions(view){
  view.enclosurePattern=Object.hasOwn(ENCLOSURE_PATTERNS[view.study]||{},view.enclosurePattern)?view.enclosurePattern:'upper';
  if(['motifspace','changetargets','questionanswer'].includes(view.study))view.study='positional';
  view.fingering=['three','oneTwo','twoOne','drop2','drop3','spread'].includes(view.fingering)?view.fingering:'caged';
- if(!view.linkedFingering&&view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
- if(!view.linkedFingering&&view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
- if(!view.linkedFingering&&view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
+ if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positionalscale'&&!['caged','three'].includes(view.fingering)){view.fingering='three';view.inversion=0;}
+ if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positional'&&view.material==='triad'&&view.fingering.startsWith('drop')){view.fingering='oneTwo';view.inversion=0;}
+ if(!acrossNeck(view)&&!view.linkedFingering&&view.study==='positional'&&view.fingering==='three'){view.fingering='oneTwo';view.inversion=0;}
  if(view.fingering==='spread'){view.material='triad';view.exactFingering=false;}
  view.exactFingering=Boolean((view.exactFingering??(!view.linkedFingering&&view.study==='positional'&&view.fingering!=='caged'))&&view.study==='positional'&&view.fingering!=='caged');
  view.spreadSource=view.spreadSource==='mode'?'mode':'chord';
@@ -107,4 +108,8 @@ export function exerciseGuidance(study){
   pentatonic:'Play the selected pattern using the chosen pentatonic source. Resolve the phrase to a backing-chord tone.',
  };
  return descriptions[study]||'Follow the written pattern through each chord and its assigned CAGED position.';
+}
+
+export function migrateTraversalSnapshot(snapshot){
+ const v={...snapshot};if(acrossNeck(v)&&v.traversalGeometryVersion!==3){v.fingering='three';v.exactFingering=false;v.traversalLegacyCore=true;}v.traversalGeometryVersion=3;return v;
 }
