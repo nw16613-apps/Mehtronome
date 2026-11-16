@@ -36,7 +36,7 @@ export function perStringMapRegions(container,shapes,selected,range={start:1,end
  }
  const usedLabels=[];
  const areas=document.createElementNS(ns,'g'),labels=document.createElementNS(ns,'g');areas.setAttribute('class','per-string-region-areas');labels.setAttribute('class','per-string-region-labels');
- shapes.forEach((shape,index)=>{
+ shapes.filter(shape=>shape.board.notes?.length).forEach((shape,index)=>{
   const active=String(shape.degree)===String(selected),points=shapeEnvelope(shape.board,range);
   const group=document.createElementNS(ns,'g');group.setAttribute('class',`per-string-map-region${active?' selected':''}`);group.setAttribute('data-full-string-position',String(shape.degree));group.style.setProperty('--shape-color',shapeColor(shape.index??index));
   const polygon=document.createElementNS(ns,'polygon');polygon.setAttribute('points',points.map(p=>p.join(',')).join(' '));polygon.setAttribute('clip-path','url(#full-neck-shape-clip)');polygon.setAttribute('class',active?'shape-boundary':'shape-region-boundary');group.append(polygon);areas.append(group);

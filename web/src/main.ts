@@ -4,7 +4,7 @@ import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
 import {isPentatonicFingering} from './guitar/fingering-types.js';
 import {materialKind,changeMaterialKind,changeNoteMaterial} from './practice/material-hierarchy.js';
 import {scaleCollectionHarmony,exerciseCollectionBoard,usesPentatonicCollection} from './guitar/scale-collection.js';
-import {fretboardCollection,fretboardStudyControls,collectionBoard,routePreviewMarkup,arpeggioDiagramsMarkup,inspectedCollection} from './guitar/fretboard-study.js';
+import {fretboardCollection,fretboardStudyControls,collectionBoard,routePreviewMarkup,arpeggioDiagramsMarkup,inspectedCollection,collectionMapShapes} from './guitar/fretboard-study.js';
 import {neckExerciseGroups,neckExerciseCells,neckCellHarmony,neckRouteChoice} from './practice/neck-exercises.js';
 import {acrossNeck,hasRouteTurnOptions,normalizeTraversal,neckRouteBoard,traversalControls,traversalLabel,routeMapSvg} from './guitar/neck-traversal.js';
 import {GUITAR_TUNINGS,GUITAR_TUNING_KEY,normalizeGuitarTuning,guitarTuningRatio} from './audio/guitar-tuning.js';
@@ -939,7 +939,7 @@ function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
     const grip=recommendedGrip(info,position.board);
     return grip?{numeral:position.numeral!,notes:grip.notes}:null;
   }).filter(Boolean) as Array<{numeral:string,notes:Array<{string:number,fret:number}>}>:[];
-  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,displayedPositions.map(position=>({numeral:position.numeral!,shape:position.shape!,...position.range})),cagedMapAll?'all':selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
+  el('full-fretboard').innerHTML=fullFretboardSvg(fullBoard,guitarDegrees,mode.degrees,`${chord}, full fretboard, frets 1 to 17`,collectionMapShapes(displayedPositions,displayCollection).map((position:any)=>({numeral:position.numeral,shape:position.shape,...occupiedFretRange(position.board)})),cagedMapAll?'all':selectedPosition.numeral!,input('highlight-mode').checked,overlay,input('show-regions').checked,fullFretboardGrips);
   emphasizeFullNeck(el('full-fretboard'),cagedMapAll?null:collectionBoard(selectedPosition.board,displayCollection),POSITIONS.findIndex(p=>p.numeral===selectedPosition.numeral));
   reflectFullFretboard();
   perStringView?.refresh();
@@ -1528,7 +1528,7 @@ function renderPerStringMap(context:any){
  const board=collectionBoard({...base,notes:arp?base.notes.map((n:any)=>({...n,scaleIndex:-1})):base.notes.filter((n:any)=>n.scale)},collection);
  const target=el('full-fretboard'),scroll=target.scrollLeft;target.innerHTML=fullFretboardSvg(board,labels,degrees,title+' · full fretboard, frets 1 to 17',[], 'I',input('highlight-mode').checked,null,false);
  emphasizeFullNeck(target,shape?collectionBoard(shape.board,collection):null,(shape?.index??0));
- if(input('show-regions').checked)perStringMapRegions(target,shapes,perStringMapShape);
+ if(input('show-regions').checked)perStringMapRegions(target,collectionMapShapes(shapes,collection),perStringMapShape);
  document.querySelectorAll<HTMLElement>('.per-string-shape').forEach(card=>{const current=!!shape&&Number(card.dataset.startDegree)===shape.degree;card.classList.toggle('map-current',current);card.querySelector('.per-string-scroll')?.setAttribute('aria-pressed',String(current));});
  context.selectShape?.(shape?.degree);
  perStringMapMenu.style.setProperty('--shape-color',shapeColor((shape?.index??0)));
@@ -2697,11 +2697,11 @@ function renderNeckTraversalMap(info:any,activeCell:any=null){
  menu.value=activeRoute;menu.disabled=exercisePlaying||exercisePreparing;
  perStringMapMenu.hidden=false;perStringMapMenu.querySelector('span')!.textContent=shape?.blocks?'Highlight route':'Highlight cell';perStringMapMenu.style.setProperty('--shape-color',shapeColor(shape?.index||0));input('show-regions').closest('label')!.hidden=false;
  const target=el('full-fretboard'),scroll=target.scrollLeft;
- target.innerHTML=routeMapSvg(board,guitarDegrees,MODES[info.mode as keyof typeof MODES].degrees,traversalLabel(exerciseView),shape?collectionBoard(shape.board,collection).notes:[],shape?.blocks||[]);
+ target.innerHTML=routeMapSvg(board,guitarDegrees,MODES[info.mode as keyof typeof MODES].degrees,traversalLabel(exerciseView),shape?collectionBoard(shape.board,collection).notes:[],collectionMapShapes(shape?.blocks||[],collection,board));
  const svg=target.querySelector<SVGElement>('svg');if(svg&&shape){svg.dataset.routeId=shape.degree;svg.dataset.routeHarmony=JSON.stringify([info.chordPcs,info.scalePcs,info.scaleNames]);}
  if(playingCell)target.querySelectorAll<SVGElement>('[data-route-block]').forEach(n=>{const active=Number(n.dataset.routeBlock)===playingCell.blockIndex;n.classList.toggle('active',active);n.querySelector('circle')?.setAttribute('stroke-width',active?'3':'1');});
  emphasizeFullNeck(target,playingCell?collectionBoard({...shape?.board,notes:playingCell.notes},collection):shape?collectionBoard(shape.board,collection):null,shape?.index||0);
- if(input('show-regions').checked)perStringMapRegions(target,shapes,activeRoute,board);
+ if(input('show-regions').checked)perStringMapRegions(target,collectionMapShapes(shapes,collection,board),activeRoute,board);
  const shown=shape||neckRouteChoice(shapes,exerciseView),detailCollection=shown?.board.exerciseHarmony?fretboardCollection(shown.board.exerciseHarmony,{...exerciseView,study:'positional',arpeggioSource:'selectedChord'},true,info):collection;
  renderNeckSelectedShape(info,shapes,shown,detailCollection,playingCell);
  target.scrollLeft=scroll;

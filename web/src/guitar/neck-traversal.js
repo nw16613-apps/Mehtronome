@@ -66,7 +66,8 @@ export function routeMapSvg(board,degrees,modeDegrees,title,notes=[],blocks=[]){
  let svg=fullFretboardSvg({...board,notes:[...board.notes,...extra]},degrees,modeDegrees,title,[],'all',true,null,false);
  const spacing=1240/(board.end-board.start+1),x=n=>62+spacing/2+(n.fret-board.start)*spacing,y=n=>54+(5-n.string)*34;
  const path=notes.length?`<polyline class="neck-route-line" points="${notes.map(n=>`${x(n)},${y(n)}`).join(' ')}"/>`:'';
- const blockParts=blocks.map((block,index)=>{
+ const blockParts=blocks.filter(block=>block.board.notes.length).map((block,i)=>{
+  const index=block.blockIndex??i;
   const ns=block.board.notes,left=Math.min(...ns.map(x))-21,right=Math.max(...ns.map(x))+21,top=Math.min(...ns.map(y))-18,bottom=Math.max(...ns.map(y))+18,color=['#5eb2f2','#e7a45f','#ae91de','#60cfa4','#ed95b8','#d7ce6e'][index%6];
   return {area:`<g class="neck-route-block" data-route-block="${index}" aria-label="${block.label}" pointer-events="none"><rect x="${left}" y="${top}" width="${right-left}" height="${bottom-top}" rx="6" fill="${color}" fill-opacity=".06" stroke="${color}" stroke-width="1.5"/></g>`,number:`<g class="neck-route-block-number" data-route-block="${index}" pointer-events="none"><circle cx="${left-12}" cy="${(top+bottom)/2}" r="10" fill="#101c29" stroke="${color}"/><text x="${left-12}" y="${(top+bottom)/2+4}" text-anchor="middle" font-size="11" fill="${color}">${index+1}</text></g>`};
  });

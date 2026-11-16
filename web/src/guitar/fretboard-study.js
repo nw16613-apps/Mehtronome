@@ -43,6 +43,10 @@ export function collectionBoard(board,collection){
    ...(!c.scale?{root:n.pc===c.rootPc,chord:true,characteristic:false,name:c.names[i]}:{})};
  })};
 }
+/** Material map regions follow visible occupied frets, without changing parent geometry. */
+export function collectionMapShapes(shapes,collection,range={start:1,end:17}){
+ return shapes.map(shape=>{const board=collectionBoard(shape.board,collection);return {...shape,board:{...board,notes:board.notes.filter(n=>n.fret>=range.start&&n.fret<=range.end)}};}).filter(shape=>shape.board.notes.length);
+}
 export function arpeggioDiagramsMarkup(board,collection,degrees,modeDegrees,highlight=true){
  if(!collection.arpeggios?.length)return diagramSvg(collectionBoard(board,collection),degrees,modeDegrees,collection.title,highlight);
  const selected=inspectedCollection({...collection,presentation:true}),multiple=collection.arpeggios.length>1;
