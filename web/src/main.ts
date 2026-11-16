@@ -1,9 +1,10 @@
+import {FAVOURITE_LIBRARY_META_KEY,readFavouriteDetails} from './practice/favourite-library.js';
 import {organizePracticeExperience,installProgressExperience,installFretboardExperience} from './practice/practice-experience';
 import {installPracticeLibrary} from './practice/practice-library-view';
 import {checklistGroups} from './practice/curriculum.js';
 import {installHarmonyWorkspace} from './practice/harmony-workspace';
 import {parentScalePositions,usesParentPosition} from './guitar/parent-scale.js';
-import {PRACTICE_RECIPE_KEY,practiceRecipe,recipePatterns} from './practice/recipe-controls.js';
+import {PRACTICE_RECIPE_KEY,practiceRecipe,practiceRecipeLabel,recipePatterns} from './practice/recipe-controls.js';
 import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
 import {isPentatonicFingering} from './guitar/fingering-types.js';
 import {materialKind,changeMaterialKind,changeNoteMaterial} from './practice/material-hierarchy.js';
@@ -613,6 +614,7 @@ function renderCagedExercise(position:any,board:any,info:any,positionPath:any[]|
   try{localStorage.setItem(PRACTICE_RECIPE_KEY,JSON.stringify(practiceRecipe(exerciseView)));}catch{}
   refreshBackingSymbols();reserveChordBands(el('caged-exercise'));
   void document.fonts.ready.then(()=>reserveChordBands(el('caged-exercise')));
+  practiceLibraryUi?.sync();
 }
 
 function backingChordAt(beat:number){const config=exerciseBackingConfig(),index=config.progression?progressionStepAtBeat(config,beat):0,info=harmonyAt(config,index);return info.name+info.suffix;}
@@ -1774,6 +1776,7 @@ function moveExercise(direction:number){
 }
 function exerciseFavourites(){return readExerciseFavourites(localStorage.getItem(EXERCISE_FAVOURITES_KEY));}
 function exerciseFavouriteLabel(item:any){
+ const customName=readFavouriteDetails(localStorage.getItem(FAVOURITE_LIBRARY_META_KEY))['recipe:'+exerciseFavouriteKey(item)]?.name;if(customName)return customName;
  const normal=normalizeExerciseOptions({...item}),name=CONTENT_MATERIALS.find(([id])=>id===contentMaterial(normal))?.[1]||(normal.exactFingering?'Fretboard chord shape':'Exercise');
  const labels=[name,contentSources(contentMaterial(normal)).find(([id])=>id===contentSource(normal))?.[1]||'',contentFamilies(contentMaterial(normal),contentSource(normal),normal).find(([id])=>id===contentFamily(normal))?.[1]||'',SCALE_SEQUENCE_STUDIES.has(normal.study)?groupPatternLabel(normal.study.replace(/^arpseq_/,''),scaleSequenceLabel(normal.study)):''];
  if(['positional','positionalscale'].includes(normal.study))labels.push(savedEntryLabel(normal.startTone));else labels.push(savedEntryLabel(normal.entryTone));
@@ -1796,7 +1799,7 @@ function refreshExerciseFavourites(){
 }
 function favouriteExercise(){
  const items=toggleExerciseFavourite(exerciseFavourites(),exerciseSnapshot());
- localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(items));refreshExerciseFavourites();applyStudioIcons(el('caged-exercise'));
+ localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(items));refreshExerciseFavourites();practiceLibraryUi?.sync();applyStudioIcons(el('caged-exercise'));
 }
 
 function exportExerciseSvg(){
@@ -2851,7 +2854,12 @@ installProgressExperience(showWorkspace);
 practiceLibraryUi=installPracticeLibrary({
  locked:()=>playing||exercisePlaying||exercisePreparing||busy||stopping,
  navigate:showWorkspace,
- capture:()=>({setup:snapshotPreset(crypto.randomUUID(),'Exact practice'),exercise:exerciseSnapshot(),position:overviewPosition,parentPosition:parentScalePosition,inspectedStep:step,summary:[chordInfo(step).name+chordInfo(step).suffix,exerciseFavouriteLabel(exerciseSnapshot()),exerciseView.tempo+' BPM'].join(' · ')}),
+ recipeStorageKey:EXERCISE_FAVOURITES_KEY,
+ recipes:()=>exerciseFavourites().map((exercise:any)=>({id:exerciseFavouriteKey(exercise),exercise,name:exerciseFavouriteLabel(exercise),summary:practiceRecipeLabel(exercise)})),
+ restoreRecipe:(exercise:any)=>restoreExercise(exercise),
+ removeRecipe:(id:string)=>{localStorage.setItem(EXERCISE_FAVOURITES_KEY,JSON.stringify(exerciseFavourites().filter((r:any)=>exerciseFavouriteKey(r)!==id)));refreshExerciseFavourites();},
+ recipesChanged:()=>refreshExerciseFavourites(),
+ capture:()=>({setup:snapshotPreset(crypto.randomUUID(),'Exact practice'),exercise:exerciseSnapshot(),position:overviewPosition,parentPosition:parentScalePosition,inspectedStep:step,summary:[chordInfo(step).name+chordInfo(step).suffix,practiceRecipeLabel(exerciseView),contentSources(contentMaterial(exerciseView)).find(([id])=>id===contentSource(exerciseView))?.[1],acrossNeck(exerciseView)?traversalLabel(exerciseView):'Selected position',exerciseView.tempo+' BPM'].join(' · ')}),
  restore:async(item:any)=>{stopExercisePreview();await loadPracticePreset(item.setup);overviewPosition=item.position;parentScalePosition=item.parentPosition;step=Math.min(item.inspectedStep,progressionDefinition(settings).roman.length-1);customStepIndex=step;perStringMapShape=String(item.exercise.inversion??0);neckMapShape=item.exercise.traversalCell||'first';restoreExercise(item.exercise);saveFretboardDisplay();}
 });
 const initialFingeringSelection={...exerciseView};
