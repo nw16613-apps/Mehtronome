@@ -8,7 +8,9 @@ import {DROP_STRING_SETS,dropVoicingCatalogue} from './drop-voicings.js';
 import {perStringCatalogue} from './per-string.js';
 const inversions=['Root position','First inversion','Second inversion','Third inversion','Fourth inversion','Fifth inversion','Sixth inversion'];
 export const fingeringName=kind=>PENTATONIC_FINGERING_LABELS[kind]||({spread:'Spread triad',drop2:'Drop 2',drop3:'Drop 3',oneTwo:'1–2–1–2–1–2',twoOne:'2–1–2–1–2–1',three:'3 notes per string'}[kind]);
-const practicalArpeggio=board=>board.end<=24&&board.notes.every(n=>n.fret>0)&&Array.from({length:6},(_,string)=>board.notes.filter(n=>n.string===string).map(n=>n.fret)).every(frets=>Math.max(...frets)-Math.min(...frets)<=4);
+export const ARPEGGIO_MAX_FRET_REACH=6;
+export const arpeggioFretReach=board=>Math.max(0,...Array.from({length:6},(_,string)=>{const frets=board.notes.filter(n=>n.string===string).map(n=>n.fret);return frets.length?Math.max(...frets)-Math.min(...frets):0;}));
+const practicalArpeggio=board=>board.end<=24&&board.notes.every(n=>n.fret>0)&&arpeggioFretReach(board)<=ARPEGGIO_MAX_FRET_REACH;
 export function fingeringCatalogue(harmony,kind,setIndex=0,source='chord',size=4,options={}){
  if(isPentatonicFingering(kind)){const h=scaleCollectionHarmony(harmony,{...options,fingering:kind});return perStringCatalogue(h,kind).map(e=>({...e,harmony:h,geometryHarmony:harmony,label:'Starting tone · '+h.scaleNames[e.degree]}));}
  if(['oneTwo','twoOne'].includes(kind)&&options.material&&!options.exactFingering){size=options.material==='triad'?3:4;}
@@ -20,7 +22,7 @@ export function fingeringCatalogue(harmony,kind,setIndex=0,source='chord',size=4
   const entries=kind.startsWith('drop')?dropVoicingCatalogue(h,kind,setIndex):perStringCatalogue(h,kind);
   return entries.map((entry,inversion)=>{
    const choices=kind.startsWith('drop')?entry.choices:entry.choices.filter(practicalArpeggio);
-   return {...entry,choices,extended:false,inversion,harmony:h,degree:sources.length>1?h.modeDegree*size+inversion:entry.degree,label:(sources.length>1?'Degree '+MODES[harmony.mode].degrees[h.modeDegree]+' · '+h.name+h.suffix+' · ':'')+inversions[inversion]+' · '+h.tones[entry.degree]+' ('+h.intervals[entry.degree]+')',tag:sources.length>1?MODES[harmony.mode].degrees[h.modeDegree]+['R','¹','²','³'][inversion]:['R','1st','2nd','3rd','4th','5th','6th'][inversion]};
+   return {...entry,choices,unavailableReason:!choices.length&&!kind.startsWith('drop')?'No complete fingering fits within frets 1–24 and a six-fret reach per string.':'',extended:false,inversion,harmony:h,degree:sources.length>1?h.modeDegree*size+inversion:entry.degree,label:(sources.length>1?'Degree '+MODES[harmony.mode].degrees[h.modeDegree]+' · '+h.name+h.suffix+' · ':'')+inversions[inversion]+' · '+h.tones[entry.degree]+' ('+h.intervals[entry.degree]+')',tag:sources.length>1?MODES[harmony.mode].degrees[h.modeDegree]+['R','¹','²','³'][inversion]:['R','1st','2nd','3rd','4th','5th','6th'][inversion]};
   });
  });
 }
