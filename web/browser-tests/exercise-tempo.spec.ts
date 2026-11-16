@@ -2,8 +2,8 @@ import {test,expect} from '@playwright/test';
 async function open(page:any,backing:boolean,countIn=false){
  await page.addInitScript(()=>{const original=MessagePort.prototype.postMessage;(window as any).audioMessages=[];MessagePort.prototype.postMessage=function(message:any,...args:any[]){if(['start','stop','exercise-tempo'].includes(message?.type))(window as any).audioMessages.push(structuredClone(message));return (original as any).call(this,message,...args);};});
  await page.goto('/');await page.locator('#mini-count-in').setChecked(countIn);await page.locator('#mini-bpm').fill('120');await page.locator('#mini-bpm').dispatchEvent('change');
- await page.locator('[data-workspace-target=study-path-title]').click();await page.locator('#study-material').selectOption('harmonized');await page.locator('#study-bars').selectOption('4');await page.locator('#study-load').click();
- await page.locator('#exercise-content-material').selectOption('scale');await page.locator('#exercise-content-family').selectOption('intervals');await page.locator('#exercise-scale-pattern').selectOption('thirds');await page.locator('#exercise-backing').setChecked(backing);
+ await page.locator('[data-workspace-target=caged-exercise]').click();
+ await page.locator('#exercise-material-kind').selectOption('scales');await page.locator('#exercise-content-source').selectOption('mode');await page.locator('#exercise-content-family').selectOption('intervals');await page.locator('#exercise-scale-pattern').selectOption('thirds');await page.locator('#exercise-backing').setChecked(backing);
  await page.locator('#exercise-tempo').fill('120');await page.locator('#exercise-tempo').dispatchEvent('change');
 }
 const index=async(page:any)=>Number(await page.locator('.exercise-note.playing').first().getAttribute('data-note-index'));

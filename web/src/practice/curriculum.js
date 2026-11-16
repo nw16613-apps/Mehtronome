@@ -14,7 +14,7 @@ export const PRACTICE_TASKS=[
   {id:'improvise',stage:'Make music',minutes:5,label:'Improvise continuously, using gap training to check the time'},
 ];
 
-export function curriculumKey({root,mode,chord}){return `${root}|${mode}|${chord}`;}
+export function curriculumKey({root,mode,chord,scope}){return `${root}|${mode}|${chord}${scope?"|"+scope:""}`;}
 export function completedCount(completed){return PRACTICE_TASKS.filter(task=>completed?.includes(task.id)).length;}
 export function practicePlan(completed,minutes=20){
   const done=new Set(completed||[]),pending=PRACTICE_TASKS.filter(task=>!done.has(task.id));
@@ -24,7 +24,7 @@ export function practicePlan(completed,minutes=20){
 }
 export function modeProgress(records,root,mode){
   const prefix=`${root}|${mode}|`;let best=0;
-  for(const [key,completed] of Object.entries(records||{}))if(key.startsWith(prefix))best=Math.max(best,completedCount(completed));
+  for(const [key,completed] of Object.entries(records||{}))if(key.startsWith(prefix)&&!key.slice(prefix.length).includes('|'))best=Math.max(best,completedCount(completed));
   return best;
 }
 
@@ -35,3 +35,10 @@ export const PRACTICE_GROUPS=[
  {id:'connect',title:'Connect positions',items:[['12','I–II'],['23','II–III'],['34','III–IV'],['45','IV–V']].map(([id,label])=>({id:`connect-${id}`,label}))},
  {id:'apply',title:'Apply an idea',items:[{id:'arpeggio',label:'Chord-tone phrase'},{id:'pentatonic',label:'Pentatonic idea'},{id:'triads',label:'Triad-pair line'},{id:'sequence',label:'Notation exercise'},{id:'progression',label:'Follow a chart'},{id:'improvise',label:'Improvise through gaps'}]},
 ];
+
+/** Existing CAGED completion IDs stay valid; other shape systems have their own scope. */
+/** @param {any[]|null} shapes */
+export function checklistGroups(shapes=null){
+ if(!shapes)return PRACTICE_GROUPS;
+ return PRACTICE_GROUPS.map(group=>group.id==='positions'?{...group,items:shapes.map(s=>({id:'shape-'+s.id,label:s.label}))}:group.id==='connect'?{...group,items:shapes.slice(0,-1).map((s,i)=>({id:'link-'+s.id+'-'+shapes[i+1].id,label:s.short+' → '+shapes[i+1].short}))}:group);
+}
