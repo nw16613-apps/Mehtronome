@@ -1,0 +1,42 @@
+.harmony-chart-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:4px 0 8px}
+.harmony-chart-identity{display:flex;align-items:end;flex:1 1 360px;gap:12px;min-width:0}
+.harmony-chart-identity>label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+.harmony-chart-name{flex:1;min-width:0}.harmony-chart-name>input{width:100%}
+.harmony-chart-identity>label:not(.harmony-chart-name){width:95px}
+.harmony-chart-toolbar :is(input,select),.harmony-tool-dialog :is(input,select,textarea){background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px;font:inherit;min-height:42px;max-width:100%}
+.harmony-chart-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.harmony-chart-actions details{position:relative}.harmony-chart-actions summary{cursor:pointer;list-style:none;min-height:42px;display:flex;align-items:center;margin:0!important;padding:10px 13px!important}
+.harmony-chart-actions details[open]>div{position:absolute;z-index:80;right:0;top:100%;min-width:215px;padding:10px;display:grid;gap:6px;background:var(--panel,#12202c);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px #0005}
+.harmony-chart-actions details>div>button{text-align:left;width:100%}
+.harmony-simplified>#repertoire-status{margin:5px 0 20px;font-size:12px;min-height:18px;color:var(--muted)}
+.harmony-simplified .custom-builder-heading .eyebrow{display:none}
+.harmony-simplified .custom-builder-heading{margin-top:8px}
+.harmony-simplified .chart-editing-workspace{grid-template-columns:minmax(0,1fr) 310px;align-items:start;gap:20px}
+.harmony-simplified .chart-editing-workspace .custom-editor{position:sticky;top:90px;padding:16px}
+.harmony-simplified .chart-workflow-buttons{gap:4px}.harmony-simplified .chart-workflow-buttons button{font-size:12px;padding:7px;min-height:34px}
+.harmony-audition-actions{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 14px}.harmony-audition-actions button{font-size:12px;padding:9px}
+.harmony-chord-extra{margin:8px 0 16px;font-size:12px}.harmony-chord-extra summary{cursor:pointer;color:var(--muted);padding:8px 0}
+.harmony-chord-extra>div{display:grid;gap:12px}.harmony-chord-extra label{display:grid;gap:5px}
+.harmony-loop-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.harmony-loop-toolbar>strong{flex:1 1 100%;font-size:12px;color:var(--muted)}
+.harmony-loop-toolbar .rehearsal-controls{margin:0}.harmony-loop-toolbar .rehearsal-controls>span{display:none}
+.harmony-loop-toolbar #loop-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0;padding:0;border:0}
+.harmony-tool-dialog{color:var(--ink);background:var(--panel,#12202c);border:1px solid var(--line);border-radius:12px;width:min(850px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:22px}
+.harmony-tool-dialog::backdrop{background:#0009}.harmony-dialog-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.harmony-dialog-heading h3{margin:0;font-size:18px}
+.harmony-tool-dialog label{display:grid;gap:7px;font-size:13px}.harmony-tool-dialog textarea{width:100%;resize:vertical}.harmony-quick-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.harmony-tool-dialog .progression-generator{border:0;margin:0;padding:0}.harmony-tool-dialog .generator-body{margin-top:0}
+#harmony-entry-preview{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0}#harmony-entry-preview li{border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+#harmony-editor-close,#harmony-edit-selection{display:none}
+.harmony-simplified #custom-grid-help{font-size:11px}.harmony-simplified #chart-loop-status{font-size:11px;margin:8px 0}
+@media(max-width:700px){
+ .harmony-chart-toolbar{gap:10px}.harmony-chart-identity{flex-basis:100%}.harmony-chart-actions{width:100%}.harmony-chart-actions>button,.harmony-chart-actions>details{flex:1}.harmony-chart-actions summary{justify-content:center}
+ .harmony-simplified .chart-editing-workspace{display:block}.harmony-simplified .chart-editing-workspace>.custom-editor{display:none}
+ .harmony-simplified.harmony-editor-open .chart-editing-workspace>.custom-editor{display:block;position:fixed;z-index:1200;left:8px;right:8px;bottom:85px;top:auto;max-height:calc(100dvh - 155px);overflow:auto;background:var(--panel,#12202c);border:1px solid var(--accent);border-radius:12px;box-shadow:0 -10px 40px #0008;padding:16px}
+ #harmony-edit-selection{display:block}#harmony-editor-close{display:block;margin-left:auto;margin-bottom:10px}
+ .harmony-simplified .chart-sheet-panel .chart-measures{grid-template-columns:repeat(var(--mobile-bars-per-line,2),minmax(0,1fr))}
+ .harmony-simplified .chart-sheet-panel .chart-bar{min-height:100px}.harmony-simplified .chart-tools{gap:6px}.harmony-simplified .chart-tools button,.harmony-simplified .chart-tools summary{font-size:12px;padding:9px}
+ .harmony-tool-dialog{padding:16px}.harmony-chart-actions details[open]>div{position:fixed;right:16px;left:16px;top:auto;width:auto;min-width:0}
+}
+
+.harmony-simplified [hidden]{display:none!important}
+@media(max-width:700px){.harmony-simplified .chart-editing-workspace>.custom-editor{display:none!important}.harmony-simplified.harmony-editor-open .chart-editing-workspace>.custom-editor:not([hidden]){display:block!important}}

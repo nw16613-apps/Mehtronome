@@ -1,3 +1,4 @@
+import {installHarmonyWorkspace} from './practice/harmony-workspace';
 import {parentScalePositions,usesParentPosition} from './guitar/parent-scale.js';
 import {PRACTICE_RECIPE_KEY,practiceRecipe,recipePatterns} from './practice/recipe-controls.js';
 import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
@@ -84,6 +85,7 @@ import './console.css';
 import './studio.css';
 import './icons.css';
 import './workspace-layout.css';
+import './harmony-workspace.css';
 import {applyStudioIcons} from './practice/icons.js';
 import {consoleChannel, syncConsole, installConsole, receiveConsoleMeters} from './practice/console.js';
 import { POSITIONS, cagedPositionFor, fretboardFor, diagramSvg, fullFretboardFor, fullFretboardSvg, occupiedFretRange, parentMajorFor } from './guitar/fretboard.js';
@@ -284,6 +286,7 @@ let stopping = false;
 let guitarDegrees = true;
 let perStringView:ReturnType<typeof installPerStringView>|undefined;
 let previewHold: string | null = null;
+let harmonyUi:ReturnType<typeof installHarmonyWorkspace>|undefined;
 let chartPreviewTimer:ReturnType<typeof setTimeout>|undefined;
 let gripRingTimer: ReturnType<typeof setTimeout> | undefined;
 let previewPreparation: Promise<void> | undefined;
@@ -1020,10 +1023,10 @@ function saveCustomProgression(message=''){
   customProgression=normalizeCustomProgression(customProgression);
   settings.customProgression=customProgression;
   (PROGRESSIONS as any).custom=customProgression;
-  try{localStorage.setItem(CUSTOM_PROGRESSION_KEY,JSON.stringify(customProgression));}
-  catch{message='The progression is ready for this session, but browser storage is unavailable.';}
+  let persisted=true;try{localStorage.setItem(CUSTOM_PROGRESSION_KEY,JSON.stringify(customProgression));}
+  catch{persisted=false;message='The progression is ready for this session, but browser storage is unavailable.';}
   el('custom-status').textContent=message;
-  document.dispatchEvent(new Event('chart-working-copy-change'));
+  document.dispatchEvent(new CustomEvent('chart-working-copy-change',{detail:{persisted}}));
 }
 function beatLength(total:number){const bars=Math.floor(total/settings.beats),remaining=total%settings.beats;return `${total} beats · ${bars} bar${bars===1?'':'s'}${remaining?` + ${remaining} beat${remaining===1?'':'s'}`:''}`;}
 function durationLabel(index:number){const bars=progressionDurations(settings)[index];return settings.template==='custom'?`${progressionBeatDurations(settings)[index]} beats`:`${bars} bar${bars===1?'':'s'}`;}
@@ -1124,8 +1127,8 @@ function renderCustomBuilder(){
 function reflectChartEditSelection(){
  const selected=chartEditSteps.map(i=>customProgression.steps[i]).filter(Boolean),multi=selected.length>1;
  const duration=progressionBeatDurations(settings),starts=duration.map((_:number,i:number)=>duration.slice(0,i).reduce((a:number,b:number)=>a+b,0)),from=chartEditSteps[0]??customStepIndex,to=chartEditSteps.at(-1)??customStepIndex;
- const status=el('custom-edit-selection-status');status.hidden=!multi;status.textContent=`Bars ${Math.floor(starts[from]/settings.beats)+1}–${Math.ceil((starts[to]+duration[to])/settings.beats)} selected. Chord changes apply to the whole selection.`;
- const durationHeading=el('custom-duration-unit').closest('.workspace-group')?.querySelector('h3');if(durationHeading)durationHeading.textContent=multi?'Duration · first selected chord':'Duration';
+ const status=el('custom-edit-selection-status');status.hidden=!multi;status.textContent=`Bars ${Math.floor(starts[from]/settings.beats)+1}–${Math.ceil((starts[to]+duration[to])/settings.beats)} selected. Chord and duration changes apply to all ${selected.length} selected chords.${new Set(selected.map(s=>s.beats??(s.bars||1)*settings.beats)).size>1?' Durations vary; choose a duration to change them together.':''}`;
+ const durationHeading=el('custom-duration-unit').closest('.workspace-group')?.querySelector('h3');if(durationHeading)durationHeading.textContent=multi?'Duration · all selected chords':'Duration';
  if(!multi)return;
  for(const [id,key]of [['custom-root','root'],['custom-chord','chord'],['custom-mode','mode'],['custom-bass','bass']]){
   const control=select(id),values=new Set(selected.map((s:any)=>s[key]===null?'':String(s[key])));
@@ -1147,8 +1150,8 @@ function commitCustomEdit(field:string){
   const control=field?el<HTMLInputElement|HTMLSelectElement>(field):null;if(control?.value==='mixed')return;
   if(modeFirstHarmony()&&field==='custom-chord'&&!chordChoicesForMode(select('custom-mode').value).some((c:any)=>c.id===select('custom-chord').value))return;
   const practiceChoices=chartPracticeChoices();rememberCustomEdit();
-  const harmonic=['custom-root','custom-chord','custom-mode','custom-bass'].includes(field);
-  const targets=harmonic&&chartEditSteps.length?chartEditSteps:[customStepIndex];
+  const harmonic=['custom-root','custom-chord','custom-mode','custom-bass'].includes(field),durationEdit=['custom-duration-unit','custom-bars','custom-beats'].includes(field);
+  const targets=(harmonic||durationEdit)&&chartEditSteps.length?chartEditSteps:[customStepIndex];
   if(field==='custom-name')customProgression.name=input('custom-name').value.trim()||'My progression';
   if(field==='custom-section')customProgression.steps[customStepIndex].section=input('custom-section').value.trim();
   for(const index of targets){
@@ -1161,7 +1164,7 @@ function commitCustomEdit(field:string){
     if(select('custom-duration-unit').value==='beats'){item.beats=Number(select('custom-beats').value);delete item.bars;}else{item.bars=Number(select('custom-bars').value);delete item.beats;}
    }
   }
-  saveCustomProgression(harmonic&&targets.length>1?`Updated ${targets.length} selected chords.`:undefined);restoreChartPracticeChoices(practiceChoices);fillLoopOptions(true);step=customStepIndex;update();
+  saveCustomProgression((harmonic||durationEdit)&&targets.length>1?`Updated ${targets.length} selected chords.`:undefined);restoreChartPracticeChoices(practiceChoices);fillLoopOptions(true);step=customStepIndex;update();
 }
 function update() {
   fxUi?.sync();
@@ -1319,7 +1322,7 @@ function stopPreview() {
   previewGripShape = null;
   reflectChordPreviews();
   el('grip-preview-status').hidden = true;
-  el('preview-status').hidden = true;
+  el('preview-status').hidden = true;harmonyUi?.sync();
   if (!playing) {
     node?.port.postMessage({type: 'stop'});
     if (master && context) master.gain.setTargetAtTime(0, context.currentTime, .035);
@@ -2158,7 +2161,7 @@ function syncTrainerStatus() {
   el('trainer-status').textContent = playing?`${currentBpm} BPM${currentBpm>=Math.max(settings.bpm,settings.trainerTarget)?' · Target reached':''}`:`Starts at ${settings.bpm} BPM.`;
 }
 function syncWorkspaceStates(){
- studyPathUi?.sync();
+ studyPathUi?.sync();harmonyUi?.sync();
  const context=document.getElementById('setup-current-context');if(context)context.textContent=`Current setup: ${names[settings.key]} · ${settings.bpm} BPM · ${progressionDefinition(settings).name}`;
  const locked=playing||exercisePlaying||exercisePreparing;
  document.querySelectorAll<HTMLInputElement|HTMLButtonElement|HTMLSelectElement>('[data-practice-task],[data-checklist-action],#checklist-position,#checklist-idea').forEach(control=>control.disabled=locked);el<HTMLButtonElement>('practice-roadmap-reset').disabled=locked;
@@ -2815,6 +2818,13 @@ installProgressionGenerator({
   input('loop-enabled').checked=false;fillLoopOptions(true);update();document.dispatchEvent(new Event('chart-context-restored'));
  }
 });
+harmonyUi=installHarmonyWorkspace({
+ getContext:()=>{const current=customProgression.steps[customStepIndex]||customProgression.steps[0];return {key:settings.key,beats:settings.beats,tool:chartView.tool,locked:exercisePlaying||exercisePreparing||busy||stopping,playing,auditioning:previewHold==='harmony-audition',selectionCount:chartEditSteps.length||1,selectionKey:JSON.stringify([customStepIndex,chartEditSteps]),chord:current?actualCustomName(current.root,current.letter)+CHORDS[current.chord as keyof typeof CHORDS].symbol:'',mode:current?MODES[current.mode as keyof typeof MODES].name:''};},
+ ensureEditable:()=>{if(settings.template!=='custom')el('customize-progression').click();},
+ audition:async()=>{if(previewHold==='harmony-audition'){stopPreview();return;}await previewChord(customStepIndex,'harmony-audition',true);harmonyUi?.sync();setTimeout(()=>{if(previewHold==='harmony-audition')stopPreview();},1800);},
+ transpose:(amount:number)=>{if(exercisePlaying||exercisePreparing||busy||stopping)return;if(settings.template!=='custom')materializeWorkingChart();const choices=chartPracticeChoices(),targets=chartEditSteps.length?[...chartEditSteps]:[customStepIndex];stopPreview();rememberCustomEdit();for(const i of targets){const item=customProgression.steps[i];item.root=(item.root+amount+12)%12;delete item.letter;if(item.bass!==null){item.bass=(item.bass+amount+12)%12;delete item.bassLetter;}}saveCustomProgression(`Transposed ${targets.length} selected chord${targets.length===1?'':'s'} ${amount>0?'up':'down'} one semitone.`);restoreChartPracticeChoices(choices);update();},
+ insert:(steps:any[])=>{if(exercisePlaying||exercisePreparing||busy||stopping)throw new Error('Wait for exercise playback to stop before inserting chords.');if(settings.template!=='custom')materializeWorkingChart();if(customProgression.steps.length+steps.length>MAX_CHART_STEPS)throw new Error(`A chart can contain at most ${MAX_CHART_STEPS} chords.`);const choices=chartPracticeChoices(),at=(chartEditSteps.at(-1)??customStepIndex)+1;stopPreview();rememberCustomEdit();customProgression.steps.splice(at,0,...structuredClone(steps));customStepIndex=at;step=at;chartEditSteps=steps.map((_,i)=>at+i);saveCustomProgression(`Inserted ${steps.length} chords.`);if(choices.positions)choices.positions.splice(at,0,...steps.map(()=>choices.positions![Math.max(0,at-1)]));if(choices.starts)choices.starts.splice(at,0,...steps.map(()=>'default'));restoreChartPracticeChoices(choices);input('loop-enabled').checked=false;fillLoopOptions(true);update();}
+});
 const initialFingeringSelection={...exerciseView};
 perStringView=installPerStringView(()=>({harmony:chordInfo(playing?livePlaybackStep:step),view:exerciseView,degrees:guitarDegrees,highlight:input('highlight-mode').checked,locked:exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet,spreadSource}:any)=>{if(exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();linkExerciseFingering(exerciseView,{kind,inversion,fret,stringSet,spreadSource},chordInfo(playing?livePlaybackStep:step));exerciseView.fretboard=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseCellSelection=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap,(choice:any)=>{const info=chordInfo(playing?livePlaybackStep:step);linkExerciseFingering(exerciseView,choice,info);if(fretboardStudyPanel.isConnected)renderFretboardStudyControls(info);});
 Object.assign(exerciseView,initialFingeringSelection);perStringView.setSelection({...initialFingeringSelection,kind:initialFingeringSelection.fingering});
@@ -2829,7 +2839,7 @@ syncPulseToolsUI();syncMiniTransport();
 
 async function applyChartSelection(start:number,end:number){
  stopPreview();stopExercisePreview();if(settings.template!=='custom')materializeWorkingChart();
- chartEditSteps=chordStepsInRange(progressionBeatDurations(settings),start,end);customStepIndex=chartEditSteps[0]??customStepIndex;step=customStepIndex;update();
+ chartEditSteps=chordStepsInRange(progressionBeatDurations(settings),start,end);customStepIndex=chartEditSteps[0]??customStepIndex;step=customStepIndex;update();document.dispatchEvent(new Event('harmony-edit-selection'));
 }
 function editChartSection(action:string,index:number){
  if(exercisePlaying||exercisePreparing||stopping)return;
