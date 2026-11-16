@@ -1,3 +1,4 @@
+import {parentScalePositions,usesParentPosition} from './guitar/parent-scale.js';
 import {PRACTICE_RECIPE_KEY,practiceRecipe,recipePatterns} from './practice/recipe-controls.js';
 import {applyExerciseCapabilities} from './practice/exercise-capabilities.js';
 import {isPentatonicFingering} from './guitar/fingering-types.js';
@@ -293,6 +294,7 @@ type TheoryView = {kind:'none'|'pentatonic'|'triads'; choiceId:string};
 const theoryView:TheoryView = {kind:'none',choiceId:''};
 const positionGrips = new Map<string, ReturnType<typeof recommendedGrip>>();
 let overviewPosition = 'I';
+let parentScalePosition='';
 let cagedMapAll=false;
 let fullFretboardCollapsed=matchMedia('(max-width:700px)').matches;
 try { const stored=localStorage.getItem('mehtronome-full-fretboard-collapsed');if(stored!==null)fullFretboardCollapsed=stored==='true'; } catch { /* Keep the context map open. */ }
@@ -300,9 +302,10 @@ const PRACTICE_PROGRESS_KEY='mehtronome-mode-practice-progress';
 let practiceProgress:Record<string,string[]>={};
 try{practiceProgress=JSON.parse(localStorage.getItem(PRACTICE_PROGRESS_KEY)||'{}')||{};}catch{practiceProgress={};}
 let neckTraversalPanel:HTMLDivElement|undefined;
-const exerciseView={degreeReference:'collection',inspectedArpeggio:'',scaleCollection:'mode',traversalShiftStrings:2,traversalPositionOrder:'follow',traversalTurn:'note',traversalCell:'first',traversal:'position',traversalStrings:'0,1',traversalStart:5,traversalEnd:17,exactFingering:false,patternVariationsOpen:false,entryTone:'default',sequenceAdvance:1,sequenceOrder:'normal',arpeggioSequence:'stepwise',arpeggioPattern:'straight',arpeggioRegister:'up',arpeggioClose:false,arpeggioSource:'diatonic',arpeggioRoutine:'repeat',arpeggioApproach:'none',enclosureTarget:'all',enclosurePattern:'upper',fingering:'caged',inversion:0,fingeringFret:5,spreadSource:'chord',fingeringStringSet:0,study:'positionalscale',material:'seventh',motion:'ascending',rhythm:'sixteenths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',startTone:'default',fretboard:true,setupOpen:false,chordDiagrams:false};
-try{const display=JSON.parse(localStorage.getItem('mehtronome-fretboard-display-v1')||'null');if(display){exerciseView.degreeReference=display.degreeReference==='chord'?'chord':'collection';exerciseView.inspectedArpeggio=String(display.inspectedArpeggio??'');}}catch{}
+const exerciseView={parentScaleFingering:'caged',degreeReference:'collection',inspectedArpeggio:'',scaleCollection:'mode',traversalShiftStrings:2,traversalPositionOrder:'follow',traversalTurn:'note',traversalCell:'first',traversal:'position',traversalStrings:'0,1',traversalStart:5,traversalEnd:17,exactFingering:false,patternVariationsOpen:false,entryTone:'default',sequenceAdvance:1,sequenceOrder:'normal',arpeggioSequence:'stepwise',arpeggioPattern:'straight',arpeggioRegister:'up',arpeggioClose:false,arpeggioSource:'diatonic',arpeggioRoutine:'repeat',arpeggioApproach:'none',enclosureTarget:'all',enclosurePattern:'upper',fingering:'caged',inversion:0,fingeringFret:5,spreadSource:'chord',fingeringStringSet:0,study:'positionalscale',material:'seventh',motion:'ascending',rhythm:'sixteenths',loop:false,backing:true,source:'',pattern:'groups3',display:'both',zoom:'comfortable',tempo:90,tempoLinked:true,loopStart:0,loopEnd:-1,autoTempo:false,autoEvery:4,autoIncrement:2,ceiling:160,stage:'full',startTone:'default',fretboard:true,setupOpen:false,chordDiagrams:false};
+try{const display=JSON.parse(localStorage.getItem('mehtronome-fretboard-display-v1')||'null');if(display){exerciseView.degreeReference=display.degreeReference==='chord'?'chord':'collection';exerciseView.inspectedArpeggio=String(display.inspectedArpeggio??'');exerciseView.parentScaleFingering=display.parentScaleFingering==='three'?'three':'caged';parentScalePosition=String(display.parentScalePosition??'');}}catch{}
 try{const saved=JSON.parse(localStorage.getItem(PRACTICE_RECIPE_KEY)||'null');if(saved&&typeof saved==='object')Object.assign(exerciseView,practiceRecipe(saved),{linkedFingering:true});normalizeExerciseOptions(exerciseView);}catch{}
+if(usesParentPosition(exerciseView))exerciseView.parentScaleFingering=exerciseView.fingering;
 exerciseView.chordDiagrams=localStorage.getItem('mehtronome-notation-chord-diagrams')==='true';
 input('pattern-start-route').value=localStorage.getItem('mehtronome-pattern-start-route')||'';
 exerciseView.display=localStorage.getItem('mehtronome-notation-display')||'both';exerciseView.zoom=localStorage.getItem('mehtronome-notation-zoom')||'comfortable';
@@ -844,11 +847,12 @@ function fillChordScaleOptions(chordId:string,currentMode:string){
   el('custom-mode-help').textContent=legacy?'This saved guide omits a written chord tone. Choose a compatible mode or use the compatible-guide button.':`Full scales include every chord tone. Pentatonic/blues guides may omit tones; blues notes add passing colour.`;
 }
 
-function saveFretboardDisplay(){try{localStorage.setItem('mehtronome-fretboard-display-v1',JSON.stringify({degreeReference:exerciseView.degreeReference,inspectedArpeggio:exerciseView.inspectedArpeggio}));}catch{}}
+function saveFretboardDisplay(){try{localStorage.setItem('mehtronome-fretboard-display-v1',JSON.stringify({degreeReference:exerciseView.degreeReference,inspectedArpeggio:exerciseView.inspectedArpeggio,parentScaleFingering:exerciseView.parentScaleFingering,parentScalePosition}));}catch{}}
 document.addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLButtonElement>('[data-inspect-arpeggio]');if(!button||button.disabled)return;event.preventDefault();event.stopPropagation();cagedMapAll=false;if(perStringMapShape==='all')perStringMapShape=String(perStringMapContext?.shapes[0]?.degree??'0');if(neckMapShape==='all')neckMapShape='first';exerciseView.inspectedArpeggio=button.dataset.inspectArpeggio!;saveFretboardDisplay();renderGuitar(true);document.querySelector<HTMLButtonElement>(`[data-inspect-arpeggio="${exerciseView.inspectedArpeggio}"]`)?.focus({preventScroll:true});},true);
 function renderGuitar(skipExercise:any=false,positionOverride:any=null){return withPlaybackSettings(()=>renderGuitarDisplay(skipExercise,positionOverride));}
 function renderGuitarDisplay(skipExercise:any=false,positionOverride:any=null) {
   skipExercise=skipExercise===true;
+  if(usesParentPosition(exerciseView))exerciseView.parentScaleFingering=exerciseView.fingering;
   if(!skipExercise&&(exercisePlaying||exercisePreparing))stopExercisePreview();
   if (previewGripShape) stopPreview();
   positionGrips.clear();
@@ -2572,11 +2576,46 @@ const guitarPanel=document.querySelector('.guitar')!;const contextMap=el('full-f
 
 neckTraversalPanel=document.createElement('div');neckTraversalPanel.id='guitar-neck-traversal-controls';guitarPanel.insertBefore(neckTraversalPanel,el('position-overview'));
 const fretboardStudyPanel=document.createElement('div');fretboardStudyPanel.id='guitar-study-controls';fretboardStudyPanel.className='neck-traversal-controls fretboard-study-controls';
+const parentScalePanel=document.createElement('section');parentScalePanel.id='parent-scale-reference';parentScalePanel.setAttribute('aria-label','Parent scale positions');parentScalePanel.innerHTML='<label>Fingering<select id="parent-scale-fingering"><option value="caged">CAGED</option><option value="three">3 notes per string</option></select></label><h4>Parent scale positions</h4><div id="parent-scale-positions" class="position-overview"></div><div class="parent-scale-navigation"><button type="button" class="practice-button" data-parent-move="-1">← Previous</button><span id="parent-scale-indicator"></span><button type="button" class="practice-button" data-parent-move="1">Next →</button></div>';
 const neckFingeringPanel=document.createElement('div');neckFingeringPanel.className='neck-fingering-controls';
 const neckShapeCards=document.createElement('div');neckShapeCards.className='position-overview neck-shape-cards';neckShapeCards.setAttribute('aria-label','Traversal positions and routes');
 const neckExplorerLayout=document.createElement('div');neckExplorerLayout.className='neck-explorer-layout';
 const neckSelectedPanel=document.createElement('section');neckSelectedPanel.id='neck-selected-panel';neckSelectedPanel.setAttribute('aria-label','Selected fingering or route');
 const neckRouteNav=document.createElement('span');neckRouteNav.className='neck-route-navigation';neckRouteNav.innerHTML='<button type="button" id="neck-shape-previous" class="practice-button" aria-label="Previous position or route">← Previous</button><span id="neck-position-indicator" aria-live="polite"></span><button type="button" id="neck-shape-next" class="practice-button" aria-label="Next position or route">Next →</button>';perStringMapMenu.after(neckRouteNav);
+function materialFingeringControl(){
+ const kind=materialKind(exerciseView),pent=usesPentatonicCollection(exerciseView),dedicated=kind==='chords'?[['spread','Spread triads'],['drop2','Drop 2'],['drop3','Drop 3']]:kind==='arpeggios'?[['oneTwo','1–2–1–2–1–2'],['twoOne','2–1–2–1–2–1']]:pent?[['pentThree','Pentatonic · 3 notes per string'],['pent31','Pentatonic · 3–1–3–1–3–1'],['pent13','Pentatonic · 1–3–1–3–1–3']]:[];
+ const options=kind==='chords'?dedicated:[['parent','Within parent position'],...dedicated],value=usesParentPosition(exerciseView)?'parent':exerciseView.fingering;
+ return `<label ${options.length===1?'hidden':''}>Material fingering<select id="guitar-material-fingering" ${exercisePlaying||exercisePreparing?'disabled':''}>${options.map(([id,name])=>`<option value="${id}" ${id===value?'selected':''}>${name}</option>`).join('')}</select></label>`;
+}
+function renderParentScaleReference(info:any){
+ const parent=exerciseView.parentScaleFingering,positions=parentScalePositions(info,parent),within=usesParentPosition(exerciseView)&&!acrossNeck(exerciseView);
+ if(within){parentScalePosition=parent==='caged'?overviewPosition:String(perStringMapShape==='all'?exerciseView.inversion:perStringMapShape);if(parent==='three'){const current=perStringMapContext?.shapes.find((s:any)=>String(s.degree)===parentScalePosition),reference=positions.find((p:any)=>p.id===parentScalePosition);if(current&&reference)reference.board=current.board;}}
+ const selected=positions.find((p:any)=>p.id===parentScalePosition)||positions[0];if(!selected)return;parentScalePosition=selected.id;
+ select('parent-scale-fingering').value=parent;select('parent-scale-fingering').disabled=exercisePlaying||exercisePreparing;
+ el('parent-scale-positions').innerHTML=positions.map((p:any)=>`<button type="button" class="position-thumbnail${p.id===selected.id?' current':''}" data-parent-position="${p.id}" style="--shape-color:${shapeColor(p.index)}" aria-pressed="${p.id===selected.id}" ${exercisePlaying||exercisePreparing?'disabled':''}><span>${escapeHtml(p.label)}</span><small>Frets ${p.board.start}–${p.board.end}</small>${diagramSvg(p.board,true,MODES[info.mode as keyof typeof MODES].degrees,p.label,true)}</button>`).join('');
+ el('parent-scale-indicator').textContent=selected.label;
+ parentScalePanel.querySelectorAll<HTMLButtonElement>('[data-parent-move]').forEach(b=>b.disabled=exercisePlaying||exercisePreparing);
+}
+function chooseParentScalePosition(id:string){
+ if(exercisePlaying||exercisePreparing)return;const info=chordInfo(step),positions=parentScalePositions(info,exerciseView.parentScaleFingering),p=positions.find((p:any)=>p.id===id);if(!p)return;parentScalePosition=id;saveFretboardDisplay();
+ if(!usesParentPosition(exerciseView)){renderGuitar(true);return;}
+ if(acrossNeck(exerciseView)){const shapes=neckExerciseCells(info,exerciseView),shape=[...shapes].sort((a,b)=>Math.abs(a.board.firstFret-(p.board.firstFret??p.board.start))-Math.abs(b.board.firstFret-(p.board.firstFret??p.board.start)))[0];if(shape){exerciseView.traversalCell=shape.degree;neckMapShape=shape.degree;}renderGuitar();return;}
+ if(exerciseView.parentScaleFingering==='caged'){chooseOverviewPosition(id);return;}
+ perStringMapShape=id;select('per-string-neck-shape').value=id;select('per-string-neck-shape').dispatchEvent(new Event('change'));renderGuitar();
+}
+parentScalePanel.addEventListener('change',event=>{
+ if((event.target as HTMLElement).id!=='parent-scale-fingering'||exercisePlaying||exercisePreparing)return;exerciseView.parentScaleFingering=select('parent-scale-fingering').value;parentScalePosition='';saveFretboardDisplay();
+ if(usesParentPosition(exerciseView)){exerciseView.fingering=exerciseView.parentScaleFingering;exerciseView.inversion=0;(exerciseView as any).linkedFingering=true;perStringMapShape='0';perStringView?.setSelection({...exerciseView,kind:exerciseView.fingering});}
+ renderGuitar();
+});
+parentScalePanel.addEventListener('keydown',event=>{
+ const button=(event.target as Element).closest<HTMLButtonElement>('[data-parent-position]');if(!button||exercisePlaying||exercisePreparing||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();
+ const positions=parentScalePositions(chordInfo(step),exerciseView.parentScaleFingering),index=positions.findIndex((p:any)=>p.id===button.dataset.parentPosition),next=event.key==='Home'?0:event.key==='End'?positions.length-1:(index+(event.key==='ArrowRight'?1:-1)+positions.length)%positions.length,id=positions[next].id;chooseParentScalePosition(id);parentScalePanel.querySelector<HTMLButtonElement>(`[data-parent-position="${id}"]`)?.focus({preventScroll:true});
+});
+parentScalePanel.addEventListener('click',event=>{
+ const button=(event.target as Element).closest<HTMLButtonElement>('button');if(!button||button.disabled)return;if(button.dataset.parentPosition!==undefined){chooseParentScalePosition(button.dataset.parentPosition);return;}
+ if(button.dataset.parentMove){const positions=parentScalePositions(chordInfo(step),exerciseView.parentScaleFingering),index=positions.findIndex((p:any)=>p.id===parentScalePosition);chooseParentScalePosition(positions[(index+Number(button.dataset.parentMove)+positions.length)%positions.length].id);}
+});
 function renderFretboardStudyControls(info:any){
  const workspace=guitarPanel.querySelector<HTMLElement>('.fretboard-workspace')!;if(!workspace)return;
  if(fretboardStudyPanel.parentElement!==workspace){workspace.prepend(fretboardStudyPanel);fretboardStudyPanel.after(neckTraversalPanel!);contextMap.before(neckExplorerLayout);neckExplorerLayout.append(neckShapeCards,neckRouteNav,neckSelectedPanel,contextMap);}
@@ -2584,7 +2623,11 @@ function renderFretboardStudyControls(info:any){
  neckTraversalPanel!.before(neckFingeringPanel);const acrossFingering=neckTraversalPanel!.querySelector('#guitar-neck-fingering');neckFingeringPanel.replaceChildren(...(acrossFingering?[acrossFingering.closest('label')!]:[]));neckFingeringPanel.hidden=!acrossFingering;
  const perLabels=document.getElementById('per-string-labels');if(perLabels)perLabels.closest('label')!.hidden=true;
  const toolbar=guitarPanel.querySelector<HTMLElement>('.fretboard-toolbar');if(toolbar&&!toolbar.closest('details')){const appearance=document.createElement('details');appearance.className='fretboard-appearance';appearance.id='fretboard-appearance';appearance.innerHTML='<summary>Display settings</summary>';neckTraversalPanel!.after(appearance);appearance.append(toolbar);}
- fretboardStudyPanel.innerHTML=fretboardStudyControls(info,exerciseView,exercisePlaying||exercisePreparing);
+ fretboardStudyPanel.innerHTML=fretboardStudyControls(info,exerciseView,exercisePlaying||exercisePreparing)+materialFingeringControl();
+ workspace.prepend(parentScalePanel);parentScalePanel.querySelector('h4')!.before(el('position-path-guide'));parentScalePanel.after(fretboardStudyPanel);fretboardStudyPanel.after(neckTraversalPanel!);neckFingeringPanel.hidden=true;
+ if(fingering){fingering.hidden=acrossNeck(exerciseView)||usesParentPosition(exerciseView);select('fretboard-fingering').closest('label')!.hidden=true;fretboardStudyPanel.after(fingering);fingering.after(neckTraversalPanel!);}
+ const appearance=document.getElementById('fretboard-appearance');if(appearance)neckTraversalPanel!.after(appearance);
+ renderParentScaleReference(info);
  const across=acrossNeck(exerciseView);neckSelectedPanel.hidden=!across;neckShapeCards.hidden=!across;neckRouteNav.hidden=!across;guitarPanel.querySelectorAll<HTMLElement>('[data-learning-focus]').forEach(n=>n.hidden=across);
  select('fret-view').closest('label')!.hidden=true;
  const guide=el('position-path-guide').querySelector('p');if(guide)guide.hidden=across;
@@ -2619,11 +2662,13 @@ function renderNeckSelectedShape(info:any,shapes:any[],shape:any,collection:any,
 neckShapeCards.addEventListener('click',event=>{const button=(event.target as Element).closest<HTMLButtonElement>('[data-neck-shape]');if(!button||button.disabled)return;const menu=select('per-string-neck-shape');menu.value=button.dataset.neckShape!;menu.dispatchEvent(new Event('change'));});
 neckRouteNav.addEventListener('click',event=>{const button=(event.target as Element).closest('button');if(!button||exercisePlaying||exercisePreparing)return;const menu=select('per-string-neck-shape'),options=Array.from(menu.options).filter(o=>!o.disabled&&o.value!=='all'),index=options.findIndex(o=>o.value===menu.value),next=options[Math.max(0,index)+(button.id==='neck-shape-next'?1:-1)];if(next){menu.value=next.value;menu.dispatchEvent(new Event('change'));}});
 fretboardStudyPanel.addEventListener('change',event=>{
- const target=event.target as HTMLSelectElement;if(exercisePlaying||exercisePreparing)return;stopExercisePreview();delete (exerciseView as any).traversalLegacyCore;
+ const target=event.target as HTMLSelectElement,desiredParent=parentScalePosition;if(exercisePlaying||exercisePreparing)return;stopExercisePreview();delete (exerciseView as any).traversalLegacyCore;
  if(target.id==='guitar-material-kind')changeMaterialKind(exerciseView,target.value);
  if(target.id==='guitar-content-material')changeNoteMaterial(exerciseView,target.value);
  if(target.id==='guitar-content-source'){changeContentSource(exerciseView,target.value);perStringView?.setSelection({...exerciseView,kind:exerciseView.fingering});}
  if(target.id==='guitar-content-collection')exerciseView.source=target.value;
+ if(target.id==='guitar-material-fingering'){exerciseView.fingering=target.value==='parent'?exerciseView.parentScaleFingering:target.value;(exerciseView as any).linkedFingering=true;if(target.value==='parent'&&exerciseView.parentScaleFingering==='three'){exerciseView.inversion=Number(desiredParent)||0;perStringMapShape=desiredParent;const p=parentScalePositions(chordInfo(step), 'three').find((p:any)=>p.id===desiredParent);if(p)exerciseView.fingeringFret=p.board.firstFret;}perStringView?.setSelection({...exerciseView,kind:exerciseView.fingering});if(target.value==='parent'&&exerciseView.parentScaleFingering==='caged'){chooseOverviewPosition(desiredParent);return;}}
+ if(usesParentPosition(exerciseView)&&exerciseView.fingering!==exerciseView.parentScaleFingering){exerciseView.fingering=exerciseView.parentScaleFingering;perStringView?.setSelection({...exerciseView,kind:exerciseView.fingering});}
 
  if(perStringView?.selection().kind!==exerciseView.fingering)perStringView?.setSelection({...exerciseView,kind:exerciseView.fingering});
  exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseCellSelection=null;renderGuitar();document.getElementById(target.id)?.focus({preventScroll:true});
@@ -2636,6 +2681,8 @@ function reflectNeckTraversal(info:any){
  for(const selector of ['#position-overview','#guitar-diagrams','.position-navigation','.per-string-controls']){const node=guitarPanel.querySelector<HTMLElement>(selector);if(node)node.hidden=active;}
  if(active)el('per-string-diagram').hidden=true;
  const routeChoices=guitarPanel.querySelector<HTMLElement>('.position-path-controls');if(routeChoices)routeChoices.hidden=active;
+ guitarPanel.classList.toggle('using-parent-position',usesParentPosition(exerciseView));
+ el('position-overview').hidden=true;document.querySelector<HTMLElement>('.position-navigation')!.hidden=true;
  if(!active)return;
  renderNeckTraversalMap(info);
 }

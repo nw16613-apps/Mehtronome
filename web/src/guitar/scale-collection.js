@@ -15,6 +15,6 @@ export function exerciseCollectionBoard(board,h,v){
 
 // Retired modal-3NPS pentatonic subsets open in the retained CAGED layout.
 export function normalizePentatonicLayout(v){
- if(v.fingering==='three'&&usesPentatonicCollection(v)){v.fingering='caged';v.inversion=0;v.traversalCell='first';}
+ if(v.fingering==='three'&&usesPentatonicCollection(v)&&v.parentScaleFingering!=='three'){v.fingering='caged';v.inversion=0;v.traversalCell='first';}
  return v;
 }

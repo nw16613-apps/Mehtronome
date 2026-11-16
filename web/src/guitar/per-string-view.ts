@@ -18,7 +18,7 @@ export function installPerStringView(getContext:()=>any,practise?:((choice:any)=
  const registers=new Map<string,number>();let lastRender='';let lastMap:any=null,selectedDegree:number|undefined;
  panel.innerHTML='<h4></h4><p class="practice-help"></p><div class="per-string-gallery"></div><div class="per-string-navigation"><button type="button" class="practice-button" data-shape-move="-1">← Previous</button><span></span><button type="button" class="practice-button" data-shape-move="1">Next →</button></div><div class="per-string-featured"></div>';
  function refresh(){
-  if(field('fretboard-fingering').value==='three'&&getContext().view&&usesPentatonicCollection(getContext().view))field('fretboard-fingering').value='caged';
+  if(field('fretboard-fingering').value==='three'&&getContext().view&&usesPentatonicCollection(getContext().view)&&getContext().view.parentScaleFingering!=='three')field('fretboard-fingering').value='caged';
   const {harmony:h,locked}=getContext(),kind=field('fretboard-fingering').value,active=kind!=='caged',arp=!isScaleFingering(kind),drop=kind==='drop2'||kind==='drop3'||kind==='spread';
   if(getContext().view&&getContext().view.fingering!==kind)selectionChanged?.({kind,inversion:0,fret:5,stringSet:Number(field('drop-string-set').value)||0,spreadSource:field('spread-triad-source').value});
   if(getContext().view){const label=field('fretboard-fingering').closest('label')!;label.firstChild!.textContent=materialKind(getContext().view)==='chords'?'Voicing type':'Fingering';const items=fingeringOptions(getContext().view);field('fretboard-fingering').replaceChildren(...items.map(([id,name])=>new Option(name,id,false,id===kind)));}

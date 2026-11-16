@@ -2,9 +2,11 @@
 
 The tab is named Fretboard and the page heading Fretboard explorer. Internal workspace IDs and stored navigation values remain unchanged.
 
-The layout follows the shared chart slots, position controls, position tabs/thumbnails, Display/Overlay toolbar, selected-position diagram, active legend, overlay information and full-neck map. The primary diagram has a bounded desktop size; mobile tabs show readable position/shape/fret labels rather than tiny SVGs. The full-neck map starts collapsed on phones unless an explicit saved visibility choice exists. Focus view keeps the diagram and hides surrounding selectors.
+The page shows chart context, a parent Fingering selector (CAGED or modal 3NPS), complete parent scale positions, Material/source/Material fingering controls, Traversal, Display settings, material diagrams and the full-neck map. The parent catalogue always uses the complete current mode, independent of the chosen arpeggio or pentatonic. Parent diagrams remain visible on mobile. The full-neck map starts collapsed on phones unless an explicit saved visibility choice exists. Focus view hides the reference and surrounding selectors.
 
-Every direct position choice (thumbnail, previous/next, keyboard arrows or full-neck region) switches the selected chart slot to manual using the same route update. The automatic-route description explains this transition. Other chart slots retain their positions, including repeated chord symbols. Navigation locks during playback and unlocks after stopping.
+“Within parent position” filters the selected parent shape to the material notes. Dedicated pentatonic fingerings, alternating-string arpeggios and chord voicings have their own lower shape catalogue. Changing the parent reference leaves those dedicated shapes unchanged; returning to Within parent position uses the chosen parent. The parent system and reference selection persist separately from material geometry, and reference changes do not change a dedicated exercise's study identity.
+
+Every direct CAGED material-position choice (parent thumbnail, previous/next, keyboard arrows or full-neck region) switches the selected chart slot to manual using the same route update. The automatic-route description explains this transition. Other chart slots retain their positions, including repeated chord symbols. Navigation locks during playback and unlocks after stopping.
 
 Display settings contains labels, degree reference, chord voicing and focus. Pentatonics and triad pairs are chosen through the primary material/source controls; there is no independent melodic overlay. Pentatonic diagrams retain purple notes, a distinct pentatonic-root ring and the backing-root amber accent.
 
