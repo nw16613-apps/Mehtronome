@@ -23,3 +23,10 @@ test('Evolution produces broad tonal and layer changes within a short listening 
  const still=Array.from({length:30},(_,i)=>ambientVoiceState(i,2,false,0,1));assert.ok(still.every(s=>s.filterOctaves===0&&s.gain===1&&s.pan===0));
  const root=ambientVoiceState(13,0,true,1,1);assert.equal(root.filterOctaves,0);
 });
+
+test('Space introduces no internal echo tail, including textures with legacy echoes',()=>{
+ for(const sound of ['warm','aurora','glass','deepSpace'])for(const padSpace of [0,1]){
+  const e=setup({sound,padSpace});render(e,rate*2);e.settings.harmony=0;e.harmonyLevel=0;
+  const [l,r]=render(e,rate);assert.ok(l.every(v=>v===0));assert.ok(r.every(v=>v===0));
+ }
+});

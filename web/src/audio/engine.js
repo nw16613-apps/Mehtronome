@@ -214,10 +214,9 @@ export class Engine {
     this.echoRight = this.echoRight || new Float32Array(this.rate);
     this.echoLeft.fill(0); this.echoRight.fill(0);
     this.echoIndex = 0;
-    this.echoMix = 0;this.ambientEchoLeft=0;this.ambientEchoRight=0;
+    this.echoMix = 0;
     this.tapLeft = Math.round(.31 * this.rate);
     this.tapRight = Math.round(.43 * this.rate);
-    this.diffuseTapLeft=Math.round(.173*this.rate);this.diffuseTapRight=Math.round(.227*this.rate);
     // Six sounding chord tones plus six release tails: common notes keep their
     // oscillator phase; changed notes crossfade at their true pitches.
     this.voices = Array.from({length:12}, (_, index) => ({
@@ -532,7 +531,7 @@ export class Engine {
     const movement=PAD_MOVEMENT[s.padMovement]||1;
     let depth=.4+1.4*(this.depthMotionState?.position??depthIndex(s.padDepth));
     const brightness=PAD_BRIGHTNESS[s.padBrightness]||1;
-    let echoTarget = s.padAmbient?.32*this.ambient.padSpace:Math.min(.2,(sound.echo || 0)*depth);
+    let echoTarget = s.padAmbient?0:Math.min(.2,(sound.echo || 0)*depth);
     const attack = 1-Math.exp(-1/(this.rate*(s.padAmbient?Math.max(.8,sound.attack):sound.attack)));
     const release = 1-Math.exp(-1/(this.rate*(s.padAmbient?Math.max(1.6,sound.release):sound.release)));
     const inverseRate = this.inverseRate;
@@ -662,7 +661,7 @@ export class Engine {
           const depthState=padDepthMotionState(s,musicalBeat);
           this.applyPadDepthState(depthState);
           depth=.4+1.4*depthState.position;
-          echoTarget=s.padAmbient?.32*this.ambient.padSpace:Math.min(.2,(sound.echo||0)*depth);
+          echoTarget=s.padAmbient?0:Math.min(.2,(sound.echo||0)*depth);
         }
         const arc=s.padAmbient?1:1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
         this.phraseArcDelta=(arc-this.phraseArc)/32;
@@ -766,7 +765,7 @@ export class Engine {
       let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+(nativeSequence||s.padAmbient?0:sequenceGain*this.sequenceLevel*this.sequence.left);
       let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+(nativeSequence||s.padAmbient?0:sequenceGain*this.sequenceLevel*this.sequence.right);
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
-      if(s.padAmbient||this.echoMix>.00001){
+      if(!s.padAmbient&&this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive
         // interpolated delay modulation on the realtime thread.
         let iLeft = this.echoIndex - this.tapLeft;
@@ -774,9 +773,8 @@ export class Engine {
         if (iLeft < 0) iLeft += this.rate;
         if (iRight < 0) iRight += this.rate;
         let echoL = this.echoLeft[iLeft], echoR = this.echoRight[iRight];
-        if(s.padAmbient){let a=this.echoIndex-this.diffuseTapLeft,b=this.echoIndex-this.diffuseTapRight;if(a<0)a+=this.rate;if(b<0)b+=this.rate;echoL=.62*echoL+.38*this.echoRight[a];echoR=.62*echoR+.38*this.echoLeft[b];this.ambientEchoLeft+=(echoL-this.ambientEchoLeft)*.22;this.ambientEchoRight+=(echoR-this.ambientEchoRight)*.22;echoL=this.ambientEchoLeft;echoR=this.ambientEchoRight;}
-        this.echoLeft[this.echoIndex]=left+echoR*(s.padAmbient?.68:.28);
-        this.echoRight[this.echoIndex]=right+echoL*(s.padAmbient?.68:.28);
+        this.echoLeft[this.echoIndex]=left+echoR*.28;
+        this.echoRight[this.echoIndex]=right+echoL*.28;
         left+=echoL*this.echoMix;right+=echoR*this.echoMix;
         this.echoIndex++;
         if (this.echoIndex === this.rate) this.echoIndex = 0;
