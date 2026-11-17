@@ -1,10 +1,10 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {Engine} from '../src/audio/engine.js';import {AMBIENT_DEFAULTS,ambientColourNotes,ambientVoiceState} from '../src/audio/ambient-harmony.js';import {harmonyAt} from '../src/audio/music.js';
 const rate=8000,noop=()=>{};
-function setup(patch={}){const e=new Engine(rate);e.configure({...AMBIENT_DEFAULTS,extensionMorph:false,padDepth:'wide',padDepthMotion:'fixed',key:9,mode:'dorian',chord:'min7',countIn:false,click:0,harmony:1,...patch});e.reset();return e;}
+function setup(patch={}){const e=new Engine(rate);e.configure({...AMBIENT_DEFAULTS,padColour:'chord',padVoicingMotion:false,extensionMorph:false,padDepth:'wide',padDepthMotion:'fixed',key:9,mode:'dorian',chord:'min7',countIn:false,click:0,harmony:1,...patch});e.reset();return e;}
 function render(e,frames){const l=new Float32Array(frames),r=new Float32Array(frames);e.render(new Float32Array(frames),noop,l,r);return [l,r];}
 const rms=a=>Math.sqrt(a.reduce((sum,v)=>sum+v*v,0)/a.length);
-test('ambient bed keeps selected chord pitch classes and fixed voicing by default',()=>{const e=setup(),before=e.padVoicing.map(v=>v.midi);render(e,rate*75);assert.deepEqual(e.padVoicing.map(v=>v.midi),before);assert.ok(before.every(n=>[9,0,4,7].includes(n%12)));assert.equal(e.motionCell,-1);assert.equal(e.voices.length,24);});
+test('ambient bed keeps selected chord pitch classes with fixed chord-only settings',()=>{const e=setup(),before=e.padVoicing.map(v=>v.midi);render(e,rate*75);assert.deepEqual(e.padVoicing.map(v=>v.midi),before);assert.ok(before.every(n=>[9,0,4,7].includes(n%12)));assert.equal(e.motionCell,-1);assert.equal(e.voices.length,24);});
 test('modal character notes are opt-in and scale-correct; register movement uses chord tones',()=>{const h=harmonyAt({key:9,mode:'dorian',chord:'min7'});assert.deepEqual(ambientColourNotes(h,'chord'),[]);assert.ok(ambientColourNotes(h,'modal').some(n=>n.midi%12===6));const e=setup({padColour:'modal',padVoicingMotion:true});assert.ok(e.padVoicing.some(n=>n.modalColour&&n.midi%12===6));assert.ok(e.padVoicing.filter(n=>n.ambientRegister!==undefined).every(n=>h.chordPcs.includes(n.midi%12)));e.configure({padColour:'chord',padVoicingMotion:false});assert.ok(e.padVoicing.every(n=>h.chordPcs.includes(n.midi%12)));});
 test('evolution changes independent layers over time while the foundation stays centred',()=>{const a=ambientVoiceState(5,2,false,.8,.7),b=ambientVoiceState(53,2,false,.8,.7);assert.ok(Math.abs(a.colour-b.colour)>.1);assert.notEqual(a.gain,b.gain);const root=ambientVoiceState(53,0,true,1,1);assert.equal(root.pan,0);assert.equal(root.width,0);assert.equal(root.gain,1);});
 test('space zero is mono and space adds a bounded stereo field',()=>{const mono=render(setup({padSpace:0}),rate*8),stereo=render(setup({padSpace:1}),rate*8);assert.deepEqual(mono[0],mono[1]);let side=0,centre=0;for(let i=rate*2;i<stereo[0].length;i++){side+=(stereo[0][i]-stereo[1][i])**2;centre+=(stereo[0][i]+stereo[1][i])**2;}assert.ok(side>centre*.0001);assert.ok(side<centre*.5);});
@@ -15,3 +15,11 @@ test('long evolving bed remains finite, bounded and stops cleanly',()=>{for(cons
 
 test('explicit chord previews keep their exact requested notes',()=>{const e=setup({padColour:'modal',padVoicingMotion:true});e.audition(0,[57,60,64,67]);assert.deepEqual(e.padVoicing.map(n=>n.midi),[57,60,64,67]);assert.ok(render(e,rate)[0].every(Number.isFinite));});
 test('Harmony space does not add ambience to the separate melodic instrument',()=>{const dry=render(setup({harmony:0,padSpace:0,sequence:true,sequenceVolume:1}),rate*3),wet=render(setup({harmony:0,padSpace:1,sequence:true,sequenceVolume:1}),rate*3);assert.ok(rms(dry[0])>0);assert.deepEqual(wet,dry);});
+
+test('Evolution produces broad tonal and layer changes within a short listening window',()=>{
+ const states=Array.from({length:301},(_,i)=>ambientVoiceState(i/10,2,false,1,1));
+ const span=k=>Math.max(...states.map(s=>s[k]))-Math.min(...states.map(s=>s[k]));
+ assert.ok(span('filterOctaves')>2);assert.ok(span('gain')>.6);assert.ok(span('pan')>.6);
+ const still=Array.from({length:30},(_,i)=>ambientVoiceState(i,2,false,0,1));assert.ok(still.every(s=>s.filterOctaves===0&&s.gain===1&&s.pan===0));
+ const root=ambientVoiceState(13,0,true,1,1);assert.equal(root.filterOctaves,0);
+});

@@ -1,12 +1,12 @@
 import {characteristicNotes} from './music.js';
-export const AMBIENT_DEFAULTS={padAmbient:true,padEvolution:.55,padSpace:.55,padVoicingMotion:false,padColour:'chord'};
+export const AMBIENT_DEFAULTS={padAmbient:true,padEvolution:.55,padSpace:.55,padVoicingMotion:true,padColour:'extensions',extensionMorph:true};
 export const AMBIENT_TEXTURES=[['warm','Warm'],['air','Airy'],['velvet','Dark'],['aurora','Shimmering']];
 const unit=(v,fallback)=>Number.isFinite(Number(v))?Math.max(0,Math.min(1,Number(v))):fallback;
 export function normalizeAmbient(s){return {padAmbient:s.padAmbient===true,padEvolution:unit(s.padEvolution,.55),padSpace:unit(s.padSpace,.55),padVoicingMotion:s.padVoicingMotion===true,padColour:s.extensionMorph?'extensions':s.padColour==='modal'?'modal':'chord'};}
 /** Seconds-based, independent layers; tempo edits never reset the texture. */
 export function ambientVoiceState(seconds,index,foundation,evolution,space){
- const slow=Math.sin(seconds*.061+index*1.71),drift=Math.sin(seconds*.137+index*.93),breath=Math.sin(seconds*.089+index*2.17);
- return {colour:.5+.5*(slow*.65+drift*.35),blend:slow*.65+breath*.35,gain:foundation?1:1+evolution*(breath*.16+slow*.08),pan:foundation?0:space*.28*evolution*drift,width:foundation?0:space};
+ const slow=Math.sin(seconds*.17+index*1.71),drift=Math.sin(seconds*.31+index*.93),breath=Math.sin(seconds*.23+index*2.17);
+ return {filterOctaves:foundation?0:evolution*(slow*1.5+drift*.5),colour:.5+.5*(slow*.65+drift*.35),blend:slow*.65+breath*.35,gain:foundation?1:1+evolution*(breath*.38+slow*.17),pan:foundation?0:space*.45*evolution*drift,width:foundation?0:space};
 }
 export function ambientColourNotes(harmony,kind){
  if(kind!=='modal')return [];

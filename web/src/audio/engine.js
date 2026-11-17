@@ -672,11 +672,11 @@ export class Engine {
           const motion=.5+.5*Math.sin(time*.19+offset);
           const slow=.5+.5*Math.sin(time*.071+offset*1.73);
           const ambient=s.padAmbient?ambientVoiceState(time,voice.index,voice.role==='foundation'||voice.role==='root',this.ambient.padEvolution,this.ambient.padSpace):null;
-          const cutoff=Math.min(this.rate*.32,(sound.filterBase+sound.filterSweep*(ambient?(.18+this.ambient.padEvolution*ambient.colour):movement*(motion*.62+slow*.38)))*brightness);
+          const cutoff=Math.min(this.rate*.32,(sound.filterBase+sound.filterSweep*(ambient?(.18+this.ambient.padEvolution*ambient.colour*1.8):movement*(motion*.62+slow*.38)))*brightness*(ambient?2**ambient.filterOctaves:1));
           const coefficient=1-Math.exp(-2*Math.PI*cutoff*inverseRate);
           const pan=ambient?ambient.pan:.18*depth*Math.sin(time*.11*movement+offset);
           const detune=ambient?sound.detune*(.45+.15*this.ambient.padEvolution*Math.sin(time*.061+offset)):sound.detune*(.8+.2*Math.sin(time*.23+offset*1.4));
-          const mix=sound.morph+sound.morphDepth*(ambient?this.ambient.padEvolution*ambient.blend:movement*(slow-.5)*2);
+          const mix=Math.max(0,Math.min(1,sound.morph+sound.morphDepth*(ambient?2.8*this.ambient.padEvolution*ambient.blend:movement*(slow-.5)*2)));
           const glass=s.sound==='atmosphere'||s.sound==='glass';
           const gain=ambient?ambient.gain:(.92+.08*Math.sin(time*.31+offset*.8))*(glass?.82+.18*Math.exp(-this.chordAge*inverseRate/1.4):1);
           const halo=sound.halo*brightness*(ambient?(.35+.65*this.ambient.padEvolution*ambient.colour):(.35+.65*motion*motion)*movement);
