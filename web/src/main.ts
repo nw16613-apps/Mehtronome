@@ -1,3 +1,4 @@
+import {installAmbientHarmony,AMBIENT_CONTROL_DEFAULTS} from './practice/ambient-harmony-view';
 import {FAVOURITE_LIBRARY_META_KEY,readFavouriteDetails} from './practice/favourite-library.js';
 import {organizePracticeExperience,installProgressExperience,installFretboardExperience} from './practice/practice-experience';
 import {installPracticeLibrary} from './practice/practice-library-view';
@@ -254,6 +255,7 @@ const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElem
 const input = (id: string) => el<HTMLInputElement>(id);
 const select = (id: string) => el<HTMLSelectElement>(id);
 document.body.insertAdjacentHTML('beforeend',`<dialog id="pulse-large" class="pulse-large" aria-labelledby="pulse-large-title"><div class="pulse-large-toolbar"><h2 id="pulse-large-title">The pulse</h2><button id="pulse-large-close" type="button" class="practice-button">Close</button></div><div id="pulse-large-number" class="pulse-large-number">Ready</div><p id="pulse-large-status">Ready to practice</p><button id="pulse-large-play" type="button" class="practice-button">Start practicing</button></dialog>`);
+let ambientHarmonyUi:ReturnType<typeof installAmbientHarmony>|undefined;
 let backingStyleUi:ReturnType<typeof installBackingStyles>|undefined;
 let studyPathUi:ReturnType<typeof installStudyPath>|undefined;
 let practiceLibraryUi:ReturnType<typeof installPracticeLibrary>|undefined;
@@ -1185,6 +1187,7 @@ function update() {
   fxUi?.sync();
   settings.automaticBacking=true;
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
+  Object.assign(settings,ambientHarmonyUi?.read());
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
@@ -1992,6 +1995,7 @@ function sendMixerSettings(){
   queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);
 }
 function updateMixerLevels(){
+  Object.assign(settings,ambientHarmonyUi?.read());
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
@@ -2476,7 +2480,7 @@ async function loadPracticePreset(preset:PracticePreset|undefined){
     soloChannels.clear();
     if (playing) await stop();
     // Presets saved before these features existed keep their original behavior.
-    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),'sequence-activity':'supporting','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
+    for (const [id,value] of Object.entries({...Object.fromEntries(MIX_CHANNELS.map(channel=>['mute-'+channel.id,false])),...AMBIENT_CONTROL_DEFAULTS,'sequence-activity':'supporting','extension-morph':false,'extension-bars':'8','pulse-accents':'','pulse-sound':'beep','pulse-swing':'0','pulse-minutes':'0','pulse-finish-bar':true,'pulse-poly':'0/2','gap-progressive':false,'gap-max':'8','trainer-enabled':false,'trainer-bars':'4','trainer-increment':'2','trainer-target':'120','featured-position':'path','manual-position-route':'','pattern-start-route':'','loop-unit':'chords','loop-beat-start':'1','loop-beat-end':'1'})) {
       if (!(id in preset.controls)) restoreControl(id,value);
     }
     restoreControl('quality',preset.controls.quality);
@@ -2865,6 +2869,7 @@ practiceLibraryUi=installPracticeLibrary({
 const initialFingeringSelection={...exerciseView};
 perStringView=installPerStringView(()=>({harmony:chordInfo(playing?livePlaybackStep:step),view:exerciseView,degrees:guitarDegrees,highlight:input('highlight-mode').checked,locked:exercisePlaying||exercisePreparing||busy||stopping}),({kind,inversion,fret,stringSet,spreadSource}:any)=>{if(exercisePlaying||exercisePreparing||busy||stopping)return;stopPreview();linkExerciseFingering(exerciseView,{kind,inversion,fret,stringSet,spreadSource},chordInfo(playing?livePlaybackStep:step));exerciseView.fretboard=true;exerciseSelectionStart=null;exerciseSelectionEnd=null;exerciseCellSelection=null;renderGuitar();showWorkspace('exercises','caged-exercise');},renderPerStringMap,(choice:any)=>{const info=chordInfo(playing?livePlaybackStep:step);linkExerciseFingering(exerciseView,choice,info);if(fretboardStudyPanel.isConnected)renderFretboardStudyControls(info);});
 Object.assign(exerciseView,initialFingeringSelection);perStringView.setSelection({...initialFingeringSelection,kind:initialFingeringSelection.fingering});
+ambientHarmonyUi=installAmbientHarmony(update);
 backingStyleUi=installBackingStyles(update);
 update();
 applyStudioIcons();

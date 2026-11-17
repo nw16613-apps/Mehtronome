@@ -7,7 +7,7 @@ export const PRESET_CONTROLS = [
   'backing-style','sequence-activity',...FX_PRESET_CONTROLS,
   ...MIX_CHANNELS.map(channel=>'mute-'+channel.id),'extension-morph','extension-bars',
   'pulse-accents','pulse-sound','pulse-swing','pulse-minutes','pulse-finish-bar','pulse-poly','gap-progressive','gap-max',
-  'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness','chord','template',
+  'bpm','beats','count-in','subdivision','accent','key','quality','sound','pad-movement','pad-depth','pad-depth-motion','pad-depth-amount','pad-brightness','pad-evolution','pad-space','pad-voicing-motion','pad-colour','chord','template',
   'exercise','click','harmony','sequence','sequence-role','sequence-phrase','sequence-development','sequence-interaction','sequence-source','sequence-register','sequence-pattern','sequence-rate','sequence-density',
   'sequence-swing','sequence-volume','drums','bass','comping','drum-groove','bass-pattern','comping-pattern','comping-tone','comping-movement','comping-movement-amount','comping-hook-length','drums-volume','bass-volume','comping-volume',
   'fret-labels','highlight-mode','show-grip',

@@ -1,3 +1,4 @@
+import {normalizeAmbient,ambientVoiceState,ambientColourNotes,ambientVoicingEntries,ambientEntryGain} from './ambient-harmony.js';
 import {musicalSettingsKey,chartLayoutKey,liveSettingsPatch} from './live-settings.js';
 import {normalizeGuitarTuning,guitarTuningRatio} from './guitar-tuning.js';
 import {prepareStandardMelody,playbackLeadInBeats} from './standard-melodies.js';
@@ -19,7 +20,7 @@ const NOOP = () => {};
 const PAD_MOVEMENT={still:.08,evolving:1,expansive:2},PAD_MOTION_GAIN={still:.018,evolving:.04,expansive:.065},PAD_BRIGHTNESS={dark:.38,balanced:1,luminous:1.75};
 // A single sample clock drives clicks, count-in and chord changes. No UI timers.
 export const DEFAULTS = {
-  guitarTuning:0,
+  guitarTuning:0,padAmbient:false,
   backingStyle:'popRock',soundLibrary:'original',backingHumanize:.65,backingVariation:1,bassInstrument:'electric',drumKit:'rock', mutedChannels:'', extensionMorph:true, extensionBars:8,
   clickSound: 'beep', beatAccents:'', clickSwing:0, polyBeats:0, polyBase:2, sessionSeconds:0, sessionFinishBar:true, studyRepeatBeats:0, gapProgressive:false, gapMaxBars:8,
   gapEnabled:false, gapPlayBars:4, gapMuteBars:1, gapTarget:'all',
@@ -89,6 +90,7 @@ export const PIANO_VOICINGS={
   dom9b13:[0,10,14,16,20],dom7b9b13:[0,10,16,20,25],maj7sharp9sharp11:[0,11,16,18,27],
   dom7alt:[0,10,16,18,20,25,27],dim7:[0,6,9,15],fifth:[0,7,12],
   dom7sharp9:[0,10,16,19,27],dom13b9:[0,10,16,19,21,25],dom7b9sharp11:[0,10,16,18,19,25],dimMaj7:[0,6,11,15],
+  dom7b13:[0,10,16,19,20],addSharp11:[0,7,16,18],min7b13:[0,7,10,15,20],min7sharp11:[0,7,10,15,18],dom7add11:[0,10,16,19,29],
   add9:[0,7,14,16],add11:[0,7,16,29],maj13:[0,7,11,14,16,21],maj13sharp11:[0,11,14,16,18,21],
   minAdd9:[0,7,14,15],minAdd11:[0,7,15,17],minSixNine:[0,7,9,14,15],min7add11:[0,7,10,15,17],
   minMaj11:[0,7,11,14,15,17],minMaj13:[0,11,14,15,21],dom11:[0,10,14,16,29],
@@ -212,9 +214,10 @@ export class Engine {
     this.echoRight = this.echoRight || new Float32Array(this.rate);
     this.echoLeft.fill(0); this.echoRight.fill(0);
     this.echoIndex = 0;
-    this.echoMix = 0;
+    this.echoMix = 0;this.ambientEchoLeft=0;this.ambientEchoRight=0;
     this.tapLeft = Math.round(.31 * this.rate);
     this.tapRight = Math.round(.43 * this.rate);
+    this.diffuseTapLeft=Math.round(.173*this.rate);this.diffuseTapRight=Math.round(.227*this.rate);
     // Six sounding chord tones plus six release tails: common notes keep their
     // oscillator phase; changed notes crossfade at their true pitches.
     this.voices = Array.from({length:12}, (_, index) => ({
@@ -300,7 +303,8 @@ export class Engine {
     const previousSubdivision = this.settings.subdivision;
     const previousPoly = `${this.settings.polyBeats}/${this.settings.polyBase}`;
     Object.assign(this.settings, settings);
-    const s = this.settings;
+    const s = this.settings;this.ambient=normalizeAmbient(s);
+    if(s.padAmbient&&this.voices.length<24)this.voices.push(...Array.from({length:24-this.voices.length},(_,index)=>({...this.voices[0],index:index+12,frequency:0,level:0,targetLevel:0,filter:0,sideFilter:0,phase:0,detuned:0,haloPhase:0,subPhase:0})));
     s.guitarTuning=normalizeGuitarTuning(s.guitarTuning);this.pitchRatio=guitarTuningRatio(s.guitarTuning);
     if(previousSound!==s.sound){
       this.wavePrevious = this.waveCurrent;
@@ -317,7 +321,7 @@ export class Engine {
       this.rhythm.lastGrid=this.beat>=this.remainingCount ? this.rhythm.gridAt(s,this.beat-this.remainingCount,this.phase/(60*this.rate)) : -1;
     }
     this.muted=new Set(String(s.mutedChannels||'').split(','));
-    s.extensionBars=[4,8,16].includes(Number(s.extensionBars))?Number(s.extensionBars):8;
+    s.extensionBars=[4,8,16,32].includes(Number(s.extensionBars))?Number(s.extensionBars):8;
     s.clickSwing=Math.max(0,Math.min(1,Number(s.clickSwing)||0));
     s.polyBeats=[0,2,3,4,5,7].includes(Number(s.polyBeats))?Number(s.polyBeats):0;
     s.polyBase=[2,3,4].includes(Number(s.polyBase))?Number(s.polyBase):2;
@@ -406,7 +410,7 @@ export class Engine {
     this.step = step;
     const s = this.settings;
     const customSignature=this.customSignature;
-    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${s.extensionMorph}/${customSignature}`;
+    const signature = `${s.key}/${s.minor}/${s.mode}/${s.chord}/${s.progression}/${s.template}/${s.sequenceSource}/${s.padDepth}/${s.padDepthMotion}/${s.bass}/${s.compingMovement}/${s.compingHookLength}/${step}/${s.extensionMorph}/${s.padAmbient}/${s.padColour}/${s.padVoicingMotion}/${customSignature}`;
     if (signature === this.chordSignature) return;
     this.chordSignature = signature;
     this.chordAge = 0;
@@ -415,7 +419,8 @@ export class Engine {
     this.rhythmChordMidi = Number.isFinite(harmony.bassMidi)?[harmony.bassMidi,...this.chordMidi]:this.chordMidi;
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
     const chordId=harmony.chordId || s.chord;
-    this.padVoicing=s.padDepthMotion==='fixed'?padVoicing(this.chordMidi,s.padDepth,chordId):movingPadVoicing(this.chordMidi,chordId);
+    this.padVoicing=s.padAmbient||s.padDepthMotion==='fixed'?padVoicing(this.chordMidi,s.padDepth,chordId):movingPadVoicing(this.chordMidi,chordId);
+    if(s.padAmbient)this.padVoicing=ambientVoicingEntries(this.padVoicing,s.padVoicingMotion);
     if(Number.isFinite(harmony.bassMidi)){
       const foundation=this.padVoicing.find(entry=>entry.role==='foundation');
       if(foundation)foundation.midi=harmony.bassMidi;
@@ -427,13 +432,14 @@ export class Engine {
     this.extensionCandidates=s.extensionMorph?extensionChoices(harmony):[];
     if(s.extensionMorph){
       const allowed=new Set(harmony.scalePcs);
-      this.padVoicing=this.padVoicing.filter(entry=>allowed.has((entry.midi%12+12)%12));
+      if(!s.padAmbient)this.padVoicing=this.padVoicing.filter(entry=>allowed.has((entry.midi%12+12)%12));
       this.extensionCandidates.forEach((choice,index)=>{
         const existing=this.padVoicing.filter(entry=>entry.midi%12===choice.midi%12);
         if(existing.length)existing.forEach(entry=>{entry.extensionIndex=index;});
         else if(this.padVoicing.length<10)this.padVoicing.push({midi:choice.midi,role:'colour',weight:.7,extensionIndex:index});
       });
     }
+    if(s.padAmbient)for(const note of ambientColourNotes(harmony,this.ambient.padColour))if(this.padVoicing.length<10&&!this.padVoicing.some(e=>e.midi===note.midi))this.padVoicing.push(note);
     this.motionNotes=padMotionNotes(s.extensionMorph?this.chordMidi.filter(midi=>harmony.scalePcs.includes(midi%12)):this.chordMidi);
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);
@@ -454,7 +460,7 @@ export class Engine {
     const base=entry.depthWeights?depthWeight(entry.depthWeights,state.position):entry.weight;
     const roleScale=entry.role==='foundation'?state.foundation:entry.role==='air'?state.air:state.body;
     const extension=entry.extensionIndex===undefined?1:extensionBlend(entry.extensionIndex,this.extensionCandidates.length,this.extensionBeat,this.settings.beats,this.settings.extensionBars);
-    return base*extension*roleScale*(this.settings.bass&&!this.muted.has('bass')&&entry.role==='foundation'?.28:1);
+    return base*extension*roleScale*(this.settings.padAmbient?ambientEntryGain(entry,this.age/this.rate):1)*(this.settings.bass&&!this.muted.has('bass')&&entry.role==='foundation'?.28:1);
   }
 
   assignPadVoices(state=this.depthMotionState) {
@@ -526,9 +532,9 @@ export class Engine {
     const movement=PAD_MOVEMENT[s.padMovement]||1;
     let depth=.4+1.4*(this.depthMotionState?.position??depthIndex(s.padDepth));
     const brightness=PAD_BRIGHTNESS[s.padBrightness]||1;
-    let echoTarget = Math.min(.2,(sound.echo || 0)*depth);
-    const attack = 1-Math.exp(-1/(this.rate*sound.attack));
-    const release = 1-Math.exp(-1/(this.rate*sound.release));
+    let echoTarget = s.padAmbient?.32*this.ambient.padSpace:Math.min(.2,(sound.echo || 0)*depth);
+    const attack = 1-Math.exp(-1/(this.rate*(s.padAmbient?Math.max(.8,sound.attack):sound.attack)));
+    const release = 1-Math.exp(-1/(this.rate*(s.padAmbient?Math.max(1.6,sound.release):sound.release)));
     const inverseRate = this.inverseRate;
     for (let i = 0; i < output.length; i++) {
       // Apply on the exact sample of the next downbeat, before old-chart hits.
@@ -648,7 +654,7 @@ export class Engine {
       if ((this.age & 31) === 0) {
         const time = this.age * inverseRate;
         const breathDepth=sound.depth*movement;
-        const breath = 1-breathDepth*.5+breathDepth*.5*Math.sin(2*Math.PI*sound.speed*movement*time);
+        const breath = s.padAmbient?1:1-breathDepth*.5+breathDepth*.5*Math.sin(2*Math.PI*sound.speed*movement*time);
         this.breathDelta=(breath-this.breath)/32;
         const musicalBeat=Math.max(0,this.beat-this.remainingCount)+this.phase/(60*this.rate);
         if((this.age&2047)===0){
@@ -656,29 +662,30 @@ export class Engine {
           const depthState=padDepthMotionState(s,musicalBeat);
           this.applyPadDepthState(depthState);
           depth=.4+1.4*depthState.position;
-          echoTarget=Math.min(.2,(sound.echo||0)*depth);
+          echoTarget=s.padAmbient?.32*this.ambient.padSpace:Math.min(.2,(sound.echo||0)*depth);
         }
-        const arc=1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
+        const arc=s.padAmbient?1:1-(sound.arc||0)*movement*.5+(sound.arc||0)*movement*.5*Math.sin(2*Math.PI*musicalBeat/(Math.max(1,s.beats)*8)-Math.PI/2);
         this.phraseArcDelta=(arc-this.phraseArc)/32;
         if(padAudible)for (const voice of this.voices) {
           if (!voice.targetLevel && voice.level<.000001) continue;
           const offset=voice.index*1.31;
           const motion=.5+.5*Math.sin(time*.19+offset);
           const slow=.5+.5*Math.sin(time*.071+offset*1.73);
-          const cutoff=Math.min(this.rate*.32,(sound.filterBase+sound.filterSweep*movement*(motion*.62+slow*.38))*brightness);
+          const ambient=s.padAmbient?ambientVoiceState(time,voice.index,voice.role==='foundation'||voice.role==='root',this.ambient.padEvolution,this.ambient.padSpace):null;
+          const cutoff=Math.min(this.rate*.32,(sound.filterBase+sound.filterSweep*(ambient?(.18+this.ambient.padEvolution*ambient.colour):movement*(motion*.62+slow*.38)))*brightness);
           const coefficient=1-Math.exp(-2*Math.PI*cutoff*inverseRate);
-          const pan=.18*depth*Math.sin(time*.11*movement+offset);
-          const detune=sound.detune*(.8+.2*Math.sin(time*.23+offset*1.4));
-          const mix=sound.morph+sound.morphDepth*movement*(slow-.5)*2;
+          const pan=ambient?ambient.pan:.18*depth*Math.sin(time*.11*movement+offset);
+          const detune=ambient?sound.detune*(.45+.15*this.ambient.padEvolution*Math.sin(time*.061+offset)):sound.detune*(.8+.2*Math.sin(time*.23+offset*1.4));
+          const mix=sound.morph+sound.morphDepth*(ambient?this.ambient.padEvolution*ambient.blend:movement*(slow-.5)*2);
           const glass=s.sound==='atmosphere'||s.sound==='glass';
-          const gain=(.92+.08*Math.sin(time*.31+offset*.8))*(glass?.82+.18*Math.exp(-this.chordAge*inverseRate/1.4):1);
-          const halo=sound.halo*brightness*(.35+.65*motion*motion)*movement;
+          const gain=ambient?ambient.gain:(.92+.08*Math.sin(time*.31+offset*.8))*(glass?.82+.18*Math.exp(-this.chordAge*inverseRate/1.4):1);
+          const halo=sound.halo*brightness*(ambient?(.35+.65*this.ambient.padEvolution*ambient.colour):(.35+.65*motion*motion)*movement);
           voice.coefficientDelta=(coefficient-voice.coefficient)/32;
           voice.panDelta=(pan-voice.pan)/32;
           voice.detuneDelta=(detune-voice.detune)/32;
           voice.gainDelta=(gain-voice.gain)/32;
           voice.mixDelta=(mix-voice.mix)/32;
-          voice.widthDelta=(sound.width-voice.width)/32;
+          voice.widthDelta=((ambient?sound.width*ambient.width:sound.width)-voice.width)/32;
           voice.haloDelta=(halo-voice.halo)/32;
         }
       }
@@ -734,7 +741,7 @@ export class Engine {
       // A high inner voice moves between chord colours in slow, breath-like
       // swells. Pitches change at the silent edge of each cell, avoiding
       // retrigger clicks while keeping a pedal chord gently alive.
-      if(padAudible&&this.motionNotes?.length){
+      if(!s.padAmbient&&padAudible&&this.motionNotes?.length){
         const cellLengthBeats=s.padMovement==='expansive'?1:2;
         const position=this.chordAge*this.currentBpm/(60*this.rate*cellLengthBeats);
         const cell=Math.floor(position),fraction=position-cell;
@@ -756,23 +763,25 @@ export class Engine {
       // The existing smoothed bus levels make this duck inaudible as a control
       // change while improving the perceived balance of the full ensemble.
       const rhythmDucking=1-.12*Math.max(this.drumsLevel,this.bassLevel);
-      let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+(nativeSequence?0:sequenceGain*this.sequenceLevel*this.sequence.left);
-      let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+(nativeSequence?0:sequenceGain*this.sequenceLevel*this.sequence.right);
+      let left=harmonyGain*this.harmonyLevel*chord*this.breath*this.phraseArc*rhythmDucking+(nativeSequence||s.padAmbient?0:sequenceGain*this.sequenceLevel*this.sequence.left);
+      let right=harmonyGain*this.harmonyLevel*chordRight*this.breath*this.phraseArc*rhythmDucking+(nativeSequence||s.padAmbient?0:sequenceGain*this.sequenceLevel*this.sequence.right);
       this.echoMix+=(echoTarget-this.echoMix)*voiceSmoothing;
-      if(this.echoMix>.00001){
+      if(s.padAmbient||this.echoMix>.00001){
         // Fixed, precomputed stereo taps avoid pitch wobble and expensive
         // interpolated delay modulation on the realtime thread.
         let iLeft = this.echoIndex - this.tapLeft;
         let iRight = this.echoIndex - this.tapRight;
         if (iLeft < 0) iLeft += this.rate;
         if (iRight < 0) iRight += this.rate;
-        const echoL = this.echoLeft[iLeft], echoR = this.echoRight[iRight];
-        this.echoLeft[this.echoIndex]=left+echoR*.28;
-        this.echoRight[this.echoIndex]=right+echoL*.28;
+        let echoL = this.echoLeft[iLeft], echoR = this.echoRight[iRight];
+        if(s.padAmbient){let a=this.echoIndex-this.diffuseTapLeft,b=this.echoIndex-this.diffuseTapRight;if(a<0)a+=this.rate;if(b<0)b+=this.rate;echoL=.62*echoL+.38*this.echoRight[a];echoR=.62*echoR+.38*this.echoLeft[b];this.ambientEchoLeft+=(echoL-this.ambientEchoLeft)*.22;this.ambientEchoRight+=(echoR-this.ambientEchoRight)*.22;echoL=this.ambientEchoLeft;echoR=this.ambientEchoRight;}
+        this.echoLeft[this.echoIndex]=left+echoR*(s.padAmbient?.68:.28);
+        this.echoRight[this.echoIndex]=right+echoL*(s.padAmbient?.68:.28);
         left+=echoL*this.echoMix;right+=echoR*this.echoMix;
         this.echoIndex++;
         if (this.echoIndex === this.rate) this.echoIndex = 0;
       }
+      if(s.padAmbient&&!nativeSequence){left+=sequenceGain*this.sequenceLevel*this.sequence.left;right+=sequenceGain*this.sequenceLevel*this.sequence.right;}
       // Oscillators, echoes and progression clocks keep running through gaps.
       const target = this.auditioning || !this.gapMuted ? 1 : 0;
       this.gapGain = target ? Math.min(1,this.gapGain+this.gapSlew) : Math.max(0,this.gapGain-this.gapSlew);
