@@ -10,15 +10,25 @@ export function ambientVoiceState(seconds,index,foundation,evolution,space){
 }
 export function ambientColourNotes(harmony,kind){
  if(kind!=='modal')return [];
- return characteristicNotes(harmony).filter(n=>!harmony.chordPcs.includes(n.pc)).slice(0,2).map((n,i)=>({midi:72+((n.pc-0+12)%12),role:'colour',weight:.28,modalColour:true,colourIndex:i,label:n.degree}));
+ return characteristicNotes(harmony).slice(0,2).map((n,i)=>({midi:72+((n.pc-0+12)%12),role:'colour',weight:.85,modalColour:true,colourIndex:i,label:n.degree}));
+}
+/** Reserve modal colours before optional octave layers; emphasise existing tones without doubling them. */
+export function ambientModalVoicing(entries,harmony){
+ const voiced=entries.map(entry=>({...entry}));
+ for(const colour of ambientColourNotes(harmony,'modal')){
+  const existing=voiced.filter(e=>e.midi%12===colour.midi%12).sort((a,b)=>b.midi-a.midi)[0];
+  if(existing)Object.assign(existing,{modalColour:true,modalExisting:true,colourIndex:colour.colourIndex,label:colour.label,weight:Math.max(1.2,existing.weight*1.4)});
+  else if(voiced.length<10)voiced.push(colour);
+ }
+ return voiced;
 }
 export function ambientVoicingEntries(entries,moving){
  if(!moving)return entries;
- const extra=entries.filter(e=>e.role!=='foundation'&&e.role!=='root'&&e.midi<84).slice(0,2).map((e,i)=>({...e,midi:e.midi+12,role:'air',weight:.3,ambientRegister:i}));
+ const extra=entries.filter(e=>e.role!=='foundation'&&e.role!=='root'&&!e.modalColour&&e.midi<84).slice(0,2).map((e,i)=>({...e,midi:e.midi+12,role:'air',weight:.3,ambientRegister:i}));
  return [...entries,...extra.filter(e=>!entries.some(n=>n.midi===e.midi))].slice(0,10);
 }
 export function ambientEntryGain(entry,seconds){
- if(entry.modalColour)return .08+.92*Math.sin(seconds*.045+(entry.colourIndex||0)*1.3)**2;
+ if(entry.modalColour){const swell=Math.sin(seconds*.16+.9+(entry.colourIndex||0)*1.3)**2;return entry.modalExisting?.85+.15*swell:.6+.4*swell;}
  if(entry.ambientRegister!==undefined)return .05+.95*Math.sin(seconds*.035+entry.ambientRegister*1.7)**2;
  return 1;
 }

@@ -1,4 +1,4 @@
-import {normalizeAmbient,ambientVoiceState,ambientColourNotes,ambientVoicingEntries,ambientEntryGain} from './ambient-harmony.js';
+import {normalizeAmbient,ambientVoiceState,ambientModalVoicing,ambientVoicingEntries,ambientEntryGain} from './ambient-harmony.js';
 import {musicalSettingsKey,chartLayoutKey,liveSettingsPatch} from './live-settings.js';
 import {normalizeGuitarTuning,guitarTuningRatio} from './guitar-tuning.js';
 import {prepareStandardMelody,playbackLeadInBeats} from './standard-melodies.js';
@@ -419,7 +419,6 @@ export class Engine {
     this.frequencies = this.chordMidi.map(note => 440 * 2 ** ((note - 69) / 12));
     const chordId=harmony.chordId || s.chord;
     this.padVoicing=s.padAmbient||s.padDepthMotion==='fixed'?padVoicing(this.chordMidi,s.padDepth,chordId):movingPadVoicing(this.chordMidi,chordId);
-    if(s.padAmbient)this.padVoicing=ambientVoicingEntries(this.padVoicing,s.padVoicingMotion);
     if(Number.isFinite(harmony.bassMidi)){
       const foundation=this.padVoicing.find(entry=>entry.role==='foundation');
       if(foundation)foundation.midi=harmony.bassMidi;
@@ -438,7 +437,10 @@ export class Engine {
         else if(this.padVoicing.length<10)this.padVoicing.push({midi:choice.midi,role:'colour',weight:.7,extensionIndex:index});
       });
     }
-    if(s.padAmbient)for(const note of ambientColourNotes(harmony,this.ambient.padColour))if(this.padVoicing.length<10&&!this.padVoicing.some(e=>e.midi===note.midi))this.padVoicing.push(note);
+    if(s.padAmbient){
+      if(this.ambient.padColour==='modal')this.padVoicing=ambientModalVoicing(this.padVoicing,harmony);
+      this.padVoicing=ambientVoicingEntries(this.padVoicing,s.padVoicingMotion);
+    }
     this.motionNotes=padMotionNotes(s.extensionMorph?this.chordMidi.filter(midi=>harmony.scalePcs.includes(midi%12)):this.chordMidi);
     this.motionCell=-1;
     const bar = Math.floor(Math.max(0,this.beat-this.remainingCount)/s.beats);

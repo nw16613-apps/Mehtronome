@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {Engine} from '../src/audio/engine.js';import {AMBIENT_DEFAULTS,ambientColourNotes,ambientVoiceState} from '../src/audio/ambient-harmony.js';import {harmonyAt} from '../src/audio/music.js';
+import {Engine} from '../src/audio/engine.js';import {AMBIENT_DEFAULTS,ambientColourNotes,ambientVoiceState,ambientEntryGain} from '../src/audio/ambient-harmony.js';import {harmonyAt} from '../src/audio/music.js';
 const rate=8000,noop=()=>{};
 function setup(patch={}){const e=new Engine(rate);e.configure({...AMBIENT_DEFAULTS,padColour:'chord',padVoicingMotion:false,extensionMorph:false,padDepth:'wide',padDepthMotion:'fixed',key:9,mode:'dorian',chord:'min7',countIn:false,click:0,harmony:1,...patch});e.reset();return e;}
 function render(e,frames){const l=new Float32Array(frames),r=new Float32Array(frames);e.render(new Float32Array(frames),noop,l,r);return [l,r];}
@@ -28,5 +28,23 @@ test('Space introduces no internal echo tail, including textures with legacy ech
  for(const sound of ['warm','aurora','glass','deepSpace'])for(const padSpace of [0,1]){
   const e=setup({sound,padSpace});render(e,rate*2);e.settings.harmony=0;e.harmonyLevel=0;
   const [l,r]=render(e,rate);assert.ok(l.every(v=>v===0));assert.ok(r.every(v=>v===0));
+ }
+});
+
+test('modal character is audible from entry and receives room before octave swells',()=>{
+ const e=setup({padColour:'modal',padVoicingMotion:true}),colour=e.padVoicing.find(n=>n.modalColour&&n.midi%12===6);
+ assert.ok(colour);assert.ok(e.padEntryWeight(colour)>.5);
+ render(e,rate*3);const voice=e.voices.find(v=>Math.abs(v.frequency-440*2**((colour.midi-69)/12))<.001);
+ assert.ok(voice.targetLevel>.07);assert.ok(voice.level>.05);
+ for(let t=0;t<40;t+=.25)assert.ok(ambientEntryGain(colour,t)>=.6);
+ e.configure({padColour:'chord'});assert.ok(!e.padVoicing.some(n=>n.modalColour));assert.ok(e.padVoicing.every(n=>[9,0,4,7].includes(n.midi%12)));
+});
+test('modal notes already written into a chord are emphasised without duplicate pitches or dropped chord tones',()=>{
+ for(const [mode,chord,pc]of [['dorian','min13',6],['lydian','maj7sharp11',3],['mixolydian','dom7',7]]){
+  const plain=setup({mode,chord}),modal=setup({mode,chord,padColour:'modal',padVoicingMotion:true});
+  const entry=modal.padVoicing.find(n=>n.modalColour&&n.midi%12===pc);assert.ok(entry,mode);assert.ok(entry.modalExisting,mode);
+  assert.ok(modal.padEntryWeight(entry)>plain.padEntryWeight(plain.padVoicing.find(n=>n.midi===entry.midi)));
+  assert.equal(new Set(modal.padVoicing.map(n=>n.midi)).size,modal.padVoicing.length);
+  assert.ok(plain.padVoicing.every(n=>modal.padVoicing.some(m=>m.midi===n.midi)));assert.ok(modal.padVoicing.length<=10);
  }
 });
