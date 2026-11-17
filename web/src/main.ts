@@ -1187,7 +1187,7 @@ function update() {
   fxUi?.sync();
   settings.automaticBacking=true;
   settings.backingStyle=backingStyleId(backingStyleUi?.sync()||settings.backingStyle);Object.assign(settings,BACKING_STYLES[settings.backingStyle as keyof typeof BACKING_STYLES].settings,backingStyleInstruments(settings.backingStyle));
-  Object.assign(settings,ambientHarmonyUi?.read());
+  Object.assign(settings,ambientHarmonyUi?.read(BACKING_STYLES[backingStyleId(settings.backingStyle) as keyof typeof BACKING_STYLES].settings.sound));
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
@@ -1995,7 +1995,7 @@ function sendMixerSettings(){
   queueAudioSettings(exercisePlaying?exerciseAudioSettings():settings);
 }
 function updateMixerLevels(){
-  Object.assign(settings,ambientHarmonyUi?.read());
+  Object.assign(settings,ambientHarmonyUi?.read(BACKING_STYLES[backingStyleId(settings.backingStyle) as keyof typeof BACKING_STYLES].settings.sound));
   settings.soundLibrary='expanded';
   Object.assign(settings,{soundSources:{},drumKitChoice:'style'});settings.drumKit=resolveDrumKit(settings);
   settings.sequenceActivity=document.querySelector<HTMLSelectElement>('#sequence-activity')?.value||'supporting';
