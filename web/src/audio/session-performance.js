@@ -1,10 +1,10 @@
+import {drumFillPhrase} from './drum-fill-vocabulary.js';
 import {CHORDS} from './music.js';
 import {segmentAt} from './reference-catalogue.js';
 
 const pc=n=>(n%12+12)%12;
 const chromatic=new Set(['traditionalJazz','jazzWaltz','modernStraightJazz','blues','motown','secondLine','boogaloo']);
 const pickups=new Set([...chromatic,'popRock','fusionJazz','funk','hardRock','legatoFusion']);
-const native=new Set(['latin','bossa','samba','afroCuban68','reggae']);
 const cymbals=new Set(['hat','hatOpen','hatPedal','ride','rideBell','flatRide','crash']);
 export const SESSION_ROLES=['opening','build','space-and-return'];
 function nearest(wanted,pcs){
@@ -72,21 +72,20 @@ function drumsForCycle(score,variation){
  for(const phrase of score.form.phrases){
   const end=Math.round(phrase.end*12),bar=Math.max(0,Math.ceil(phrase.end/beats)-1),part=score.form.bars[bar];
   const pass=Math.min(3,Math.floor((phrase.end-.01)/score.developmentBeats));
-  if(end-lastEnd<beats*4*12||!part?.transition||variation===2&&pass!==3)continue;
+  if(end-lastEnd<beats*4*12||!(part?.transition||part?.phraseEnd)||variation===2&&pass!==3)continue;
   lastEnd=end;
-  let strokes;
-  if(score.id==='ballad')strokes=[[6,'hatPedal',.085]];
-  else if(native.has(score.id))strokes=[[6,score.id==='latin'||score.id==='afroCuban68'?'congaMute':'rim',.16]];
-  else if(score.id==='slowSoul128')strokes=[[8,'snare',.14],[4,'tomLow',.2]];
-  else if(['traditionalJazz','jazzWaltz','blues','secondLine'].includes(score.id))strokes=[[12,'snare',.16],[6,variation===1?'tomLow':'tomHigh',.23]];
-  else if(['neoSoul','legatoFusion','modernStraightJazz'].includes(score.id))strokes=[[9,'snare',.13],[3,'tomLow',.2]];
-  else strokes=variation===1?[[12,'snare',.22],[9,'tomHigh',.24],[6,'tomLow',.28],[3,'snare',.2]]:[[12,'snare',.22],[6,'tomLow',.27]];
+  const long=(bar+1)%8===0||phrase.role==='return';
+  let strokes=drumFillPhrase(score.id,phrase.index,variation,long);
+  if(phrase.role==='contrast'||variation===2)strokes=strokes.slice(-1);
   for(const [offset,name,velocity]of strokes){
    const grid=end-offset;if(grid<0||grid>=length)continue;
    // Full melody is a conservative collision map: later Supporting filters
    // can only create additional space, never expose a new collision.
    let clear=true;for(let g=Math.max(0,grid-3);g<Math.min(length,grid+4);g++)if(score.sequence[g].length){clear=false;break;}
    if(!clear||row(grid).some(e=>e.name===name))continue;
+   // Two hands: retain the authored backbeat/cymbal and leave room rather than stacking a third strike.
+   const hands=row(grid).filter(e=>!['kick','hatPedal'].includes(e.name));
+   if(hands.length>=2)continue;
    row(grid).push({at:grid/12%beats,bar:Math.floor(grid/12/beats),name,velocity,transition:true,sessionFill:true,phraseRole:phrase.role});
   }
  }
@@ -98,7 +97,7 @@ function drumsForCycle(score,variation){
 export function prepareSessionPerformance(score,targets,clip){
  if(!score.composition)return score;
  const base=bassPhrase(score,targets,clip,0);score.bass=base;
- const variants=[null];
+ const variants=[{drums:drumsForCycle(score,0)}];
  for(const variation of [1,2]){
   const tracks={bass:sparseBass(base,bassPhrase(score,targets,clip,variation)),drums:drumsForCycle(score,variation)};
   if(variation===2){

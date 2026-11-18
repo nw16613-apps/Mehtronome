@@ -1,3 +1,4 @@
+import {drumFillPhrase} from './drum-fill-vocabulary.js';
 import {fusionJazzDrumCell} from './fusion-jazz-drums.js';
 import {performanceExpression} from './performance-expression.js';
 import {SONOR_DRUM_GROUPS} from './sonor-groups.js';
@@ -171,14 +172,6 @@ const BASS_LINES = {
     [[0,0,0,1.8,.85],[9,1,0,.9,.64],[14,-2,0,.38,.51]],
   ],
 };
-const FILLS={
- blues:[[[6,'snare',.18]],[[4,'snare',.2],[7,'snare',.13]],[[3,'snare',.14],[6,'tomLow',.22]],[[6,'snare',.2],[7,'snare',.12]]],
- soul:[[[7,'snare',.17]],[[6,'snare',.2],[7,'snare',.12]],[[3,'snare',.12],[7,'snare',.21]],[[6,'tomLow',.22]]],
- rock:[[[4,'snare',.26],[6,'tomHigh',.29],[7,'tomLow',.34]],[[2,'snare',.2],[4,'tomHigh',.3],[6,'tomLow',.35]],[[4,'snare',.3],[5,'snare',.18],[7,'tomLow',.34]],[[0,'snare',.25],[3,'tomHigh',.27],[6,'tomLow',.33],[7,'snare',.2]]],
- jazz:[[[3,'snare',.13],[6,'snare',.21]],[[2,'snare',.17],[7,'snare',.14]],[[0,'tomHigh',.18],[6,'snare',.22]],[[3,'snare',.12],[5,'snare',.2],[7,'tomLow',.17]]],
- latin:[[[2,'rim',.2],[6,'tomHigh',.22]],[[3,'rim',.16],[7,'tomLow',.23]],[[0,'rim',.19],[6,'rim',.25]],[[2,'tomHigh',.19],[7,'rim',.24]]],
- soft:[[[6,'rim',.12]],[[7,'rim',.15]],[[4,'snare',.12]],[[6,'rim',.14]]]
-};
 const KITS = new Map();
 // Close-miked hats carry much more sustained energy than the shell recordings.
 // Balance them here so musical pattern velocities can stay readable as written.
@@ -350,9 +343,8 @@ export class Rhythm {
     // In odd meters, an extra partial cell still starts from the groove's root.
     if(groove==='halftime'&&beat===Math.floor(settings.beats/2)&&sub===0)hit('snare',.72);
     if(varied&&filling){
-      const family=latin?'latin':jazzRide?'jazz':groove==='shuffle'?'blues':groove==='motown'?'soul':groove==='ballad'?'soft':'rock';
-      const answer=Math.floor(bar/4)%4,fillCell=(beat-settings.beats+2)*4+sub;
-      for(const [position,name,gain]of FILLS[family][answer])if(position===fillCell&&!GROOVES[groove][phrase].some(([offset,kind,velocity])=>offset===cell&&kind===name&&velocity>.5))hit(name,gain);
+      const beforeEnd=(settings.beats-beat)*12-sub*3;
+      for(const [position,name,gain]of drumFillPhrase(groove,Math.floor(bar/4),0,fillBeats>1))if(position===beforeEnd&&!GROOVES[groove][phrase].some(([offset,kind,velocity])=>offset===cell&&kind===name&&velocity>.5))hit(name,gain);
       this.lastFillBar=bar;
     }
     if(!varied&&turn&&sub%2===1){
