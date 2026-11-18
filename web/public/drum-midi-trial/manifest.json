@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "method": "Eight-bar phrase plus a resolving beat, original quarter-note timing and note velocities, no additional MIDI humanization; static RMS level matching, no compression or FX. Roland notes mapped to the app kit; middle/floor toms share its low tom and continuous hi-hat pedal position is reduced to the played note articulation.",
+  "performances": [
+    {
+      "style": "fusionJazz",
+      "title": "Jazz fusion",
+      "bpm": 96,
+      "kit": "Sonor Force 3001 kit",
+      "seconds": 20.625,
+      "excerpt": {
+        "groove": "drummer7/session2/112",
+        "startBeat": 8,
+        "endBeat": 41,
+        "fill": "drummer7/session2/117",
+        "fillAtBeat": 28,
+        "fillEndBeat": 32
+      },
+      "variants": [
+        {
+          "id": "current",
+          "label": "Current app",
+          "file": "audio/fusionJazz-current.mp3",
+          "events": 130,
+          "rms": 0.04853306715634615,
+          "peak": 0.5142508505072108
+        },
+        {
+          "id": "midi",
+          "label": "MIDI groove",
+          "file": "audio/fusionJazz-midi.mp3",
+          "events": 139,
+          "rms": 0.04853306715634615,
+          "peak": 0.7187739655122573
+        },
+        {
+          "id": "fill",
+          "label": "MIDI groove + fill",
+          "file": "audio/fusionJazz-fill.mp3",
+          "events": 137,
+          "rms": 0.04853306715634615,
+          "peak": 0.8599999999999999
+        }
+      ]
+    },
+    {
+      "style": "funk",
+      "title": "Funk",
+      "bpm": 95,
+      "kit": "Tama acoustic kit",
+      "seconds": 20.842105263157894,
+      "excerpt": {
+        "groove": "drummer1/session1/102",
+        "startBeat": 8,
+        "endBeat": 41,
+        "fill": "drummer1/session1/103",
+        "fillAtBeat": 28,
+        "fillEndBeat": 32
+      },
+      "variants": [
+        {
+          "id": "current",
+          "label": "Current app",
+          "file": "audio/funk-current.mp3",
+          "events": 120,
+          "rms": 0.05498741692433322,
+          "peak": 0.6180737023719916
+        },
+        {
+          "id": "midi",
+          "label": "MIDI groove",
+          "file": "audio/funk-midi.mp3",
+          "events": 173,
+          "rms": 0.05498741692433322,
+          "peak": 0.8599999999999999
+        },
+        {
+          "id": "fill",
+          "label": "MIDI groove + fill",
+          "file": "audio/funk-fill.mp3",
+          "events": 165,
+          "rms": 0.05498741692433322,
+          "peak": 0.8593399639677626
+        }
+      ]
+    },
+    {
+      "style": "popRock",
+      "title": "Rock",
+      "bpm": 112,
+      "kit": "Tama acoustic kit",
+      "seconds": 17.678571428571427,
+      "excerpt": {
+        "groove": "drummer7/session2/37",
+        "startBeat": 8,
+        "endBeat": 41,
+        "fill": "drummer7/session2/38",
+        "fillAtBeat": 28,
+        "fillEndBeat": 32
+      },
+      "variants": [
+        {
+          "id": "current",
+          "label": "Current app",
+          "file": "audio/popRock-current.mp3",
+          "events": 109,
+          "rms": 0.06228060474693884,
+          "peak": 0.6518404014515505
+        },
+        {
+          "id": "midi",
+          "label": "MIDI groove",
+          "file": "audio/popRock-midi.mp3",
+          "events": 131,
+          "rms": 0.06228060474693884,
+          "peak": 0.86
+        },
+        {
+          "id": "fill",
+          "label": "MIDI groove + fill",
+          "file": "audio/popRock-fill.mp3",
+          "events": 130,
+          "rms": 0.06228060474693884,
+          "peak": 0.7695536580429305
+        }
+      ]
+    }
+  ]
+}
