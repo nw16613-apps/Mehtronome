@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 test('drum trial compares all styles, preserves switching position and plays one clip at a time',async({page})=>{
- const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/drum-midi-trial.html');await expect(page.locator('.card')).toHaveCount(3);
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/drum-midi-trial.html');await expect(page.locator('.card')).toHaveCount(3);await expect(page.locator('header')).toContainText('Round 2');await expect(page.locator('button[data-variant=midi]')).toHaveText(['Alternative A','Alternative A','Alternative A']);
  for(const style of ['fusionJazz','funk','popRock']){
   const card=page.locator(`[data-style=${style}]`),audio=card.locator('audio');await card.locator('button[data-variant=midi]').click();
   await expect.poll(()=>audio.evaluate((a:HTMLAudioElement)=>!a.paused&&a.currentTime>0)).toBe(true);

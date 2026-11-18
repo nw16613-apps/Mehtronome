@@ -21,4 +21,15 @@ class MidiTrialTests(unittest.TestCase):
     parsed=module.read_midi(file);self.assertEqual(parsed['notes'],s['notes']);self.assertEqual(parsed['hiHatPedal'],s['hiHatPedal'])
     self.assertTrue(all(n['channel']==9 for n in s['notes']));self.assertEqual(s['metres'][0],[0,4,4])
     self.assertTrue(any(abs(n['beat']*4-round(n['beat']*4))>.02 for n in s['notes']))
+ def test_second_round_uses_distinct_continuous_performances_and_preserves_pickup(self):
+  folder=root/'public/drum-midi-trial';current=json.loads((folder/'performances.json').read_text());old=json.loads((folder/'round1-performances.json').read_text());manifest=json.loads((folder/'manifest.json').read_text())
+  old_ids={s['sourceId'] for p in old['performances'] for s in p['sources']}
+  self.assertEqual(current['round'],2);self.assertEqual(manifest['round'],2)
+  for p in current['performances']:
+   self.assertEqual(len(p['sources']),2);self.assertTrue(all(s['sourceId'] not in old_ids for s in p['sources']))
+  for p in manifest['performances']:
+   self.assertTrue(p['excerpt']['continuous']);self.assertEqual(p['excerpt']['pickupBeats'],.125)
+   self.assertEqual(len(p['variants']),3);self.assertEqual(len(set(round(v['rms'],8) for v in p['variants'])),1)
+   for v in p['variants']:
+    self.assertLessEqual(v['peak'],.861);self.assertTrue((folder/v['file']).is_file());self.assertIn('round2',v['file'])
 if __name__=='__main__':unittest.main()

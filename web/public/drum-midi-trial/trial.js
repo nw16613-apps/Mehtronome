@@ -1,7 +1,7 @@
 let requestCounter=0;
 const status=document.getElementById('status'),root=document.getElementById('comparisons');
 try{
- const response=await fetch('/drum-midi-trial/manifest.json');if(!response.ok)throw new Error('Could not load comparison clips');const data=await response.json();
+ const response=await fetch('/drum-midi-trial/manifest.json',{cache:'no-store'});if(!response.ok)throw new Error('Could not load comparison clips');const data=await response.json();
  for(const p of data.performances){
   const card=document.createElement('article');card.className='card';card.dataset.style=p.style;
   card.innerHTML=`<div class="heading"><h2>${p.title}</h2><span class="meta">${p.bpm} BPM · ${p.kit} · 8 bars + downbeat</span></div><div class="choices" role="group" aria-label="${p.title} comparison versions"></div><div class="selection" aria-live="polite">Choose a version to listen.</div><audio controls preload="none" aria-label="${p.title} player"></audio>`;

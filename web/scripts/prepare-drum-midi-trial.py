@@ -42,16 +42,16 @@ def read_midi(path):
 
 def prepare(root):
  root=Path(root);out=Path(__file__).resolve().parents[1]/'public/drum-midi-trial';out.mkdir(exist_ok=True);(out/'midi').mkdir(exist_ok=True)
- choices=[('fusionJazz','Jazz fusion',96,'drummer7/session2',['112_jazz-fusion_96_beat_4-4.mid','116_jazz-fusion_96_fill_4-4.mid','117_jazz-fusion_96_fill_4-4.mid']),('funk','Funk',95,'drummer1/session1',['102_funk_95_beat_4-4.mid','103_funk_95_fill_4-4.mid','104_funk_95_fill_4-4.mid']),('popRock','Rock',112,'drummer7/session2',['37_rock_112_beat_4-4.mid','38_rock_112_fill_4-4.mid','39_rock_112_fill_4-4.mid'])]
+ choices=[('fusionJazz','Jazz-funk fusion',116,'drummer1/session1',['4_jazz-funk_116_beat_4-4.mid','5_jazz-funk_116_beat_4-4.mid']),('funk','Funk',95,'drummer8/session1',['1_funk_95_beat_4-4.mid','2_funk_95_beat_4-4.mid']),('popRock','Rock',105,'',['drummer3/session1/9_rock_105_beat_4-4.mid','drummer5/session2/12_rock_105_beat_4-4.mid'])]
  records=[];metadata={r['midi_filename']:r for r in csv.DictReader((root/'info.csv').open())}
  for style,title,bpm,folder,files in choices:
   sources=[]
   for name in files:
-   relative=folder+'/'+name;p=root/relative;source=read_midi(p);copied=style+'-'+name;shutil.copyfile(p,out/'midi'/copied)
+   relative=(folder+'/' if folder else '')+name;p=root/relative;source=read_midi(p);copied=style+'-round2-'+name.replace('/','-');shutil.copyfile(p,out/'midi'/copied)
    assert int(metadata[relative]['bpm'])==bpm
    source.update({'sourceId':metadata[relative]['id'],'originalPath':relative,'file':'midi/'+copied,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()});sources.append(source)
    print(style,name,len(source['notes']),round(source['endBeat'],3),'first',round(source['notes'][0]['beat'],3),'last',round(source['notes'][-1]['beat'],3))
-  records.append({'style':style,'title':title,'bpm':bpm,'sources':sources})
- data={'version':1,'source':'Groove MIDI Dataset v1.0.0','credit':'Google LLC; Groove MIDI Dataset contributors','licence':'CC BY 4.0','licenceUrl':'https://creativecommons.org/licenses/by/4.0/','sourceUrl':'https://magenta.withgoogle.com/datasets/groove','mirror':'https://github.com/zharry29/drums-with-llm/tree/476adbc938a600eaca26bbb02648e6127b5eca64/groove','performances':records}
+  records.append({'style':style,'title':title,'bpm':bpm,'startBeat':16,'sources':sources})
+ data={'version':2,'round':2,'source':'Groove MIDI Dataset v1.0.0','credit':'Google LLC; Groove MIDI Dataset contributors','licence':'CC BY 4.0','licenceUrl':'https://creativecommons.org/licenses/by/4.0/','sourceUrl':'https://magenta.withgoogle.com/datasets/groove','mirror':'https://github.com/zharry29/drums-with-llm/tree/476adbc938a600eaca26bbb02648e6127b5eca64/groove','performances':records}
  (out/'performances.json').write_text(json.dumps(data,indent=2)+'\n');shutil.copyfile(root/'LICENSE',out/'LICENSE.txt')
 if __name__=='__main__':prepare(sys.argv[1])

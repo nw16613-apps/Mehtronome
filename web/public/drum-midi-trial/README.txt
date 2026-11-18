@@ -13,13 +13,17 @@ The official ZIP download was unavailable. Its full-archive checksum was not
 independently verified. performances.json retains the original source path,
 performance ID and individual SHA256 of every bundled original MIDI file.
 
-Changes: select original beat positions 8–41, replace beats 28–32 with a separately
-played fill in the MIDI+fill version, preserve note timestamps and raw velocities,
-map Roland notes to the app's sampled kit articulations, and render with one fixed
-gain per clip for RMS level matching. No MIDI quantization or added humanization,
-compression, reverb or delay. Eight bars plus a resolving beat and natural tail.
+Round 2 changes: choose two alternative continuous takes per style. Source beats
+16-0.125 through 49 are retained, including a short pickup before the first beat.
+The current arranger receives the same lead-in. Original note timestamps and raw
+velocities are preserved, Roland notes are mapped to app kit articulations, and
+one fixed gain per clip matches RMS levels. No fill is separately spliced into
+this round. There is no MIDI quantization or added humanization, compression,
+reverb or delay. Eight bars are followed by a resolving beat and natural tail.
 Continuous hi-hat pedal openness is reduced to played note articulation, and
 middle/floor tom pitches share the app's low-tom sound. Original MIDI is unmodified.
+Round 1 source metadata is retained in round1-performances.json and its clip
+manifest in round1-manifest.json. Those original rendered clips remain archived.
 
 Current app clips use the existing authored arranger. The listening trial does
 not replace normal app backing. Each style uses the same kit and tempo for all
